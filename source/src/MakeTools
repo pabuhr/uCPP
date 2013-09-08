@@ -1,0 +1,46 @@
+## Define some of the tools that are used by the make process.
+
+# The u++ translator is used to build the kernel and library support code to allow uC++ keywords, like _Coroutine,
+# _Task, _Mutex, etc. However, the translator does not need to make available the uC++ includes during kernel build
+# because the include directory (inc) is being created, so these directories and special includes are turned off using
+# flag "-no-u++-include".
+
+CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/u++
+
+CCFLAGS = -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
+CCFLAGS += -D__U_STATISTICS__
+
+ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
+	CCFLAGS += -m${WORDSIZE}
+endif
+
+#CCFLAGS += -D__U_PROFILER__
+#CCFLAGS += -profile -D__U_PROFILEABLE_ONLY__
+
+#CCFLAGS += -I/home/pabuhr/include/i686-linux -DKNOT -DBIGGER_FD_SETSIZE2 # -DBIGGER_FD_SETSIZE uKnot/Linux
+#CCFLAGS += -DFD_SETSIZE=65536 -DKNOT	# uKnot/Solaris
+
+HOSTNAME = ${shell hostname}
+ifeq (${HOSTNAME},plg2)			# development machine
+	# When -O2 is specified, compilers can generate additional warning messages.
+	CCFLAGS += -Wall -Wno-unused-label -g -O2 #
+else
+	CCFLAGS += -Wall -Wno-unused-label -g -O2 #
+endif
+
+ifeq (${TOS},solaris)
+    ifeq (${TCPU},sparc)
+	CCFLAGS += -mcpu=v9
+	ASFLAGS += -D_ASM
+    endif
+endif
+
+AR = ar cr
+
+RL = ${shell if [ -f /usr/bin/ranlib -o -f /bin/ranlib ]; then echo "ranlib"; else echo "echo"; fi}
+
+RM = rm -rf
+
+INSTALL = cp
+CHMODEXEC = chmod 0755
+CHMODDATA = chmod 0644
