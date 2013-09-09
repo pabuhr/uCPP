@@ -1,4 +1,0 @@
-uCPP
-====
-
-concurrency for C++

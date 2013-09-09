@@ -8,17 +8,17 @@
 # Author           : Peter A. Buhr
 # Created On       : Fri Dec 12 07:44:36 2008
 # Last Modified By : Siqing Wang
-# Last Modified On : Sun Sep 8 15:35:26 2013
-# Update Count     : 131
+# Last Modified On : Wed Sep 18 21:28:26 2013
+# Update Count     : 132
 
 # Examples:
-# % sh install.sh
+# % sh u++-6.0.0.sh
 #   root : build package in /usr/local, u++ command in /usr/local/bin
 #   non-root : build package in ./u++-6.0.0, u++ command in ./u++-6.0.0/bin
-# % sh install.sh -p /software
-#   build package in /software, u++ command in /software/u++-6.0.0/bin
-# % sh install.sh -p /software -c /software/local/bin
-#   build package in /software, u++ command in /software/local/bin
+# % sh u++-6.0.0.sh -p /software
+#   build package in /software/u++-6.0.0, u++ command in /software/u++-6.0.0/bin
+# % sh u++-6.0.0.sh -p /software -c /software/local/bin
+#   build package in /software/u++-6.0.0, u++ command in /software/local/bin
 
 version=6.0.0					# version number of the uC++ tarball
 cmd="${0}"					# name of this file
