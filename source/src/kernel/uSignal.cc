@@ -6,9 +6,9 @@
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 13 15:10:22 2012
-// Update Count     : 783
+// Last Modified By : 
+// Last Modified On : Wed May 15 01:48:00 2013
+// Update Count     : 784
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -329,6 +329,9 @@ namespace UPP {
 	// Hence errors that result in terminate are delivered on a separate stack.
 	static char stack[SIGSTKSZ];
 	static stack_t ss;
+#ifdef __U_DEBUG_H__
+	uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + SIGSTKSZ );
+#endif // __U_DEBUG_H__
 	ss.ss_sp = stack;
 	ss.ss_size = SIGSTKSZ;
 	ss.ss_flags = 0;

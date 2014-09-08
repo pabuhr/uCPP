@@ -7,8 +7,8 @@
 // Author           : Richard Bilson and Ashif Harji
 // Created On       : Wed Jul 16 16:44:10 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 28 22:57:02 2012
-// Update Count     : 47
+// Last Modified On : Mon Jul 14 13:31:43 2014
+// Update Count     : 48
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@
 /* Read member of the thread descriptor directly.  */
 #define THREAD_GETMEM(member) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value;		\
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -78,7 +78,7 @@
 /* Set member of the thread descriptor directly.  */
 #define THREAD_SETMEM(member, value) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -107,7 +107,7 @@
 /* Read member of the thread descriptor directly.  */
 #define THREAD_GETMEM(member) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value;		\
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -133,7 +133,7 @@
 /* Set member of the thread descriptor directly.  */
 #define THREAD_SETMEM(member, value) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -266,7 +266,7 @@
 
 #define THREAD_GETMEM(member) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value;		\
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8. */		\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -293,7 +293,7 @@
 /* Set member of the thread descriptor directly.  */
 #define THREAD_SETMEM(member, value) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8. */		\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -323,7 +323,7 @@ __asm__( ".register %g7,#ignore" );
 
 #define THREAD_GETMEM(member) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value;		\
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\
@@ -360,7 +360,7 @@ __asm__( ".register %g7,#ignore" );
 /* Set member of the thread descriptor directly.  */
 #define THREAD_SETMEM(member, value) \
 ({										\
-  __typeof__ (((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
+  __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
   _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
 		   sizeof(__value) == 8 );					\

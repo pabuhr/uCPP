@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:06:02 2011
-// Update Count     : 62
+// Last Modified On : Wed Jul 23 23:49:38 2014
+// Update Count     : 132
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,6 +29,7 @@
 #include "main.h"
 #include "hash.h"
 #include "token.h"
+#include "key.h"
 #include "input.h"
 
 #include <iostream>
@@ -43,6 +44,10 @@ static char buffer[BUFLEN];
 static char *bptr = buffer;
 static char *eptr = buffer + BUFLEN;
 static char *cptr;
+
+#define DELIMITER_MAX_LENGTH (16)			// C++11
+static char delimiter_name[DELIMITER_MAX_LENGTH];
+static unsigned int delimiter_lnth, delimiter_lnth_ctr;
 
 static int get() {
     char c;
@@ -72,11 +77,16 @@ typedef enum state_t {
     white,
     directive,
     identifier,
-    character_or_string,
     character,
     character_escape,
     string,
     string_escape,
+    wide_string,
+    unicode_string,
+    raw_string,
+    start_delimiter,
+    raw_character,
+    end_delimiter,
     greater_than,
     right_shift,
     less_than,
@@ -135,17 +145,23 @@ token_t *getinput() {
 	      case '\'':
 		state = character;
 		break;
-	      case '\"':				// "
+	      case '\"':
 		state = string;
 		break;
-	      case 'l': case 'L':
-		state = character_or_string;
+	      case 'L':
+		state = wide_string;
+		break;
+	      case 'u': case 'U':
+		state = unicode_string;
+		break;
+	      case 'R':
+		state = raw_string;
 		break;
 	      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
-	      case 'k': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+	      case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't':
 	      case 'v': case 'w': case 'x': case 'y': case 'z': case 'A': case 'B': case 'C': case 'D': case 'E':
 	      case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'M': case 'N': case 'O': case 'P':
-	      case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+	      case 'Q': case 'S': case 'T': case 'V': case 'W': case 'X': case 'Y': case 'Z':
 	      case '_':
 		state = identifier;
 		break;
@@ -194,9 +210,7 @@ token_t *getinput() {
 	      case '0':
 		state = octal;
 		break;
-	      case '1': case '2': case '3':
-	      case '4': case '5': case '6':
-	      case '7': case '8': case '9':
+	      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		state = decimal;
 		break;
 	      default:
@@ -273,16 +287,15 @@ token_t *getinput() {
 	    } // switch
 	    break;
 	  case identifier:
+	  identifier:
 	    switch ( c ) {
 	      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
-	      case 'k': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+	      case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
 	      case 'v': case 'w': case 'x': case 'y': case 'z': case 'A': case 'B': case 'C': case 'D': case 'E':
-	      case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'M': case 'N': case 'O': case 'P':
+	      case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N': case 'O': case 'P':
 	      case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
-	      case 'l': case 'L':
 	      case '_':
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		break;
 	      default:
 		unget( c );
@@ -290,30 +303,77 @@ token_t *getinput() {
 		return new token_t( IDENTIFIER, hash_table->lookup( buffer ) );
 	    } // switch
 	    break;
-	  case character_or_string:
+	  case wide_string:
 	    switch ( c ) {
 	      case '\'':
 		state = character;
 		break;
-	      case '\"':				// "
+	      case '\"':
 		state = string;
 		break;
-	      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
-	      case 'k': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-	      case 'v': case 'w': case 'x': case 'y': case 'z': case 'A': case 'B': case 'C': case 'D': case 'E':
-	      case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'M': case 'N': case 'O': case 'P':
-	      case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
-	      case 'l': case 'L':
-	      case '_':
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
-		state = identifier;
+	      case 'R':
+		state = raw_string;
 		break;
 	      default:
-		unget( c );
-		wrap();
-		return new token_t( IDENTIFIER, hash_table->lookup( buffer ) );
+		goto identifier;
 	    } // switch
+	    break;
+	  case unicode_string:
+	    switch ( c ) {
+	      case '8':
+		state = unicode_string;			// under constrain, allow multiple 8s, which are subsequently invalid
+		break;
+	      case 'R':
+		state = raw_string;
+		break;
+	      case '\'':
+		state = character;
+		break;
+	      case '\"':
+		state = string;
+		break;
+	      default:
+		goto identifier;
+	    } // switch
+	    break;
+	  case raw_string:
+	    switch ( c ) {
+	      case '\"':
+		delimiter_lnth = delimiter_lnth_ctr = 0; // reset counters
+		state = start_delimiter;
+		break;
+	      default:
+		goto identifier;
+	    } // switch
+	    break;
+	  case start_delimiter:
+	    if ( c  == '(' ) {
+		state = raw_character;
+	    } else {
+		// Do not care about characters composing delimiter.
+		if ( delimiter_lnth < DELIMITER_MAX_LENGTH ) { // exceed max delimiter length
+		    delimiter_name[delimiter_lnth] = c;
+		    delimiter_lnth += 1;
+		} else {				// syntax error, panic and look for end of string
+		    state = raw_character;
+		} // if
+	    } // if
+	    break;
+	  case raw_character:
+	    if ( c == ')' ) {
+	  	state = end_delimiter;
+	    } // if
+	    break;
+	  case end_delimiter:
+	    if ( c == '\"' ) {
+	    	wrap();
+		return new token_t( STRING, hash_table->lookup( buffer ) );
+	    } else if ( delimiter_lnth_ctr < delimiter_lnth && c == delimiter_name[delimiter_lnth_ctr] ) {
+	    	delimiter_lnth_ctr += 1;
+	    } else {
+		delimiter_lnth_ctr = 0;			// reset counter
+		state = raw_character;			// not delimiter, continue scan
+	    } // if
 	    break;
 	  case character:
 	    switch ( c ) {
@@ -332,7 +392,7 @@ token_t *getinput() {
 	    break;
 	  case string:
 	    switch ( c ) {
-	      case '\"':				// "
+	      case '\"':
 		wrap();
 		return new token_t( STRING, hash_table->lookup( buffer ) );
 	      case '\\':
@@ -571,8 +631,7 @@ token_t *getinput() {
 	      case 'x': case 'X':
 		state = hexadecimal;
 		break;
-	      case '0': case '1': case '2': case '3':
-	      case '4': case '5': case '6': case '7':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 		break;
 	      case 'l': case 'L': case 'u': case 'U':
 		state = long_unsigned;
@@ -588,8 +647,7 @@ token_t *getinput() {
 	    break;
 	  case hexadecimal:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 	      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 	      case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 		break;
@@ -604,8 +662,7 @@ token_t *getinput() {
 	    break;
 	  case decimal:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		break;
 	      case 'l': case 'L': case 'u': case 'U':
 		state = long_unsigned;
@@ -634,8 +691,7 @@ token_t *getinput() {
 	    break;
 	  case fraction:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		break;
 	      case 'e': case 'E':
 		state = possible_exponent;
@@ -651,8 +707,7 @@ token_t *getinput() {
 	    break;
 	  case possible_exponent:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		state = exponent;
 		break;
 	      case '+': case '-':
@@ -666,8 +721,7 @@ token_t *getinput() {
 	    break;
 	  case possible_signed_exponent:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		state = exponent;
 		break;
 	      default:
@@ -678,8 +732,7 @@ token_t *getinput() {
 	    break;
 	  case exponent:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		break;
 	      case 'f': case 'F': case 'l': case 'L':
 		state = float_long;

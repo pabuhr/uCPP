@@ -2,12 +2,12 @@
 #include <errno.h>
 #include <dlfcn.h>
 
-typeof( ::write ) *Rwrite;
+__typeof__( ::write ) *Rwrite;
 
 extern "C" ssize_t write( int fd, const void *buf, size_t count ) {
     ssize_t retcode;
     if ( ! Rwrite)
-        Rwrite = (typeof(write) *)dlvsym(RTLD_NEXT, "write", "GLIBC_2.2.5");
+        Rwrite = (__typeof__(write) *)dlvsym(RTLD_NEXT, "write", "GLIBC_2.2.5");
 
     for ( ;; ) {
 	retcode = Rwrite( fd, buf, count ); // call the real routine

@@ -37,7 +37,7 @@ endif
 
 ## Define the header files
 
-HEADERS = ostream fstream ${shell ls *.h}
+HEADERS = ostream fstream mutex ${shell ls *.h}
 
 ## Define which libraries should be built.
 

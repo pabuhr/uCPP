@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:46:34 1992
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:07:35 2011
-// Update Count     : 30
+// Last Modified By : 
+// Last Modified On : Sat Jun  1 16:55:01 2013
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@
 
 #include "attribute.h"
 
-class token_t;
+struct token_t;
 
 class structor_t {
   public:

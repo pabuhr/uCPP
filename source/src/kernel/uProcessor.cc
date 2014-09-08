@@ -6,9 +6,9 @@
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 13 21:49:00 2012
-// Update Count     : 2076
+// Last Modified By : 
+// Last Modified On : Wed May 15 01:46:07 2013
+// Update Count     : 2077
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -597,7 +597,11 @@ void uProcessorKernel::main() {
 	    readyTask->currCoroutine = readyTask;	// manually reset current coroutine
 
 #ifdef __U_DEBUG__
+#   if defined( __linux__ ) && defined( __ia64__ )
+	    void *SP = (void *)(((ucontext_t *)readyTask->context)->uc_mcontext.sc_ar_bsp);
+#   else
 	    void *SP = ((uContext_t *)readyTask->context)->SP;
+#   endif
 #endif // __U_DEBUG__
 #ifdef __U_DEBUG_H__
 	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
@@ -689,7 +693,11 @@ void uProcessorKernel::main() {
 	    THREAD_SETMEM( activeTask, readyTask );
 
 #ifdef __U_DEBUG__
+#   if defined( __linux__ ) && defined( __ia64__ )
+	    void *SP = (void *)(((ucontext_t *)readyTask->currCoroutine->context)->uc_mcontext.sc_ar_bsp);
+#   else
 	    void *SP = ((uContext_t *)readyTask->currCoroutine->context)->SP;
+#   endif
 #endif // __U_DEBUG__
 #ifdef __U_DEBUG_H__
 	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",

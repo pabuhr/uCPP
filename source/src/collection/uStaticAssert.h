@@ -20,7 +20,7 @@ namespace _static_assert_ {
 #define _CPP_DO_CONCAT_( X, Y ) X##Y
 
 #define _STATIC_ASSERT_( B ) typedef ::_static_assert_::static_assert_test< sizeof(::_static_assert_::STATIC_ASSERTION_FAILURE< (bool)( B ) >) > \
-	_CPP_CONCAT_( _static_assert_typedef_, __LINE__ )
+	_CPP_CONCAT_( _static_assert_typedef_, __LINE__ ) __attribute__(( unused ))
 
 #endif // __U_STATIC_ASSERT_H__
 

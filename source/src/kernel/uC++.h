@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 27 13:47:19 2013
-// Update Count     : 5569
+// Last Modified On : Mon Jul 14 13:32:12 2014
+// Update Count     : 5582
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,7 +32,6 @@
 // only be detected by observing erroneous results reported by certain metrics
 // that are sensitive to the registration of processors.
 // ***************************************************************************
-
 
 #ifndef __U_CPLUSPLUS_H__
 #define __U_CPLUSPLUS_H__
@@ -205,11 +204,23 @@ namespace UPP {
 
 _Task uSystemTask;					// forward declaration
 class uBaseCoroutine;					// forward declaration
-class uBaseTask;					// forward declaration
+class
+#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
+__attribute__(( may_alias ))
+#endif
+    uBaseTask;						// forward declaration
 class uBaseSpinLock;					// forward declaration
-class uSpinLock;					// forward declaration
+class
+#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
+    __attribute__(( may_alias ))
+#endif
+    uSpinLock;						// forward declaration
 class uLock;						// forward declaration
-class uOwnerLock;					// forward declaration
+class
+#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
+    __attribute__(( may_alias ))
+#endif
+    uOwnerLock;						// forward declaration
 class uCondLock;					// forward declaration
 class uProcessor;					// forward declaration
 class uDefaultScheduler;				// forward declaration
@@ -365,24 +376,24 @@ namespace UPP {
       public:
 	static void startup();
 
-	static typeof( ::exit ) *exit __attribute__(( noreturn ));
-	static typeof( ::abort ) *abort;
-	static typeof( ::select ) *select;
-	static typeof( std::set_terminate ) *set_terminate;
-	static typeof( std::set_unexpected ) *set_unexpected;
+	static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
+	static __typeof__( ::abort ) *abort;
+	static __typeof__( ::select ) *select;
+	static __typeof__( std::set_terminate ) *set_terminate;
+	static __typeof__( std::set_unexpected ) *set_unexpected;
 #if defined( __linux__ ) || defined( __freebsd__ )
-	static typeof( ::dl_iterate_phdr ) *dl_iterate_phdr;
+	static __typeof__( ::dl_iterate_phdr ) *dl_iterate_phdr;
 #endif // __linux__ || __freebsd__
-	static typeof( ::pthread_create ) *pthread_create;
-//	static typeof( ::pthread_exit ) *pthread_exit;
-	static typeof( ::pthread_attr_init ) *pthread_attr_init;
-	static typeof( ::pthread_attr_setstack ) *pthread_attr_setstack;
-	static typeof( ::pthread_kill ) *pthread_kill;
-	static typeof( ::pthread_join ) *pthread_join;
-	static typeof( ::pthread_self ) *pthread_self;
+	static __typeof__( ::pthread_create ) *pthread_create;
+//	static __typeof__( ::pthread_exit ) *pthread_exit;
+	static __typeof__( ::pthread_attr_init ) *pthread_attr_init;
+	static __typeof__( ::pthread_attr_setstack ) *pthread_attr_setstack;
+	static __typeof__( ::pthread_kill ) *pthread_kill;
+	static __typeof__( ::pthread_join ) *pthread_join;
+	static __typeof__( ::pthread_self ) *pthread_self;
 #if defined( __linux__ ) || defined( __freebsd__ )
-	static typeof( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
-	static typeof( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
+	static __typeof__( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
+	static __typeof__( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
 #endif // __linux__ || __freebsd__
     }; // RealRtn
 } // UPP
@@ -460,7 +471,7 @@ class uKernelModule {
     friend class uKernelSampler;			// access: globalClusters
     friend class uClusterSampler;			// access: globalClusters
 #if defined( __linux__ ) || defined( __freebsd__ )
-    friend typeof( ::dl_iterate_phdr ) dl_iterate_phdr; // access: disableInterrupts, enableInterrupts
+    friend __typeof__( ::dl_iterate_phdr ) dl_iterate_phdr; // access: disableInterrupts, enableInterrupts
 #endif // __linux__ || __freebsd__
 
     struct uKernelModuleData {

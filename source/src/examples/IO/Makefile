@@ -13,6 +13,10 @@ SHELLFLAGS := set -x ;
 SRCDIR = ${PACKAGE}/src/examples/IO
 LFILE = ${PACKAGE}/src/kernel/uC++.cc
 
+ifneq (${CPP11},)
+    CCFLAGS += -std=${CPP11}
+endif
+
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
     CCFLAGS += -m${WORDSIZE}
 endif
@@ -25,7 +29,7 @@ else
 endif
 
 ifdef ALLOCATOR
-CCFLAGS += -uAlloc${ALLOCATOR}
+    CCFLAGS += -uAlloc${ALLOCATOR}
 endif
 
 .SILENT : all file pipe socket unix inet sendfile plain

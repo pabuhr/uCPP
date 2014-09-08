@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:06:46 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:05:48 2011
-// Update Count     : 27
+// Last Modified On : Tue Jul 15 16:28:55 2014
+// Update Count     : 29
 //
 
 #ifndef __MAIN_H__
@@ -25,9 +25,8 @@ extern ostream *yyout;
 extern bool error;
 extern bool Yield;					// name "yield" already taken
 extern bool verify;
-extern bool trace;
 extern bool profile;
-extern bool gnu;
+extern bool stdcpp11;
 extern bool user;
 
 int main( int argc, char *argv[] );

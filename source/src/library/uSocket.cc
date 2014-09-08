@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:06:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:02:09 2011
-// Update Count     : 1049
+// Last Modified On : Mon Jul 14 13:32:37 2014
+// Update Count     : 1054
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -371,7 +371,7 @@ ssize_t uSocketIO::sendfile( uFile::FileAccess &file, off_t *off, size_t len, uD
 	sendfileClosure.len = len - count;
 	sendfileClosure.wrapper();
 #ifdef __U_STATISTICS__
-	if ( count == 0 && wlen == (typeof(wlen))len ) { uFetchAdd( UPP::Statistics::first_sendfile, 1 ); };
+	if ( count == 0 && wlen == (__typeof__(wlen))len ) { uFetchAdd( UPP::Statistics::first_sendfile, 1 ); };
 #endif // __U_STATISTICS__
 	if ( ret == -1 && sendfileClosure.errno_ == U_EWOULDBLOCK ) {
 #ifdef __U_STATISTICS__
@@ -390,7 +390,7 @@ ssize_t uSocketIO::sendfile( uFile::FileAccess &file, off_t *off, size_t len, uD
 	    sendfileFailure( sendfileClosure.errno_, file.fd(), off, len, timeout );
 	} // if
 	count += wlen;
-      if ( count == len ) break;			// transfer completed ?
+	if ( (__typeof__(len))count == len ) break;	// transfer completed ? (cast prevents warning about signed/unsigned comparison)
 #ifdef __U_STATISTICS__
 //	sendfile_yields += 1;
 #endif // __U_STATISTICS__

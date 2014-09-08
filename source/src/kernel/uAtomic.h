@@ -6,9 +6,9 @@
 // 
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun 10 17:52:27 2011
-// Update Count     : 71
+// Last Modified By : 
+// Last Modified On : Sat May 11 11:52:57 2013
+// Update Count     : 75
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,7 +52,7 @@ inline int uTestSet( unsigned int &lock ) {
 #if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
     return __sync_lock_test_and_set( &lock, 1 );
 #elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
+#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
     return __sync_lock_test_and_set( &lock, 1 );
 #else
     int result = 1;
@@ -69,7 +69,7 @@ inline void uTestReset( unsigned int &lock ) {
 #if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
     __sync_lock_release( &lock );
 #elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
+#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
     __sync_lock_release( &lock );
 #else
     lock = 0;					// unlock
@@ -94,7 +94,7 @@ template< typename T > inline bool uCompareAssign( volatile T &loc, T comp, T re
 #elif defined( __sparc__ )
     return __sync_bool_compare_and_swap( &loc, comp, replacement );
 #elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
+#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
     return __sync_bool_compare_and_swap( &loc, comp, replacement );
 #else
     unsigned char ret;
@@ -116,7 +116,7 @@ template< typename T > inline T uFetchAdd( volatile T &counter, int amt ) {
 #if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
     return __sync_fetch_and_add( &counter, amt );
 #elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
+#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
     return __sync_fetch_and_add( &counter, amt );
 #else
     asm volatile (

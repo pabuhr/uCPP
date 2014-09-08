@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:47:21 1992
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 30 11:20:19 2011
-// Update Count     : 66
+// Last Modified By : 
+// Last Modified On : Sat Jun  1 16:55:59 2013
+// Update Count     : 68
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,8 +31,8 @@
 #include <list>
 
 class hash_t;
-class table_t;
-class token_t;
+struct table_t;
+struct token_t;
 
 const unsigned int TIMEOUTPOSN = 0;			// bit 0 is reserved for timeout
 const unsigned int DESTRUCTORPOSN = 1;			// bit 1 is reserved for destructor

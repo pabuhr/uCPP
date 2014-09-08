@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:48:16 1992
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:09:22 2011
-// Update Count     : 50
+// Last Modified By : 
+// Last Modified On : Sat Jun  1 16:53:22 2013
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@
 #include <cstddef>					// size_t
 
 class hash_t;
-class symbol_t;
+struct symbol_t;
 
 struct token_t {
     token_t *fore;					// next token

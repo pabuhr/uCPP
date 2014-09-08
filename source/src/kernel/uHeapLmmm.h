@@ -6,9 +6,9 @@
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 13 14:47:51 2011
-// Update Count     : 251
+// Last Modified By : 
+// Last Modified On : Sat May 11 11:53:16 2013
+// Update Count     : 253
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 
 class MMInfoEntry;					// for profiler
 
-#if defined( __GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
+#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
 #define uMallReturnType size_t
 #else
 // Old gcc cannot handle typedef for size_t and global :: qualifier in namespace
@@ -136,7 +136,7 @@ namespace UPP {
 	static unsigned int maxBucketsUsed;		// maximum number of buckets in use
 	static unsigned int bucketSizes[NoBucketSizes];	// different bucket sizes
 #ifdef FASTLOOKUP
-	static char lookup[LookupSizes];		// O(1) lookup for small sizes
+	static unsigned char lookup[LookupSizes];	// O(1) lookup for small sizes
 #endif // FASTLOOKUP
 	static int mmapFd;				// fake or actual fd for anonymous file
 #ifdef __U_DEBUG__

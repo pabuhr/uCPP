@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 20 14:10:19 2013
-// Update Count     : 70
+// Last Modified On : Thu Jul 24 21:34:51 2014
+// Update Count     : 90
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,20 +36,77 @@ struct keyword_t {
 extern keyword_t key[];
 
 enum key_value_t {
-    ASM = 512,
-    ATOMIC,
+    // Operators
+
+    EQ = 256,						// ==
+    NE,							// !=
+    LE,							// <=
+    GE,							// >=
+
+    PLUS_ASSIGN,					// +=
+    MINUS_ASSIGN,					// -=
+    LSH_ASSIGN,						// <<=
+    RSH_ASSIGN,						// >>=
+    AND_ASSIGN,						// &=
+    XOR_ASSIGN,						// ^=
+    OR_ASSIGN,						// |=
+    MULTIPLY_ASSIGN,					// *=
+    DIVIDE_ASSIGN,					// /=
+    MODULUS_ASSIGN,					// %=
+
+    AND_AND,						// &&
+    OR_OR,						// ||
+    PLUS_PLUS,						// ++
+    MINUS_MINUS,					// --
+    RSH,						// >>
+    LSH,						// <<
+    GMIN,						// <? (min) gcc specific, deprecated
+    GMAX,						// >? (max) gcc specific, deprecated
+
+    ARROW,						// ->
+    ARROW_STAR,						// ->*
+    DOT_STAR,						// ->.
+
+    CHARACTER,						// 'a'
+    STRING,						// "abc"
+    NUMBER,						// integer (oct,dec,hex) and floating-point constants
+
+    IDENTIFIER,						// variable names
+    LABEL,						// statement labels
+    TYPE,						// builtin and user defined types
+
+    DOT_DOT,						// meta, intermediate parsing state
+    DOT_DOT_DOT,					// ...
+
+    COLON_COLON,					// ::
+
+    USER_LITERAL,					// meta, user literal name
+    ERROR,						// meta, error mesage
+    WARNING,						// meta, warning message
+    CODE,						// meta, generated code
+
+    // Keywords
+
+    ALIGNAS = 512,					// C++11
+    ALIGNOF,						// C++11
+    ASM,
+    ATOMIC,						// C11
     ATTRIBUTE,						// gcc specific
-    AUTO,
+    AUTO,						// C++11
     BOOL,
     BREAK,
     CASE,
     CATCH,
     CHAR,
+    CHAR16_t,
+    CHAR32_t,
     CLASS,
-    COMPLEX,						// gcc specific
+    COMPLEX,						// gcc/c99 specific
     CONST,
+    CONSTEXPR,						// C++11
     CONST_CAST,
     CONTINUE,
+    DECLTYPE,						// C++11
     DEFAULT,
     DELETE,
     DO,
@@ -62,6 +119,7 @@ enum key_value_t {
     EXTENSION,						// gcc specific
     EXTERN,
     FALSE,
+    FINAL,						// C++11
     FLOAT,
     FOR,
     FRIEND,
@@ -73,7 +131,10 @@ enum key_value_t {
     MUTABLE,
     NAMESPACE,
     NEW,
+    NOEXCEPT,						// C++11
+    NULLPTR,						// C++11
     OPERATOR,
+    OVERRIDE,
     PRIVATE,
     PROTECTED,
     PUBLIC,
@@ -85,12 +146,14 @@ enum key_value_t {
     SIGNED,
     SIZEOF,
     STATIC,
+    STATIC_ASSERT,					// C++11
     STATIC_CAST,
     STRUCT,
     SWITCH,
     TEMPLATE,
     THIS,
     THREAD,
+    THREAD_LOCAL,					// C++11
     THROW,
     TRUE,
     TRY,
@@ -98,6 +161,7 @@ enum key_value_t {
     TYPEOF,						// gcc specific
     TYPEID,
     TYPENAME,
+    UNDERLYING_TYPE,					// gcc specific
     UNION,
     UNSIGNED,
     USING,
@@ -106,6 +170,8 @@ enum key_value_t {
     VOLATILE,
     WCHAR_T,
     WHILE,
+
+    // uC++ specific
 
     ACCEPT,
     ACCEPTRETURN,

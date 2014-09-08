@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 19 19:23:18 2012
-// Update Count     : 881
+// Last Modified On : Wed Jul 23 16:45:02 2014
+// Update Count     : 898
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -93,6 +93,7 @@ int main( int argc, char *argv[] ) {
     string heading;					// banner printed at start of cfa compilation
     string arg;						// current command-line argument during command-line parsing
     string Bprefix;					// path where g++ looks for compiler command steps
+    string langstd;					// language standard
 
     string compiler_path( CCAPP );			// path/name of C compiler
     string compiler_name;				// name of C compiler
@@ -221,6 +222,17 @@ int main( int argc, char *argv[] ) {
 		nargs += 1;
 	    } else if ( arg == "-g" ) {
 		debugging = true;			// symbolic debugging required
+		args[nargs] = argv[i];			// pass the argument along
+		nargs += 1;
+	    } else if ( prefix( arg, "-std=" ) ) {
+		langstd = arg.substr(5);		// strip the -std= flag
+		if ( langstd == "c++0x" || langstd == "gnu++0x" ||
+		     langstd == "c++11" || langstd == "gnu++11" ||
+		     langstd == "c++1y" || langstd == "gnu++1y"
+		    ) {
+		    args[nargs] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
+		    nargs += 1;
+		} // if
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-B" ) ) {
@@ -368,7 +380,7 @@ int main( int argc, char *argv[] ) {
 		    for ( ;; ) {
 			configFile >> dirkind;
 		  if ( configFile.eof() || configFile.fail() ) goto fini;
-			for ( i = 0; i < dirnum && dirkind != dirs[i].dirkind; i += 1 ); // linear search
+			for ( i = 0; i < dirnum && dirkind != dirs[i].dirkind; i += 1 ) {} // linear search
 		      if ( i < dirnum ) break;		// found a line to be parsed
 		    } // for
 		    configFile >> equal;
@@ -571,6 +583,9 @@ int main( int argc, char *argv[] ) {
     // _Task, _Mutex, etc. However, the translator does not need to make available the uC++ includes during kernel build
     // because the include directory (inc) is being created, so these directories and special includes are turned off
     // (see src/MakeTools). Kernel build is the only time this flag should be used.
+    //
+    // Note, when testing using -no-u++-include, the "inc" file is not present so special include files to adjust text
+    // do not occur. Hence, other errors may occur. See the "library" directory special include files.
 
     if ( ! nouinc ) {
 	// add the directory that contains the include files to the list of arguments after any user specified include
@@ -676,6 +691,11 @@ int main( int argc, char *argv[] ) {
 
     args[nargs] = "-D__U_WORDSIZE__=" VSTRINGIFY(WORDSIZE);
     nargs += 1;
+
+#if defined( STATISTICS )				// Kernel Statistics ?
+    args[nargs] = "-D__U_STATISTICS__";
+    nargs += 1;
+#endif // STATISTICS
 
 #if defined( AFFINITY )					// Thread Local Storage ?
     args[nargs] = "-D__U_AFFINITY__";

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:59:11 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:09:33 2011
-// Update Count     : 64
+// Last Modified On : Fri Feb 14 08:03:04 2014
+// Update Count     : 66
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,7 @@
 #ifndef __TABLE_H__
 #define __TABLE_H__
 
-class table_t;
+struct table_t;
 
 #include "symbol.h"
 #include "structor.h"
@@ -54,7 +54,7 @@ struct lexical_t {
 };
 
 struct table_t {
-    local_t *list;					// list of local tables/symbols defined at this scope level
+    local_t *local;					// list of local tables/symbols defined at this scope level
     table_t *lexical;					// nested lexical scopes
     symbol_t *symbol;					// symbol (back pointer) that owns this nested scope
 

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:04:17 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  2 16:16:59 2011
-// Update Count     : 62
+// Last Modified On : Mon Jul 28 08:01:38 2014
+// Update Count     : 63
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,7 +25,6 @@
 //
 
 #include "hash.h"
-
 #include <cstring>
 
 // should be a prime number

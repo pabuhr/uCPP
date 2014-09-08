@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 20 14:16:40 2013
-// Update Count     : 50
+// Last Modified By : 
+// Last Modified On : Wed Dec  4 23:07:24 2013
+// Update Count     : 55
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,7 +44,6 @@ union declmutex {
 union declqualifier {
     int value;
     struct {
-	bool AUTO : 1;
 	bool REGISTER : 1;
 	bool STATIC : 1;
 	bool EXTERN : 1;
@@ -66,6 +65,7 @@ union declkind {
     struct {
 	bool TYPEDEF : 1;
 	bool FRIEND : 1;
+	bool CONSTEXPR : 1;
     } kind;
 };
 
@@ -78,9 +78,9 @@ union rttaskkind {
     } kind;
 };
 
-class table_t;						// forward declaration
-class symbol_t;						// forward declaration
-class token_t;						// forward declaration
+struct table_t;						// forward declaration
+struct symbol_t;					// forward declaration
+struct token_t;						// forward declaration
 
 struct attribute_t {
     bool Mutex;						// for mutex type: true => mutex type (not redundant with dclqual qualifier)

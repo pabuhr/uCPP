@@ -97,17 +97,14 @@ MODULES = ${MODOBJ} ${MODOBJ-D} ${MODOBJ-M} ${MODOBJ-M-D}
 
 ## Define the library files.
 
-
 LIBRARIES = ${LIB} ${LIB-D} ${LIB-M} ${LIB-M-D} ${LIB1} ${LIB1-D} ${LIB1-M} ${LIB1-M-D}
 
 
 ## Define the dependence files.
 
-
 DEPENDS = ${DEPEND} ${DEPEND-D} ${DEPEND-M} ${DEPEND-M-D}
 
 
 ## Define the files that normally get cleaned.
-
 
 CLEAN = ${OBJDIR} ${LIBDIR} ${BINDIR} fstream ostream

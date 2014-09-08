@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:06:30 2011
-// Update Count     : 132
+// Last Modified On : Wed Jul 23 16:06:12 2014
+// Update Count     : 155
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,8 +27,8 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <string>
 #include <csignal>
-#include <cstring>					// strcmp, strncmp, strlen
 #include <cstdlib>					// exit
 
 using std::cin;
@@ -37,6 +37,7 @@ using std::cerr;
 using std::endl;
 using std::ifstream;
 using std::ofstream;
+using std::string;
 
 #include "main.h"
 #include "key.h"
@@ -56,45 +57,53 @@ ostream *yyout = &cout;
 bool error = false;
 bool Yield = false;
 bool verify = false;
-bool gnu = false;
-bool user = false;
 bool profile = false;
+bool stdcpp11 = false;
+bool user = false;
 
 extern void sigSegvBusHandler( int sig );
+
+void check( string arg ) {
+    if ( arg == "__U_YIELD__" ) {
+	Yield = true;
+    } else if ( arg == "__U_VERIFY__" ) {
+	verify = true;
+    } else if ( arg == "__U_PROFILE__" ) {
+	profile = true;
+    } else if ( arg == "__U_STD_CPP11__" ) {
+	stdcpp11 = true;
+    } // if
+} // check
 
 int main( int argc, char *argv[] ) {
     char *infile = NULL;
     char *outfile = NULL;
 
-    //
     // The translator can receive 2 types of arguments.
     //
-    // The first type begin with a '-' character and are generally -D<string>
-    // type arguments.  We are interested in arguments, -D__U_YIELD__,
-    // -D__U_VERIFY__ and __GNUG__ because they affect the code that is
-    // produced by the translator.
+    // The first type begin with a '-' character and are generally -D<string> type arguments.  We are interested in
+    // arguments, -D__U_YIELD__, -D__U_VERIFY__ and __GNUG__ because they affect the code that is produced by the
+    // translator.
     //
-    // The second type of argument are input and output file specifications.
-    // These arguments do not begin with a '-' character.  The first file
-    // specification is taken to be the input file specification while the
-    // second file specification is taken to be the output file specification.
-    // If no files are specified, stdin and stdout are assumed.  If more files
-    // are specified, an error results.
-    //
+    // The second type of argument are input and output file specifications.  These arguments do not begin with a '-'
+    // character.  The first file specification is taken to be the input file specification while the second file
+    // specification is taken to be the output file specification.  If no files are specified, stdin and stdout are
+    // assumed.  If more files are specified, an error results.
 
     for ( int i = 1; i < argc; i += 1 ) {
 #ifdef __U_DEBUG_H__
 	cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
 #endif // __U_DEBUG_H__
 	if ( argv[i][0] == '-' ) {
-	    if ( strcmp( argv[i], "-D__U_YIELD__" ) == 0 ) {
-		Yield = true;
-	    } else if ( strcmp( argv[i], "-D__U_VERIFY__" ) == 0 ) {
-		verify = true;
-	    } else if ( strcmp( argv[i], "-D__U_PROFILE__" ) == 0 ) {
-		profile = true;
-	    } else if ( strncmp( argv[i], "-D__GNUG__", strlen( "-D__GNUG__" ) ) == 0 ) {
-		gnu = true;
+	    string arg = string( argv[i] );
+	    if ( arg == "-D" ) {
+		i += 1;					// advance to next argument
+#ifdef __U_DEBUG_H__
+		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
+#endif // __U_DEBUG_H__
+		check( string( argv[i] ) );
+	    } else if ( arg.substr(0,2) == "-D" ) {
+		check( arg.substr(2) );
 	    } // if
 	} else {
 	    if ( infile == NULL ) {
@@ -124,16 +133,18 @@ int main( int argc, char *argv[] ) {
 	} // if
     } // for
 
+#ifdef __U_DEBUG_H__
+    cerr << "flags yield:" << Yield << " verify:" << verify << " profile:" << profile << " std cpp11:" << stdcpp11 << endl;
+#endif // __U_DEBUG_H__
+
     *yyin >> std::resetiosflags( std::ios::skipws );	// turn off white space skipping during input
 
     signal( SIGSEGV, sigSegvBusHandler );
     signal( SIGBUS,  sigSegvBusHandler );
 
-    // This is the heart of the translator.  Although inefficient, it is very
-    // simple.  First, all the input is read and convert to a list of tokens.
-    // Second, this list is parsed, extracting and inserting tokens as
-    // necessary. Third, this list of tokens is converted into an output stream
-    // again.
+    // This is the heart of the translator.  Although inefficient, it is very simple.  First, all the input is read and
+    // convert to a list of tokens.  Second, this list is parsed, extracting and inserting tokens as necessary. Third,
+    // this list of tokens is converted into an output stream again.
 
     hash_table = new hash_table_t;
 
@@ -165,10 +176,8 @@ int main( int argc, char *argv[] ) {
     if ( yyin != &cin ) delete yyin;
     if ( yyout != &cout ) delete yyout;
 
-    // If an error has occurred during the translation phase, return a negative
-    // result to signify this fact.  This will cause the host compiler to
-    // terminate the compilation at this point, just as if the regular cpp had
-    // failed.
+    // If an error has occurred during the translation phase, return a negative result to signify this fact.  This will
+    // cause the host compiler to terminate the compilation at this point, just as if the regular cpp had failed.
 
 //    return error ? -1 : 0;
     return 0;

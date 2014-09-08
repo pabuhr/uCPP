@@ -211,7 +211,7 @@ void uMain::main() {
 	delete wcpus[i];
     } // for
 #ifdef __U_STATISTICS__
-    UPP::Statistics::print();
+//    UPP::Statistics::print();
 #endif // __U_STATISTICS__
 }  // uMain::main
 

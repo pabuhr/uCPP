@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:11:49 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  4 17:21:52 2011
-// Update Count     : 58
+// Last Modified On : Fri Jul 18 15:04:06 2014
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
 #include "hash.h"
 #include "token.h"
 #include "table.h"
-#include "input.h"
+#include "key.h"
 #include "scan.h"
 
 #include <cstdio>					// EOF
@@ -45,7 +45,7 @@ using std::endl;
 void scan() {
     ahead = ahead->next_parse_token();
 
-    if ( ahead->value == EOF ) return;
+  if ( ahead->value == EOF ) return;
 
     if ( ahead->hash->value != 0 ) {
 	// if the value of the hash associated with the look ahead token is non zero, it must be a keyword.  simply make

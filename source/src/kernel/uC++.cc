@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 13 21:44:42 2012
-// Update Count     : 2963
+// Last Modified On : Mon Jul 14 13:30:42 2014
+// Update Count     : 2965
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -916,7 +916,7 @@ int uRepositionEntry::uReposition( bool relCallingLock ) {
 //######################### InterposeSymbol #########################
 
 
-#define INIT_REALRTN( x, ver ) x = (typeof(x))interposeSymbol( #x, ver )
+#define INIT_REALRTN( x, ver ) x = (__typeof__(x))interposeSymbol( #x, ver )
 
 namespace UPP {    
     void *RealRtn::interposeSymbol( const char *symbolName, const char *version ) {
@@ -952,25 +952,25 @@ namespace UPP {
     } // RealRtn::interposeSymbol
     
     
-    typeof( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
-    typeof( ::abort ) *RealRtn::abort;
-    typeof( ::select ) *RealRtn::select;
-    typeof( std::set_terminate ) *RealRtn::set_terminate;
-    typeof( std::set_unexpected ) *RealRtn::set_unexpected;
+    __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
+    __typeof__( ::abort ) *RealRtn::abort;
+    __typeof__( ::select ) *RealRtn::select;
+    __typeof__( std::set_terminate ) *RealRtn::set_terminate;
+    __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
 #if defined( __linux__ ) || defined( __freebsd__ )
-    typeof( ::dl_iterate_phdr ) *RealRtn::dl_iterate_phdr;
+    __typeof__( ::dl_iterate_phdr ) *RealRtn::dl_iterate_phdr;
 #endif // __linux__ || __freebsd__
 #if defined( __U_MULTI__ )
-    typeof( ::pthread_create ) *RealRtn::pthread_create;
-//    typeof( ::pthread_exit ) *RealRtn::pthread_exit;
-    typeof( ::pthread_attr_init ) *RealRtn::pthread_attr_init;
-    typeof( ::pthread_attr_setstack ) *RealRtn::pthread_attr_setstack;
-    typeof( ::pthread_kill ) *RealRtn::pthread_kill;
-    typeof( ::pthread_join ) *RealRtn::pthread_join;
-    typeof( ::pthread_self ) *RealRtn::pthread_self;
+    __typeof__( ::pthread_create ) *RealRtn::pthread_create;
+//    __typeof__( ::pthread_exit ) *RealRtn::pthread_exit;
+    __typeof__( ::pthread_attr_init ) *RealRtn::pthread_attr_init;
+    __typeof__( ::pthread_attr_setstack ) *RealRtn::pthread_attr_setstack;
+    __typeof__( ::pthread_kill ) *RealRtn::pthread_kill;
+    __typeof__( ::pthread_join ) *RealRtn::pthread_join;
+    __typeof__( ::pthread_self ) *RealRtn::pthread_self;
 #if defined( __linux__ ) || defined( __freebsd__ )
-    typeof( ::pthread_setaffinity_np ) *RealRtn::pthread_setaffinity_np;
-    typeof( ::pthread_getaffinity_np ) *RealRtn::pthread_getaffinity_np;
+    __typeof__( ::pthread_setaffinity_np ) *RealRtn::pthread_setaffinity_np;
+    __typeof__( ::pthread_getaffinity_np ) *RealRtn::pthread_getaffinity_np;
 #endif // __linux__ || __freebsd__
 #endif // __U_MULTI__
 
@@ -980,12 +980,12 @@ namespace UPP {
 	INIT_REALRTN( exit, version );
 	INIT_REALRTN( abort, version );
 #if defined( __solaris__ ) && FD_SETSIZE > 1024 && __U_WORDSIZE__ == 32
-	select = (typeof(select))interposeSymbol( "select_large_fdset", version );
+	select = (__typeof__(select))interposeSymbol( "select_large_fdset", version );
 #else
 	INIT_REALRTN( select, version );
 #endif // __solaris__
-	set_terminate = (typeof(std::set_terminate)*)interposeSymbol( "_ZSt13set_terminatePFvvE", version );
-	set_unexpected = (typeof(std::set_unexpected)*)interposeSymbol( "_ZSt14set_unexpectedPFvvE", version );
+	set_terminate = (__typeof__(std::set_terminate)*)interposeSymbol( "_ZSt13set_terminatePFvvE", version );
+	set_unexpected = (__typeof__(std::set_unexpected)*)interposeSymbol( "_ZSt14set_unexpectedPFvvE", version );
 #if defined( __linux__ ) || defined( __freebsd__ )
 	INIT_REALRTN( dl_iterate_phdr, version );
 #endif // __linux__ || __freebsd__

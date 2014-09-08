@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 23:37:02 2011
-// Update Count     : 1187
+// Last Modified On : Mon Mar 17 22:04:10 2014
+// Update Count     : 1203
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,12 +45,6 @@
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 
-#if __U_WORDSIZE__ == 32
-#define FMTSIZE
-#else
-#define FMTSIZE "l"
-#endif // __U_WORDSIZE__
-
 
 namespace UPP {
 #ifdef __U_DEBUG__
@@ -80,7 +74,7 @@ namespace UPP {
 	4194304
     };
 #ifdef FASTLOOKUP
-    char uHeapManager::lookup[];			// array size defined in .h
+    unsigned char uHeapManager::lookup[];		// array size defined in .h
 #endif // FASTLOOKUP
 
     int uHeapManager::mmapFd = -1;
@@ -139,14 +133,14 @@ namespace UPP {
 #endif // __U_STATISTICS__
 
     inline void uHeapManager::noMemory() {
-	uAbort( "Heap memory exhausted at %" FMTSIZE "u bytes.\n"
+	uAbort( "Heap memory exhausted at %zu bytes.\n"
 		"Possible cause is very large memory allocation and/or large amount of unfreed storage allocated by the program or system/library routines.",
 		((char *)(sbrk( 0 )) - (char *)(uHeapManager::heapManagerInstance->heapBegin)) );
     } // uHeapManager::noMemory
 
     inline void uHeapManager::checkAlign( size_t alignment ) {
 	if ( alignment < sizeof(void *) || ! uPow2( alignment ) ) {
-	    uAbort( "Alignment %" FMTSIZE "u for memory allocation is less than sizeof(void *) and/or not a power of 2.", alignment );
+	    uAbort( "Alignment %zu for memory allocation is less than sizeof(void *) and/or not a power of 2.", alignment );
 	} // if
     } // uHeapManager::checkAlign
 
@@ -195,10 +189,10 @@ namespace UPP {
     } // uHeapManager::headers
 
 
-    void *uHeapManager::extend( size_t size ) {
+    inline void *uHeapManager::extend( size_t size ) {
 	extlock.acquire();
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.extend( %" FMTSIZE "u ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%" FMTSIZE "x, sbrk:%p\n",
+	uDebugPrt( "(uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
 		   this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
 #endif // __U_DEBUG_H__
 	ptrdiff_t rem = heapRemaining - size;
@@ -208,7 +202,7 @@ namespace UPP {
 	    size_t increase = uCeiling( size > heapExpand ? size : heapExpand, uAlign() );
 	    if ( sbrk( increase ) == (void *)-1 ) {
 #ifdef __U_DEBUG_H__
-		uDebugPrt( "0x%" FMTSIZE "x = (uHeapManager &)%p.extend( %" FMTSIZE "u ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%" FMTSIZE "x, sbrk:%p\n",
+		uDebugPrt( "0x%zx = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
 			   NULL, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
 #endif // __U_DEBUG_H__
 		extlock.release();
@@ -230,7 +224,7 @@ namespace UPP {
 	heapRemaining = rem;
 	heapEnd = (char *)heapEnd + size;
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = (uHeapManager &)%p.extend( %" FMTSIZE "u ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%" FMTSIZE "x, sbrk:%p\n",
+	uDebugPrt( "%p = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
 		   block, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
 #endif // __U_DEBUG_H__
 	extlock.release();
@@ -238,9 +232,9 @@ namespace UPP {
     } // uHeapManager::extend
 
 
-    void *uHeapManager::doMalloc( size_t size ) {
+    inline void *uHeapManager::doMalloc( size_t size ) {
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.doMalloc( %" FMTSIZE "u )\n", this, size );
+	uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size );
 #endif // __U_DEBUG_H__
 
 	Storage *block;
@@ -264,7 +258,7 @@ namespace UPP {
 	    block = (Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, mmapFlags, mmapFd, 0 );
 	    if ( block == MAP_FAILED ) {
 		// Do not call strerror( errno ) as it may call malloc.
-		uAbort( "(uHeapManager &)0x%p.doMalloc() : internal error, mmap failure, size:%" FMTSIZE "u error:%d.", this, tsize, errno );
+		uAbort( "(uHeapManager &)0x%p.doMalloc() : internal error, mmap failure, size:%zu error:%d.", this, tsize, errno );
 	    } // if
 #ifdef __U_DEBUG__
 	    // Set new memory to garbage so subsequent uninitialized usages might fail.
@@ -284,7 +278,7 @@ namespace UPP {
 	    tsize = freeElem->blockSize;		// total space needed for request
 
 #ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uHeapManager &)%p.doMalloc, size after lookup:%" FMTSIZE "u\n", this, tsize );
+	    uDebugPrt( "(uHeapManager &)%p.doMalloc, size after lookup:%zu\n", this, tsize );
 #endif // __U_DEBUG_H__
     
 	    // Spin until the lock is acquired for this particular size of block.
@@ -313,7 +307,7 @@ namespace UPP {
 	assert( ((uintptr_t)area & (uAlign() - 1)) == 0 ); // minimum alignment ?
 	uFetchAdd( uHeapManager::allocfree, tsize );
 	if ( uHeapControl::traceHeap() ) {
-	    uDebugPrt( "%p = Malloc( %" FMTSIZE "u ) (allocated %" FMTSIZE "u)\n", area, size, tsize );
+	    uDebugPrt( "%p = Malloc( %zu ) (allocated %zu)\n", area, size, tsize );
 	} // if
 #endif // __U_DEBUG__
 
@@ -324,27 +318,10 @@ namespace UPP {
     } // uHeapManager::doMalloc
 
 
-    void uHeapManager::doFree( void *addr ) {
+    inline void uHeapManager::doFree( void *addr ) {
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uHeapManager &)%p.doFree( %p )\n", this, addr );
 #endif // __U_DEBUG_H__
-#ifdef __U_STATISTICS__
-	uFetchAdd( free_calls, 1 );
-#endif // __U_STATISTICS__
-
-      if ( unlikely( addr == NULL ) ) {			// special case
-#ifdef __U_PROFILER__
-	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
-		(*uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, 0, 0 ); 
-	    } // if
-#endif // __U_PROFILER__
-#ifdef __U_DEBUG__
-	    if ( uHeapControl::traceHeap() ) {
-		uDebugPrt( "Free( %p ) size:0\n", addr );
-	    } // if
-#endif // __U_DEBUG__
-	    return;
-	} // exit
 
 #ifdef __U_DEBUG__
 	if ( uHeapManager::heapManagerInstance == NULL ) {
@@ -393,14 +370,14 @@ namespace UPP {
 	    freeElem->lock.release();			// release spin lock
 
 #ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uHeapManager &)%p.doFree( %p ) returning free block in list 0x%" FMTSIZE "x\n", this, addr, size );
+	    uDebugPrt( "(uHeapManager &)%p.doFree( %p ) returning free block in list 0x%zx\n", this, addr, size );
 #endif // __U_DEBUG_H__
 	} // if
 
 #ifdef __U_DEBUG__
 	uFetchAdd( uHeapManager::allocfree, -size );
 	if ( uHeapControl::traceHeap() ) {
-	    uDebugPrt( "Free( %p ) size:%" FMTSIZE "u\n", addr, size );
+	    uDebugPrt( "Free( %p ) size:%zu\n", addr, size );
 	} // if
 #endif // __U_DEBUG__
     } // uHeapManager::doFree
@@ -424,12 +401,12 @@ namespace UPP {
 #endif // __U_STATISTICS__
 	    } // for
 #ifdef __U_STATISTICS__
-	    if ( prt ) uDebugPrt2( "%7" FMTSIZE "u, %-7u  ", size, N );
+	    if ( prt ) uDebugPrt2( "%7zu, %-7u  ", size, N );
 	    if ( (i + 1) % 8 == 0 ) uDebugPrt2( "\n" );
 #endif // __U_STATISTICS__
 	} // for
 #ifdef __U_STATISTICS__
-	if ( prt ) uDebugPrt2( "\ntotal free blocks:%" FMTSIZE "u\n", total );
+	if ( prt ) uDebugPrt2( "\ntotal free blocks:%zu\n", total );
 	uDebugRelease();
 #endif // __U_STATISTICS__
 	return (char *)heapEnd - (char *)heapBegin - total;
@@ -586,7 +563,7 @@ extern "C" {
 	} // if
 #endif // __U_PROFILER__
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = malloc( %" FMTSIZE "u )\n", area, size );
+	uDebugPrt( "%p = malloc( %zu )\n", area, size );
 #endif // __U_DEBUG_H__
 	return area;
     } // malloc
@@ -611,7 +588,7 @@ extern "C" {
 	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = calloc( %" FMTSIZE "u, %" FMTSIZE "u )\n", area, noOfElems, elemSize );
+	uDebugPrt( "%p = calloc( %zu, %zu )\n", area, noOfElems, elemSize );
 #endif // __U_DEBUG_H__
 	return area;
     } // calloc
@@ -636,7 +613,7 @@ extern "C" {
 	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = cmemalign( %" FMTSIZE "u, %" FMTSIZE "u, %" FMTSIZE "u )\n", area, alignment, noOfElems, elemSize );
+	uDebugPrt( "%p = cmemalign( %zu, %zu, %zu )\n", area, alignment, noOfElems, elemSize );
 #endif // __U_DEBUG_H__
 	return area;
     } // cmemalign
@@ -689,7 +666,7 @@ extern "C" {
 	memcpy( area, addr, usize );			// copy bytes
 	free( addr );
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = realloc( %p, %" FMTSIZE "u )\n", area, addr, size );
+	uDebugPrt( "%p = realloc( %p, %zu )\n", area, addr, size );
 #endif // __U_DEBUG_H__
 	return area;
     } // realloc
@@ -743,7 +720,7 @@ extern "C" {
 #endif // __U_PROFILER__
 
 #ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = memalign( %" FMTSIZE "u, %" FMTSIZE "u )\n", user, alignment, size );
+	uDebugPrt( "%p = memalign( %zu, %zu )\n", user, alignment, size );
 #endif // __U_DEBUG_H__
 	return user;
     } // memalign
@@ -763,8 +740,27 @@ extern "C" {
 
 
     void free( void *addr ) __THROW {
+#ifdef __U_STATISTICS__
+	uFetchAdd( UPP::uHeapManager::free_calls, 1 );
+#endif // __U_STATISTICS__
+
+      if ( unlikely( addr == NULL ) ) {			// special case
+#ifdef __U_PROFILER__
+	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
+		(*uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, 0, 0 ); 
+	    } // if
+#endif // __U_PROFILER__
+#ifdef __U_DEBUG__
+	    if ( UPP::uHeapControl::traceHeap() ) {
+		uDebugPrt( "Free( %p ) size:0\n", addr );
+	    } // if
+#endif // __U_DEBUG__
+	    return;
+	} // exit
+
 	UPP::uHeapManager::heapManagerInstance->doFree( addr );
 #ifdef __U_DEBUG_H__
+	// Do not debug print free( NULL ), as it can cause recursive entry from sprintf.
 	uDebugPrt( "free( %p )\n", addr );
 #endif // __U_DEBUG_H__
     } // free
@@ -826,6 +822,8 @@ extern "C" {
 	int temp = UPP::uHeapManager::statfd;
 	UPP::uHeapManager::statfd = fd;
 	return temp;
+#else
+	return -1;
 #endif // __U_STATISTICS__
     } // malloc_stats_fd
 

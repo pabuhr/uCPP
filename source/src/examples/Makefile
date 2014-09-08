@@ -10,6 +10,10 @@ include ${PACKAGE}/CONFIG
 
 SRCDIR = ${PACKAGE}/src/examples
 
+ifneq (${CPP11},)
+	CCFLAGS += -std=${CPP11}
+endif
+
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
 	CCFLAGS += -m${WORDSIZE}
 endif
@@ -201,10 +205,11 @@ multiprocessor :
 	./a.out > uCalibrate.h ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} Sim.cc ; \
-		time -p ./a.out 1 100 500000 ; \
-		time -p ./a.out 2 100 500000 ; \
-		time -p ./a.out 4 100 500000 ; \
-		time -p ./a.out 8 100 500000 ; \
+		time -p ./a.out  1 100 500000 ; \
+		time -p ./a.out  2 100 500000 ; \
+		time -p ./a.out  4 100 500000 ; \
+		time -p ./a.out  8 100 500000 ; \
+		time -p ./a.out 16 100 500000 ; \
 	done ; \
 	rm -f ./a.out ;
 

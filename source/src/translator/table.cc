@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  4 17:21:27 2011
-// Update Count     : 293
+// Last Modified On : Tue Aug  5 13:02:12 2014
+// Update Count     : 371
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,10 +29,8 @@
 #include "hash.h"
 #include "token.h"
 #include "table.h"
-#include "input.h"
 
 #include <iostream>
-
 using std::cerr;
 using std::endl;
 
@@ -48,7 +46,7 @@ table_t *focus;						// pointer to current lookup table
 table_t::table_t( symbol_t *sym ) {
     // initialize the fields of the table
 
-    list = NULL;
+    local = NULL;
     useing = false;
     lexical = NULL;
     symbol = sym;
@@ -76,7 +74,7 @@ table_t::~table_t() {
 	cerr << "delete table for anonymous template containing:" << endl;
     } // if
 #endif // __U_DEBUG_H__
-    for ( local_t *l = list; l != NULL; ) {
+    for ( local_t *l = local; l != NULL; ) {
 	local_t *curr = l;
 	l = l->link;
 	if ( ! curr->useing ) {			// ignore contents of using entry ?
@@ -95,7 +93,7 @@ table_t::~table_t() {
 	} // if
 	delete curr;
     } // for
-    list = NULL;
+    local = NULL;
 #ifdef __U_DEBUG_H__
 #ifdef __U_DEBUG_CONTEXT_H__
     context();
@@ -106,7 +104,7 @@ table_t::~table_t() {
 
 void table_t::push_table() {
 #ifdef __U_DEBUG_H__
-    cerr << "push enter focus:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
+    cerr << "PUSH FOCUS:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #ifdef __U_DEBUG_CONTEXT_H__
     context();
 #endif // __U_DEBUG_CONTEXT_H__
@@ -116,10 +114,7 @@ void table_t::push_table() {
     top = temp;
     focus = this;
 #ifdef __U_DEBUG_H__
-    cerr << "push  exit focus:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
-#ifdef __U_DEBUG_CONTEXT_H__
-    context();
-#endif // __U_DEBUG_CONTEXT_H__
+    cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #endif // __U_DEBUG_H__
 } // table_t::push_table
 
@@ -140,7 +135,7 @@ void table_t::display_table( int blank ) {
 	cerr << endl;
     } // if
 
-    for ( local_t *cur = list; cur != NULL; cur = cur->link ) {
+    for ( local_t *cur = local; cur != NULL; cur = cur->link ) {
 	print_blanks( blank );
 
 	symbol_t *sym = cur->kind.sym;
@@ -215,7 +210,7 @@ static symbol_t *search_list( hash_t *hash, local_t *locals ) {
 #ifdef __U_DEBUG_H__
 	    cerr << "\tbegin using table: " << list->kind.tbl->symbol->hash->text << endl;
 #endif // __U_DEBUG_H__
-	    symbol_t *temp = search_list( hash, list->kind.tbl->list );
+	    symbol_t *temp = search_list( hash, list->kind.tbl->local );
 #ifdef __U_DEBUG_H__
 	    cerr << "\tend using table: " << list->kind.tbl->symbol->hash->text << endl;
 #endif // __U_DEBUG_H__
@@ -235,6 +230,8 @@ static symbol_t *search_list( hash_t *hash, local_t *locals ) {
 symbol_t *table_t::search_table( hash_t *hash ) {
 #ifdef __U_DEBUG_H__
     cerr << "LOOKUP:" << hash->text << endl;
+    cerr << "SYMBOL TABLE:" << endl;
+    root->display_table( 0 );
 #ifdef __U_DEBUG_CONTEXT_H__
     context();
 #endif // __U_DEBUG_CONTEXT_H__
@@ -244,14 +241,23 @@ symbol_t *table_t::search_table( hash_t *hash ) {
 
     if ( hash->InSymbolTable == 0 ) {
 #ifdef __U_DEBUG_H__
-	cerr << "not found" << endl;
+	cerr << "NOT FOUND:" << endl;
 #endif // __U_DEBUG_H__
 	return NULL;
     } // if
 
     // otherwise search the ST tree
 
-    return search_table2( hash );
+    symbol_t *st = search_table2( hash );
+#ifdef __U_DEBUG_H__
+    if ( st != NULL ) {
+	table_t *parent = st->data->found;
+	cerr << "FOUND:" << hash->text << " in " << parent << " (" << (parent->symbol != NULL ? parent->symbol->hash->text : parent == root ? "root" : "template/compound") << ")" << endl;
+//	cerr << "AFTER:" << endl;
+//	root->display_table( 0 );
+    } // if
+#endif // __U_DEBUG_H__
+    return st;
 } // table_t::search_table
 
 
@@ -262,7 +268,7 @@ static symbol_t *search_base( hash_t *hash, symbol_t *symbol ) { // recursively 
 #endif // __U_DEBUG_H__
 	if ( (*sym)->data->table != NULL ) {
 	    // search local symbol table
-	    symbol_t *temp = search_list( hash, (*sym)->data->table->list );
+	    symbol_t *temp = search_list( hash, (*sym)->data->table->local );
 	    if ( temp != NULL ) return temp;
 	    // search base symbol table
 	    temp = search_base( hash, *sym );
@@ -277,10 +283,10 @@ static symbol_t *search_base( hash_t *hash, symbol_t *symbol ) { // recursively 
 symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST tree
 #ifdef __U_DEBUG_H__
     if ( this == root ) {
-	cerr << "current:root" << endl;
+	cerr << "CURRENT: root" << endl;
     } else {
 	if ( symbol != NULL ) {
-	    cerr << "current:" << symbol->hash->text << endl;
+	    cerr << "CURRENT:" << symbol->hash->text << endl;
 	} // if
     } // if
 #endif // __U_DEBUG_H__
@@ -288,16 +294,16 @@ symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST 
     // first search the current block
 
 #ifdef __U_DEBUG_H__
-    cerr << "current block:" << endl;
+    cerr << "CURRENT BLOCK:" << endl;
 #endif // __U_DEBUG_H__
-    symbol_t *temp = search_list( hash, list );
+    symbol_t *temp = search_list( hash, local );
     if ( temp != NULL ) return temp;
 
     // search derived chain
 
     if ( symbol != NULL && ! symbol->data->base_list.empty() ) {
 #ifdef __U_DEBUG_H__
-	cerr << "derived:" << endl;
+	cerr << "DERIVED:" << endl;
 #endif // __U_DEBUG_H__
 	symbol_t *temp = search_base( hash, symbol );
 	if ( temp != NULL ) return temp;
@@ -307,13 +313,13 @@ symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST 
 
     if ( lexical != NULL ) {
 #ifdef __U_DEBUG_H__
-	cerr << "next lexical" << endl;
+	cerr << "NEXT LEXICAL:" << endl;
 #endif // __U_DEBUG_H__
 	return lexical->search_table2( hash );
     } // if
 
 #ifdef __U_DEBUG_H__
-    cerr << "not found" << endl;
+    cerr << "NOT FOUND:" << endl;
 #endif // __U_DEBUG_H__
     return NULL;
 } // table_t::search_table2
@@ -321,6 +327,9 @@ symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST 
 
 void table_t::insert_table( symbol_t *symbol ) {
     uassert( symbol != NULL );
+#ifdef __U_DEBUG_H__
+    cerr << "LOCAL ADD SYMBOL:" << symbol->hash->text << " to " << this << " (" << (table_t::symbol != NULL ? table_t::symbol->hash->text : this == root ? "root" : "template/compound" ) << ")" << endl;
+#endif // __U_DEBUG_H__
 
     // link this symbol into the list of symbols associated with this table
 
@@ -328,8 +337,8 @@ void table_t::insert_table( symbol_t *symbol ) {
     n->useing = false;
     n->tblsym = false;					// symbol
     n->kind.sym = symbol;
-    n->link = list;
-    list = n;
+    n->link = local;
+    local = n;
 
     // remember which table this symbol is found in
 
@@ -338,12 +347,16 @@ void table_t::insert_table( symbol_t *symbol ) {
     // remember that the hash node pointed to by this symbol is in another symbol table
 
     symbol->hash->InSymbolTable += 1;
+#ifdef __U_DEBUG_H__
+    cerr << "SYMBOL TABLE:" << endl;
+    root->display_table( 0 );
+#endif // __U_DEBUG_H__
 } // table_t::insert_table
 
 
 table_t *pop_table() {
 #ifdef __U_DEBUG_H__
-    cerr << " pop enter focus:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
+    cerr << "POP FOCUS:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #ifdef __U_DEBUG_CONTEXT_H__
     context();
 #endif // __U_DEBUG_CONTEXT_H__
@@ -354,10 +367,7 @@ table_t *pop_table() {
     focus = top->tbl;
     delete tempt;
 #ifdef __U_DEBUG_H__
-    cerr << " pop  exit focus:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
-#ifdef __U_DEBUG_CONTEXT_H__
-    context();
-#endif // __U_DEBUG_CONTEXT_H__
+    cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != NULL ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #endif // __U_DEBUG_H__
     return tempf;
 } // pop_table

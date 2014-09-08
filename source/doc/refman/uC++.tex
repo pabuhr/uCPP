@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sat Dec 29 20:49:19 2012
-%% Update Count     : 6712
+%% Last Modified On : Sat Jul 12 09:27:56 2014
+%% Update Count     : 6730
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -46,7 +46,7 @@
 \vspace{1in}
 \href{http://plg.uwaterloo.ca/~usystem/uC++.html}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/uC++.html}} \\
 \vspace{0.125in}
-\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.0.0.sh}{\uC download} (installation: \textsf{sudo sh u++-6.0.0.sh})
+\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.0.0.sh}{\uC download} or \href{https://github.com/pabuhr/uCPP}{Github} (installation: \textsf{sudo sh u++-6.0.0.sh}) \\
 } % title
 \author{
 \Large Peter A. Buhr \copyright\thanks{\normalsize
@@ -4507,7 +4507,7 @@ The following features characterize the \uC EHM, and differentiate it from the \
 \begin{itemize}
 \item
 \uC exceptions are generated from a specific kind of type, which can be thrown\index{exception!throw} and/or resumed\index{exception!resume}.
-All exception types are also grouped into a hierarchy, where the hierarchy is built by publicly inheriting among the exception types.
+All exception types are also grouped into a hierarchy by publicly inheriting among the exception types.
 \uC extends the \CC set of predefined exception-types\footnote{\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}::\V{bad\_alloc}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}::\V{bad\_cast}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}::\V{bad\_typeid}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}::\V{bad\_exception}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}::\V{basic\_ios}::\V{failure}}}\endlgrinde\LGend{}, etc.} covering \uC exceptional runtime and I/O events.
 \item
 \uC restricts raising of exceptions to the specific exception-types;
@@ -4521,7 +4521,7 @@ Essentially, \uC follows a common rule for throwing and resuming: between a rais
 \item
 \uC supports two kinds of \Index{handler}s, termination\index{handler!termination} and resumption\index{handler!resumption}, which match with the kind of raise;
 \CC only supports termination handlers.
-Unfortunately, resumption handlers must be simulated using routines/functors due to the lack of nested routines in \CC.
+Unfortunately, resumption handlers have some restrictions because of the lack of nested routines in \CC.
 \item
 \uC supports raising of nonlocal and concurrent exceptions so that exceptions can be used to affect control flow \emph{among} coroutines and tasks.
 A \newterm{nonlocal exception} occurs when the raising and handling execution-states are different, and control flow is sequential, i.e., the thread raising the exception is also the thread handling the exception.
@@ -4534,8 +4534,7 @@ It is also possible to (hierarchically) block these kinds of exceptions when del
 \section{Exception Type}
 \label{s:ExceptionType}
 
-While \CC allows any type to be used as an exception type, \uC restricts exception to types defined by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}\index{_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}\index{keyword, additions!_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}.
-An exception type\index{exception!type} has all the properties of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}, and its general form is:
+While \CC allows any type to be used as an exception type, \uC restricts exception types to those defined by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}\index{_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}\index{keyword, additions!_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}, which has all the properties of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Event}\0\nterminal{exception-type name}\0\{}}
 \L{\LB{}\Tab{4}{.\,.\,.}}
@@ -9188,21 +9187,24 @@ Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultMmapStart}}}\endlgrinde\L
 
 \section{Symbolic Debugging}
 
-The symbolic debugging\index{debugging!symbolic} tools (e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}\index{dbx@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\index{gdb@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}}) do not work perfectly with \uC.
-This is because each coroutine and task has its own stack, and the debugger does not know that there are multiple stacks.
+The symbolic debugging\index{debugging!symbolic} tools (e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}\index{dbx@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\index{gdb@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}}) do not work perfectly with \uC, because each coroutine and task has its own stack, and the debugger does not know about these stacks.
 When a program terminates with an error, only the stack of the coroutine or task in execution at the time of the error is understood by the debugger.
-Furthermore, in the multiprocessor case, there are multiple kernel threads that are not necessarily handled well by all debuggers.
-Some debuggers do handle multiple kernel threads (which correspond to \uC virtual processors), and hence, it is possible to examine at least the active tasks running on each kernel thread.
-Nevertheless, it is possible to use many debuggers on programs compiled with the unikernel.
-At the very least, it is usually possible to examine some of the variables, externals and ones local to the current coroutine or task, and to discover the statement where the error occurred.
-
-For most debuggers it is necessary to tell them to let the \uC runtime system handle certain UNIX signals.
-Signals \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{} are handled by \uC to perform pre-emptive scheduling\index{pre-emptive!scheduling}.
-In gdb, the following debugger command allows the application program to handle signal \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{}:
+During execution, the debugger cannot step through a context switch for either a coroutine or task.
+Therefore, it is necessary to put break points after the suspend/resume or signal/wait to acquire control, and just continue execution through the context switch.
+Once the breakpoint is reached, it is possible to next/step through the lines of the coroutine/task until the next context switch.
+For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is possible to examine the active task running on each kernel thread.
+% switching to none
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{handle}\0\V{SIGALRM}\0\V{nostop}\0\V{noprint}\0\V{pass}\0\V{ignore}}}
-\L{\LB{\V{handle}\0\V{SIGUSR1}\0\V{nostop}\0\V{noprint}\0\V{pass}\0\V{ignore}}}
+\L{\LB{(\V{gdb})\0\V{info}\0\V{threads}}\Tab{20}{\V{\#}\0\V{list}\0\V{all}\0\V{kernel}\0\V{threads}}}
+\L{\LB{(\V{gdb})\0\V{thread}\02}\Tab{20}{\V{\#}\0\V{switch}\0\V{to}\0\V{kernel}\0\V{thread}\02}}
 \endlgrinde\LGend
+Finally, it is necessary to tell the debugger that \uC is handling UNIX signals \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{} to perform pre-emptive scheduling\index{pre-emptive!scheduling}.
+For gdb, the following debugger commands allows the application program to handle signal \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{}:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{(\V{gdb})\0\V{handle}\0\V{SIGALRM}\0\V{nostop}\0\V{noprint}\0\V{pass}\0\V{ignore}}}
+\L{\LB{(\V{gdb})\0\V{handle}\0\V{SIGUSR1}\0\V{nostop}\0\V{noprint}\0\V{pass}\0\V{ignore}}}
+\endlgrinde\LGend
+% switching to u++
 
 
 \section{Installation Requirements}
@@ -9232,15 +9234,27 @@ These compilers can be obtained free of charge.
 
 \section{Installation}
 
-The current version of \uC can be obtained from:
+The current version of \uC can be obtained from \href{https://github.com/pabuhr/uCPP}{Github}.
+Execute the following command to install:
+% switching to sh
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{\$}\0\V{git}\0\V{clone}\0\V{https}:\1\1\V{github}.\V{com}\1\V{pabuhr}\1\V{uCPP}.\V{git}}}
+\L{\LB{\V{\$}\0\K{cd}\0\V{uCPP}}}
+\L{\LB{\V{\$}\0\V{sudo}\0\V{sh}\0\V{install}.\V{sh}}}
+\endlgrinde\LGend
+%$
+% switching to u++
+or from:
 \begin{quote}
 \href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.0.0.sh}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/pub/uSystem/u++-6.0.0.sh}}
 \end{quote}
 Execute the following command to install:
+% switching to sh
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\%\0\V{sudo}\0\K{\#}\0\V{optional},\0\V{installs}\0\V{in}\0\1\V{usr}\1\V{local}\0\K{and}\0\1\V{usr}\1\V{local}\1\V{bin}}}
-\L{\LB{\%\0\V{sh}\0\V{u}++\-6.0.0.sh}}
+\L{\LB{\V{\$}\0\V{sudo}\0\V{sh}\0\V{u}++\-6.0.0.sh}}
 \endlgrinde\LGend
+%$
+% switching to u++
 
 
 \section{Reporting Problems}

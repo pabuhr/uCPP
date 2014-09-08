@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:36:43 1992
-// Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:11:29 2011
-// Update Count     : 76
+// Last Modified By : 
+// Last Modified On : Sat Oct 12 15:36:26 2013
+// Update Count     : 78
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,10 +28,10 @@
 #ifndef __GEN_H__
 #define __GEN_H__
 
-#include "input.h"
+#include "key.h"
 
-class token_t;
-class symbol_t;
+struct token_t;
+struct symbol_t;
 class hash_t;
 
 token_t *gen_code( token_t *before, const char text );

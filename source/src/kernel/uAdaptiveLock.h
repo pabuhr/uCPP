@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  6 11:35:40 2012
-// Update Count     : 31
+// Last Modified On : Wed May 14 16:46:34 2014
+// Update Count     : 32
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -133,11 +133,11 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	for ( ;; ) {
 	    waiting.addTail( &(task.entryRef) );	// suspend current task
 #ifdef __U_STATISTICS__
-	    uFetchAdd( UPP::Statistics::adaptive_lock, 1 );
+	    uFetchAdd( UPP::Statistics::adaptive_lock_queue, 1 );
 #endif // __U_STATISTICS__
 	    UPP::uProcessorKernel::schedule( &spin );	// atomically release owner spin lock and block
 #ifdef __U_STATISTICS__
-	    uFetchAdd( UPP::Statistics::adaptive_lock, -1 );
+	    uFetchAdd( UPP::Statistics::adaptive_lock_queue, -1 );
 #endif // __U_STATISTICS__
 	    if ( tryacquireInternal( task, acquireSpins ) ) {
 		waker = 0;

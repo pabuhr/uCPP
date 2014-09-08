@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Jul 16 08:17:06 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  3 14:16:51 2011
-// Update Count     : 14
+// Last Modified On : Thu Mar  6 12:23:27 2014
+// Update Count     : 15
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -157,7 +157,7 @@ class uWaitQueue_ISM {
 	DL *t = 0;
 	for ( uSeqIter< DL > i( q ); i >> t; ) {
 	    t->acceptState.client = &client;
-	    if ( ! t->selectee.addAccept( &t->acceptState ) ) {
+	    if ( t->selectee.addAccept( &t->acceptState ) ) {
 		DL *s;
 		for ( uSeqIter< DL > i( q ); i >> s && s != t; ) {
 		    s->selectee.removeAccept( &s->acceptState );

@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:04:55 2011
-// Update Count     : 134
+// Last Modified On : Tue Jul 15 17:23:48 2014
+// Update Count     : 144
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -123,7 +123,9 @@ void Stage1( const int argc, const char * const argv[] ) {
 		i += 1;					// and the argument
 	    } else if ( prefix( arg, "-A" ) ) {
 	    } else if ( prefix( arg, "-D__GNU" ) ) {
-	    // gcc 5.6.0 separated the -D from the argument
+	    //********
+	    // GCC 5.6.0 SEPARATED THE -D FROM THE ARGUMENT!
+	    //********
 	    } else if ( arg == "-D" && prefix( argv[i + 1], "__GNU" ) ) {
 		i += 1;					// and the argument
 
@@ -146,12 +148,12 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	    // u++ flags controlling the u++-cpp step
 
-	    } else if ( arg == "-D__U_YIELD__" || arg == "-D__U_VERIFY__" || arg == "-D__U_PROFILE__" ) {
+	    } else if ( arg == "-D__U_YIELD__" || arg == "-D__U_VERIFY__" || arg == "-D__U_PROFILE__" || arg == "-D__U_STD_CPP11__" ) {
 		args[nargs] = argv[i];			// pass the flag along to cpp
 		nargs += 1;
 		uargs[nuargs] = argv[i];		// pass the flag along to upp
 		nuargs += 1;
-	    } else if ( arg == "-D" && ( string( argv[i + 1] ) == "__U_YIELD__" || string( argv[i + 1] ) == "__U_VERIFY__" || string( argv[i + 1] ) == "__U_PROFILE__" ) ) {
+	    } else if ( arg == "-D" && ( string( argv[i + 1] ) == "__U_YIELD__" || string( argv[i + 1] ) == "__U_VERIFY__" || string( argv[i + 1] ) == "__U_PROFILE__" || string( argv[i + 1] ) == "__U_STD_CPP11__" ) ) {
 		args[nargs] = argv[i];			// pass the flag along to cpp
 		nargs += 1;
 		args[nargs] = argv[i + 1];		// pass the argument along to cpp
@@ -173,7 +175,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 		// CPP flags with an argument
 		if ( arg == "-D" || arg == "-I" || arg == "-MF" || arg == "-MT" || arg == "-MQ" ||
 		     arg == "-include" || arg == "-imacros" || arg == "-idirafter" || arg == "-iprefix" ||
-		     arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" ) {
+		     arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ) {
 		    i += 1;
 		    args[nargs] = argv[i];		// pass the argument along
 		    nargs += 1;

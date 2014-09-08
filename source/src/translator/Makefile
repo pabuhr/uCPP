@@ -21,6 +21,14 @@ CC := ${CCBUILD}
 ## Override from MakeTools
 CCFLAGS := -Wall -I. -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTVENDOR=\"${TVENDOR}\" -DTCPU=\"${TCPU}\" -DTOS=\"${TOS}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DWORDSIZE=${WORDSIZE}
 
+ifneq (${CPP11},)
+	CCFLAGS += -std=${CPP11}
+endif
+
+ifeq (${STATISTICS},TRUE)
+	CCFLAGS += -DSTATISTICS
+endif
+
 ifeq (${AFFINITY},TRUE)
 	CCFLAGS += -DAFFINITY
 endif
@@ -114,7 +122,7 @@ install : all ${INSTALLFILES}
 test :
 	set -x ; \
 	for filename in Operators AcceptStmt SelectStmt BreakStmt Resumption CatchResume Exception Termination Event MutexTaskParms Constructor \
-			Lookup InheritanceException Template Friend Inheritance STL Types ; do \
+			Lookup InheritanceException Template Friend Inheritance STL Types C++11 ; do \
 		${INSTALLBINDIR}/u++ ${CCFLAGS} -Wno-unused-label -c test$${filename}.cc ; \
 	done ; \
 	rm -f ./a.out test*.o ;

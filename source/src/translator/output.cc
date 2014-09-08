@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:06:57 2011
-// Update Count     : 191
+// Last Modified On : Thu Jul 24 21:53:09 2014
+// Update Count     : 199
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,7 +31,6 @@
 #include "key.h"
 #include "hash.h"
 #include "token.h"
-#include "input.h"
 #include "output.h"
 
 #include <cstring>					// strcpy, strlen
@@ -45,11 +44,17 @@ void context() {
     int i;
 
     cerr << "=====>\"";
-    // backup 10 tokens
+    // backup up to 10 tokens
     for ( i = 0, p = ahead; i < 10 && p->aft != NULL; i += 1, p = p->aft );
-    // print 15 tokens around problem area
-    for ( i = 0; i < 15 && p != NULL; i += 1, p = p->fore ) {
-      if ( p->hash == NULL ) break;
+    // print up to 10 tokens before problem area
+    for ( ; p != ahead; p = p->fore ) {
+      if ( p->hash == NULL ) continue;
+	cerr << p->hash->text << " ";
+    } // for
+    cerr << " @ " << ahead->hash->text << " @ ";
+    // print up to 10 tokens after problem area
+    for ( i = 0, p = ahead->fore; i < 10 && p != NULL; i += 1, p = p->fore ) {
+      if ( p->hash == NULL ) continue;
 	cerr << p->hash->text << " ";
     } // for
     cerr << "\"" << endl;
@@ -114,6 +119,9 @@ void putoutput( token_t *token ) {
 	break;
       case WARNING:
 	cerr << file << ":" << line << ": uC++ Translator warning: " << token->hash->text << endl;
+	break;
+      case USER_LITERAL:
+	*yyout << token->hash->text;			// no space
 	break;
       case CONN_OR:					// do not print these keywords
       case CONN_AND:

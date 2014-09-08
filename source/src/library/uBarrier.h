@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec  1 19:14:37 2012
-// Update Count     : 45
+// Last Modified On : Sun Feb 23 08:26:39 2014
+// Update Count     : 46
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -77,7 +77,8 @@ _Mutex _Coroutine uBarrier {
 	} else {
 	    last();					// call the last routine
 	    for ( ; ! Waiters.empty(); ) {		// restart all waiting tasks
-		Waiters.signal();
+		Waiters.signal();			// LIFO release, N-1 cxt switches
+//		Waiters.signalBlock();			// FIFO release, 2N cxt switches
 	    } // for
 	} // if
 	Count -= 1;

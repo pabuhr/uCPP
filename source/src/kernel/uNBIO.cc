@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 10 10:43:48 2012
-// Update Count     : 1431
+// Last Modified On : Mon Jul 14 13:31:05 2014
+// Update Count     : 1439
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,14 +72,28 @@ namespace UPP {
     // for integers of width up to 128 bits
     static inline int countBits( unsigned long int v ) {
       if ( v == 0 ) return 0;
-	typedef typeof(v) T;
+	typedef __typeof__(v) T;
 	v = v - ((v >> 1) & (T)~(T)0/3);                           // temp
 	v = (v & (T)~(T)0/15*3) + ((v >> 2) & (T)~(T)0/15*3);      // temp
 	v = (v + (v >> 4)) & (T)~(T)0/255*15;                      // temp
 	return (T)(v * ((T)~(T)0/255)) >> (sizeof(v) - 1) * CHAR_BIT; // count
     } // countBits
 
+#if defined( __GNUC__ )									// GNU gcc compiler ?
+    // polymorphic integer log2, using clz, which returns the number of leading 0-bits,
+    // starting at the most significant bit (single instruction on x86)
+#   define msbpos( n ) ( sizeof(n) * __CHAR_BIT__ - 1 - (	\
+	( sizeof(n) ==  4 ) ? __builtin_clz( n ) :		\
+	( sizeof(n) ==  8 ) ? __builtin_clzl( n ) :		\
+	( sizeof(n) == 16 ) ? __builtin_clzll( n ) :		\
+	-1 ) )
+#else
+    int msbpos( int n ) {				// fallback integer log2( n )
+	return n > 1 ? 1 + Log2( n / 2 ) : n == 1 ? 0 : -1;
+    }
+#endif // __GNUC__
 
+#if 0
     static const int msbpostab[] = {
       -64, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,	// -64 allows check for zero mask
 	4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -121,10 +135,11 @@ namespace UPP {
 	assert( l >= 0 );
 	return l;
     } // msbpos
+#endif
 
 
-    static inline int findMaxFD( int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds ) {
-	int prevMax = nfds;
+    static inline int findMaxFD( unsigned int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds ) {
+	unsigned int prevMax = nfds;
 	nfds = 0;
     
 	// Search backwards from previous max
@@ -538,9 +553,9 @@ namespace UPP {
 
 	    if ( multiples ) {				// check if multiple maxFD needs to be reset
 		unsigned int last = mmaxFD - 1;
-		if ( ! ( FD_ISSET( last, &mrfds ) || FD_ISSET( last, &mwfds ) ||
-		     efdsUsed &&
-			 FD_ISSET( last, &mefds ) ) ) {
+		if ( ! ( FD_ISSET( last, &mrfds ) || FD_ISSET( last, &mwfds ) || (
+			     efdsUsed &&
+			     FD_ISSET( last, &mefds ) ) ) ) {
 		    mmaxFD = findMaxFD( mmaxFD, &mrfds, &mwfds,
 					! efdsUsed ? NULL :
 					    &mefds );
