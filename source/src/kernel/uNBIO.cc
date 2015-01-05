@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uNBIO.cc -- non-blocking IO
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 14 13:31:05 2014
-// Update Count     : 1439
+// Last Modified On : Thu Dec 18 12:15:15 2014
+// Update Count     : 1449
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -79,9 +79,9 @@ namespace UPP {
 	return (T)(v * ((T)~(T)0/255)) >> (sizeof(v) - 1) * CHAR_BIT; // count
     } // countBits
 
-#if defined( __GNUC__ )									// GNU gcc compiler ?
-    // polymorphic integer log2, using clz, which returns the number of leading 0-bits,
-    // starting at the most significant bit (single instruction on x86)
+#if defined( __GNUC__ )					// GNU gcc compiler ?
+// O(1) polymorphic integer log2, using clz, which returns the number of leading 0-bits, starting at the most
+// significant bit (single instruction on x86). UNDEFINED FOR 0.
 #   define msbpos( n ) ( sizeof(n) * __CHAR_BIT__ - 1 - (	\
 	( sizeof(n) ==  4 ) ? __builtin_clz( n ) :		\
 	( sizeof(n) ==  8 ) ? __builtin_clzl( n ) :		\
@@ -89,7 +89,7 @@ namespace UPP {
 	-1 ) )
 #else
     int msbpos( int n ) {				// fallback integer log2( n )
-	return n > 1 ? 1 + Log2( n / 2 ) : n == 1 ? 0 : -1;
+	return n > 1 ? 1 + msbpos( n / 2 ) : n == 1 ? 0 : -1;
     }
 #endif // __GNUC__
 
@@ -169,7 +169,8 @@ namespace UPP {
 
     void uNBIO::uSelectTimeoutHndlr::handler() {
 	*node.nbioTimeout = node.timedout = true;
-	if ( cluster.NBIO->IOPollerPid != (uPid_t)-1 ) cluster.wakeProcessor( cluster.NBIO->IOPollerPid );
+	uPid_t temp = cluster.NBIO->IOPollerPid;	// race: IOPollerPid can change to -1 if poller wakes before wakeup
+	if ( temp != (uPid_t)-1 ) cluster.wakeProcessor( temp );
     } // uNBIO::uSelectTimeoutHndlr::handler
 
 
@@ -804,7 +805,8 @@ namespace UPP {
 	    pendingIOSfds[fd].addTail( &node );		// node is removed by IOPoller
 	} // if
 
-	if ( IOPollerPid != (uPid_t)-1 ) { uThisCluster().wakeProcessor( IOPollerPid ); IOPollerPid = (uPid_t)-1; }
+	uPid_t temp = IOPollerPid;			// race: IOPollerPid can change to -1 if poller wakes before wakeup
+	if ( temp != (uPid_t)-1 ) uThisCluster().wakeProcessor( temp );
 	pending += 1;
 	return checkPoller();
     } // uNBIO::initSfd
@@ -844,7 +846,8 @@ namespace UPP {
 
 	pendingIOMfds.addTail( &node );			// node is removed by IOPoller
 
-	if ( IOPollerPid != (uPid_t)-1 ) { uThisCluster().wakeProcessor( IOPollerPid ); IOPollerPid = (uPid_t)-1; }
+	uPid_t temp = IOPollerPid;			// race: IOPollerPid can change to -1 if poller wakes before wakeup
+	if ( temp != (uPid_t)-1 ) uThisCluster().wakeProcessor( temp );
 	pending += 1;
 	return checkPoller();
     } // uNBIO::initMfds

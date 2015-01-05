@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uC++.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 14 13:30:42 2014
-// Update Count     : 2965
+// Last Modified On : Tue Dec 23 15:46:28 2014
+// Update Count     : 2972
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -464,14 +464,15 @@ void uLock::acquire() {
 
 
 bool uLock::tryacquire() {
+  if ( value == 0 ) return false;
     spinLock.acquire();
-    if ( value == 1 ) {
+    if ( value == 0 ) {
+	spinLock.release();
+	return false;
+    } else {
 	value = 0;
 	spinLock.release();
 	return true;
-    } else {
-	spinLock.release();
-	return false;
     } // if
 } // uLock::tryacquire
 
@@ -539,10 +540,9 @@ void uOwnerLock::acquire() {
 #endif // __U_STATISTICS__
 	    // owner_ and count set in release
 	    return;
-	} else {
-	    owner_ = &task;				// become owner
-	    count = 1;
 	} // if
+	owner_ = &task;					// become owner
+	count = 1;
     } else {
 	count += 1;					// remember how often
     } // if
@@ -554,6 +554,9 @@ bool uOwnerLock::tryacquire() {
     assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
 
     uBaseTask &task = uThisTask();			// optimization
+
+  if ( owner_ != NULL && owner_ != &task ) return false; // don't own lock yet
+
     spinLock.acquire();
 #ifdef KNOT
     task.setActivePriority( task.getActivePriorityValue() + 1 );
@@ -681,7 +684,7 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     lock.release_();					// release owner lock
     uProcessorKernel::schedule( &spinLock );		// atomically release owner spin lock and block
     // spin released by schedule, owner lock is acquired when task restarts
-//    assert( &task == lock.owner() );
+    assert( &task == lock.owner() );
     lock.count = prevcnt;				// reestablish lock's recursive count after blocking
 
     timeoutEvent.remove();
@@ -953,7 +956,7 @@ namespace UPP {
     
     
     __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
-    __typeof__( ::abort ) *RealRtn::abort;
+    __typeof__( ::abort ) *RealRtn::abort __attribute__(( noreturn ));
     __typeof__( ::select ) *RealRtn::select;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
@@ -2331,8 +2334,13 @@ void UPP::uKernelBoot::startup() {
     // fpsetmask( FP_X_IMP );
 #else
     feenableexcept( FE_ALL_EXCEPT );			// raise floating-point signal
-    // TEMPORARY, remove FE_INEXACT, there is a bug in "sin" (maybe other trig routines)
+    // TEMPORARY removal, there is a bug in "sin" (maybe other trig routines)
     fedisableexcept( FE_INEXACT );
+#if defined( __ia64__ )
+    // TEMPORARY removal, there is a bug in "__builtin_clz"
+    fedisableexcept( FE_UPWARD );
+    fedisableexcept( FE_DOWNWARD );
+#endif // __ia64__
 #endif // __solaris__
 
     // create user cluster

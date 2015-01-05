@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
 // 
 // ServerINETDGRAM.cc -- Server for INET/datagram socket test. Server reads data from multiple clients. The server reads
 //     the data from the client and writes it back.

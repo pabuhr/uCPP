@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1993
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1993
 // 
 // uBoundedBuffer.h -- Generic bounded buffer problem using a monitor and uAccept
 // 

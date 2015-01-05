@@ -1,6 +1,6 @@
 ## Define the appropriate configuration variables.
 
-PACKAGE = /u0/usystem/software/u++-6.0.0
+PACKAGE = /u0/usystem/software/u++-6.1.0
 
 ## Include the architecture dependent definitions.
 
@@ -32,7 +32,7 @@ endif
 
 .SILENT : all abortexit bench allocation features pthread EHM realtime multiprocessor
 
-all : bench allocation features timeout pthread EHM realtime multiprocessor
+all : bench allocation features cobegin timeout pthread EHM realtime multiprocessor
 
 errors : ownership abortexit
 
@@ -139,6 +139,19 @@ features :
 	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+cobegin :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in Cobegin ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${INSTALLBINDIR}/u++ -std=c++1y ${CCFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \

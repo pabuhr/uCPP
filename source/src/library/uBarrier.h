@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1995
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1995
 // 
 // uBarrier.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 23 08:26:39 2014
-// Update Count     : 46
+// Last Modified On : Thu Oct 16 22:36:50 2014
+// Update Count     : 47
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -70,7 +70,7 @@ _Mutex _Coroutine uBarrier {
 	init( total );
     } // uBarrier::reset
 
-    void block() {
+    virtual void block() {
 	Count += 1;
 	if ( Count < Total ) {				// all tasks arrived ?
 	    Waiters.wait();

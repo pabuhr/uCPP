@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // parse.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  5 15:24:59 2014
-// Update Count     : 4300
+// Last Modified On : Sat Dec 27 18:18:43 2014
+// Update Count     : 4346
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,6 +44,9 @@
 #include <set>
 
 //#define __U_DEBUG_H__
+
+#include <iostream>
+using namespace std;
 
 #ifdef __U_DEBUG_H__
 static void print_focus_change( const char *name, table_t *from, table_t *to ) {
@@ -303,7 +306,10 @@ static token_t *nested_name_specifier() {
 	    template_key();
 
 	    uassert( token->symbol != NULL );
-	    uassert( token->symbol->data != NULL );
+//	    uassert( token->symbol->data != NULL );
+	    if ( token->symbol->data == NULL ) {
+		abort();
+	    }
 	    if ( check( COLON_COLON ) && token->symbol->data->key != 0 ) { // type must be a "class-or-namespace-name"
 #ifdef __U_DEBUG_H__
 		print_focus_change( "nested_name_specifier3", focus, token->symbol->data->table );
@@ -3058,8 +3064,6 @@ static bool template_parameter_list( attribute_t &attribute ) {
 	    template_parameter( attribute );
 	} // while
 	if ( attribute.plate->local != prev ) attribute.plate->endT = attribute.plate->local;
-    } else {						// specialization
-	attribute.emptytemplate = true;
     } // if
 
     return true;
@@ -3216,7 +3220,7 @@ static bool type_qualifier( attribute_t &attribute ) {
     if ( match( EXTERN ) ) { attribute.dclqual.qual.EXTERN = true; return true; }
     if ( match( MUTABLE ) ) { attribute.dclqual.qual.MUTABLE = true; return true; }
     if ( match( THREAD ) ) { attribute.dclqual.qual.THREAD = true; return true; }
-    if ( match( THREAD_LOCAL ) ) { attribute.dclqual.qual.THREAD = true; return true; }
+    if ( match( THREAD_LOCAL ) ) { attribute.dclqual.qual.THREAD = true; return true; } // C++11
 
     if ( match( EXTENSION ) ) { attribute.dclqual.qual.EXTENSION = true; return true; }; // gcc specific
 
@@ -3228,7 +3232,7 @@ static bool type_qualifier( attribute_t &attribute ) {
     if ( match( VOLATILE ) ) { attribute.dclqual.qual.VOLATILE = true; return true; }
     if ( match( RESTRICT ) ) { attribute.dclqual.qual.RESTRICT = true; return true; }
     if ( match( REGISTER ) ) { attribute.dclqual.qual.REGISTER = true; return true; }
-    if ( match( ATOMIC ) ) { attribute.dclqual.qual.ATOMIC = true; return true; }
+    if ( match( ATOMIC ) ) { attribute.dclqual.qual.ATOMIC = true; return true; } // C11
 
     if ( match( TYPEDEF ) ) { attribute.dclkind.kind.TYPEDEF = true; return true; }
     if ( match( FRIEND ) ) { attribute.dclkind.kind.FRIEND = true; return true; }
@@ -3444,6 +3448,17 @@ static bool class_specifier( attribute_t &attribute ) {
     symbol_t *symbol;
 
     if ( ( clss = class_head( attribute ) ) != NULL ) {
+	// specialized template: "template<...> class T<...>" => create new symbol table
+	if ( strcmp( ahead->aft->hash->text, ">" ) == 0 ) { // specialization ?
+	    // SKULLDUGGERY: Naming specializations is difficult. Instead, assume the template specialization is
+	    // completely inlined, which is reasonable because templates cannot be separately compiled. The next
+	    // specialization simply drops all local declarations from the previous one and starts again.  This hack
+	    // does not handle non-inline definitions of specialization members, as uC++ does not track the
+	    // specialization name that prefixes the non-inline definition.
+	    clss->symbol->data->attribute.plate = NULL;	// free old storage ?
+	    clss->symbol->data->index = 1;		// reset mutex member counter
+	} // if
+
 	symbol = clss->symbol;
 	uassert( symbol != NULL );
 
@@ -3463,31 +3478,6 @@ static bool class_specifier( attribute_t &attribute ) {
 
 	symbol->data->attribute.rttskkind = attribute.rttskkind;
 
-//	template_key();
-	// specialized template: "template<>" => create new symbol table with mangled name for specialization
-// 	if ( attribute.startT != NULL && attribute.startT->fore->fore == attribute.endT->aft->aft ) {
-// 	    char name[1024] = "\0";
-// 	    for ( token_t *p = clss; p != ahead; p = p->next_parse_token() ) { // build a name for the conversion operator
-// 		strcat( name, p->hash->text );
-// 	    } // for
-// 	    printf( "#%s#\n", name );
-	    
-// 	    hash_t hash( name, NULL, TYPE );
-// 	    symbol_t *xxx = focus->search_table2( &hash ); // look up token
-//  	    if ( xxx == NULL ) {
-// 		token->hash = &hash;
-//  		// if the symbol is not defined in the symbol table, define it
-//  		token->symbol = new symbol_t( TYPE, token->hash );
-//  	    } else {
-//  		// if the symbol is already defined but not in this scope => make one for this scope
-
-//  		if ( token->symbol->data->found != focus ) {
-//  		    token->symbol = new symbol_t( TYPE, token->hash );
-//  		    focus->insert_table( token->symbol );
-//  		} // if
-//  	    } // if
-// 	    symbol = token->symbol;
-// 	} // if
 	base_clause( symbol );
 
 	// Ignore the case where a class is used in a declaration.  When a class is defined/forward, check the mutex
@@ -3544,7 +3534,6 @@ static bool class_specifier( attribute_t &attribute ) {
 	    // copy these fields to complete symbol attribute
 
 	    if ( attribute.plate != NULL && symbol->data->attribute.plate == NULL ) {
-		symbol->data->attribute.emptytemplate = attribute.emptytemplate;
 		symbol->data->attribute.startT = attribute.startT;
 		symbol->data->attribute.endT = attribute.endT;
 		symbol->data->attribute.plate = attribute.plate;
@@ -3928,7 +3917,9 @@ static bool asm_clause() {				// gcc asm clause
 
 static bool cv_qualifier_list() {
     // over constrained to handle multiple contexts
-    while ( match( CONST ) || match( VOLATILE ) || match( RESTRICT ) || match( ATOMIC ) || match( FINAL ) || match( OVERRIDE ) || attribute_clause() || asm_clause() || exception_list() );
+    while ( match( CONST ) || match( VOLATILE ) || match( RESTRICT ) ||
+	    match( ATOMIC ) || match( FINAL ) || match( OVERRIDE ) ||
+	    attribute_clause() || asm_clause() || exception_list() );
     return true;
 } // cv_qualifier_list
 
@@ -4443,7 +4434,6 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 	symbol->data->attribute.dclqual.value |= attribute.dclqual.value;
 	symbol->data->attribute.nestedqual = attribute.nestedqual;
 	if ( attribute.plate != NULL ) {
-	    symbol->data->attribute.emptytemplate = attribute.emptytemplate;
 	    symbol->data->attribute.startT = attribute.startT;
 	    symbol->data->attribute.endT = attribute.endT;
 	    symbol->data->attribute.plate = attribute.plate;
@@ -5006,7 +4996,7 @@ static bool initializer() {
 	  } else if ( match( LC ) ) {
 	      if ( match_closing( LC, RC, true ) ) continue;
 	      goto fini;
-	  } else if ( match( LB ) ) {			// lambda, C++11
+	  } else if ( stdcpp11 && match( LB ) ) {	// lambda, C++11
 	      if ( match_closing( LB, RB ) ) continue;
 	      goto fini;
 	  } // if
@@ -5019,7 +5009,7 @@ static bool initializer() {
 	} // for
     } else if ( match( LP ) && match_closing( LP, RP ) ) { // constructor argument
 	return true;
-    } else if ( match( LC ) && match_closing( LC, RC ) ) { // C++11 uniform initialization
+    } else if ( stdcpp11 && match( LC ) && match_closing( LC, RC ) ) { // C++11 uniform initialization
 	return true;
     } // if
   fini: ;
@@ -5128,7 +5118,7 @@ static bool object_declaration() {
     if ( using_definition() ) return true;
     if ( using_directive() ) return true;
     if ( using_alias( attribute ) ) return true;
-    if ( static_assert_declaration() ) return true;
+    if ( static_assert_declaration() ) return true;	// C++11
     if ( constructor_declaration( attribute ) ) return true;
     if ( destructor_declaration( attribute ) ) return true;
 

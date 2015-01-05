@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // attribute.cc --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul  3 16:04:14 2011
-// Update Count     : 52
+// Last Modified On : Wed Dec 17 16:46:30 2014
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,7 +34,7 @@ attribute_t::attribute_t() {
     rttskkind.value = 0;
     typedef_base = NULL;
     focus = NULL;
-    emptytemplate = emptyparms = nestedqual = false;
+    emptyparms = nestedqual = false;
     plate = NULL;
     startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = NULL;
 } // attribute_t::attribute_t

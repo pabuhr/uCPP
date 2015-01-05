@@ -53,6 +53,8 @@
 \LGnuminterval=10
 \newskip\LGindent % Indentation for displayed lines
 \LGindent=1.6667\parindent
+\newskip\LGtab % size of a tab character
+\LGtab=1ex
 \newskip\LGbeginspacing % spacing at beginning of display code
 \LGbeginspacing=0pt
 \newskip\LGendspacing % spacing at ending of display code
@@ -144,7 +146,7 @@
 	\ifLGinline%
 		\def\sp@ce{\hskip 0.8ex}%
 	\else%
-		\setbox\tb@x=\hbox{\hskip 1ex}%
+		\setbox\tb@x=\hbox{\hskip \LGtab}%
 		\@ts=\wd\tb@x%
 		\def\sp@ce{\hskip 0.8ex}%
 	\fi%

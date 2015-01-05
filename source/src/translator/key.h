@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // key.h --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 24 21:34:51 2014
-// Update Count     : 90
+// Last Modified On : Sun Nov 16 21:29:01 2014
+// Update Count     : 94
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,12 +87,8 @@ enum key_value_t {
 
     // Keywords
 
-    ALIGNAS = 512,					// C++11
-    ALIGNOF,						// C++11
-    ASM,
-    ATOMIC,						// C11
+    ASM = 512,
     ATTRIBUTE,						// gcc specific
-    AUTO,						// C++11
     BOOL,
     BREAK,
     CASE,
@@ -103,10 +99,8 @@ enum key_value_t {
     CLASS,
     COMPLEX,						// gcc/c99 specific
     CONST,
-    CONSTEXPR,						// C++11
     CONST_CAST,
     CONTINUE,
-    DECLTYPE,						// C++11
     DEFAULT,
     DELETE,
     DO,
@@ -119,7 +113,6 @@ enum key_value_t {
     EXTENSION,						// gcc specific
     EXTERN,
     FALSE,
-    FINAL,						// C++11
     FLOAT,
     FOR,
     FRIEND,
@@ -131,8 +124,6 @@ enum key_value_t {
     MUTABLE,
     NAMESPACE,
     NEW,
-    NOEXCEPT,						// C++11
-    NULLPTR,						// C++11
     OPERATOR,
     OVERRIDE,
     PRIVATE,
@@ -146,14 +137,12 @@ enum key_value_t {
     SIGNED,
     SIZEOF,
     STATIC,
-    STATIC_ASSERT,					// C++11
     STATIC_CAST,
     STRUCT,
     SWITCH,
     TEMPLATE,
     THIS,
     THREAD,
-    THREAD_LOCAL,					// C++11
     THROW,
     TRUE,
     TRY,
@@ -171,7 +160,7 @@ enum key_value_t {
     WCHAR_T,
     WHILE,
 
-    // uC++ specific
+    // uC++
 
     ACCEPT,
     ACCEPTRETURN,
@@ -195,6 +184,20 @@ enum key_value_t {
     TIMEOUT,
     WITH,
     WHEN,
+
+    // C++11
+
+    ALIGNAS,						// C++11
+    ALIGNOF,						// C++11
+    ATOMIC,						// C11
+    AUTO,						// C++11
+    CONSTEXPR,						// C++11
+    DECLTYPE,						// C++11
+    FINAL,						// C++11
+    NOEXCEPT,						// C++11
+    NULLPTR,						// C++11
+    STATIC_ASSERT,					// C++11
+    THREAD_LOCAL,					// C++11
 
     CONN_OR,						// pseudo values (i.e., no associated keywords) denotes kinds of definitions
     CONN_AND,

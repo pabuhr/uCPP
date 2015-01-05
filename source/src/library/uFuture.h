@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard C. Bilson 2006
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard C. Bilson 2006
 // 
 // Future.h -- 
 // 
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr  4 13:50:11 2014
-// Update Count     : 537
+// Last Modified On : Tue Nov 25 16:16:57 2014
+// Update Count     : 538
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -116,7 +116,7 @@ namespace UPP {
 	void reset() {					// mark future as empty (for reuse)
 #ifdef __U_DEBUG__
 	    if ( ! delay.empty() || ! acceptClients.empty() ) {
-		uAbort( "Attempt to reset future with waiting tasks.", this );
+		uAbort( "Attempt to reset future %p with waiting tasks.", this );
 	    } // if
 #endif // __U_DEBUG__
 	    available_ = cancelled_ = false;		// reset for next value

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Richard C. Bilson 2007
+// uC++ Version 6.1.0, Copyright (C) Richard C. Bilson 2007
 // 
 // uBaseSelector.h -- 
 // 

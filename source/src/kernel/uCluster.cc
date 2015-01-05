@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uCluster.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 13 15:09:09 2012
-// Update Count     : 610
+// Last Modified On : Wed Dec 17 23:39:13 2014
+// Update Count     : 611
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -61,7 +61,6 @@ void uCluster::wakeProcessor( uPid_t pid ) {
     for ( ;; ) {
 	retcode =
 #endif // __freebsd__
-
 	    RealRtn::pthread_kill( pid, SIGUSR1 );
 
 #if defined( __freebsd__ )

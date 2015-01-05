@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Ashif Harji 2000
+// uC++ Version 6.1.0, Copyright (C) Ashif Harji 2000
 // 
 // Disinherit1Static.cc -- 
 // 

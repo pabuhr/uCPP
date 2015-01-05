@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2001
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2001
 // 
 // pthread.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 13 15:11:36 2012
-// Update Count     : 1030
+// Last Modified On : Tue Dec 23 18:14:40 2014
+// Update Count     : 1039
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1169,24 +1169,17 @@ _getfp:\n\
 	    ((uOwnerLock *)&magic_check)->release();
 	} // if
 #elif defined(__linux__)
-	// SKULLDUGGERY: Linux distributions may use different definitions for pthread_mutex_t, but they should always
-	// be layout compatible, and hence the "kind" field should always be in a predictable location.  Unfortunately,
-	// there is no portable way to check this.
-	struct assumed_mutex {
-	    int __m_reserved;               /* Reserved for future use */
-	    int __m_count;                  /* Depth of recursive locking */
-	    void *__m_owner;                /* Owner thread (if recursive or errcheck) */
-	    int __m_kind;                   /* Mutex kind: fast, recursive or errcheck */
-	};
 	// Cannot use a pthread_mutex_lock due to recursion on initialization.
 	static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
 	// Use double check to improve performance. Check is safe on sparc/x86; volatile prevents compiler reordering
 	volatile pthread_mutex_t *const mutex_ = mutex;
-	int kind = ((assumed_mutex *)mutex_)->__m_kind;
-	if ( 0 < kind && kind < 10 ) {
+	// SKULLDUGGERY: not a portable way to access the kind field, /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
+	int kind = ((pthread_mutex_t *)mutex_)->__data.__kind;
+	// kind is a small pthread enumerated type. If it greater than 32, it is a value in an uOwnerlock field.
+	if ( 0 < kind && kind < 32 ) {			// static initialized ?
 	    ((uOwnerLock *)&magic_check)->acquire();	// race
-	    kind = ((assumed_mutex *)mutex_)->__m_kind;
-	    if ( 0 < kind && kind < 10 ) {
+	    kind = ((pthread_mutex_t *)mutex_)->__data.__kind;
+	    if ( 0 < kind && kind < 32 ) {		// static initialized ?
 		pthread_mutex_init( mutex, NULL );
 	    } // if
 	    ((uOwnerLock *)&magic_check)->release();
@@ -1212,8 +1205,6 @@ _getfp:\n\
 	    uKernelModule::startup();
 	} // if
 
-//      if ( ! uKernelModule::initialized ) return 0;	// executing sequentially
-//	assert( ! THREAD_GETMEM( disableInt ) );
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "pthread_mutex_lock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
 #endif // __U_DEBUG_H__
@@ -1223,8 +1214,6 @@ _getfp:\n\
     } // pthread_mutex_lock
 
     int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW {
-//      if ( ! uKernelModule::initialized ) return 0;	// executing sequentially
-//	assert( ! THREAD_GETMEM( disableInt ) );
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "pthread_mutex_trylock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
 #endif // __U_DEBUG_H__
@@ -1232,10 +1221,7 @@ _getfp:\n\
 	return PthreadLock::get< uOwnerLock >( mutex )->tryacquire() ? 0 : EBUSY;
     } // pthread_mutex_trylock
 
-
     int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW {
-//      if ( ! uKernelModule::initialized ) return 0;	// executing sequentially
-//	assert( ! THREAD_GETMEM( disableInt ) );
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "pthread_mutex_unlock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
 #endif // __U_DEBUG_H__

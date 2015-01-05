@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2007
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2007
 // 
 // ClientINETSTREAMSendfile.cc -- Client for INET/stream/sendfile socket test. Client reads file name from standard
 //     input, writes the file name the server, reads the file data from the server, and writes that data to standard output.

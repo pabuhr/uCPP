@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uDebug.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 15 02:18:12 2013
-// Update Count     : 133
+// Last Modified On : Fri Nov 28 07:56:46 2014
+// Update Count     : 135
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,7 +43,8 @@ using namespace UPP;
 // calls to malloc at the file buffer level. Therefore, it is safe to call this routine from inside the memory
 // management routines because there will be no recursive calls to allocate memory.
 
-static char buffer[512];
+enum { BufferSize = 512 };
+static char buffer[BufferSize];
 
 // SKULLDUGGERY: The debug spin lock has to be available at the same time as the heap routines to allow debugging
 // them. Since the initial value of a spin lock are zero and static storage is initialized to zero, this works out.
@@ -95,7 +96,7 @@ extern "C" void uDebugPrt( const char fmt[], ... ) {
 	     getpid()
 #endif // __U_MULTI__
 	);
-    len += vsprintf( ::buffer + len, fmt, args );	// and after that the message
+    len += vsnprintf( ::buffer + len, BufferSize, fmt, args );	// and after that the message
     uDebugWrite( STDERR_FILENO, ::buffer, len );
     uDebugRelease();
     va_end( args );
@@ -108,7 +109,7 @@ extern "C" void uDebugPrt2( const char fmt[], ... ) {
     va_list args;
 
     va_start( args, fmt );
-    int len = vsprintf( ::buffer, fmt, args );
+    int len = vsnprintf( ::buffer, BufferSize, fmt, args );
     uDebugWrite( STDERR_FILENO, ::buffer, len );
     va_end( args );
 } // uDebugPrt2
@@ -127,7 +128,7 @@ extern "C" void uDebugPrtBuf( char buffer[], const char fmt[], ... ) {
 	     getpid()
 #endif // __U_MULTI__
 	);
-    len += vsprintf( buffer + len, fmt, args );		// and after that the message
+    len += vsnprintf( ::buffer + len, BufferSize, fmt, args );	// and after that the message
     uDebugWrite( STDERR_FILENO, buffer, len );
     va_end( args );
 } // uDebugPrt

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Robert Denda 1996
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Robert Denda 1996
 // 
 // FloatTest.cc -- 
 // 

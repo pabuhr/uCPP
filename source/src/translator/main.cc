@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // main.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 23 16:06:12 2014
-// Update Count     : 155
+// Last Modified On : Sun Nov 16 21:29:24 2014
+// Update Count     : 160
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -153,9 +153,15 @@ int main( int argc, char *argv[] ) {
 
     // Insert the keywords into the root symbol table.
 
-    for ( int i = 0; key[i].text != NULL; i += 1 ) {
+    int i;
+    for ( i = 0; key[i].text != NULL; i += 1 ) {
 	hash_table->lookup( key[i].text, key[i].value );
     } // for
+    if ( stdcpp11 ) {					// insert C++11 keywords
+	for ( i += 1; key[i].text != NULL; i += 1 ) {
+	    hash_table->lookup( key[i].text, key[i].value );
+	} // for
+    } // if
 
     read_all_input();
     translation_unit();					// parse the program

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uHeapLmmm.cc -- Lean Mean Malloc Machine - a runtime configurable replacement
 //                 for malloc.
@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 17 22:04:10 2014
-// Update Count     : 1203
+// Last Modified On : Wed Dec 17 16:56:42 2014
+// Update Count     : 1219
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -307,7 +307,11 @@ namespace UPP {
 	assert( ((uintptr_t)area & (uAlign() - 1)) == 0 ); // minimum alignment ?
 	uFetchAdd( uHeapManager::allocfree, tsize );
 	if ( uHeapControl::traceHeap() ) {
-	    uDebugPrt( "%p = Malloc( %zu ) (allocated %zu)\n", area, size, tsize );
+	    enum { BufferSize = 64 };
+	    char helpText[BufferSize];
+	    int len = snprintf( helpText, BufferSize, "%p = Malloc( %zu ) (allocated %zu)\n", area, size, tsize );
+	    //int len = snprintf( helpText, BufferSize, "Malloc %p %zu\n", area, size );
+	    uDebugWrite( STDERR_FILENO, helpText, len );
 	} // if
 #endif // __U_DEBUG__
 
@@ -377,7 +381,10 @@ namespace UPP {
 #ifdef __U_DEBUG__
 	uFetchAdd( uHeapManager::allocfree, -size );
 	if ( uHeapControl::traceHeap() ) {
-	    uDebugPrt( "Free( %p ) size:%zu\n", addr, size );
+	    enum { BufferSize = 64 };
+	    char helpText[BufferSize];
+	    int len = snprintf( helpText, BufferSize, "Free( %p ) size:%zu\n", addr, size );
+	    uDebugWrite( STDERR_FILENO, helpText, len );
 	} // if
 #endif // __U_DEBUG__
     } // uHeapManager::doFree
@@ -752,7 +759,10 @@ extern "C" {
 #endif // __U_PROFILER__
 #ifdef __U_DEBUG__
 	    if ( UPP::uHeapControl::traceHeap() ) {
-		uDebugPrt( "Free( %p ) size:0\n", addr );
+		enum { BufferSize = 64 };
+		char helpText[BufferSize];
+		int len = snprintf( helpText, BufferSize, "Free( %p ) size:0\n", addr );
+		uDebugWrite( STDERR_FILENO, helpText, len );
 	    } // if
 #endif // __U_DEBUG__
 	    return;

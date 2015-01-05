@@ -1,6 +1,6 @@
 //                               -*- Mode: Asm -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSwitch-i386.S -- context switch for x86
 // 

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uAlign.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 22:08:40 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 10 21:40:40 2009
-// Update Count     : 45
+// Last Modified On : Tue Oct 21 14:43:15 2014
+// Update Count     : 46
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,8 +38,7 @@
 // Check for power of 2
 
 static inline bool uPow2( unsigned long int value ) {
-    // clears all bits below value, rounding value down to the next lower
-    // multiple of value
+    // clears all bits below value, rounding value down to the next lower multiple of value
     return (value & (value - 1)) == 0;
 } // uPow2
 

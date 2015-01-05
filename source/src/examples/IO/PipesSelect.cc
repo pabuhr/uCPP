@@ -103,7 +103,7 @@ _Task Reader {
 		read_mbps = do_reader_bytes / diff / 1000000.0;
 		osacquire( cout ) << setw(7) << diff.nanoseconds() / 1000000000.0
 		     << "\t" << setw(7) << select_calls
-		     << "\t" << setw(7) << select_fds / select_calls
+		     << "\t" << setw(7) << (select_calls != 0 ? select_fds / select_calls : 0)
 		     << "\t" << setw(7) << read_mbps
 #ifdef __U_STATISTICS__
 		     << "\t" << setw(7) << UPP::Statistics::select_maxFD
@@ -116,7 +116,7 @@ _Task Reader {
 		     << "\t" << setw(7) << UPP::Statistics::select_events
 		     << "\t" << setw(7) << UPP::Statistics::select_nothing
 		     << "\t" << setw(7) << UPP::Statistics::select_blocking
-		     << "\t" << setw(7) << UPP::Statistics::select_pending / UPP::Statistics::select_syscalls
+		     << "\t" << setw(7) << (UPP::Statistics::select_syscalls != 0 ? UPP::Statistics::select_pending / UPP::Statistics::select_syscalls : 0)
 		     << "\t" << setw(7) << UPP::Statistics::select_syscalls
 #endif // __U_STATISTICS__
 		     << endl;

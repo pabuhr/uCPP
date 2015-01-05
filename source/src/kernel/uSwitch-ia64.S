@@ -1,6 +1,6 @@
 //                               -*- Mode: Asm -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2002
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2002
 // 
 // uSwitch-ia64.s -- context switch routine for Itanium processors
 // 

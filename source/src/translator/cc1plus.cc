@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2003
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2003
 //
 // cc1plus.cc --
 //
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 15 17:23:48 2014
-// Update Count     : 144
+// Last Modified On : Wed Oct  8 14:30:03 2014
+// Update Count     : 167
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,22 +25,18 @@
 //
 
 
+#include <iostream>
+using std::cerr;
+using std::endl;
 #include <string>
 using std::string;
 #include <cstdio>
 #include <cstdlib>					// getenv, exit
-#include <cstring>					// strcmp, strlen
 #include <unistd.h>					// execvp, fork, unlink
 #include <sys/wait.h>					// wait
 
 
 //#define __U_DEBUG_H__
-
-#ifdef __U_DEBUG_H__
-#include <iostream>
-using std::cerr;
-using std::endl;
-#endif
 
 
 string compiler_name( CCAPP );				// path/name of C compiler
@@ -140,11 +136,15 @@ void Stage1( const int argc, const char * const argv[] ) {
 		upp_flag = true;
 	    } else if ( arg == "-D" && string( argv[i + 1] ) == "__U_UPP__" ) {
 		i += 1;					// and the argument
+		upp_flag = true;
 	    } else if ( prefix( arg, D__U_GCC_BPREFIX__ ) ) {
 		bprefix = arg.substr( D__U_GCC_BPREFIX__.size() );
 	    } else if ( arg == "-D" && prefix( argv[i + 1], "__U_GCC_BPREFIX__=" ) ) {
 		bprefix = string( argv[i + 1] ).substr( D__U_GCC_BPREFIX__.size() - 2 );
 		i += 1;					// and the argument
+#ifdef __DEBUG_H__
+		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
+#endif // __DEBUG_H__
 
 	    // u++ flags controlling the u++-cpp step
 
@@ -205,7 +205,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 		cerr << "cpp_out:\"" << cpp_out << "\""<< endl;
 #endif // __U_DEBUG_H__
 	    } else {
-		fprintf( stderr, "Usage: %s input-file [output-file] [options]\n", argv[0] );
+		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
 	    } // if
 	} // if
@@ -222,7 +222,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 #endif // __U_DEBUG_H__
 
     if ( cpp_in == NULL ) {
-	fprintf( stderr, "Usage: %s input-file [output-file] [options]\n", argv[0] );
+	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 	exit( EXIT_FAILURE );
     } // if
 
@@ -277,6 +277,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    perror( "uC++ Translator error: cpp level, freopen" );
 	    exit( EXIT_FAILURE );
 	} // if
+
 	args[0] = compiler_name.c_str();
 	args[nargs] = cpp_in;				// input to cpp
 	nargs += 1;
@@ -301,9 +302,9 @@ void Stage1( const int argc, const char * const argv[] ) {
     cerr << "return code from cpp:" << WEXITSTATUS(code) << endl;
 #endif // __U_DEBUG_H__
 
-    if ( WIFSIGNALED(code) ) {				// child failed ?
+    if ( WIFSIGNALED(code) != 0 ) {			// child failed ?
 	unlink( tmpname );				// remove tmpname
-	fprintf( stderr, "uC++ Translator error: cpp failed with signal %d\n", WTERMSIG(code) );
+	cerr << "uC++ Translator error: cpp failed with signal " << WTERMSIG(code) << endl;
 	exit( EXIT_FAILURE );
     } // if
 
@@ -355,7 +356,7 @@ void Stage1( const int argc, const char * const argv[] ) {
     } // if
 
     if ( WIFSIGNALED(code) ) {				// child failed ?
-	fprintf( stderr, "uC++ Translator error: u++-cpp failed with signal %d\n", WTERMSIG(code) );
+	cerr << "uC++ Translator error: u++-cpp failed with signal " << WTERMSIG(code) << endl;
 	exit( EXIT_FAILURE );
     } // if
 
@@ -421,7 +422,7 @@ void Stage2( const int argc, const char * const * argv ) {
 		cerr << "cpp_in:\"" << cpp_in << "\"" << endl;
 #endif // __U_DEBUG_H__
 	    } else {
-		fprintf( stderr, "Usage: %s input-file [output-file] [options]\n", argv[0] );
+		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
 	    } // if
 	} // if
@@ -479,7 +480,7 @@ int main( const int argc, const char * const argv[], const char * const env[] ) 
 #endif // __U_DEBUG_H__
 	Stage2( argc, argv );
     } else {
-	fprintf( stderr, "Usage: %s input-file [output-file] [options]\n", argv[0] );
+	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl; 
 	exit( EXIT_FAILURE );
     } // if
 } // main

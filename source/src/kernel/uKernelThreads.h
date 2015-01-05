@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Richard Bilson and Ashif Harji 2003
+// uC++ Version 6.1.0, Copyright (C) Richard Bilson and Ashif Harji 2003
 // 
 // uKernelThreads.h -- 
 // 

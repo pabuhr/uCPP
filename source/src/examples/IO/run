@@ -1,0 +1,10 @@
+#!/bin/sh -x
+
+rm -f *.core run.out
+while [ T = T ] ; do
+        make > run.out 2>&1
+    if [ -f Client.core ] ; then break; fi
+    if [ -f Server.core ] ; then break; fi
+	echo "successful completion"
+	rm run.out
+done

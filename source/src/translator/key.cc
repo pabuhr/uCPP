@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // key.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 16 08:57:38 2014
-// Update Count     : 116
+// Last Modified On : Sun Nov 16 21:21:24 2014
+// Update Count     : 119
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,15 +29,11 @@
 #include <cstddef>					// NULL
 
 keyword_t key[] = {
-    { "alignas", ALIGNAS },				// C++11
-    { "alignof", ALIGNOF },				// C++11
     { "asm", ASM },
     { "__asm", ASM },					// gcc specific
     { "__asm__", ASM },					// gcc specific
-    { "_Atomic", ATOMIC },				// C11
     { "__attribute", ATTRIBUTE },			// gcc specific
     { "__attribute__", ATTRIBUTE },			// gcc specific
-    { "auto", AUTO },					// C++11
     { "bool", BOOL },
     { "break", BREAK },
     { "case", CASE },
@@ -51,10 +47,8 @@ keyword_t key[] = {
     { "const", CONST },
     { "__const", CONST },				// gcc specific
     { "__const__", CONST },				// gcc specific
-    { "constexpr", CONSTEXPR },				// C++11
     { "const_cast", CONST_CAST },
     { "continue", CONTINUE },
-    { "decltype", DECLTYPE },				// C++11
     { "default", DEFAULT },
     { "delete", DELETE },
     { "do", DO },
@@ -67,7 +61,6 @@ keyword_t key[] = {
     { "__extension__", EXTENSION },			// gcc specific
     { "extern", EXTERN },
     { "false", FALSE },
-    { "final", FINAL },					// C++11
     { "float", FLOAT },
     { "for", FOR },
     { "friend", FRIEND },
@@ -82,10 +75,7 @@ keyword_t key[] = {
     { "mutable", MUTABLE },
     { "namespace", NAMESPACE },
     { "new", NEW },
-    { "noexcept", NOEXCEPT },				// C++11
-    { "nullptr", NULLPTR },				// C++11
     { "operator", OPERATOR },
-    { "override", OVERRIDE },				// C++11
     { "private", PRIVATE },
     { "protected", PROTECTED },
     { "public", PUBLIC },
@@ -101,14 +91,12 @@ keyword_t key[] = {
     { "__signed__", SIGNED },				// gcc specific
     { "sizeof", SIZEOF },
     { "static", STATIC },
-    { "static_assert", STATIC_ASSERT },			// C++11
     { "static_cast", STATIC_CAST },
     { "struct", STRUCT },
     { "switch", SWITCH },
     { "template", TEMPLATE },
     { "this", THIS },
     { "__thread", THREAD },
-    { "thread_local", THREAD_LOCAL },			// C++11
     { "throw", THROW },
     { "true", TRUE },
     { "try", TRY },
@@ -143,7 +131,7 @@ keyword_t key[] = {
     { "xor", '^' },
     { "xor_eq", XOR_ASSIGN },
 
-// uC++ specific
+    // uC++
 
     { "_Accept", ACCEPT },
     { "_AcceptReturn", ACCEPTRETURN },
@@ -167,6 +155,22 @@ keyword_t key[] = {
     { "_Timeout", TIMEOUT },
     { "_When", WHEN },
     { "_With", WITH },
+    { NULL, 0 },
+
+    // C++11
+
+    { "alignas", ALIGNAS },				// C++11
+    { "alignof", ALIGNOF },				// C++11
+    { "_Atomic", ATOMIC },				// C11
+    { "auto", AUTO },					// C++11
+    { "constexpr", CONSTEXPR },				// C++11
+    { "decltype", DECLTYPE },				// C++11
+    { "final", FINAL },					// C++11
+    { "noexcept", NOEXCEPT },				// C++11
+    { "nullptr", NULLPTR },				// C++11
+    { "override", OVERRIDE },				// C++11
+    { "static_assert", STATIC_ASSERT },			// C++11
+    { "thread_local", THREAD_LOCAL },			// C++11
     { NULL, 0 }
 };
 

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
 // 
 // ClientUNIXDGRAM.cc -- Client for UNIX/datagram socket test. Client reads from standard input, writes the data to the
 //     server, reads the data from the server, and writes that data to standard output.

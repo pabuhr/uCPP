@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2001
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2001
 // 
 // Locks.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 10 15:08:22 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 12 19:50:35 2012
-// Update Count     : 37
+// Last Modified On : Tue Dec 23 17:11:16 2014
+// Update Count     : 38
 // 
 
 #include <uAdaptiveLock.h>
@@ -109,8 +109,8 @@ _Task testerAL_TAR {
 };
 
 class monitor {
-    uCondLock cond1, cond2;
     uOwnerLock lock;
+    uCondLock cond1, cond2;
     unsigned int cnt;
   public:
     monitor() { cnt = 0; }

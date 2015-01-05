@@ -128,8 +128,14 @@
 %       ****************************************
 
 \newcommand{\newtermFontInline}{\textbf}
-\newcommand{\newterm}[2][\@empty]{{\newtermFontInline{#2}}\ifx#1\@empty\index{#2@{\lowercase{#2}}}\else\index{#1@{\lowercase{#2}}}\fi}
-\newcommand{\Index}[2][\@empty]{#2\ifx#1\@empty\index{#2@{\lowercase{#2}}}\else\index{#1@{\lowercase{#2}}}\fi}
+% \newcommand{\newterm}[2][\@empty]{{\newtermFontInline{#2}}\ifx#1\@empty\index{#2@{\lowercase{#2}}}\else\index{#1@{\lowercase{#2}}}\fi}
+% \newcommand{\Index}[2][\@empty]{#2\ifx#1\@empty\index{#2@{\lowercase{#2}}}\else\index{#1@{\lowercase{#2}}}\fi}
+\newcommand{\Index}{\@ifstar\@sIndex\@Index}
+\newcommand{\@Index}[2][\@empty]{\lowercase{\def\temp{#2}}#2\ifx#1\@empty\index{\temp}\else\index{#1@{\protect#2}}\fi}
+\newcommand{\@sIndex}[2][\@empty]{#2\ifx#1\@empty\index{#2}\else\index{#1@{\protect#2}}\fi}
+\newcommand{\newterm}{\@ifstar\@snewterm\@newterm}
+\newcommand{\@newterm}[2][\@empty]{\lowercase{\def\temp{#2}}{\newtermFontInline{#2}}\ifx#1\@empty\index{\temp}\else\index{#1@{\protect#2}}\fi}
+\newcommand{\@snewterm}[2][\@empty]{{\newtermFontInline{#2}}\ifx#1\@empty\index{#2}\else\index{#1@{\protect#2}}\fi}
 
 %       ****************************************
 %       *              REF MACRO               *

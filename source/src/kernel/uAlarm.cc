@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1995, 1997
+// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1995, 1997
 // 
 // uAlarm.cc -- 
 // 

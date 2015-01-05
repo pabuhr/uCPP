@@ -1,0 +1,545 @@
+From: plaice@cse.unsw.edu.au (John Plaice)
+To: "Peter A. Buhr" <pabuhr@plg.uwaterloo.ca>
+Date: Mon, 6 Jun 2005 05:31:57 +1000
+Cc: John Plaice <plaice@cse.unsw.edu.au>
+Subject: Re: Your book on control flow
+
+Hi Peter,
+
+On Sat, Jun 04, 2005 at 09:06:09PM -0400, Peter A. Buhr wrote:
+> We have taught concurrency in 3rd year here at Waterloo for the past 10+ years,
+> and it is very successful. If you want to give it a try, I can send you the
+> notes, assignments and exams I use. It's not perfect, but you can probably
+> shape it to work for you.
+
+I might take you up on this some time.
+
+>    In reading your books, I have come across a few typos and typesetting
+>    mishaps.  I took the liberty of cataloguing them.  Below you can find the
+>    typos for the first 10 chapters of the book on control flow.
+> 
+> I owe you a few beers for all this work. It'll take me several days to go
+> through all your suggestions. Thanks a lot. I'm trying to make more progress on
+> the book over the Summer (your Winter), so your suggestions are apropos.
+
+I just finished reading the manual, and there's another list of typos below.
+Send me your book when you finish it.
+
+Now for some technical questions.  For the real-time tasks, to what extent can
+your scheduler guarantee timing constraints?  Would this be possible if you
+were completely controlling the run-time system and the OS below?  I'm trying
+to figure out what is inherent in the language \mu C++ and what is contigent on
+the implementation.
+
+Take care,
+
+John
+---------
+
+All line numbers ignore the contents of floats.
+
+p.4, l.-13	s/execution-state/execution state/	Twice.
+p.4, l.-12	s/execution-state/execution state/
+p.4, l.-9	s/execution-state/execution state/
+p.4, l.-8	s/execution-state/execution state/
+p.4, l.-7	s/execution-state/execution state/	Twice.
+p.4, l.-6	s/execution-state/execution state/
+
+p.5, l.3	s/execution-states/execution states/
+p.5, l.16	s/execution-state/execution state/
+p.5, l.19	s/execution-state/execution state/
+p.5		Table 1.1: Move caption to above the table.
+p.5, l.-19	s/class-object/class object/
+p.5, l.-18	s/execution-state/execution state/
+p.5, l.-11	s/coroutine-monitor/coroutine monitor/
+p.5, l.-10	s/execution-state/execution state/
+p.5, l.-9	s/execution-state/execution state/
+p.5, l.-8	s/execution-state/execution state/
+p.5, l.-7	s/execution-state/execution state/
+p.5, l.-6	s/execution-state/execution state/
+p.5, l.-5	s/execution-state/execution state/
+p.5, l.-2	s/concurrent access/concurrent-access/
+
+p.7, l.-11	s/class-object/class object/
+p.7, l.-11	s/coroutine-monitor/coroutine monitor/
+p.7		Table 2.1: Move caption to above the table.
+
+p.8, l.5	s/class-objects/class objects/
+p.8, l.6	s/coroutine-monitors/coroutine monitors/
+p.8, l.7	s/light-weight/lightweight/
+p.8, l.11	s/address-spaces/address spaces/
+p.8, l.16	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...},/
+p.8, l.-13	s/task uMain/task uMain,/
+
+p.9, l.-19	s/system related/system-related/
+p.9, l.-18	s/such as,/such as/
+
+p.10		Table 2.2: Move caption to above the table.
+p.10, l.-11	s/program(s)/programs/
+
+p.11, ll.3-4	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.11, ll.18-19	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...},/
+
+p.12, l.-19	s/inner most/innermost/
+p.12, l.-3	s/inner most/innermost/
+
+p.13, l.17	s/transfers/transfer/
+p.13, l.21	s/control-flow/control flow/
+p.13, l.28	s/execution-state/execution state,/
+p.13, l.35	s/execution-state/execution state/
+
+p.14, l.11	s/full-coroutine/full coroutine/
+p.14, l.12	s/full-coroutine/full coroutine/
+p.14, l.13	s/full-coroutine/full coroutine/
+p.14, l.16	s/storage-class/storage class/
+p.14, l.18	s/execution-state/execution state/
+p.14, l.24	s/execution-state/execution state/
+p.14, l.25	s/full-coroutines/full coroutines/
+p.14, l.26	s/call-graph/call graph/
+p.14, l.28	s/execution-state/execution state/
+p.14, l.29	s/execution-state/execution state/
+p.14, l.33	s/classs-object/class object/
+p.14, l.-1	s/execution-state/execution state/
+
+p.15, l.-5	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.16, l.4	s/8K/8KiB/	See http://en.wikipedia.org/wiki/Binary_prefix
+p.16, l.8	s/8K/8KiB/
+p.16, l.8	s/16K/16KiB/
+p.16, l.10	s/if a/If a/
+p.16, l.15	s/if a/If a/
+p.16, l.18	s/if a/If a/
+p.16, l.-16	s/execution-state/execution state/
+p.16, l.-13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.16, l.-12	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.17, l.-23	s/execution-state/execution state/
+p.17, l.-22	s/execution-state/execution state/
+p.17, l.-21	s/execution-state/execution state/ 	Twice.
+p.17, l.-14	s/execution-state/execution state/
+p.17, l.-9	s/another object/another object,/
+p.17, l.-3	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.18            Float "Figure 2.2" should appear before Section 2.8 begins.
+p.18, l.11	Move "if ( done ) break;" two lines up.
+
+p.19            Float "Figure 2.3" should appear before Section 2.8 begins.
+p.19, l.12	Move "if ( done ) break;" two lines up.
+
+p.20            Float "Figure 2.4" should appear before Section 2.8 begins.
+p.20, caption	s/Full-Coroutine/Full Coroutine/
+
+p.21            Float "Figure 2.5" should appear before Section 2.9 begins.
+
+p.22, l.-17	s/overload/overloaded/
+p.22, l.-3	Add more horizontal space between examples.
+
+p.23, ll.-17-16	Add more horizontal space between examples, and align right one.
+p.23, l.-10	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.23, ll.-6-5	Add more horizontal space between examples, and align right one.
+p.23, l.-1	s/two case/two cases/
+
+p.24, ll.1-2	Add more horizontal space between examples.
+p.24, l.13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.24, l.16	s/Section/Sections/
+p.24, l.-7	s/setup/set up/
+
+p.26, l.18	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+p.26, l.25	s/subsequently/subsequent/
+
+p.27, l.-1	s/class-object/class object/
+
+p.29, l.1	s/Coroutine-Monitor/Coroutine Monitor/
+p.29, l.2	s/coroutine-monitor/coroutine monitor/
+p.29, l.17	s/coroutine-monitor/coroutine monitor/
+p.29, l.19	s/coroutine-monitor/coroutine monitor/
+p.29, l.20	s/execution-states/execution states/
+p.29, l.21	s/call-graph/call graph/
+p.29, l.21	s/coroutine-monitor/coroutine monitor/
+p.29, l.20	s/execution-state/execution state/
+p.29, l.-4	s/coroutine's/task's/
+p.29, l.-3	s/coroutine's/task's/
+p.29, l.-1	s/class-object/class object/
+
+p.30, l.19	s/execution-state/execution state/
+
+p.31, l.-22	s/8K/8KiB/	See http://en.wikipedia.org/wiki/Binary_prefix
+p.31, l.-15	s/16K/16KiB/
+p.31, l.-13	s/16K/16KiB/
+p.31, ll.-10-9	s/5 times/5~times/
+
+p.32, l.19	s/The following/Two/	Fixes the bad break at the end of the line.
+p.32,l.-7	s/many perform/may perform/
+
+p.33, l.19	s/stack diddling/stack-diddling/
+
+p.34, l.14	s/flexible/flexibility/
+p.34, l.18	s/behavioural/behavioral/
+p.34, l.26	s/behaviour/behavior/		Twice.
+p.34		Table 2.3: Move caption to above the table.
+
+p.36, l.5	s/execution-state/execution state/
+p.36, l.12	s/coroutine-monitors/coroutine monitors/
+p.36, l.16	s/semaphores/semaphore/
+p.36, l.-19	s/intializes/initialize/
+p.36, l.-13	s/Ved/V'ed/
+p.36, l.-13	s/Ping/P'ing/
+p.36, l.-9	s/Ved/V'ed/
+p.36, l.-8	s/N/$N$/			Twice.
+p.36, l.-6	s/N/$N$/
+
+p.37, l.10	s/mutex type/mutex-type/
+p.37, l.10	s/the these/these/
+p.37, l.11	s/mutual exclusion/mutual-exclusion/
+p.37, l.13	s/after is/after it is/
+p.37, l.27	s/initializes/initialize/
+p.37, l.-4	s/owners/owner's/
+p.37, l.-4	s/task/tasks/
+p.37, l.-4	s/task/tasks/
+p.37, l.-3	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.37, l.-2	s/task be/task to be/
+
+p.38, l.12	s/initializes/initialize/
+p.38, l.22	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.38, l.-12	s/initializes/initialize/
+p.38, l.-12	s/owner-lock/owner lock/
+p.38, l.-11	s/owner-lock/owner lock/
+p.38, l.-10	s/waiting-time/waiting time/
+p.38, l.-9	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.39, l.25	s/initializes/initialize/
+
+p.40, l.3	s/co-processor/coprocessor/
+p.40, l.10	s/non-processor specific/non-processor-specific/
+p.40, l.12	s/save-area/save area/
+p.40, l.13	s/save-area/save area/
+p.40, l.14	s/execution-state/execution state/
+p.40, l.15	s/save-area/save area/
+p.40, l.-19	s/execution-state/execution state/
+p.40, l.-17	s/co-processor/coprocessor/
+p.40, l.-16	s/search-key/search key/
+p.40, ll.-6-5	s/execution-states/execution states/
+p.40, ll.-1	s/execution-state/execution state/
+
+p.41            Float "Figure 2.7" should appear before Section 2.16.1 begins.
+p.41, l.-13	s/execution-state/execution state/
+p.41, l.-9	s/floating point/floating-point/
+p.41, ll.-2-1	s/class-object/class object/
+
+p.42, l.12	s/floating point/floating-point/
+p.42, l.19	s/prevent/prevented/
+p.42, l.21	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.42, l.23	s/Since,/Since/
+p.42, l.-17	s/128 bit/128-bit/
+
+p.44		Delete header.
+
+p.45, l.4	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.45, l.13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.45, l.20	s/(light) blocked/(light-) blocked/
+p.45, l.20	s/heavy blocked/heavy-blocked/
+p.45, l.22	s/light blocked/light-blocked/
+
+p.46, l.1	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.47, l.-6	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.48, ll.2-4	Align comments vertically.
+p.48, l.10	s/has/had/
+
+p.49, l.7	s/many to one/many-to-one/
+
+p.50		Float "Figure 3.2" should appear after reference.
+p.50, l.-3	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/   Twice.
+p.50, l.-3	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+
+p.51, l.4	s/one to many/one-to-many/
+p.51, l.4	s/socket-endpoints/socket endpoints/
+p.51, l.5	s/socket-endpoint/socket endpoint/
+p.51, l.6	s/one to many/one-to-many/
+p.51, l.7	s/socket-endpoints/socket endpoints/
+p.51, l.7	s/socket-endpoint/socket endpoint/
+p.51, l.9	s/socket-endpoints/socket endpoints/
+p.51, l.10	s/socket-endpoints/socket endpoints/
+p.51, l.10	s/others address/other's address/
+p.51, l.14	s/socket-endpoint/socket endpoint/
+p.51, l.17	s/socket-endpoints/socket endpoints/
+p.51, l.20	s/socket-endpoint/socket endpoint/
+p.51, l.21	s/socket-endpoint/socket endpoint/
+p.51, l.23	s/transfered/transferred/
+p.51, l.27	s/address/address,/
+p.51, l.29	s/socket-endpoint/socket endpoint/
+p.51, l.34	s/socket-endpoint/socket endpoint/
+p.51, l.35	s/socket-endpoint/socket endpoint/		Twice.
+p.51, l.37	s/socket-endpoints/socket endpoints/
+p.51, l.39	s/socket-endpoint/socket endpoint/
+p.51, l.40	s/socket-endpoint/socket endpoint/
+
+p.52		Float "Figure 3.4" should appear before Section 3.4.1 begins.
+p.52, l.-7	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.54, l.15	s/the first/The first/
+p.54, l.16	s/the lack/The lack/
+p.54, l.25	s/the optional/The optional/
+p.54, l.28	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+p.54, l.29	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+
+p.55, l.-2	s/the first/The first/
+p.55, l.-1	s/the lack/The lack/
+
+p.55, l.10	s/the optional/The optional/
+p.55, l.12	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+p.55, l.13	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+p.55, l.25	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.55, l.25	s/boolean/Boolean/
+p.55, l.-6	s/the first/The first/
+p.55, l.-5	s/the optional/The optional/
+p.55, l.-5	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.56		Delete header.
+
+p.59, l.4	s/execution-environment/execution environment/
+p.59, l.5	s/raise-mechanism/raise mechanism/
+p.59, l.5	s/execution-environment/execution environment/
+p.59, l.6	s/raising-mechanisms/raising mechanisms/
+p.59, ll.6-7	s/execution-states/execution states/
+p.59, l.14	s/p. 395/p.395./
+
+p.60, l.-22	s/exception-types/exception types/
+p.60, l.-18	s/exception-types/exception types/
+p.60, ll.-15-14	s/exception-types/exception types/
+p.60, l.-14	s/exception-types/exception types/	Twice.
+p.60, ll.-13-12	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.60, l.-7	s/execution-states/execution states/
+p.60, l.-5	s/execution-states/execution states/
+
+p.61, l.12	s/inheriant/inherent/
+p.61, l.18	s/exceptions/exception/
+
+p.62, l.21	s/exception-type/exception type/
+p.62, ll.21-22	s/exception-type/exception type/
+p.62, l.-11	s/reraise:/reraise./
+p.62, l.-8	s/control-flow/control flow/
+p.62, l.-1	s/exception-type/exception type/
+
+p.64, ll.-17-15	Add more horizontal space between examples.
+p.64, l.-11	s/Sections~\ref{...} and~\ref{...}/
+		 /Sections~\ref{...}, p.\pageref{...}, and~\ref{...}, p.\pageref{...}/
+
+p.65, l.11	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.65, l.21	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.65, l.-13	s/the the/the/
+
+p.66		Float "Figure 4.1" should appear before Section 4.5.2 begins.
+p.66, l.-10	s/exception-type/exception type/
+p.66, l.-9	s/exception-type/exception type/
+
+p.67		Float "Figure 4.2" should appear before Section 4.5.2.1 begins.
+
+p.68, ll.2-3	s/routine f/routine~f/
+p.68, l.16	s/resumption-handler/resumption handler/
+p.68, l.-13	s/exception-type/exception type/	Twice.
+
+p.71		Table 4.1: Move caption to above the table.
+
+p.73, l.-11	s/return-values/return values/		Twice.
+
+p.74, l.1	s/Exception-Type/Exception Type/
+p.74, l.2	s/exception-type/exception type/
+p.74, l.10	s/Exception-Type/Exception Type/
+p.74, l.11	s/exception-type/exception type/
+p.74, l.15	s/Exception-Type/Exception Type/
+p.74, l.16	s/exception-type/exception type/
+p.74, l.18	s/exception-type/exception type/
+p.74, l.21	s/make its/make their/
+p.74, l.22	s/exception-type/exception type/
+p.74, l.24	s/Exception-Types/Exception Types/
+p.74, l.25	s/exception-Types/exception Types/
+p.74, ll.26-27	s/exception-types/exception types/
+p.74, l.27	s/exception-types/exception types/
+p.74, l.28	s/exception-types/exception types/
+p.74, l.29	s/exception-types/exception types/
+p.74, l.31	s/Exception-Types/Exception Types/
+p.74, l.32	s/exception-types/exception types/
+p.74, l.33	s/exception-type/exception type/
+p.74, l.34	s/exception-type/exception type/
+p.74, l.37	s/exception-type/exception type/
+p.74, l.-6	s/Section~\ref{...}/Section~\ref{...} (p.\pageref{...})/
+
+Throughout Chapter 5, the use of the sans-serif font for the error messages,
+because the double quotes end up looking like closing double quotes.  The
+typewriter font would be more suitable.
+
+p.77, l.6	s/translator/translator,/
+
+p.78, l.-23	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.78, l.-9	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.80, ll.-22-21	s/type T3,/type~T3,/
+p.80, l.-18	s/Sections~\ref{...} and~\ref{...}/
+		 /Sections~\ref{...}, p.\pageref{...}, and~\ref{...}, p.\pageref{...}/
+p.80, l.-9	s/Run-time/Runtime/
+
+p.81, l.-14	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.81, l.-11	s/behaviour/behavior/
+p.81, l.-7	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.81, l.-4	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.82, ll.-25-24	s/task t1,/task~t1,/
+
+p.83, ll.-18-17	s/task t/task~t/
+p.83, l.-17	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.84, l.16	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.85, l.-2	s/nor suspending is allowed to/to nor suspending from is allowed for/
+p.85, l.-2	s/coroutines/coroutine/
+
+p.86, l.18	s/and hence,/hence/
+p.86, l.20	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.87, l.-12	s/execution-state/execution state/
+p.87, l.-1	s/1000000000 byte/1000000000-byte/
+
+p.88, l.1	s/Section~\ref{...}/Section~\ref{...} (p.\pageref{...})/
+p.88, l.-13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.89, ll.22-23	s/coroutine cm,/coroutine~cm,/
+
+p.91, l.21	s/storage-management/storage management/
+
+p.92, l.27	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.92, l.-13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.93, l.17	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.93, l.21	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.93, l.-7	s/and hence,/hence/
+
+p.94, l.22	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.94, l.32	s/empty,/empty;/
+
+p.95, l.13	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.95, l.21	s/range 0-1/range 0--1/
+
+p.96, l.1	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.96, l.-4	s/pre or post conditions./pre- or post-conditions./
+
+p.97, l.5	s/operations,/operations/
+
+p.98, l.10	s/read only/read-only/
+
+p.99, l.5	s/points/points,/
+p.99, l.-21	s/POSIX style/POSIX-style/
+p.99, l.-19	s/POSIX style/POSIX-style/
+p.99, l.-18	s/pre-emption only/only pre-emption/
+
+p.100, l.11	s/Section~\ref{...}/Section~\ref{...} (p.\pageref{...})/
+p.100, l.18	s/it the/it is the/
+p.100, l.-6	s/8K/8KiB/
+
+p.101, l.11	s/per task/per-task/
+p.101, l.12	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.101, l.-19	s/semantic/semantics/
+
+p.102, l.2	s/Section~\ref{...}/Section~\ref{...} (p.\pageref{...})/
+p.102, l.8	s/variable(s) is/variables are/
+p.102, l.10	s/thread)/thread/
+p.102, l.-5	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.103, ll.2-3	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.103, l.8	s/spin-duration/spin duration/
+p.103, l.9	s/spin-duration/spin duration/
+p.103, l.11	s/spin-duration/spin duration/
+p.103, l.12	s/spin-duration/spin duration/
+p.103, l.19	s/may/many/
+p.103, l.-8	s/time-slice/time slice/
+
+p.104, l.5	s/user specified/user-specified/
+p.104, l.13	s/affect/effect/
+p.104, l.-1	s/heavy-weight/heavyweight/
+
+p.105, l.2	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+
+p.106		Delete header.
+
+p.107, l.5	s/time constraints/timing constraints/
+p.107, l.7	s/behaviour/behavior/
+p.107, l.-13	s/that has/has/
+p.107, l.-11	s/time constrained/time-constrained/
+p.107, l.-9	s/2:00 - 1:30/2:00 $-$ 1:30/
+p.107, ll.-4-2	Align comments.
+
+p.108, l.-9	s/represent/represents/
+p.108, l.-2	s/represented/represents/
+
+p.109, l.2	s/this argument is 1./this argument is 0./
+p.109, ll.-8-7	Align comments.
+
+p.110, l.1	s/a timeout/timeout/
+p.110, l.3	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.110,ll.-22-21	Add more horizontal space between examples, and align right one.
+p.110,ll.-16-15	"Appendix C.4 and 3.4" ??  Also page references.
+p.110, l.-13	s/zero timeout/zero-timeout/
+p.110, l.-11	"read (readvIf" ??
+p.110, l.-10	"read (readvFor" ??
+
+p.111, l.11	s/Appendix~\ref{...}/Appendix~\ref{...} (p.\pageref{...})/
+p.111, l.-17	s/as real-time clock/as a real-time clock/
+
+p.113, l.4	s/both time and event are not/neither time nor event is/
+p.113, l.21	s/or use/or the use of/
+
+p.114, l.-33	s/protocol,/protocol/
+p.114, l.-33	s/priority-inversion/priority inversion/
+p.114, l.-32	s/lower priority/lower-priority/
+p.114, l.-29	s/lower priority/lower-priority/
+p.114, l.-27	s/low priority/low-priority/
+p.114, l.-25	s/high priority/high-priority/
+p.114, l.-24	s/lower priority/lower-priority/
+p.114, l.-21	s/waiting/wait/
+p.114, l.-20	s/prioritized entry/prioritized-entry/
+p.114, l.-18	s/higher priority/higher-priority/
+p.114, l.-17	s/highest priority/highest-priority/
+p.114, l.-16	s/higher priority/higher-priority/
+p.114, l.-15	s/higher priority/higher-priority/
+p.114, l.-13	s/highest priority/highest-priority/
+p.114, l.-12	s/highest priority/highest-priority/
+p.114, l.-10	s/higher priority/higher-priority/
+p.114, l.-9	s/priority-inversion/priority inversion/
+p.114, l.-9	s/high priority/high-priority/
+p.114, l.-7	s/priority-inversion/priority inversion/
+p.114, l.-6	s/priority-inversion/priority inversion/
+p.114, l.-3	s/higher priority/higher-priority/
+p.114, l.-1	s/highest priority/highest-priority/
+
+p.115, l.1	s/signalled stack/signalled stack,/
+p.115, l.2	s/priority-inversion/priority inversion/
+p.115, l.12	s/lower priority/lower-priority/
+p.115,ll.-25-24	s/priority-inheritance/priority inheritance/
+p.115, l.-17	s/behaviour/behavior/
+p.115, l.-16	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.115, l.-15	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.115, l.-14	s/Section~\ref{...}/Section~\ref{...}, p.\pageref{...}/
+p.115, l.-7	s/User Supplied/User-Supplied/
+
+p.116, ll.2-3	s/data-structure/data structure/
+p.116, l.21	s/behaviour/behavior/
+p.116, l.26	s/priority changing protocols like/
+		 /priority-changing protocols, such as/
+p.116, l.31	"Section B" ??
+p.116, l.-12	s/task set/task-set/
+p.116, ll.-7-6	s/data-structure/data structure/
+p.116, l.-6	s/data-structure/data structure/
+p.116, l.-6	s/task dispatching/task-dispatching/
+p.116, l.-5	s/data-structure/data structure/
+p.116, l.-2	s/Amoeba[TvRvS+90]/Amoeba [TvRvS+90]/
+p.116, l.-2	s/Chorus[RAA+88]/Chorus [RAA+88]/
+p.116, l.-2	s/Apertos[Yok92]/Apertos [Yok92]/
+p.116, l.-1	s/behaviour/behavior/
+
+p.117, l.9	s/an example of particular/a particular example of/
+p.117, l.-3	s/data-structure/data structure/
+
+p.118		Delete header.
+
+---- EOF ----

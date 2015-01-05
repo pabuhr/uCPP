@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Nikita Borisov 1995
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Nikita Borisov 1995
 //
 // u++.cc --
 //
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 23 16:45:02 2014
-// Update Count     : 898
+// Last Modified On : Mon Nov 10 20:51:26 2014
+// Update Count     : 903
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -81,8 +81,8 @@ int main( int argc, char *argv[] ) {
 	} // if
     } // if
 
-    string installlibdir( INSTALLLIBDIR );		// fixed location of the cpp and cfa-cpp commands
     string installincdir( INSTALLINCDIR );		// fixed location of include files
+    string installlibdir( INSTALLLIBDIR );		// fixed location of the cc1 and cfa-cpp commands
 
     string tvendor( TVENDOR );
     string tos( TOS );
@@ -224,8 +224,8 @@ int main( int argc, char *argv[] ) {
 		debugging = true;			// symbolic debugging required
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
-	    } else if ( prefix( arg, "-std=" ) ) {
-		langstd = arg.substr(5);		// strip the -std= flag
+	    } else if ( prefix( arg, "-std=" ) || prefix( arg, "--std=" ) ) {
+		langstd = arg.substr( arg[1] == '-' ? 6 : 5 ); // strip the -std= flag
 		if ( langstd == "c++0x" || langstd == "gnu++0x" ||
 		     langstd == "c++11" || langstd == "gnu++11" ||
 		     langstd == "c++1y" || langstd == "gnu++1y"

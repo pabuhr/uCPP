@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // ServerUNIXSTREAM.cc -- Server for UNIX/stream socket test. Server accepts multiple connections from clients. Each
 //     client then communicates with an acceptor.  The acceptor reads the data from the client and writes it back.

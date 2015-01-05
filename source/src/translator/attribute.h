@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // attribute.h --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
-// Last Modified By : 
-// Last Modified On : Wed Dec  4 23:07:24 2013
-// Update Count     : 55
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Dec 17 16:46:31 2014
+// Update Count     : 56
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,7 +90,6 @@ struct attribute_t {
     declkind dclkind;					// declaration kind
     rttaskkind rttskkind;				// kind of realtime task
     symbol_t *typedef_base;				// typedef base type
-    bool emptytemplate;					// indicates template parameter list is empty (specialization)
     bool emptyparms;					// indicates routine parameter list is empty
     bool nestedqual;					// indicates nest qualification of routine name
 

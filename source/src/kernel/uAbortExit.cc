@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uAbortExit.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 17 18:51:48 2012
-// Update Count     : 542
+// Last Modified On : Fri Nov 28 07:57:55 2014
+// Update Count     : 543
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -95,8 +95,9 @@ void uAbort( const char *fmt, ... ) {
     uKernelModule::initialized = false;
 #endif // __U_DEBUG__
 
-    static char helpText[1024];
-    int len = snprintf( helpText, 1024, "uC++ Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
+    enum { BufferSize = 1024 };
+    static char helpText[BufferSize];
+    int len = snprintf( helpText, BufferSize, "uC++ Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
     uDebugWrite( STDERR_FILENO, helpText, len );
 
     if ( fmt != NULL ) {
@@ -104,17 +105,17 @@ void uAbort( const char *fmt, ... ) {
 
 	va_list args;
 	va_start( args, fmt );
-	len = vsnprintf( helpText, 1024, fmt, args );
+	len = vsnprintf( helpText, BufferSize, fmt, args );
 	va_end( args );
 	uDebugWrite( STDERR_FILENO, helpText, len );
 	helpText[0] = '\n';
 	uDebugWrite( STDERR_FILENO, helpText, 1 );
     } // if
 
-    len = snprintf( helpText, 1024, "Error occurred while executing task %.256s (%p)", task.getName(), &task );
+    len = snprintf( helpText, BufferSize, "Error occurred while executing task %.256s (%p)", task.getName(), &task );
     uDebugWrite( STDERR_FILENO, helpText, len );
     if ( &task != &uThisCoroutine() ) {
-	len = snprintf( helpText, 1024, " in coroutine %.256s (%p).\n", uThisCoroutine().getName(), &uThisCoroutine() );
+	len = snprintf( helpText, BufferSize, " in coroutine %.256s (%p).\n", uThisCoroutine().getName(), &uThisCoroutine() );
 	uDebugWrite( STDERR_FILENO, helpText, len );
     } else {
 	helpText[0] = '.'; helpText[1] = '\n';

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSemaphore.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 13:42:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 19 22:54:59 2008
-// Update Count     : 76
+// Last Modified On : Tue Nov  4 09:44:01 2014
+// Update Count     : 78
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,7 +40,15 @@ _Monitor uSemaphore {
     int count;						// semaphore counter
     uCondition blockedTasks;
   public:
-    uSemaphore( unsigned int count = 1 ) : count( count ) {
+    uSemaphore( int count = 1 ) : count( count ) {
+#ifdef __U_STATISTICS__
+	    uFetchAdd( UPP::Statistics::uSemaphores, 1 );
+#endif // __U_STATISTICS__
+#ifdef __U_DEBUG__
+	if ( count < 0 ) {
+	    uAbort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
+	} // if
+#endif // __U_DEBUG__
     } // uSemaphore::uSemaphore
 
     void P() {						// wait on a semaphore
@@ -68,9 +76,14 @@ _Monitor uSemaphore {
 	return false;
     } // uSemaphore::TryP
 
-    void V( unsigned int times = 1 ) {			// signal a semaphore
-	count += times;					// increment semaphore counter
-	for ( unsigned int i = 0; i < times; i += 1 ) {	// wake up required number of tasks
+    void V( int inc = 1 ) {				// signal a semaphore
+#ifdef __U_DEBUG__
+	if ( inc < 0 ) {
+	    uAbort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
+	} // if
+#endif // __U_DEBUG__
+	count += inc;					// increment semaphore counter
+	for ( int i = 0; i < inc; i += 1 ) {		// wake up required number of tasks
 	    blockedTasks.signal();
 	} // for
     } // uSemaphore::V

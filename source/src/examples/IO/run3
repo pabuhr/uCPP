@@ -1,0 +1,30 @@
+#!/bin/sh -x
+if [ ! -f Client ] ; then
+	../../../bin/u++ -g ClientINET2.cc -o Client
+fi
+if [ ! -f Server ] ; then
+	../../../bin/u++ -g ServerINET2.cc -o Server
+fi
+rm -f core portno
+while [ T = T ] ; do
+	( TMPDIR=/tmp ; export TMPDIR; ./Server > portno & \
+		( \
+			sleep 10 ; portno=`cat portno` ; \
+			( ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc ; wait ) ; \
+			echo "************************** 1 **************************" ; \
+			( ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc ; wait ) ; \
+			echo "************************** 2 **************************" ; \
+			( ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & ./Client ${portno} < File.cc & \
+				./Client ${portno} < File.cc & ./Client ${portno} < File.cc ; wait ) ; \
+			echo "************************** 3 **************************" ; \
+		) ; wait \
+	) ; \
+	ps -u pabuhr ; \
+	rm -f portno ; \
+done
+	

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2003
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2003
 // 
 // uSemaphore.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr  7 15:33:02 2011
-// Update Count     : 87
+// Last Modified On : Tue Nov  4 09:43:51 2014
+// Update Count     : 89
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -194,9 +194,14 @@ namespace UPP {
     } // uSemaphore::V
 
 
-    void uSemaphore::V( unsigned int times ) {		// signal semaphore
+    void uSemaphore::V( int inc ) {			// signal semaphore
+#ifdef __U_DEBUG__
+	if ( inc < 0 ) {
+	    uAbort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
+	} // if
+#endif // __U_DEBUG__
 	spinLock.acquire();
-	for ( int i = times; i > 0; i -= 1 ) {
+	for ( int i = inc; i > 0; i -= 1 ) {
 	    if ( count >= 0 ) {
 		count += i;
 		break;

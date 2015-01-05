@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2002
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2002
 // 
 // PThread.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 23:02:35 2011
-// Update Count     : 170
+// Last Modified On : Tue Dec 23 17:11:12 2014
+// Update Count     : 171
 // 
 
 #if defined( __U_CPLUSPLUS__ )
@@ -41,9 +41,9 @@ class MutexMem {
 
 template <class ELEMTYPE> class BoundedBuffer {
 	pthread_mutex_t mutex;
+	pthread_cond_t Full, Empty;							// waiting consumers & producers
 	int front, back, count;
 	ELEMTYPE Elements[20];
-	pthread_cond_t Full, Empty;							// waiting consumers & producers
   public:
 	BoundedBuffer() {
 		front = back = count = 0;

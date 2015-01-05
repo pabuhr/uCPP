@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2000
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2000
 // 
 // uHeap.h -- generic heap data structure
 // 

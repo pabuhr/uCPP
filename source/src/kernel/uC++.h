@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uC++.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 14 13:32:12 2014
-// Update Count     : 5582
+// Last Modified On : Tue Dec 23 20:36:31 2014
+// Update Count     : 5589
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -377,7 +377,7 @@ namespace UPP {
 	static void startup();
 
 	static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
-	static __typeof__( ::abort ) *abort;
+	static __typeof__( ::abort ) *abort __attribute__(( noreturn ));
 	static __typeof__( ::select ) *select;
 	static __typeof__( std::set_terminate ) *set_terminate;
 	static __typeof__( std::set_unexpected ) *set_unexpected;
@@ -849,14 +849,14 @@ class uCxtSwtchHndlr : public uSignalHandler {
 class uOwnerLock {
     friend class uCondLock;				// access: add_, release_
 
-    // These data fields must be initialized to zero. Therefore, this lock can
-    // be used in the same storage area as a pthread_mutex_t, if
-    // sizeof(pthread_mutex_t) >= sizeof(uOwnerLock).
+    // These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
+    // pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uOwnerLock).
 
     uBaseSpinLock spinLock;				// must be first field for alignment
     unsigned int count;					// number of recursive entries; no overflow checking
-    // Solaris has a magic value in its pthread locks, so place the spin lock in
-    // that position as it cannot take on the magic value (see library/pthread.cc).
+
+    // Solaris has a magic value in its pthread locks, so place the spin lock in that position as it cannot take on the
+    // magic value (see library/pthread.cc).
     uBaseTask *owner_;					// owner with respect to recursive entry
     uSequence<uBaseTaskDL> waiting;			// sequence versus queue to reduce size to 24 bytes => more expensive
 
@@ -979,10 +979,15 @@ namespace UPP {
 	uSemaphore( uSemaphore & );			// no copy
 	uSemaphore &operator=( uSemaphore & );		// no assignment
       public:
-	uSemaphore( unsigned int count = 1 ) : count( count ) {
+	uSemaphore( int count = 1 ) : count( count ) {
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::uSemaphores, 1 );
 #endif // __U_STATISTICS__
+#ifdef __U_DEBUG__
+	    if ( count < 0 ) {
+		uAbort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
+	    } // if
+#endif // __U_DEBUG__
 	} // uSemaphore::uSemaphore
 
 	void P();					// wait on semaphore
@@ -993,7 +998,7 @@ namespace UPP {
 	bool P( uSemaphore &s, uTime time );		// wait on semaphore and release another or timeout
 	bool TryP();					// conditionally wait on a semaphore
 	void V();					// signal semaphore
-	void V( unsigned int times );			// signal semaphore
+	void V( int inc );				// signal semaphore
 
 	int counter() const {				// semaphore counter
 	    return count;

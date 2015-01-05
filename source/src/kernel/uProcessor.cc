@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uProcessor.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
-// Last Modified By : 
-// Last Modified On : Wed May 15 01:46:07 2013
-// Update Count     : 2077
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Dec 23 18:13:19 2014
+// Update Count     : 2083
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the

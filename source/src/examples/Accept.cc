@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2011
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2011
 // 
 // Accept.cc -- Check dynamically nested accepting returns to the correct code after the accept clause that accepted the
 //              call.

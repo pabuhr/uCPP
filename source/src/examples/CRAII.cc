@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Peter A. Buhr 2006
+// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2006
 // 
 // CRAII.cc -- Test deletion of a non-terminated coroutine results in deallocation of all objects on its stack.
 // 

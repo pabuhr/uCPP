@@ -1,5 +1,5 @@
 ## Release version number; do not change.
-VERSION = 6.0.0
+VERSION = 6.1.0
 
 ## Define where the final targets are installed. If you wish to put the final
 ## pieces in different places, you MUST change these macros before you create
@@ -55,6 +55,13 @@ CCAPP ?= ${CCBUILD}
 
 MAXENTRYBITS ?= 128
 
+## Define if the kernel is build with statistical counters
+
+STATISTICS ?= TRUE
+
+## Define if the kernel is build with C++11 (-std=): c++0x, c++11, c++1y
+
+CPP11 ?=
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -181,6 +188,8 @@ configure :
 	echo 'MULTI = ${MULTI}' >> ${CONFIG}
 	echo 'SHELL := /bin/sh' >> ${CONFIG}
 	echo 'MAXENTRYBITS := ${MAXENTRYBITS}' >> ${CONFIG}
+	echo 'STATISTICS := ${STATISTICS}' >> ${CONFIG}
+	echo 'CPP11 := ${CPP11}' >> ${CONFIG}
 
 	for file in `find doc src -type f -name Makefile -print` ; do \
 		sed 's@^PACKAGE = .*@PACKAGE = '${PACKAGE}'@' $${file} > /tmp/t$${$$} ; \

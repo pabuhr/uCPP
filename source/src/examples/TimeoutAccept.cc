@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.0.0, Copyright (C) Ashif S. Harji 1997
+// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 1997
 // 
 // TimeoutAccept.cc -- 
 // 

@@ -1,6 +1,6 @@
 ## Define the appropriate configuration variables.
 
-PACKAGE = /u0/usystem/software/u++-6.0.0
+PACKAGE = /u0/usystem/software/u++-6.1.0
 
 ## Include the architecture dependent definitions.
 
