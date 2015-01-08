@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 23 15:46:28 2014
-// Update Count     : 2972
+// Last Modified On : Thu Jan  8 08:55:06 2015
+// Update Count     : 2977
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1871,13 +1871,24 @@ namespace UPP {
 #endif // __U_PROFILER__
     } // uSerialMember::uSerialMember
 
+    // Used in conjunction with macro uRendezvousAcceptor inside mutex types to determine if a rendezvous has ended.
+    // NULL means rendezvous is ended; otherwise address of the rendezvous partner is returned.  In addition, calling
+    // uRendezvousAcceptor has the side effect of cancelling the implicit resume of uMutexFailure::RendezvousFailure at
+    // the acceptor, which allows a mutex member to terminate with an exception without informing the acceptor.
+
+    uBaseTask *uSerialMember::uAcceptor() {
+	uBaseTask *temp = acceptor;
+	acceptor->acceptedCall = NULL;
+	acceptor = NULL;
+	return temp;
+    } // uSerialMember::uAcceptor
 
     uSerialMember::~uSerialMember() {
 	uBaseTask &task = uThisTask();			// optimization
 	uSerial &serial = task.getSerial();		// get current serial
 
 	finalize( task );
-	if ( acceptor ) {
+	if ( acceptor ) {				// not cancelled by uRendezvousAcceptor ?
 	    acceptor->acceptedCall = NULL;		// accepted mutex member terminates
 	    // raise a concurrent exception at the acceptor
 	    if ( std::uncaught_exception() && noUserOverride && ! serial.notAlive && acceptorSuspended ) {

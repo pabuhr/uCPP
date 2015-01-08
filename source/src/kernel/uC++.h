@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 23 20:36:31 2014
-// Update Count     : 5589
+// Last Modified On : Wed Jan  7 23:35:04 2015
+// Update Count     : 5591
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1947,7 +1947,7 @@ namespace UPP {
       public:
 	uSerialMember( uSerial &serial, uBasePrioritySeq &ml, int mp );
 	~uSerialMember();
-	uBaseTask *uAcceptor() { uBaseTask *temp = acceptor; acceptor = NULL; return temp; }
+	uBaseTask *uAcceptor();
     }; // uSerialMember
 
 
