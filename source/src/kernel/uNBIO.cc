@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 18 12:15:15 2014
-// Update Count     : 1449
+// Last Modified On : Fri Jan 16 22:42:30 2015
+// Update Count     : 1451
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,9 +67,11 @@ namespace UPP {
     } // printFDset
 #endif // __U_DEBUG_H__
 
-
-    // Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive
-    // for integers of width up to 128 bits
+    /****************** countBits ********************
+	Purpose: Count number of bits with value 1
+	Parameter: unsigned long int (up to 128 bits)
+	Reference: Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive`
+    **************************************************/
     static inline int countBits( unsigned long int v ) {
       if ( v == 0 ) return 0;
 	typedef __typeof__(v) T;
@@ -79,6 +81,16 @@ namespace UPP {
 	return (T)(v * ((T)~(T)0/255)) >> (sizeof(v) - 1) * CHAR_BIT; // count
     } // countBits
 
+    /****************** msbpos ********************
+	Purpose: Find the most significant bit's  position
+	Parameter: unsigned int
+	Example: 0,1 => 0
+		 2,3 => 1
+		 4,5 => 2
+	Need to Check: What's the start index? 0 or 1
+	Reference: http://stackoverflow.com/a/671842
+		 http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html
+	**************************************************/
 #if defined( __GNUC__ )					// GNU gcc compiler ?
 // O(1) polymorphic integer log2, using clz, which returns the number of leading 0-bits, starting at the most
 // significant bit (single instruction on x86). UNDEFINED FOR 0.

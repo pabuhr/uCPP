@@ -192,35 +192,37 @@ configure :
 	echo 'CPP11 := ${CPP11}' >> ${CONFIG}
 
 	for file in `find doc src -type f -name Makefile -print` ; do \
-		sed 's@^PACKAGE = .*@PACKAGE = '${PACKAGE}'@' $${file} > /tmp/t$${$$} ; \
-		cmp -s $${file} /tmp/t$${$$} ; \
+		tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+		sed 's@^PACKAGE = .*@PACKAGE = '${PACKAGE}'@' $${file} > $${tmpname} ; \
+		cmp -s $${file} $${tmpname} ; \
 		if [ $${?} -ne 0 ] ; then \
 			echo "Setting hard coded variables in file $${file}" ; \
-			cp /tmp/t$${$$} $${file} ; \
+			cp $${tmpname} $${file} ; \
 		fi ; \
-		rm -f /tmp/t$${$$} ; \
+		rm -f $${tmpname} ; \
 	done
 
 	printf "Checking compiler..." ; \
 	if which ${CCAPP} > /dev/null ; then \
 		if [ "${CPU}" = "sparc" ] ; then \
-			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1;\n#endif\n}' > /tmp/t$${$$}.cc ; \
-			if ${CCAPP} /tmp/t$${$$}.cc > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
+			tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1;\n#endif\n}' > $${tmpname} ; \
+			if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
 				printf "Version of gcc too old for build, requires at least gcc 4.2.1\n" ; \
-				rm -f a.out /tmp/t$${$$}.cc ; \
+				rm -f a.out $${tmpname} ; \
 				rm -f CONFIG ; \
 				exit 1 ; \
 			fi ; \
 		else \
-			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 0 || __GNUC__ == 4 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ >= 3;\n#endif\n}' > /tmp/t$${$$}.cc ; \
-			if ${CCAPP} /tmp/t$${$$}.cc > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
+			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 0 || __GNUC__ == 4 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ >= 3;\n#endif\n}' > $${tmpname} ; \
+			if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
 				printf "Version of gcc too old for build, requires at least gcc 4.0.3\n" ; \
-				rm -f a.out /tmp/t$${$$}.cc ; \
+				rm -f a.out $${tmpname} ; \
 				rm -f CONFIG ; \
 				exit 1 ; \
 			fi ; \
 		fi ; \
-		rm -f a.out /tmp/t$${$$}.cc ; \
+		rm -f a.out $${tmpname} ; \
 		printf "found compiler ${CCAPP}\n" ; \
 	else \
 		printf "compiler ${CCAPP} not found; possible cause compiler not installed\n" ; \
@@ -233,8 +235,9 @@ configure :
 		if [ ${TOS} = darwin ] ; then \
 			echo "WORDSIZE := 32" >> ${CONFIG} ; \
 		else \
-			echo 'int main() {}' > /tmp/t$${$$}.cc ; \
-			${CCAPP} /tmp/t$${$$}.cc > /dev/null 2>&1 ; \
+			tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+			echo 'int main() {}' > $${tmpname} ; \
+			${CCAPP} $${tmpname} > /dev/null 2>&1 ; \
 			if file ./a.out | grep "32-bit" > /dev/null 2>&1 ; then \
 				printf "32 bit\n" ; \
 				echo "WORDSIZE := 32" >> ${CONFIG} ; \
@@ -243,11 +246,11 @@ configure :
 				echo "WORDSIZE := 64" >> ${CONFIG} ; \
 			else \
 				printf "Check for 32/64 bit compilation failed\n" ; \
-				rm -f a.out /tmp/t$${$$}.cc ; \
+				rm -f a.out $${tmpname} ; \
 				rm -f CONFIG ; \
 				exit 1 ; \
 			fi ; \
-			rm -f a.out /tmp/t$${$$}.cc ; \
+			rm -f a.out $${tmpname} ; \
 		fi ; \
 	else \
 		if [ "${WORDSIZE}" = "32" -o "${WORDSIZE}" = "64" ] ; then \
@@ -261,17 +264,18 @@ configure :
 	fi
 
 	printf "Checking for TLS support in libc..." ; \
-	echo '__thread int x = 1; int main() { if ( x == 1 ) return 0; else return 1; }' > /tmp/t$${$$}.cc ; \
-	if ${CCAPP} /tmp/t$${$$}.cc > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
+	tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+	echo '__thread int x = 1; int main() { if ( x == 1 ) return 0; else return 1; }' > $${tmpname} ; \
+	if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
 		echo yes ; \
 	else \
 		echo no ; \
 		printf "Check for TLS support failed\n" ; \
-		rm -f a.out /tmp/t$${$$}.cc ; \
+		rm -f a.out $${tmpname} ; \
 		rm -f CONFIG ; \
 		exit 1 ; \
 	fi ; \
-	rm -f a.out /tmp/t$${$$}.cc
+	rm -f a.out $${tmpname}
 
 	if [ ${TOS} = linux -o ${TOS} = freebsd -o ${TOS} = solaris ] ; then \
 		echo "AFFINITY := TRUE" >> ${CONFIG} ; \
@@ -288,12 +292,13 @@ configure :
 	if [ ${TOS} = solaris ] ; then \
 		echo "Adjusting for printf format difference" ; \
 		for file in `find . -type f \( -name '*.cc' -o -name '*.h' \) -print` ; do \
-			sed 's/%p/0x%p/g' $${file} > /tmp/t$${$$} ; \
-			cmp -s $${file} /tmp/t$${$$} ; \
+			tmpname="${TMPDIR}/uC_tmp$${$$}" ; \
+			sed 's/%p/0x%p/g' $${file} > $${tmpname} ; \
+			cmp -s $${file} $${tmpname} ; \
 			if [ $${?} -ne 0 ] ; then \
-				cp /tmp/t$${$$} $${file} ; \
+				cp $${tmpname} $${file} ; \
 			fi ; \
-			rm -f /tmp/t$${$$} ; \
+			rm -f $${tmpname} ; \
 		done ; \
 	fi
 

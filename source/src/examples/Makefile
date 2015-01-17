@@ -145,17 +145,22 @@ features :
 	rm -f ./a.out ;
 
 cobegin :
+	# needs -std=c++1y
 	set -x ; \
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in Cobegin ; do \
-		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ -std=c++1y ${CCFLAGS} $${ccflags} $${filename}.cc ; \
-			./a.out ; \
+	tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+	echo 'int main() {}' > $${tmpname} ; \
+	if ${CCAPP} -std=c++1y $${tmpname} > /dev/null 2>&1 ; then \
+		for filename in Cobegin ; do \
+			for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+				${INSTALLBINDIR}/u++ -std=c++1y ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+				./a.out ; \
+			done ; \
 		done ; \
-	done ; \
-	rm -f ./a.out ;
+	fi ; \
+	rm -f ./a.out $${tmpname} ;
 
 timeout :
 	set -x ; \
