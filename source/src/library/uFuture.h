@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 25 16:16:57 2014
-// Update Count     : 538
+// Last Modified On : Fri Jul  3 14:33:00 2015
+// Update Count     : 540
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -216,13 +216,13 @@ template<typename T, typename ServerData> _Monitor Future_ESM : public UPP::uBas
 
 
 template< typename Result, typename ServerData, typename Other >
-UPP::BinarySelector< UPP::OrCondition, UPP::UnarySelector< Future_ESM< Result, ServerData >, int >, UPP::UnarySelector< Other, int >, int > operator||( const Future_ESM< Result, ServerData > &s1, const Other &s2 ) {
-    return UPP::BinarySelector< UPP::OrCondition,UPP::UnarySelector< Future_ESM< Result, ServerData >, int >, UPP::UnarySelector< Other, int >, int >( UPP::UnarySelector< Future_ESM< Result, ServerData >, int >( s1 ), UPP::UnarySelector< Other, int >( s2 ) );
+UPP::BinarySelector< UPP::UnarySelector< Future_ESM< Result, ServerData > >, UPP::UnarySelector< Other > > operator||( Future_ESM< Result, ServerData > &s1, Other &s2 ) {
+    return UPP::BinarySelector< UPP::UnarySelector< Future_ESM< Result, ServerData > >, UPP::UnarySelector< Other > >( UPP::UnarySelector< Future_ESM< Result, ServerData > >( s1 ), UPP::UnarySelector< Other >( s2 ), UPP::Condition::Or );
 } // operator||
 
 template< typename Result, typename ServerData, typename Other >
-UPP::BinarySelector< UPP::AndCondition, UPP::UnarySelector< Future_ESM< Result, ServerData >, int >, UPP::UnarySelector< Other, int >, int > operator&&( const Future_ESM< Result, ServerData > &s1, const Other &s2 ) {
-    return UPP::BinarySelector< UPP::AndCondition, UPP::UnarySelector< Future_ESM< Result, ServerData >, int >, UPP::UnarySelector< Other, int >, int >( UPP::UnarySelector< Future_ESM< Result, ServerData >, int >( s1 ), UPP::UnarySelector< Other, int >( s2 ) );
+UPP::BinarySelector< UPP::UnarySelector< Future_ESM< Result, ServerData > >, UPP::UnarySelector< Other > > operator&&( Future_ESM< Result, ServerData > &s1, Other &s2 ) {
+    return UPP::BinarySelector< UPP::UnarySelector< Future_ESM< Result, ServerData > >, UPP::UnarySelector< Other > >( UPP::UnarySelector< Future_ESM< Result, ServerData > >( s1 ), UPP::UnarySelector< Other >( s2 ), UPP::Condition::And );
 } // operator&&
 
 
@@ -349,13 +349,13 @@ template<typename T> class Future_ISM {
 
 
 template< typename Result, typename Other >
-UPP::BinarySelector< UPP::OrCondition, Future_ISM< Result >, UPP::UnarySelector< Other, int >, int > operator||( const Future_ISM< Result > &s1, const Other &s2 ) {
-    return UPP::BinarySelector< UPP::OrCondition, Future_ISM< Result >, UPP::UnarySelector< Other, int >, int >( s1, UPP::UnarySelector< Other, int >( s2 ) );
+UPP::BinarySelector< UPP::UnarySelector< Future_ISM< Result > >, UPP::UnarySelector< Other > > operator||( Future_ISM< Result > &s1, Other &s2 ) {
+    return UPP::BinarySelector< UPP::UnarySelector< Future_ISM< Result > >, UPP::UnarySelector< Other > >( UPP::UnarySelector< Future_ISM< Result > > ( s1 ), UPP::UnarySelector< Other >( s2 ), UPP::Condition::Or );
 } // operator||
 
 template< typename Result, typename Other >
-UPP::BinarySelector< UPP::AndCondition, Future_ISM< Result >, UPP::UnarySelector< Other, int >, int > operator&&( const Future_ISM< Result > &s1, const Other &s2 ) {
-    return UPP::BinarySelector< UPP::AndCondition, Future_ISM< Result >, UPP::UnarySelector< Other, int >, int >( s1, UPP::UnarySelector< Other, int >( s2 ) );
+UPP::BinarySelector< UPP::UnarySelector<Future_ISM< Result > >, UPP::UnarySelector< Other > > operator&&( Future_ISM< Result > &s1, Other &s2 ) {
+    return UPP::BinarySelector< UPP::UnarySelector<Future_ISM< Result > >, UPP::UnarySelector< Other > >( UPP::UnarySelector<Future_ISM< Result > >( s1 ), UPP::UnarySelector< Other >( s2 ), UPP::Condition::And );
 } // operator&&
 
 

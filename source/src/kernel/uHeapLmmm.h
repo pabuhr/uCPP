@@ -6,9 +6,9 @@
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
-// Last Modified By : 
-// Last Modified On : Sat May 11 11:53:16 2013
-// Update Count     : 253
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun May 17 13:25:45 2015
+// Update Count     : 264
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,18 +31,6 @@
 
 #define FASTLOOKUP
 
-class MMInfoEntry;					// for profiler
-
-#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
-#define uMallReturnType size_t
-#else
-// Old gcc cannot handle typedef for size_t and global :: qualifier in namespace
-#if __U_WORDSIZE__ == 32
-#define uMallReturnType unsigned int
-#else
-#define uMallReturnType unsigned long int
-#endif
-#endif
 
 extern "C" void *malloc( size_t size ) __THROW;
 extern "C" void *calloc( size_t noOfElems, size_t elemSize ) __THROW;
@@ -50,9 +38,9 @@ extern "C" void *realloc( void *addr, size_t size ) __THROW;
 extern "C" void *memalign( size_t alignment, size_t size ) __THROW;
 extern "C" void *valloc( size_t size ) __THROW;
 extern "C" void free( void *addr ) __THROW;
-extern "C" uMallReturnType malloc_alignment( void *addr ) __THROW;
+extern "C" size_t malloc_alignment( void *addr ) __THROW;
 extern "C" bool malloc_zero_fill( void *addr ) __THROW;
-extern "C" uMallReturnType malloc_usable_size( void *addr ) __THROW;
+extern "C" size_t malloc_usable_size( void *addr ) __THROW;
 extern "C" void malloc_stats() __THROW;
 extern "C" int malloc_stats_fd( int fd ) __THROW;
 extern "C" int mallopt( int param_number, int value ) __THROW;
@@ -71,9 +59,9 @@ namespace UPP {
 	friend void *::valloc( size_t size ) __THROW;	// access: pageSize
 	friend void ::free( void *addr ) __THROW;	// access: doFree
 	friend int ::mallopt( int param_number, int value ) __THROW; // access: heapManagerInstance, setHeapExpand, setMmapStart
-	friend uMallReturnType ::malloc_alignment( void *addr ) __THROW; // access: Header, FreeHeader
+	friend size_t ::malloc_alignment( void *addr ) __THROW; // access: Header, FreeHeader
 	friend bool ::malloc_zero_fill( void *addr ) __THROW; // access: Storage
-	friend uMallReturnType ::malloc_usable_size( void *addr ) __THROW; // access: Header, FreeHeader
+	friend size_t ::malloc_usable_size( void *addr ) __THROW; // access: Header, FreeHeader
 	friend void ::malloc_stats() __THROW;
 	friend int ::malloc_stats_fd( int fd ) __THROW;
 	friend class uHeapControl;			// access: heapManagerInstance, boot
@@ -90,7 +78,7 @@ namespace UPP {
 #if __U_WORDSIZE__ == 32
 #ifdef __U_PROFILER__
 			// Used by uProfiler to find matching allocation data-structure for a deallocation.
-			MMInfoEntry *profileMallocEntry;
+			size_t *profileMallocEntry;
 #define			PROFILEMALLOCENTRY( header ) ( header->kind.real.profileMallocEntry )
 #else
 			uint32_t padding;		// unused
@@ -108,7 +96,7 @@ namespace UPP {
 		} kind;
 #if __U_WORDSIZE__ == 64 && defined( __U_PROFILER__ )
 		// Used by uProfiler to find matching allocation data-structure for a deallocation.
-		MMInfoEntry *profileMallocEntry;
+		size_t *profileMallocEntry;
 #define		PROFILEMALLOCENTRY( header ) ( header->profileMallocEntry )
 #endif // __U_WORDSIZE__ == 64 && defined( __U_PROFILER__ )
 	    } header; // Header

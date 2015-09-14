@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  8 14:30:03 2014
-// Update Count     : 167
+// Last Modified On : Mon Apr 27 23:12:31 2015
+// Update Count     : 174
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,8 +30,8 @@ using std::cerr;
 using std::endl;
 #include <string>
 using std::string;
-#include <cstdio>
-#include <cstdlib>					// getenv, exit
+#include <cstdio>					// stderr, stdout, perror, fprintf
+#include <cstdlib>					// getenv, exit, mkstemp
 #include <unistd.h>					// execvp, fork, unlink
 #include <sys/wait.h>					// wait
 
@@ -42,6 +42,9 @@ using std::string;
 string compiler_name( CCAPP );				// path/name of C compiler
 
 string D__U_GCC_BPREFIX__( "-D__U_GCC_BPREFIX__=" );
+
+char tmpname[] = P_tmpdir "/uC++XXXXXX";
+int tmpfilefd = -1;
 
 
 bool prefix( string arg, string pre ) {
@@ -80,6 +83,23 @@ void checkEnv( const char *args[], int &nargs ) {
 } // checkEnv
 
 
+void rmtmpfile() {
+    if ( unlink( tmpname ) == -1 ) {			// remove tmpname
+	perror ( "uC++ Translator error: cpp failed" );
+	exit( EXIT_FAILURE );
+    } // if
+    tmpfilefd = -1;					// mark closed
+} // rmtmpfile
+
+
+void sigTermHandler( int signal ) {
+    if ( tmpfilefd != -1 ) {				// RACE, file created ?
+	rmtmpfile();					// remove
+	exit( EXIT_FAILURE );				// terminate 
+    } // if
+} // sigTermHandler
+
+
 void Stage1( const int argc, const char * const argv[] ) {
     int code;
     int i;
@@ -98,6 +118,9 @@ void Stage1( const int argc, const char * const argv[] ) {
     int nargs = 1;					// number of arguments in args list; 0 => command name
     const char *uargs[20];				// leave space for 20 additional u++-cpp command line values
     int nuargs = 1;					// 0 => command name
+
+    signal( SIGINT,  sigTermHandler );
+    signal( SIGTERM, sigTermHandler );
 
     // process all the arguments
 
@@ -125,7 +148,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    } else if ( arg == "-D" && prefix( argv[i + 1], "__GNU" ) ) {
 		i += 1;					// and the argument
 
-	    // strip u++ flags controlling cpp step
+	    // strip flags controlling cpp step
 
 	    } else if ( arg == "-D__U_CPP__" ) {
 		cpp_flag = true;
@@ -139,7 +162,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 		upp_flag = true;
 	    } else if ( prefix( arg, D__U_GCC_BPREFIX__ ) ) {
 		bprefix = arg.substr( D__U_GCC_BPREFIX__.size() );
-	    } else if ( arg == "-D" && prefix( argv[i + 1], "__U_GCC_BPREFIX__=" ) ) {
+	    } else if ( arg == "-D" && prefix( argv[i + 1], D__U_GCC_BPREFIX__.substr(2) ) ) {
 		bprefix = string( argv[i + 1] ).substr( D__U_GCC_BPREFIX__.size() - 2 );
 		i += 1;					// and the argument
 #ifdef __DEBUG_H__
@@ -256,15 +279,14 @@ void Stage1( const int argc, const char * const argv[] ) {
 
     // Create a temporary file to store output of the C preprocessor.
 
-    char tmpname[] = P_tmpdir "/uC++XXXXXX";
-    int tmpfile = mkstemp( tmpname );
-    if ( tmpfile == -1 ) {
+    tmpfilefd = mkstemp( tmpname );
+    if ( tmpfilefd == -1 ) {
 	perror( "uC++ Translator error: cpp level, mkstemp" );
 	exit( EXIT_FAILURE );
     } // if
 
 #ifdef __U_DEBUG_H__
-    cerr << "tmpname:" << tmpname << " tmpfile:" << tmpfile << endl;
+    cerr << "tmpname:" << tmpname << " tmpfilefd:" << tmpfilefd << endl;
 #endif // __U_DEBUG_H__
 
     // Run the C preprocessor and save the output in tmpfile.
@@ -303,20 +325,20 @@ void Stage1( const int argc, const char * const argv[] ) {
 #endif // __U_DEBUG_H__
 
     if ( WIFSIGNALED(code) != 0 ) {			// child failed ?
-	unlink( tmpname );				// remove tmpname
+	rmtmpfile();					// remove tmpname
 	cerr << "uC++ Translator error: cpp failed with signal " << WTERMSIG(code) << endl;
 	exit( EXIT_FAILURE );
     } // if
 
     if ( WEXITSTATUS(code) != 0 ) {			// child error ?
-	unlink( tmpname );				// remove tmpname
+	rmtmpfile();					// remove tmpname
 	exit( WEXITSTATUS( code ) );			// do not continue
     } // if
 
     // If -U++ flag specified, run the u++-cpp preprocessor on the temporary file, and output is written to standard
     // output.  Otherwise, run the u++-cpp preprocessor on the temporary file and save the result into the output file.
 
-    if ( upp_flag || fork() == 0 ) {			// conditional fork ?
+    if ( fork() == 0 ) {				// child runs CFA
 	uargs[0] = ( *new string( bprefix + "/u++-cpp" ) ).c_str();
 
 	uargs[nuargs] = tmpname;
@@ -331,7 +353,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	uargs[nuargs] = NULL;				// terminate argument list
 
 #ifdef __U_DEBUG_H__
-	cerr << "u++-cpp nuargs: " << nuargs << endl;
+	cerr << "u++-cpp nuargs: " << o_name << " " << upp_flag << " " << nuargs << endl;
 	for ( i = 0; uargs[i] != NULL; i += 1 ) {
 	    cerr << uargs[i] << " ";
 	} // for
@@ -350,10 +372,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 #endif // __U_DEBUG_H__
 
     // Must unlink here because file must exist across execvp.
-    if ( unlink( tmpname ) == -1 ) {
-	perror( "uC++ Translator error: cpp level, unlink" );
-	exit( EXIT_FAILURE );
-    } // if
+    rmtmpfile();					// remove tmpname
 
     if ( WIFSIGNALED(code) ) {				// child failed ?
 	cerr << "uC++ Translator error: u++-cpp failed with signal " << WTERMSIG(code) << endl;
@@ -480,7 +499,7 @@ int main( const int argc, const char * const argv[], const char * const env[] ) 
 #endif // __U_DEBUG_H__
 	Stage2( argc, argv );
     } else {
-	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl; 
+	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 	exit( EXIT_FAILURE );
     } // if
 } // main

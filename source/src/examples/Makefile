@@ -10,10 +10,6 @@ include ${PACKAGE}/CONFIG
 
 SRCDIR = ${PACKAGE}/src/examples
 
-ifneq (${CPP11},)
-	CCFLAGS += -std=${CPP11}
-endif
-
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
 	CCFLAGS += -m${WORDSIZE}
 endif
@@ -136,7 +132,7 @@ features :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 ; do \
+	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
@@ -151,11 +147,11 @@ cobegin :
 		multi=${MULTI} ; \
 	fi ; \
 	tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
-	echo 'int main() {}' > $${tmpname} ; \
-	if ${CCAPP} -std=c++1y $${tmpname} > /dev/null 2>&1 ; then \
+	echo '#if __cplusplus <= 201103L\n#error unsupport\n#endif\n' > $${tmpname} ; \
+	if ${CCAPP} -E -std=c++1y $${tmpname} > /dev/null 2>&1 ; then \
 		for filename in Cobegin ; do \
 			for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-				${INSTALLBINDIR}/u++ -std=c++1y ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+				${INSTALLBINDIR}/u++ ${CCFLAGS} -std=c++1y $${ccflags} $${filename}.cc ; \
 				./a.out ; \
 			done ; \
 		done ; \

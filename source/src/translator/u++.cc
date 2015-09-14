@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 10 20:51:26 2014
-// Update Count     : 903
+// Last Modified On : Mon May 18 08:35:56 2015
+// Update Count     : 917
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -97,6 +97,8 @@ int main( int argc, char *argv[] ) {
 
     string compiler_path( CCAPP );			// path/name of C compiler
     string compiler_name;				// name of C compiler
+
+    string cpp11;					// C++11 version
 
     bool nonoptarg = false;				// indicates non-option argument specified
     bool link = true;					// linking as well as compiling
@@ -225,13 +227,12 @@ int main( int argc, char *argv[] ) {
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-std=" ) || prefix( arg, "--std=" ) ) {
-		langstd = arg.substr( arg[1] == '-' ? 6 : 5 ); // strip the -std= flag
+		string langstd = arg.substr( arg[1] == '-' ? 6 : 5 ); // strip the -std= flag
 		if ( langstd == "c++0x" || langstd == "gnu++0x" ||
 		     langstd == "c++11" || langstd == "gnu++11" ||
 		     langstd == "c++1y" || langstd == "gnu++1y"
 		    ) {
-		    args[nargs] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
-		    nargs += 1;
+		    cpp11 = langstd;			// unsure if other values are valid
 		} // if
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
@@ -734,13 +735,22 @@ int main( int argc, char *argv[] ) {
 	if ( tcpu == "ia64" ) {
 	    args[nargs] = "-fno-optimize-sibling-calls"; // TEMPORARY: gcc 3 code gen problem on ia64
 	    nargs += 1;
-	} else if ( tcpu == "i386" ) {
-	    args[nargs] = "-march=i586";		// minimum  architecture level for __sync_fetch_and_add
-	    nargs += 1;
+//	} else if ( tcpu == "i386" ) {
+//	    args[nargs] = "-march=i586";		// minimum architecture level for __sync_fetch_and_add
+//	    nargs += 1;
 	} else if ( tcpu == "sparc" ) {
-	    args[nargs] = "-mcpu=v9";			// minimum  architecture level for __sync_fetch_and_add
+	    args[nargs] = "-mcpu=v9";			// minimum architecture level for __sync_fetch_and_add
 	    nargs += 1;
 	} // if
+	// minimum c++0x
+	if ( cpp11.length() == 0 ) {
+	    args[nargs] = ( *new string( string("-std=") + CPP11 ) ).c_str(); // default
+	} else {
+	    args[nargs] = ( *new string( string("-std=") + cpp11 ) ).c_str(); // user supplied
+	} // if
+	nargs += 1;
+	args[nargs] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
+	nargs += 1;
 	args[nargs] = "-no-integrated-cpp";
 	nargs += 1;
 	args[nargs] = ( *new string( string("-B") + Bprefix + "/" ) ).c_str();

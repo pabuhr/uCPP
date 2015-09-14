@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 15 16:42:42 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 18:48:08 2005
-// Update Count     : 54
+// Last Modified On : Mon May 11 23:09:51 2015
+// Update Count     : 55
 // 
 
 #include <uSemaphore.h>
@@ -23,7 +23,7 @@ template<typename ELEMTYPE> class BoundedBuffer {
 	BoundedBuffer( BoundedBuffer & );					// no copy
 	BoundedBuffer &operator=( BoundedBuffer & );		// no assignment
   public:
-	BoundedBuffer( const int size = 10 ) : size( size ), full( 0 ), empty( size ) {
+	BoundedBuffer( const unsigned int size = 10 ) : size( size ), full( 0 ), empty( size ) {
 		front = back = 0;
 		Elements = new ELEMTYPE[size];
 	} // BoundedBuffer::BoundedBuffer

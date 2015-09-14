@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 17 23:39:13 2014
-// Update Count     : 611
+// Last Modified On : Sat Jul 11 12:46:07 2015
+// Update Count     : 612
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -129,10 +129,6 @@ void uCluster::processorPause() {
 		uAbort( "internal error, sigprocmask" );
 	    } // if
 
-#if defined( __i386__ ) || defined( __x86_64__ )
-	    uThisProcessor().startTime = uRead_tsc();
-#endif
-
 #ifdef __U_DEBUG_H__
 	    uDebugPrt( "(uCluster &)%p.processorPause, after sigpause\n", this );
 #endif // __U_DEBUG_H__
@@ -229,11 +225,6 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 	// do.
 
 	if ( ! idleProcessors.empty() && ( &uThisCluster() != this || ! readyQueue->empty() ) ) {
-#if defined( __i386__ ) || defined( __x86_64__ )
-//	unsigned long long int duration = uRead_tsc() - uThisProcessor().startTime;
-//	if ( ! idleProcessors.empty() && ( &uThisCluster() != this || duration > 300000 ) ) {
-//	    uThisProcessor().startTime = uRead_tsc();
-#endif
 	    uPid_t pid = idleProcessors.dropHead()->processor().pid;
 	    idleProcessorsCnt -= 1;
 	    readyIdleTaskLock.release();		// don't hold lock while sending SIGALRM

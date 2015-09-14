@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Tue Mar 26 23:01:30 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 23:56:21 2011
-// Update Count     : 146
+// Last Modified On : Tue Feb 17 19:21:07 2015
+// Update Count     : 147
 // 
 
 #include <uBarrier.h>
@@ -76,7 +76,7 @@ void worker::main() {
 				} // for
 			} // for
 		} // _Enable
-	} _CatchResume ( Rev &r ) ( int id, int round ) {
+	} _CatchResume ( Rev &r ) {
 		handled[id] += 1;								// count exceptions handled by each task
 		//osacquire( cerr ) << "handler, exception id: " << e.ticket << endl;
 		assert( r.ticket < NTASK*((NTASK-1)*ROUNDS+1) ); // subscript error ?

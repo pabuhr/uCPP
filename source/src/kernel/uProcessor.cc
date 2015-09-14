@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 23 18:13:19 2014
-// Update Count     : 2083
+// Last Modified On : Sat Jul 11 12:44:21 2015
+// Update Count     : 2089
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -573,9 +573,6 @@ void uProcessorKernel::main() {
     uThisProcessor().procTask->currCoroutine = this;
 #endif // __U_MULTI__
 
-#if defined( __i386__ ) || defined( __x86_64__ )
-    uThisProcessor().startTime = uRead_tsc();
-#endif
 
     uBaseTask *readyTask;
 

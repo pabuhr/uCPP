@@ -1,8 +1,0 @@
-#!/bin/sh
-rm -f core
-while [ T = T ] ; do
-	( echo 1; sleep 1; echo 2; sleep 1; echo 3; sleep 1; echo 4; sleep 1; ) | ./a.out ;
-	sleep 2			# wait for core to be dumped
-    if [ -f core ] ; then break; fi
-	echo "successful completion"
-done

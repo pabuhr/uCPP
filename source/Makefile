@@ -59,9 +59,9 @@ MAXENTRYBITS ?= 128
 
 STATISTICS ?= TRUE
 
-## Define if the kernel is build with C++11 (-std=): c++0x, c++11, c++1y
+## Define version of C++11 (-std=): c++0x (minimum), c++11, c++1y
 
-CPP11 ?=
+CPP11 ?= c++0x
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -204,23 +204,13 @@ configure :
 
 	printf "Checking compiler..." ; \
 	if which ${CCAPP} > /dev/null ; then \
-		if [ "${CPU}" = "sparc" ] ; then \
-			tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
-			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1;\n#endif\n}' > $${tmpname} ; \
-			if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
-				printf "Version of gcc too old for build, requires at least gcc 4.2.1\n" ; \
-				rm -f a.out $${tmpname} ; \
-				rm -f CONFIG ; \
-				exit 1 ; \
-			fi ; \
-		else \
-			echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 0 || __GNUC__ == 4 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ >= 3;\n#endif\n}' > $${tmpname} ; \
-			if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
-				printf "Version of gcc too old for build, requires at least gcc 4.0.3\n" ; \
-				rm -f a.out $${tmpname} ; \
-				rm -f CONFIG ; \
-				exit 1 ; \
-			fi ; \
+		tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+		echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 5;\n#endif\n}' > $${tmpname} ; \
+		if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
+			printf "Version of gcc too old for build, requires at least gcc 4.5.0\n" ; \
+			rm -f a.out $${tmpname} ; \
+			rm -f CONFIG ; \
+			exit 1 ; \
 		fi ; \
 		rm -f a.out $${tmpname} ; \
 		printf "found compiler ${CCAPP}\n" ; \

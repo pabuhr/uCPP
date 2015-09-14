@@ -9,10 +9,6 @@ CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/u++
 
 CCFLAGS = -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
 
-ifneq (${CPP11},)
-    CCFLAGS += -std=${CPP11}
-endif
-
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
     CCFLAGS += -m${WORDSIZE}
 endif
@@ -20,7 +16,7 @@ endif
 #CCFLAGS += -D__U_PROFILER__
 #CCFLAGS += -profile -D__U_PROFILEABLE_ONLY__
 
-#CCFLAGS += -I/home/pabuhr/include/i686-linux -DKNOT -DBIGGER_FD_SETSIZE2 # -DBIGGER_FD_SETSIZE uKnot/Linux
+#CCFLAGS += -I/home/pabuhr/include/x86_64-linux -DKNOT -DBIGGER_FD_SETSIZE2 # -DBIGGER_FD_SETSIZE uKnot/Linux
 #CCFLAGS += -DFD_SETSIZE=65536 -DKNOT	# uKnot/Solaris
 
 HOSTNAME = ${shell hostname}

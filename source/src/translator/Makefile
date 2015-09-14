@@ -19,11 +19,7 @@ include ${PACKAGE}/src/MakeTools
 CC := ${CCBUILD}
 
 ## Override from MakeTools
-CCFLAGS := -Wall -I. -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTVENDOR=\"${TVENDOR}\" -DTCPU=\"${TCPU}\" -DTOS=\"${TOS}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DWORDSIZE=${WORDSIZE}
-
-ifneq (${CPP11},)
-	CCFLAGS += -std=${CPP11}
-endif
+CCFLAGS := -Wall -I. -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DTVENDOR=\"${TVENDOR}\" -DTOS=\"${TOS}\" -DTCPU=\"${TCPU}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DCPP11=\"${CPP11}\" -DWORDSIZE=${WORDSIZE}
 
 ifeq (${STATISTICS},TRUE)
 	CCFLAGS += -DSTATISTICS
@@ -44,7 +40,7 @@ CPPNAME = cc1plus
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
-	CCFLAGS += -g -Wall # -O2
+	CCFLAGS += -g -Wall -O2 #
 else
 	CCFLAGS += -O2 # -DNDEBUG
 endif
@@ -121,7 +117,7 @@ install : all ${INSTALLFILES}
 
 test :
 	set -x ; \
-	for filename in Operators AcceptStmt SelectStmt BreakStmt Resumption CatchResume Exception Termination Event MutexTaskParms Constructor \
+	for filename in Operators AcceptStmt SelectStmt BreakStmt Finally CatchResume Exception Termination Event MutexTaskParms Constructor \
 			Lookup InheritanceException Template Friend Inheritance STL Types C++11 ; do \
 		${INSTALLBINDIR}/u++ ${CCFLAGS} -Wno-unused-label -c test$${filename}.cc ; \
 	done ; \

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  8 08:55:06 2015
-// Update Count     : 2977
+// Last Modified On : Mon May 11 23:13:17 2015
+// Update Count     : 2980
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -957,7 +957,7 @@ namespace UPP {
     
     __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
     __typeof__( ::abort ) *RealRtn::abort __attribute__(( noreturn ));
-    __typeof__( ::select ) *RealRtn::select;
+    __typeof__( ::pselect ) *RealRtn::pselect;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
 #if defined( __linux__ ) || defined( __freebsd__ )
@@ -983,9 +983,9 @@ namespace UPP {
 	INIT_REALRTN( exit, version );
 	INIT_REALRTN( abort, version );
 #if defined( __solaris__ ) && FD_SETSIZE > 1024 && __U_WORDSIZE__ == 32
-	select = (__typeof__(select))interposeSymbol( "select_large_fdset", version );
+	pselect = (__typeof__(pselect))interposeSymbol( "select_large_fdset", version );
 #else
-	INIT_REALRTN( select, version );
+	INIT_REALRTN( pselect, version );
 #endif // __solaris__
 	set_terminate = (__typeof__(std::set_terminate)*)interposeSymbol( "_ZSt13set_terminatePFvvE", version );
 	set_unexpected = (__typeof__(std::set_unexpected)*)interposeSymbol( "_ZSt14set_unexpectedPFvvE", version );
@@ -1028,29 +1028,6 @@ extern "C" int dl_iterate_phdr( int (*callback)( dl_phdr_info *, size_t, void * 
 
 void uKernelModule::startup() {
     uKernelModule::kernelModuleInitialized = true;
-
-//     volatile uKernelModule::uKernelModuleData *km;
-// #if defined( __ia64__ ) && defined( __linux__ ) && defined( __U_MULTI__ )
-//     asm volatile ("addl %0 = @ltoff(@tprel(_ZN13uKernelModule17uKernelModuleBootE#)), gp;;\n"
-//                   "ld8 %0 = [%0];;\n"
-//                   "add %0 = %0, r13;;\n" : "=r" (km) );
-// #elif defined( __i386__ ) && ( defined( __linux__ ) || defined( __freebsd__ ) ) && defined( __U_MULTI__ )
-//     asm volatile ("movl %%gs:0,%0\n"
-// 		  "leal _ZN13uKernelModule17uKernelModuleBootE@ntpoff(%0),%0"
-// 		  : "=r" (km) );
-// #elif defined( __x86_64__ ) && ( defined( __linux__ ) || defined( __freebsd__ ) ) && defined( __U_MULTI__ )
-//     asm volatile ("movq %%fs:0,%0\n"
-// 		  "leaq _ZN13uKernelModule17uKernelModuleBootE@tpoff(%0),%0"
-// 		  : "=r" (km) );
-// #elif defined( __sparc__ ) && defined( __U_MULTI__ )
-//     asm volatile ("sethi %%tle_hix22(_ZN13uKernelModule17uKernelModuleBootE),%0\n\t"
-// 		  "xor %0, %%tle_lox10(_ZN13uKernelModule17uKernelModuleBootE), %0\n\t"
-// 		  "add %%g7, %0, %0" : "=r" (km) );
-// #else
-//     // use statically allocated kernel module
-//     km = &uKernelModule::uKernelModuleBoot;
-// #endif
-//     km->ctor();
 
     // No concurrency, so safe to make direct call through TLS pointer.
     uKernelModule::uKernelModuleBoot.ctor();

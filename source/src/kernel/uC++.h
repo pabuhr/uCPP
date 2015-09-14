@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  7 23:35:04 2015
-// Update Count     : 5591
+// Last Modified On : Sat Jul 11 12:47:38 2015
+// Update Count     : 5600
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -204,23 +204,11 @@ namespace UPP {
 
 _Task uSystemTask;					// forward declaration
 class uBaseCoroutine;					// forward declaration
-class
-#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
-__attribute__(( may_alias ))
-#endif
-    uBaseTask;						// forward declaration
+class __attribute__(( may_alias )) uBaseTask;		// forward declaration
 class uBaseSpinLock;					// forward declaration
-class
-#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
-    __attribute__(( may_alias ))
-#endif
-    uSpinLock;						// forward declaration
+class __attribute__(( may_alias )) uSpinLock;		// forward declaration
 class uLock;						// forward declaration
-class
-#if defined( __GNUC__ ) && (__GNUC__ >= 4 && __GNUC_MINOR__ > 3)
-    __attribute__(( may_alias ))
-#endif
-    uOwnerLock;						// forward declaration
+class __attribute__(( may_alias )) uOwnerLock;		// forward declaration
 class uCondLock;					// forward declaration
 class uProcessor;					// forward declaration
 class uDefaultScheduler;				// forward declaration
@@ -378,7 +366,7 @@ namespace UPP {
 
 	static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
 	static __typeof__( ::abort ) *abort __attribute__(( noreturn ));
-	static __typeof__( ::select ) *select;
+	static __typeof__( ::pselect ) *pselect;
 	static __typeof__( std::set_terminate ) *set_terminate;
 	static __typeof__( std::set_unexpected ) *set_unexpected;
 #if defined( __linux__ ) || defined( __freebsd__ )
@@ -1405,19 +1393,20 @@ class uBaseCoroutine : public UPP::uMachContext {
     } // uBaseCoroutine::resume
 
     void suspend() {					// restarts the coroutine that most recently resumed this coroutine
+	uBaseCoroutine &c = uThisCoroutine();		// optimization
 #ifdef __U_DEBUG__
-	if ( last == NULL ) {
+	if ( c.last == NULL ) {
 	    uAbort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
 		    "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
-		    getName(), this );
+		    c.getName(), this );
 	} // if
-	if ( ! last->notHalted ) {			// check if terminated
+	if ( ! c.last->notHalted ) {			// check if terminated
 	    uAbort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
 		    "Possible cause is terminated coroutine's main routine has already returned.",
-		    uThisCoroutine().getName(), &uThisCoroutine(), last->getName(), last );
+		    getName(), this, c.last->getName(), c.last );
 	} // if
 #endif // __U_DEBUG__
-	last->contextSw2();
+	c.last->contextSw2();
 
 	_Enable <uBaseCoroutine::Failure>;		// implicit poll
     } // uBaseCoroutine::suspend
@@ -2616,8 +2605,6 @@ class uProcessor {
     uProcessorDL idleRef;				// double link field: list of idle processors
     uProcessorDL processorRef;				// double link field: list of processors on a cluster
     uProcessorDL globalRef;				// double link field: list of all processors
-// TEMPORARY
-    unsigned long long int startTime;
 
     void createProcessor( uCluster &cluster, bool detached, int ms, int spin );
     void fork( uProcessor *processor );
@@ -3064,9 +3051,6 @@ namespace UPP {
 	static void prepareTask( uBaseTask *task );
 	static void startTask();
 	static void finishTask();
-#if defined( __GNUC__) && ! (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 1)
-      public:						// earlier gcc cannot handle friendship for PthreadLock
-#endif
 	static void startup();
       public:
 	static bool initialized();

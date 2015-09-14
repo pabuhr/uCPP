@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov 28 07:57:55 2014
-// Update Count     : 543
+// Last Modified On : Tue May 12 06:50:00 2015
+// Update Count     : 545
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,12 +51,12 @@ void exit( int retcode ) __THROW {			// interpose
     uKernelModule::retCode = retcode;
     RealRtn::exit( retcode );				// call the real exit
     // CONTROL NEVER REACHES HERE!
-    assert( false );
 } // exit
 
 
 void abort() __THROW {					// interpose
     uAbort( NULL );
+    // CONTROL NEVER REACHES HERE!
 } // uAbort
 
 
@@ -139,6 +139,7 @@ void uAbort( const char *fmt, ... ) {
     } // if
 
     _exit( EXIT_FAILURE );
+    // CONTROL NEVER REACHES HERE!
 } // uAbort
 
 

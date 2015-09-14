@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 16 21:21:24 2014
-// Update Count     : 119
+// Last Modified On : Thu Feb  5 23:23:10 2015
+// Update Count     : 120
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -143,6 +143,7 @@ keyword_t key[] = {
     { "_Else", UELSE },
     { "_Enable", ENABLE },
     { "_Event", EVENT },
+    { "_Finally", FINALLY },
     { "_Mutex", MUTEX },
     { "_Nomutex", NOMUTEX },
     { "_PeriodicTask", PTASK },

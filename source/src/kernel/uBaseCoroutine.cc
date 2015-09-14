@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 17 21:35:37 2012
-// Update Count     : 537
+// Last Modified On : Wed Apr 29 20:32:38 2015
+// Update Count     : 538
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -344,20 +344,20 @@ void uBaseCoroutine::UnhandledException::defaultTerminate() const {
     } // if
 } // uBaseCoroutine::UnhandledException::defaultTerminate
 
-void uBaseCoroutine::handleUnhandled( UnhandledException *ex ) {
-    UnhandledException *cpy = ex->duplicate();
+void uBaseCoroutine::handleUnhandled( UnhandledException *event ) {
+    UnhandledException *cpy = event->duplicate();
     _Resume uBaseCoroutine::UnhandledException( cpy ) _At resumer();
     notHalted = false;
 } // uBaseCoroutine::handleUnhandled
 
-void uBaseCoroutine::handleUnhandled( uBaseEvent *ex ) {
+void uBaseCoroutine::handleUnhandled( uBaseEvent *event ) {
 #   define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
 #   define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
     char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
-    uBaseEvent::RaiseKind raisekind = ex == NULL ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
+    uBaseEvent::RaiseKind raisekind = event == NULL ? uBaseEvent::ThrowRaise : event->getRaiseKind();
     strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
     uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
-    _Resume uBaseCoroutine::UnhandledException( ex == NULL ? ex : ex->duplicate(), msg ) _At resumer();
+    _Resume uBaseCoroutine::UnhandledException( event == NULL ? event : event->duplicate(), msg ) _At resumer();
     notHalted = false;				// terminate coroutine
 } // uBaseCoroutine::handleUnhandled
 

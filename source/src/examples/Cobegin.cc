@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 27 18:20:07 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  1 22:58:34 2015
-// Update Count     : 30
+// Last Modified On : Thu Jul 23 09:32:23 2015
+// Update Count     : 31
 // 
 
 #include <uCobegin.h>
@@ -78,7 +78,7 @@ void uMain::main() {
     WAIT( tp );
     auto tf = START( f, 3, 5.2 ); // f( 3, 5.2 )
     std::cout << "m2" << std::endl;			// concurrent
-    std::cout << WAIT( tf ) << std::endl;;
+    std::cout << WAIT( tf ) << std::endl;
 } // uMain::main
 
 // Local Variables: //

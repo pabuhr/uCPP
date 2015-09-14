@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 16 15:32:39 2015
-// Update Count     : 187
+// Last Modified On : Mon May 11 23:09:01 2015
+// Update Count     : 188
 // 
 
 #if defined( __U_CPLUSPLUS__ )
@@ -51,12 +51,14 @@ template <class ELEMTYPE> class BoundedBuffer {
 		pthread_cond_init( &Full, NULL );
 		pthread_cond_init( &Empty, NULL );
 	}
+
 	~BoundedBuffer() {
 		pthread_mutex_lock( &mutex );
 		pthread_cond_destroy( &Empty );
 		pthread_cond_destroy( &Full );
 		pthread_mutex_destroy( &mutex );
 	}
+
 	int query() { return count; }
 
 	void insert( ELEMTYPE elem ) {

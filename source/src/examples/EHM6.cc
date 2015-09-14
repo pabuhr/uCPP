@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 14 09:14:27 2009
-// Update Count     : 27
+// Last Modified On : Tue Feb 17 19:21:35 2015
+// Update Count     : 28
 // 
 
 #include <iostream>
@@ -55,7 +55,7 @@ void uMain::main() {
 			gg.f( x, y );
 			osacquire( cout ) << "try<R2,rtn2>, x:" << x << " y:" << y << endl;
 		} _CatchResume( R1 ) {
-		} _CatchResume( gg.R2 ) ( int x, char y ) {
+		} _CatchResume( gg.R2 ) {
 			osacquire( cout ) << "rtn2, i:" << x << " c:" << y << endl;
 			x = 2; y = 'c';									// change x, y
 		} // try
@@ -63,7 +63,7 @@ void uMain::main() {
 			ff.g( x, y );
 			osacquire( cout ) << "try<R1>, x:" << x << " y:" << y << endl;
 		} _CatchResume( R1 ) {
-		} _CatchResume( gg.R2 ) ( int x, char y ) {
+		} _CatchResume( gg.R2 ) {
 			osacquire( cout ) << "rtn2, i:" << x << " c:" << y << endl;
 			x = 2; y = 'c';									// change x, y
 		} // try

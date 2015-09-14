@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 24 21:53:09 2014
-// Update Count     : 199
+// Last Modified On : Wed Apr 29 20:45:09 2015
+// Update Count     : 200
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -123,7 +123,8 @@ void putoutput( token_t *token ) {
       case USER_LITERAL:
 	*yyout << token->hash->text;			// no space
 	break;
-      case CONN_OR:					// do not print these keywords
+      case AT:						// do not print these keywords
+      case CONN_OR:
       case CONN_AND:
       case SELECT_LP:
       case SELECT_RP:
@@ -138,7 +139,6 @@ void putoutput( token_t *token ) {
       case PTASK:
       case RTASK:
       case STASK:
-      case AT:
       case DISABLE:
       case ENABLE:
       case RESUME:

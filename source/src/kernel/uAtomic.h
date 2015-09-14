@@ -6,9 +6,9 @@
 // 
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
-// Last Modified By : 
-// Last Modified On : Sat May 11 11:52:57 2013
-// Update Count     : 75
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jul 12 16:56:19 2015
+// Update Count     : 142
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@
 
 
 #if defined( __i386__ ) || defined( __x86_64__ )
-static inline unsigned long long int uRead_tsc() {
+static inline unsigned long long int uRdtsc() {
     unsigned long long int result;
 #if defined( __x86_64__ )
     asm volatile ( "rdtsc\n"
@@ -40,96 +40,63 @@ static inline unsigned long long int uRead_tsc() {
 	);
 #elif defined( __i386__ )
     asm volatile ( "rdtsc" : "=A" (result) );
-#else
-    #error uC++ : internal error, unsupported architecture
 #endif
     return result;
-} // uRead_tsc
+} // uRdtsc
 #endif
 
 
-inline int uTestSet( unsigned int &lock ) {
-#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
-    return __sync_lock_test_and_set( &lock, 1 );
-#elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
-    return __sync_lock_test_and_set( &lock, 1 );
+static inline void uPause() {				// pause to prevent excess processor bus usage
+#if defined( __sparc )
+    __asm__ __volatile__ ( "rd %ccr,%g0" );
+#elif defined( __i386 ) || defined( __x86_64 )
+    __asm__ __volatile__ ( "pause" : : : );
 #else
-    int result = 1;
-    asm( "xchgl %0,%1" : "+q" (result), "+m" (lock) );
-    return result;
+    // do nothing
 #endif
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
+} // uPause
+
+
+template< typename T > static inline bool uTestSet( volatile T &lock ) {
+    //return __sync_lock_test_and_set( &lock, 1 );
+    return __atomic_test_and_set( &lock, __ATOMIC_ACQUIRE );
 } // uTestSet
 
-
-inline void uTestReset( unsigned int &lock ) {
-#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
-    __sync_lock_release( &lock );
-#elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
-    __sync_lock_release( &lock );
-#else
-    lock = 0;					// unlock
-#endif
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
+template< typename T > static inline void uTestReset( volatile T &lock ) {
+    //__sync_lock_release( &lock );
+    __atomic_clear( &lock, __ATOMIC_RELEASE );
 } // uTestReset
 
 
-template< typename T > inline bool uCompareAssign( volatile T &loc, T comp, T replacement ) {
-#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ )
-#ifdef __sync_bool_compare_and_swap			// broken macro, replace it
+template< typename T > static inline T uFetchAssign( volatile T &loc, T replacement ) {
+    //return __sync_lock_test_and_set( &loc, replacement );
+    return __atomic_exchange_n( &loc, replacement, __ATOMIC_ACQUIRE );
+} // uFetchAssign
+
+
+template< typename T > static inline T uFetchAdd( volatile T &counter, int increment ) {
+    //return __sync_fetch_and_add( &counter, increment );
+    return __atomic_fetch_add( &counter, increment, __ATOMIC_SEQ_CST );
+} // uFetchAdd
+
+
+template< typename T > static inline bool uCompareAssign( volatile T &loc, T comp, T replacement ) {
+#if ( defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) ) && defined( __sync_bool_compare_and_swap ) // broken macro, replace it
 #if __U_WORDSIZE__ == 32
     return __sync_bool_compare_and_swap_si((int *)(void *)(&loc),(int)(comp),(int)(replacement));
 #else
     return __sync_bool_compare_and_swap_di((long *)(void *)(&loc),(long)(comp),(long)(replacement));
 #endif // __U_WORDSIZE__ == 32
 #else
-    return __sync_bool_compare_and_swap( &loc, comp, replacement );
-#endif // __sync_bool_compare_and_swap
-#elif defined( __sparc__ )
-    return __sync_bool_compare_and_swap( &loc, comp, replacement );
-#elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
-    return __sync_bool_compare_and_swap( &loc, comp, replacement );
-#else
-    unsigned char ret;
-    asm volatile (
-#ifdef __U_MULTI__
-	"lock "
-#endif // ! __U_MULTI__
-	"cmpxchg %3, %0\n\t"
-	"sete %2" : "+m" (loc), "+a" (comp), "=q" (ret) : "r" (replacement) );
-    return ret;
-#endif
-#else
-    #error uC++ : internal error, unsupported architecture
+    //return __sync_bool_compare_and_swap( &loc, comp, replacement );
+    return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 #endif
 } // uCompareAssign
 
 
-template< typename T > inline T uFetchAdd( volatile T &counter, int amt ) {
-#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) || defined( __sparc__ )
-    return __sync_fetch_and_add( &counter, amt );
-#elif defined( __i386__ ) || defined( __x86_64__ )
-#if defined( __GNUC__ ) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 2 || __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >= 1)
-    return __sync_fetch_and_add( &counter, amt );
-#else
-    asm volatile (
-#ifdef __U_MULTI__
-	"lock "
-#endif // ! __U_MULTI__
-	"xaddl %0,%1" : "+r" (amt), "+m" (counter) );
-    return amt;
-#endif
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
-} // uFetchAdd
+template< typename T > static inline bool uCompareAssignValue( volatile T &loc, T &comp, T replacement ) {
+    return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+} // uCompareAssignValue
 
 
 // Local Variables: //

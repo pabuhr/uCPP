@@ -13,10 +13,6 @@ SHELLFLAGS := set -x ;
 SRCDIR = ${PACKAGE}/src/examples/IO
 LFILE = ${PACKAGE}/src/kernel/uC++.cc
 
-ifneq (${CPP11},)
-    CCFLAGS += -std=${CPP11}
-endif
-
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
     CCFLAGS += -m${WORDSIZE}
 endif
