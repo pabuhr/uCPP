@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun 25 17:39:35 2012
-// Update Count     : 709
+// Last Modified On : Thu Dec 24 11:39:05 2015
+// Update Count     : 710
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -129,7 +129,7 @@ void uLocalDebuggerReader::main() {
 	uProcessor *processor;
 	bool ignore;
 
-  end: for ( ;; ) {
+  endloop: for ( ;; ) {
 		uLocalDebugger::readPDU( sockClient, pdu );		// read next pdu
 
 		switch( pdu.getType() ) {
@@ -148,7 +148,7 @@ void uLocalDebuggerReader::main() {
 #ifdef __U_DEBUG_H__
 			uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw CfinishLocalDebugger, bye\n", __LINE__, this );
 #endif // __U_DEBUG_H__
-			break end;
+			break endloop;
 		  case uDebuggerProtocolUnit::OstartAtomicOperation:
 			debugger.performAtomicOperation();
 			break;

@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 20 16:09:33 2015
-// Update Count     : 714
+// Last Modified On : Thu Nov  5 21:04:10 2015
+// Update Count     : 721
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -176,11 +176,11 @@ void uBaseEvent::reraise() {
     uEHM::Resume( *this );
 } // uBaseEvent::reraise
 
-void uBaseEvent::defaultTerminate() const {
+void uBaseEvent::defaultTerminate() {
     // do nothing so per thread "terminate()" is called
 } // uBaseEvent::defaultTerminate
 
-void uBaseEvent::defaultResume() const {
+void uBaseEvent::defaultResume() {
     stackThrow();
     // CONTROL NEVER REACHES HERE!
     assert( false );
@@ -549,7 +549,8 @@ void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
 
     // cannot find a handler, use the default handler
     ResumeWorkHorseInit newStackVisualTop( NULL, (uBaseEvent &)event ); // record the current resumption
-    event.defaultResume();				// default handler can change the exception
+    // default routine for event may change the event, so remove const used to allow both const and non-const events
+    const_cast<uBaseEvent &>(event).defaultResume();	// default handler can change the exception
 } // uEHM::resumeWorkHorse
 
 // Local Variables: //

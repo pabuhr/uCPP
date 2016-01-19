@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 20 07:38:15 2015
-// Update Count     : 483
+// Last Modified On : Thu Nov  5 20:47:41 2015
+// Update Count     : 489
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,8 +67,8 @@ class uBaseEvent {
     const void *getOriginalThrower() const { return staticallyBoundObject; }
     void reraise();
     virtual uBaseEvent *duplicate() const = 0;		// translator generated => object specific
-    virtual void defaultTerminate() const;
-    virtual void defaultResume() const;
+    virtual void defaultTerminate();
+    virtual void defaultResume();
 }; // uBaseEvent
 
 

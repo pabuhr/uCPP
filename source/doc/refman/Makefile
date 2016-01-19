@@ -25,7 +25,7 @@ include ${PACKAGE}/src/MakeTools
 
 ## Define the text source files.
 
-SOURCE = ${addprefix ${SRCDIR}/, ${addsuffix .tex, \
+SOURCES = ${addprefix ${SRCDIR}/, ${addsuffix .tex, \
 uC++ \
 } }
 
@@ -75,7 +75,7 @@ install : all ${INSTALLDOCDIR}
 depend :
 
 clean :
-	rm -f *.zzz *.bbl *.aux *.dvi *.idx *.ilg *.ind *.log *.toc *.blg *.out *.brf ${SOURCE} ${FIGURES} ${PROGRAMS} ${DOCUMENT}
+	rm -f *.zzz *.bbl *.aux *.dvi *.idx *.ilg *.ind *.log *.toc *.blg *.out *.brf ${SOURCES} ${FIGURES} ${PROGRAMS} ${DOCUMENT}
 
 uninstall :
 	rm -f ${addprefix ${INSTALLDOCDIR}/, ${notdir ${DOCUMENT}}}
@@ -88,17 +88,15 @@ ${INSTALLDOCDIR} :
 ${DOCUMENT} : ${basename ${DOCUMENT}}.dvi
 	dvips $< -o $@
 
-${basename ${DOCUMENT}}.dvi : Makefile ${FIGURES} ${PROGRAMS} ${SOURCE} ${basename ${DOCUMENT}}.idx ${basename ${DOCUMENT}}.bbl
+${basename ${DOCUMENT}}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${basename ${DOCUMENT}}.bbl
 	${LaTeX} ${basename $@}.tex
-	if fgrep -s "Label(s) may have changed. Rerun" ${basename $@}.log ; then ${LaTeX} ${basename $@}.tex ; fi
+	if fgrep -s "Label(s) may have changed" ${basename $@}.log ; then ${LaTeX} ${basename $@}.tex ; fi
 	makeindex ${basename $@}.idx
 	${LaTeX} ${basename $@}.tex
 	${LaTeX} ${basename $@}.tex		% to get index title in toc
 
-${basename ${DOCUMENT}}.idx : %.idx : %.tex
-	if [ ! -r ${basename $@}.ind ] ; then cp /dev/null ${basename $@}.ind ; fi
-
-${basename ${DOCUMENT}}.bbl :
+${basename ${DOCUMENT}}.bbl : ${basename ${DOCUMENT}}.tex
+	if [ ! -r ${basename $@}.ind ] ; then touch ${basename $@}.ind ; fi
 	if [ ! -r ${basename $@}.aux ] ; then ${LaTeX} ${basename $@}.tex ; fi
 	-${BibTeX} ${basename $@}
 	${LaTeX} ${basename $@}.tex

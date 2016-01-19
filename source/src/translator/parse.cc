@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  3 14:45:58 2015
-// Update Count     : 4424
+// Last Modified On : Wed Jan 13 21:17:22 2016
+// Update Count     : 4503
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -304,17 +304,18 @@ static token_t *nested_name_specifier() {
 	    template_key();
 
 	    uassert( token->symbol != NULL );
-//	    uassert( token->symbol->data != NULL );
-	    if ( token->symbol->data == NULL ) {
-		abort();
-	    }
-	    if ( check( COLON_COLON ) && token->symbol->data->key != 0 ) { // type must be a "class-or-namespace-name"
+	    uassert( token->symbol->data != NULL );
+	    if ( check( COLON_COLON ) && ( token->symbol->typname || token->symbol->data->key != 0 ) ) { // type must have substructure
+		if ( token->symbol->data->key != 0 ) {
 #ifdef __U_DEBUG_H__
-		print_focus_change( "nested_name_specifier3", focus, token->symbol->data->table );
+		    print_focus_change( "nested_name_specifier3", focus, token->symbol->data->table );
 #endif // __U_DEBUG_H__
-		focus = token->symbol->data->table;
-		match( COLON_COLON );
-		match( TEMPLATE );
+		    focus = token->symbol->data->table;
+		    match( COLON_COLON );
+		    match( TEMPLATE );
+		} else {
+		    match( COLON_COLON );
+		} // if
 	    } else {
 		if ( prev == NULL ) break;		// no "::" found
 //		if ( token->symbol->data->key != 0 ) return token;
@@ -4897,7 +4898,7 @@ static bool namespace_definition() {
     token_t *token;
     symbol_t *symbol;
 
-    match( INLINE ); 					// optional
+    bool inlne = match( INLINE );			// optional
 
     if ( match( NAMESPACE ) ) {
 	if ( ( token = identifier() ) == NULL )	token = type();	// optional name
@@ -4912,6 +4913,7 @@ static bool namespace_definition() {
 		    symbol->data->key = NAMESPACE;
 		    if ( symbol->data->table == NULL ) {
 			symbol->data->table = new table_t( symbol ); // create a new symbol table
+			symbol->data->attribute.dclqual.qual.INLINE = inlne;
 		    } // if
 		    symbol->data->table->lexical = focus; // connect lexical chain
 		} // if
@@ -4920,7 +4922,20 @@ static bool namespace_definition() {
 	    match( LC );				// now scan passed the '{' for the next token
 	    while ( declaration() );
 	    if ( token != NULL ) pop_table();
-	    if ( match( RC ) ) return true;
+	    if ( match( RC ) ) {
+		if ( symbol->data->attribute.dclqual.qual.INLINE ) {
+		    local_t *use = new local_t;
+		    use->useing = true;
+		    use->tblsym = true;
+		    use->kind.tbl = symbol->data->table;
+		    use->link = focus->local;
+		    //cerr << "adding using table:" << use << " (" << ns->hash->text << ") to:" << focus
+		    //     << " (" << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+		    focus->useing = true;			// using entries in this list
+		    focus->local = use;
+		} // if
+		return true;
+	    } // if
 	} // if
     } // if
 
@@ -4959,23 +4974,29 @@ static bool using_definition() {
     token_t *back = ahead;
     token_t *token;
 
-    if ( match( USING ) && ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) ) {
-	attribute_clause_list();			// optional
-	if ( check( ';' ) ) {				// don't scan ahead yet
-	    symbol_t *ns = token->symbol;
-	    if ( ns != NULL ) {
-		local_t *use = new local_t;
-		use->useing = true;
-		use->tblsym = false;
-		use->kind.sym = ns;
-		use->link = focus->local;
-		//cerr << "adding using symbol:" << use << " (" << ns->hash->text << ") to:" << focus << " ("
-		//     << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
-		focus->useing = true;			// using entries in this list
-		focus->local = use;
+    if ( match( USING ) ) {
+	bool typname = match( TYPENAME );		// optional
+	if ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) {
+	    attribute_clause_list();			// optional
+	    if ( check( ';' ) ) {			// don't scan ahead yet
+		uassert( token->symbol != NULL );
+		symbol_t *symbol = token->symbol;
+		if ( typname ) {
+		    make_type( token, token->symbol );
+		} else if ( symbol != NULL ) {
+		    local_t *use = new local_t;
+		    use->useing = true;
+		    use->tblsym = false;
+		    use->kind.sym = symbol;
+		    use->link = focus->local;
+		    //cerr << "adding using symbol:" << use << " (" << symbol->hash->text << ") to:" << focus << " ("
+		    //     << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+		    focus->useing = true;			// using entries in this list
+		    focus->local = use;
+		} // if
+		match( ';' );
+		return true;
 	    } // if
-	    match( ';' );
-	    return true;
 	} // if
     } // if
 
@@ -4993,14 +5014,14 @@ static bool using_directive() {
     if ( match( USING ) && match( NAMESPACE ) && ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) ) {
 	attribute_clause_list();			// optional
 	if ( check( ';' ) ) {				// don't scan ahead yet
-	    symbol_t *ns = token->symbol;
-	    if ( ns != NULL && ns->data->table != NULL ) {
+	    symbol_t *symbol = token->symbol;
+	    if ( symbol != NULL && symbol->data->table != NULL ) {
 		local_t *use = new local_t;
 		use->useing = true;
 		use->tblsym = true;
-		use->kind.tbl = ns->data->table;
+		use->kind.tbl = symbol->data->table;
 		use->link = focus->local;
-		//cerr << "adding using table:" << use << " (" << ns->hash->text << ") to:" << focus
+		//cerr << "adding using table:" << use << " (" << symbol->hash->text << ") to:" << focus
 		//     << " (" << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
 		focus->useing = true;			// using entries in this list
 		focus->local = use;
@@ -5015,8 +5036,8 @@ static bool using_directive() {
 
 
 // using-alias:
-//    "using" identifier attr(optional) "=" type-id ";"
-//    "template" "<" template-parameter-list ">" "using" identifier attr(optional) "=" type-id ";"
+//    "using" identifier attr(optional) "=" typename_opt type-id ";"
+//    "template" "<" template-parameter-list ">" "using" identifier attr(optional) "=" typename_opt type-id ";"
 
 static bool using_alias( attribute_t &attribute ) {
     token_t *back = ahead;
@@ -5032,7 +5053,10 @@ static bool using_alias( attribute_t &attribute ) {
 	make_type( token, symbol, lexical );
 	attribute_clause_list();			// optional
 	if ( match( '=' ) ) {
+	    bool typname = match( TYPENAME );		// optional
 	    specifier_list( attribute );
+	    uassert( token->symbol != NULL );
+	    token->symbol->typname = typname;
 	    if ( function_declarator( attribute ) == ABSTRACT ) return true; // function prototype ?
 
 	    if ( attribute.typedef_base == NULL ) {	// => not aggregate specifier, e.g., struct, class, etc.

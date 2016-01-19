@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:18:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun  3 14:52:04 2014
-// Update Count     : 51
+// Last Modified On : Wed Jan 13 21:15:33 2016
+// Update Count     : 73
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ symbol_data_t::symbol_data_t() {
 symbol_t::symbol_t( int v, hash_t *h ) {
     value = v;
     hash = h;
-    copied = false;
+    copied = typname = false;
     data = new symbol_data_t;
 #ifdef __U_DEBUG_H__
     cerr << "add1 symbol " << hash->text << endl;

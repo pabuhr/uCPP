@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:47:21 1992
-// Last Modified By : 
-// Last Modified On : Sat Jun  1 16:55:59 2013
-// Update Count     : 68
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jan 12 23:17:41 2016
+// Update Count     : 72
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -59,8 +59,9 @@ struct symbol_data_t {
 struct symbol_t {
     int value;						// symbol is an identifier or operator or type
     hash_t *hash;					// name of symbol in hash table
-    bool copied;					// mark if "data" copied for typedef
     symbol_data_t *data;				// shared data for typedef
+    bool copied;					// mark if "data" copied for typedef
+    bool typname;					// mark if typename
 
     symbol_t( int v, hash_t *h );
     symbol_t( const symbol_t & );

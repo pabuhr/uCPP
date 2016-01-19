@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 11 23:23:23 2015
-// Update Count     : 1481
+// Last Modified On : Wed Dec 30 20:59:56 2015
+// Update Count     : 1483
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -826,26 +826,20 @@ namespace UPP {
 
 
     void uNBIO::waitOrPoll( NBIOnode &node, uEventNode *timeoutEvent ) {
-	switch ( initSfd( node, timeoutEvent ) ) {	// single bit
-	  case false:					// not poller task ?
+	if ( ! initSfd( node, timeoutEvent ) ) {	// single bit ?
 	    node.pending.P();
-	    if ( ! node.listed() ) break;		// not poller task ?
-	    // FALL THROUGH
-	  case true:
-	    while ( pollIO( node ) ) uThisTask().uYieldNoPoll(); // busy wait
+	    if ( ! node.listed() ) return;		// not poller task ?
 	} // if
+	while ( pollIO( node ) ) uThisTask().uYieldNoPoll(); // busy wait
     } // uNBIO::waitOrPoll
 
 
     void uNBIO::waitOrPoll( unsigned int nfds, NBIOnode &node, uEventNode *timeoutEvent ) {
-	switch ( initMfds( nfds, node, timeoutEvent ) ) { // multiple bits
-	  case false:					// not poller task ?
+	if ( ! initMfds( nfds, node, timeoutEvent ) ) {	// multiple bits ?
 	    node.pending.P();
-	    if ( ! node.listed() ) break;		// not poller task ?
-	    // FALL THROUGH
-	  case true:
-	    while ( pollIO( node ) ) uThisTask().uYieldNoPoll(); // busy wait
+	    if ( ! node.listed() ) return;		// not poller task ?
 	} // if
+	while ( pollIO( node ) ) uThisTask().uYieldNoPoll(); // busy wait
     } // uNBIO::waitOrPoll
 
 

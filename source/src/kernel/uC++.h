@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 11 12:47:38 2015
-// Update Count     : 5600
+// Last Modified On : Sat Nov  7 17:42:05 2015
+// Update Count     : 5601
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2072,7 +2072,7 @@ class uBaseTask : public uBaseCoroutine {
     unsigned int mutexRecursion;			// number of recursive calls while holding mutex
     uCluster *currCluster;				// cluster task is executing on
     uBaseCoroutine *currCoroutine;			// coroutine being executed by tasks thread
-    long int info;					// condition information stored with blocked task
+    uintptr_t info;					// condition information stored with blocked task
 
     uBaseTaskDL clusterRef;				// double link field: list of tasks on cluster
     uBaseTaskDL readyRef;				// double link field: ready queue
@@ -2334,7 +2334,7 @@ class uCondition {
 	return condQueue.empty();			// check if the condition queue is empty
     } // uCondition::empty
 
-    long int front() const {				// return task information
+    uintptr_t front() const {				// return task information
 #ifdef __U_DEBUG__
 	if ( condQueue.empty() ) {			// condition queue must not be empty
 	    uAbort( "Attempt to access user data on an empty condition.\n"

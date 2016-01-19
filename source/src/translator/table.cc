@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  5 13:02:12 2014
-// Update Count     : 371
+// Last Modified On : Wed Jan 13 21:15:33 2016
+// Update Count     : 397
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -181,6 +181,8 @@ void table_t::display_table( int blank ) {
 	      default:
 		break;
 	    } // switch
+	    if ( sym->copied ) cerr << " COPIED";
+	    if ( sym->typname ) cerr << " TYPENAME";
 	    cerr << endl;
 	    if ( sym->data->table != NULL ) {
 		if ( ! sym->data->attribute.dclkind.kind.TYPEDEF ) {

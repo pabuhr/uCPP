@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 16 21:29:24 2014
-// Update Count     : 160
+// Last Modified On : Wed Oct 14 09:41:17 2015
+// Update Count     : 164
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,6 +30,7 @@
 #include <string>
 #include <csignal>
 #include <cstdlib>					// exit
+#include <cstring>
 
 using std::cin;
 using std::cout;
@@ -75,9 +76,13 @@ void check( string arg ) {
     } // if
 } // check
 
+#define FILE_NAME "no file name"
+
 int main( int argc, char *argv[] ) {
     char *infile = NULL;
     char *outfile = NULL;
+    file = new char[sizeof(FILE_NAME)];
+    strcpy( file, FILE_NAME );
 
     // The translator can receive 2 types of arguments.
     //
