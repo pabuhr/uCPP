@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  1 15:06:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:42:30 2012
-// Update Count     : 80
+// Last Modified On : Fri May 27 06:30:19 2016
+// Update Count     : 81
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -164,8 +164,8 @@ uDuration uPeriodicBaseTask::setPeriod( uDuration period_ ) {
     } // if
 #endif // __U_DEBUG__
 
-    // A simple optimization: changing the period of a task to its existing
-    // value does not require a recalculation of priorities.
+    // A simple optimization: changing the period of a task to its existing value does not require a recalculation of
+    // priorities.
 
   if ( period_ == period ) return period;
 
@@ -209,8 +209,8 @@ uDuration uSporadicBaseTask::setFrame( uDuration frame_ ) {
     } // if
 #endif // __U_DEBUG__
 
-    // A simple optimization: changing the frame of a task to its existing
-    // value does not require a recalculation of priorities.
+    // A simple optimization: changing the frame of a task to its existing value does not require a recalculation of
+    // priorities.
 
   if ( frame_ == frame ) return frame;
 

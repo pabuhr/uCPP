@@ -88,7 +88,8 @@ ${INSTALLDOCDIR} :
 ${DOCUMENT} : ${basename ${DOCUMENT}}.dvi
 	dvips $< -o $@
 
-${basename ${DOCUMENT}}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${basename ${DOCUMENT}}.bbl
+${basename ${DOCUMENT}}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${basename ${DOCUMENT}}.bbl \
+		../TeXmacros/mystyle.sty ../TeXmacros/lgrind.sty ../TeXmacros/myalpha.bst
 	${LaTeX} ${basename $@}.tex
 	if fgrep -s "Label(s) may have changed" ${basename $@}.log ; then ${LaTeX} ${basename $@}.tex ; fi
 	makeindex ${basename $@}.idx

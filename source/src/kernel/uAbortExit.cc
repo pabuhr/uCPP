@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 12 06:50:00 2015
-// Update Count     : 545
+// Last Modified On : Mon Sep 12 23:12:38 2016
+// Update Count     : 558
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,7 +42,6 @@
 #include <cstdarg>
 #include <cerrno>
 #include <unistd.h>					// _exit
-
 
 using namespace UPP;
 

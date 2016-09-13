@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  5 12:53:33 2009
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:01:12 2011
-// Update Count     : 6
+// Last Modified On : Tue Sep  6 17:54:59 2016
+// Update Count     : 8
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,7 @@ class uRWLock {
     uSequence<uBaseTaskDL> waiting;
     // Cannot pass ownership of spinlock to another task.
     uSpinLock entry;
-    int rwdelay, rcnt, wcnt;
+    unsigned int rwdelay, rcnt, wcnt;
 
     void wunblock() {
 	wcnt += 1;
@@ -62,6 +62,9 @@ class uRWLock {
     uRWLock() {
 	rwdelay = rcnt = wcnt = 0;
     } // uRWLock::uRWLock
+
+    inline unsigned int rdcnt() const { return rcnt; }
+    inline unsigned int wrcnt() const { return wcnt; }
 
     void rdacquire() {
 	entry.acquire();				// entry protocol

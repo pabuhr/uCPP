@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 18 08:35:56 2015
-// Update Count     : 917
+// Last Modified On : Thu Jul  7 09:11:46 2016
+// Update Count     : 919
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -230,6 +230,8 @@ int main( int argc, char *argv[] ) {
 		string langstd = arg.substr( arg[1] == '-' ? 6 : 5 ); // strip the -std= flag
 		if ( langstd == "c++0x" || langstd == "gnu++0x" ||
 		     langstd == "c++11" || langstd == "gnu++11" ||
+		     langstd == "c++14" || langstd == "gnu++14" ||
+		     langstd == "c++17" || langstd == "gnu++17" ||
 		     langstd == "c++1y" || langstd == "gnu++1y"
 		    ) {
 		    cpp11 = langstd;			// unsure if other values are valid
@@ -756,7 +758,7 @@ int main( int argc, char *argv[] ) {
 	args[nargs] = ( *new string( string("-B") + Bprefix + "/" ) ).c_str();
 	nargs += 1;
     } else {
-	cerr << argv[0] << " error, compiler " << compiler_name << " not supported." << endl;
+	cerr << argv[0] << " error, compiler \"" << compiler_name << "\" unsupported." << endl;
 	exit( EXIT_FAILURE );
     } // if
 

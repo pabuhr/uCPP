@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 17 16:56:42 2014
-// Update Count     : 1219
+// Last Modified On : Thu Apr 28 23:23:27 2016
+// Update Count     : 1221
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -759,10 +759,9 @@ extern "C" {
 #endif // __U_PROFILER__
 #ifdef __U_DEBUG__
 	    if ( UPP::uHeapControl::traceHeap() ) {
-		enum { BufferSize = 64 };
-		char helpText[BufferSize];
-		int len = snprintf( helpText, BufferSize, "Free( %p ) size:0\n", addr );
-		uDebugWrite( STDERR_FILENO, helpText, len );
+#		define nullmsg "Free( 0x0 ) size:0\n"
+		// Do not debug print free( NULL ), as it can cause recursive entry from sprintf.
+		//uDebugWrite( STDERR_FILENO, nullmsg, sizeof(nullmsg) - 1 );
 	    } // if
 #endif // __U_DEBUG__
 	    return;

@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Oct 27 16:09:42 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:42:37 2012
-// Update Count     : 40
+// Last Modified On : Fri May 27 06:26:04 2016
+// Update Count     : 41
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,7 +31,7 @@
 //#include <uDebug.h>
 
 
-// compare abstracts the comparison of two task's priorities.  The deadline is first checked.  If the deadlines are
+// Compare abstracts the comparison of two task's priorities.  The deadline is first checked.  If the deadlines are
 // identical for two tasks, the period or frame field is checked.  Non-real-time tasks are always greater in deadline
 // than real-time tasks.  Aperiodic tasks get lowest deadline or priority among all real-time tasks.  This compare
 // function acts in the same way as strcmp in terms of return value.
@@ -43,8 +43,6 @@ int uDeadlineMonotonicStatic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 			     { R_NR,	R_R,	NPS_PS,	NPS_PS	},
 			     { PS_NPS,  	PS_NPS, PS_PS,	PS_PS	},
 			     { PS_NPS,  	PS_NPS, PS_PS,	PS_PS	} };
-
-    assert( &task1 != NULL && &task2 != NULL );
 
     uRealTimeBaseTask *rbtask1, *rbtask2;
     uPeriodicBaseTask *pbtask1, *pbtask2;

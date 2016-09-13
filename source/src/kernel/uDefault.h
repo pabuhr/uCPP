@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  9 12:40:27 2012
-// Update Count     : 37
+// Last Modified On : Mon Apr 25 09:02:32 2016
+// Update Count     : 41
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,7 +38,7 @@
 // Define the mmap crossover point during allocation. Allocations less than this amount are allocated from buckets;
 // values greater than or equal to this value are mmap from the operating system.
 
-#define __U_DEFAULT_MMAP_START__ (96 * 1024)
+#define __U_DEFAULT_MMAP_START__ (256 * 1024)
 
 
 // Define the default scheduling pre-emption time in milliseconds.  A scheduling pre-emption is attempted every default
@@ -60,13 +60,15 @@
 
 #if defined( __ia64__ ) || defined( __sparc__ )
 // needed by IA64 unwind library and by SPARC for large stack-frames
-#define __U_DEFAULT_STACK_SIZE__ 60000
+//#define __U_DEFAULT_STACK_SIZE__ 60000
+#define __U_DEFAULT_STACK_SIZE__ 240000
 #else
-#define __U_DEFAULT_STACK_SIZE__ 30000
+//#define __U_DEFAULT_STACK_SIZE__ 30000
+#define __U_DEFAULT_STACK_SIZE__ 240000
 #endif
 
 // often large automatic arrays for setting up the program
-#define __U_DEFAULT_MAIN_STACK_SIZE__ 500000
+#define __U_DEFAULT_MAIN_STACK_SIZE__ 490000
 
 
 // Define the default number of processors created on the user cluster. May not be less than 1.

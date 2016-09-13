@@ -13,19 +13,21 @@ SHELLFLAGS := set -x ;
 SRCDIR = ${PACKAGE}/src/examples/IO
 LFILE = ${PACKAGE}/src/kernel/uC++.cc
 
+CXX = ${INSTALLBINDIR}/u++
+
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
-    CCFLAGS += -m${WORDSIZE}
+    CXXFLAGS += -m${WORDSIZE}
 endif
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
-    CCFLAGS += -O2 -Wall -Wno-unused-label #
+    CXXFLAGS += -O2 -Wall -Wno-unused-label #
 else
-    CCFLAGS += -O2 #
+    CXXFLAGS += -O2 #
 endif
 
 ifdef ALLOCATOR
-    CCFLAGS += -uAlloc${ALLOCATOR}
+    CXXFLAGS += -uAlloc${ALLOCATOR}
 endif
 
 .SILENT : all file pipe socket unix inet sendfile plain
@@ -41,7 +43,7 @@ file :
 	fi ; \
 	times=3 ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} File.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} File.cc ; \
 	    i=0 ; \
 	    while [ $${i} -lt $${times} ] ; do \
 		./a.out File.cc ; \
@@ -50,7 +52,7 @@ file :
 	    done ; \
 	done ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} NBStream.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} NBStream.cc ; \
 	    i=0 ; \
 	    while [ $${i} -lt $${times} ] ; do \
 		( echo 1; sleep 1; echo 2; sleep 1; echo 3; sleep 1; echo 4; sleep 1; ) | ./a.out ; \
@@ -59,7 +61,7 @@ file :
 	    done ; \
 	done ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} NBFile.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} NBFile.cc ; \
 	    i=0 ; \
 	    while [ $${i} -lt $${times} ] ; do \
 		( echo 1; sleep 1; echo 2; sleep 1; echo 3; sleep 1; echo 4; sleep 1; ) | ./a.out ; \
@@ -69,7 +71,7 @@ file :
 	    done ; \
 	done ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} StringIO.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} StringIO.cc ; \
 	    i=0 ; \
 	    while [ $${i} -lt $${times} ] ; do \
 		./a.out ${LFILE} > xxx ; cmp ${LFILE} xxx ; \
@@ -78,7 +80,7 @@ file :
 	    done ; \
 	done ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} Filebuf.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} Filebuf.cc ; \
 	    ./a.out Filebuf.cc ; \
 	done ; \
 	rm -f xxx a.out ;
@@ -90,14 +92,14 @@ pipe :
 	    multi=${MULTI} ; \
 	fi ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} PipesSelect.cc ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} PipesSelect.cc ; \
 	    ./a.out ; \
 	done ; \
 	rm -f a.out ;
 
 #	\
 #	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-#		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} Pipes.cc ; \
+#		${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} Pipes.cc ; \
 #		./a.out ; \
 #	done ; \
 
@@ -109,8 +111,8 @@ unix :
 	rm -f sock ; \
 	times=3 ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientUNIXSTREAM.cc -o Client ; \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerUNIXSTREAM.cc -o Server ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientUNIXSTREAM.cc -o Client ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerUNIXSTREAM.cc -o Server ; \
 	    ( ./Server sock & \
 		( \
 		    sleep 5 ; \
@@ -128,8 +130,8 @@ unix :
 	done ; \
 	rm -f sock ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientUNIXDGRAM.cc -o Client ; \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerUNIXDGRAM.cc -o Server ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientUNIXDGRAM.cc -o Client ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerUNIXDGRAM.cc -o Server ; \
 	    ( TMPDIR=/tmp ; export TMPDIR ; ./Server sock & \
 		( \
 		    sleep 5 ; \
@@ -154,8 +156,8 @@ inet :
 	rm -f portno ; \
 	times=3 ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientINETSTREAM.cc -o Client ; \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerINETSTREAM.cc -o Server ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientINETSTREAM.cc -o Client ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerINETSTREAM.cc -o Server ; \
 	    ( ./Server > portno & \
 		( \
 		    sleep 5 ; portno=`cat portno` ; \
@@ -173,8 +175,8 @@ inet :
 	done ; \
 	rm -f portno ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientINETDGRAM.cc -o Client ; \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerINETDGRAM.cc -o Server ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientINETDGRAM.cc -o Client ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerINETDGRAM.cc -o Server ; \
 	    ( TMPDIR=/tmp ; export TMPDIR ; ./Server > portno & \
 		( \
 		    sleep 5 ; portno=`cat portno` ; \
@@ -200,8 +202,8 @@ sendfile :
 	if [ ${TOS} != solaris -a ${TOS} != freebsd ] ; then \
 	    rm -f sock ; \
 	    for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientUNIXSTREAMSendfile.cc -o Client ; \
-		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerUNIXSTREAMSendfile.cc -o Server ; \
+		${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientUNIXSTREAMSendfile.cc -o Client ; \
+		${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerUNIXSTREAMSendfile.cc -o Server ; \
 		( ./Server sock & \
 		    ( \
 			sleep 5 ; \
@@ -220,8 +222,8 @@ sendfile :
 	fi ; \
 	rm -f portno ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ClientINETSTREAMSendfile.cc -o Client ; \
-	    ${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} ServerINETSTREAMSendfile.cc -o Server ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ClientINETSTREAMSendfile.cc -o Client ; \
+	    ${INSTALLBINDIR}/u++ ${CXXFLAGS} $${ccflags} ServerINETSTREAMSendfile.cc -o Server ; \
 	    ( ./Server > portno & \
 		( \
 		    sleep 5 ; portno=`cat portno` ; \
@@ -245,8 +247,8 @@ plain :
 	fi ; \
 	times=3 ; \
 	rm -f sock xxx* ; \
-	g++ ${CCFLAGS} $${ccflags} clientUNIXSTREAM.cc -o Client ; \
-	g++ ${CCFLAGS} $${ccflags} serverUNIXSTREAM.cc -o Server ; \
+	g++ ${CXXFLAGS} $${ccflags} clientUNIXSTREAM.cc -o Client ; \
+	g++ ${CXXFLAGS} $${ccflags} serverUNIXSTREAM.cc -o Server ; \
 	( ./Server $${times} sock & \
 	    (   sleep 5 ; \
 		i=0 ; \
@@ -261,8 +263,8 @@ plain :
 	) ; \
 	rm -f Server Client xxx* ; \
 	rm -f sock ; \
-	g++ ${CCFLAGS} $${ccflags} clientUNIXSTREAM2.cc -o Client ; \
-	g++ ${CCFLAGS} $${ccflags} serverUNIXSTREAM2.cc -o Server ; \
+	g++ ${CXXFLAGS} $${ccflags} clientUNIXSTREAM2.cc -o Client ; \
+	g++ ${CXXFLAGS} $${ccflags} serverUNIXSTREAM2.cc -o Server ; \
 	( ./Server $${times} sock & \
 	    (   sleep 5 ; \
 		i=0 ; \
@@ -277,8 +279,8 @@ plain :
 	) ; \
 	rm -f Server Client xxx* ; \
 	rm -f sock ; \
-	g++ ${CCFLAGS} $${ccflags} clientUNIXSTREAMSendfile.cc -o Client ; \
-	g++ ${CCFLAGS} $${ccflags} serverUNIXSTREAMSendfile.cc -o Server ; \
+	g++ ${CXXFLAGS} $${ccflags} clientUNIXSTREAMSendfile.cc -o Client ; \
+	g++ ${CXXFLAGS} $${ccflags} serverUNIXSTREAMSendfile.cc -o Server ; \
 	( ./Server $${times} sock & \
 	    (   sleep 5 ; \
 		i=0 ; \
@@ -293,8 +295,8 @@ plain :
 	) ; \
 	rm -f Server Client xxx* ; \
 	rm -f sock ; \
-	g++ ${CCFLAGS} $${ccflags} clientUNIXDGRAM.cc -o Client ; \
-	g++ ${CCFLAGS} $${ccflags} serverUNIXDGRAM.cc -o Server ; \
+	g++ ${CXXFLAGS} $${ccflags} clientUNIXDGRAM.cc -o Client ; \
+	g++ ${CXXFLAGS} $${ccflags} serverUNIXDGRAM.cc -o Server ; \
 	( ./Server sock & \
 	    (   sleep 5 ; \
 		i=0 ; \
@@ -309,8 +311,8 @@ plain :
 	) ; \
 	rm -f Server Client xxx* ; \
 	rm -f portno ; \
-	g++ ${CCFLAGS} $${ccflags} clientINETDGRAM.cc -o Client ; \
-	g++ ${CCFLAGS} $${ccflags} serverINETDGRAM.cc -o Server ; \
+	g++ ${CXXFLAGS} $${ccflags} clientINETDGRAM.cc -o Client ; \
+	g++ ${CXXFLAGS} $${ccflags} serverINETDGRAM.cc -o Server ; \
 	( ./Server > portno & \
 	    (   sleep 5 ; \
 		portno=`cat portno` ; \

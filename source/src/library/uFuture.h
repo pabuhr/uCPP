@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 25 16:57:53 2015
-// Update Count     : 609
+// Last Modified On : Sat Apr 30 21:49:15 2016
+// Update Count     : 623
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -599,12 +599,15 @@ class uWaitQueue_ESM {
 
 
 class uExecutor {
-    // Buffer is embedded in executor to allow the executor to delete the workers without causing a deadlock.  If the
-    // buffer is incorperated into the executor by making it a monitor, the thread calling the executor destructor
+  public:
+    enum Cluster { Same, Sep };				// use same or separate cluster
+  private:
+    // Mutex buffer is embedded in the nomutex executor to allow the executor to delete the workers without causing a
+    // deadlock.  If the executor is the monitor and the buffer is class, the thread calling the executor's destructor
     // (which is mutex) blocks when deleting the workers, preventing outstanding workers from calling remove to drain
     // the buffer.
     template<typename ELEMTYPE> _Monitor Buffer {	// unbounded buffer
-	uSequence<ELEMTYPE> buf;			// unbounded list of work requests
+	uQueue<ELEMTYPE> buf;				// unbounded list of work requests
 	uCondition delay;
       public:
 	void insert( ELEMTYPE *elem ) {
@@ -618,21 +621,26 @@ class uExecutor {
 	} // Buffer::remove
     }; // Buffer
 
-    class WRequest : public uSeqable {			// worker request
-	bool done;
-      public:
+    struct WRequest : public uColable {			// worker request
+	bool done;					// true => stop worker
 	WRequest( bool done = false ) : done( done ) {}
-	virtual ~WRequest() {};
+	virtual ~WRequest() {};				// required for FRequest's result
 	virtual bool stop() { return done; };
-	virtual void doit() {};
+	virtual void doit() { assert( false ); };	// not abstract as used for sentinel
     }; // WRequest
 
-    template<typename R, typename F> struct CRequest : public WRequest { // client request
+    template<typename F> struct VRequest : public WRequest { // client request, no return
+	F action;
+	void doit() { action(); }
+	VRequest( F action ) : action( action ) {}
+    }; // VRequest
+
+    template<typename R, typename F> struct FRequest : public WRequest { // client request, return
 	F action;
 	Future_ISM<R> result;
 	void doit() { result.delivery( action() ); }
-	CRequest( F action ) : action( action ) {}
-    }; // CRequest
+	FRequest( F action ) : action( action ) {}
+    }; // FRequest
 
     _Task Worker {
 	uExecutor &executor;
@@ -649,49 +657,69 @@ class uExecutor {
 	Worker( uCluster &wc, uExecutor &executor ) : uBaseTask( wc ), executor( executor ) {}
     }; // Worker
 
-    const unsigned int nworkers;			// number of workers tasks
-    Buffer<WRequest> requests;				// list of work requests
+    enum { DefaultWorkers = 16, DefaultProcessors = 2 };
+    const unsigned int nworkers, nprocessors;		// number of workers/processor tasks
+    const Cluster clus;					// use same or separate cluster
     Worker **workers;					// array of workers executing work requests
-    uProcessor **processors;				//   corresponding number of virtual processors
-    uCluster *cluster;					// workers execute on separate cluster
+    uProcessor **processors;				// array of virtual processors adding parallelism for workers
+    uCluster *cluster;					// if workers execute on separate cluster
+    Buffer<WRequest> requests;				// list of work requests
   public:
-    uExecutor( unsigned int nworkers = 4 ) : nworkers( nworkers ) {
-#if defined( __U_SEPARATE_CLUSTER__ )
-	cluster = new uCluster;
-#else
-	cluster = &uThisCluster();
-#endif // __U_SEPARATE_CLUSTER__
-	processors = new uProcessor *[ nworkers ];
+    uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same ) : nworkers( nworkers ), nprocessors( nprocessors ), clus( clus ) {
+	cluster = clus == Sep ? new uCluster : &uThisCluster();
+	processors = new uProcessor *[ nprocessors ];
 	workers = new Worker *[ nworkers ];
 
-	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
+	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    processors[ i ] = new uProcessor( *cluster );
+	} // for
+	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
 	    workers[ i ] = new Worker( *cluster, *this );
 	} // for
     } // uExecutor::uExecutor
 
+    uExecutor( unsigned int nworkers, Cluster clus = Same ) : uExecutor( nworkers, DefaultProcessors, clus ) {}
+    uExecutor( Cluster clus ) : uExecutor( DefaultWorkers, DefaultProcessors, clus ) {}
+    uExecutor() : uExecutor( DefaultWorkers, DefaultProcessors, Same ) {}
+
     ~uExecutor() {
-	WRequest sentinel( true );
+	// Add one sentinel per worker to stop them. Since in destructor, no new work should be queued.  Cannot combine
+	// next two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1 may take
+	// the single sentinel while waiting for worker 0 to end.
+	WRequest sentinel[nworkers];
 	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
-	    requests.insert( &sentinel );
+	    sentinel[i].done = true;
+	    requests.insert( &sentinel[i] );		// force eventually termination
 	} // for
-	unsigned int i;
-	for ( i = 0; i < nworkers; i += 1 ) {
+	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
 	    delete workers[ i ];
+	} // for
+	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    delete processors[ i ];
 	} // for
 	delete [] workers;
 	delete [] processors;
-#if defined( __U_SEPARATE_CLUSTER__ )
-	delete cluster;
-#endif // __U_SEPARATE_CLUSTER__
+	if ( clus == Sep ) delete cluster;
     } // uExecutor::~uExecutor
 
-    template <typename Return, typename Func> void submit( Future_ISM<Return> &result, Func action ) {
-	CRequest<Return,Func> *node = new CRequest<Return,Func>( action );
-	result = node->result;				// race, copy before insert
+    template <typename Func> void send( Func action ) { // asynchronous call, no return value
+    	VRequest<Func> *node = new VRequest<Func>( action );
+    	requests.insert( node );
+    } // uExecutor::send
+
+    // template <typename Return, typename Func> void submit( Future_ISM<Return> &result, Func action ) { // asynchronous call, return value (future)
+    // 	FRequest<Return, Func> *node = new FRequest<Return, Func>( action );
+    // 	result = node->result;				// race, copy before insert
+    // 	requests.insert( node );
+    // } // uExecutor::submit
+
+    // Future type is the return type of the action routine, so action is pseudo called to obtain its type in decltype.
+    template <typename Func> auto sendrecv( Func action ) -> Future_ISM<decltype(action())> { // asynchronous call, return value (future)
+	FRequest<decltype(action()), Func> *node = new FRequest<decltype(action()), Func>( action );
+	Future_ISM<decltype(action())> result = node->result;	// race, copy before insert
 	requests.insert( node );
-    } // uExecutor::submit
+	return result;
+    } // uExecutor::sendrecv
 }; // uExecutor
 
 

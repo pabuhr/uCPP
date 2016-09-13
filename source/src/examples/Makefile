@@ -10,20 +10,22 @@ include ${PACKAGE}/CONFIG
 
 SRCDIR = ${PACKAGE}/src/examples
 
+CXX = ${INSTALLBINDIR}/u++
+
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
-	CCFLAGS += -m${WORDSIZE}
+    CXXFLAGS += -m${WORDSIZE}
 endif
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
-    CCFLAGS += -O2 -Wall -Wno-unused-label #
+    CXXFLAGS += -O2 -Wall -Wno-unused-label #
 else
-    CCFLAGS += -O2 #
+    CXXFLAGS += -O2 #
 endif
 
 ifdef ALLOCATOR
-ALLOCFLAGS += -DALLOCATOR=${ALLOCATOR}
-CCFLAGS += -uAlloc${ALLOCATOR}
+    ALLOCFLAGS += -DALLOCATOR=${ALLOCATOR}
+    CXXFLAGS += -uAlloc${ALLOCATOR}
 endif
 
 .SILENT : all abortexit bench allocation features pthread EHM realtime multiprocessor
@@ -39,7 +41,7 @@ ownership :
 	fi ; \
 	for filename in Ownership1 Ownership2 ; do \
 		for ccflags in "" $${multi+"-multi"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -56,7 +58,7 @@ abortexit :
 		pscmd="ps -u$${USER}" ; \
 	fi ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} AbortExit.cc ; \
+		${CXX} ${CXXFLAGS} $${ccflags} AbortExit.cc ; \
 		echo "************************** 0 Killed by SIGTERM **************************" ; \
 		./a.out 0 & \
 		sleep 1 ; \
@@ -101,6 +103,10 @@ abortexit :
 	done ; \
 	rm -f a.out core core.* ;
 
+ifeq (${MAKECMDGOALS},Bench)
+    CXXFLAGS += -multi -lrt
+endif
+
 bench :
 	set -x ; \
 	if [ ${MULTI} = TRUE ] ; then \
@@ -108,7 +114,7 @@ bench :
 	fi ; \
 	for filename in Bench ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc -lrt ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc -lrt ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -121,7 +127,7 @@ allocation :
 	fi ; \
 	for filename in Allocation ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${ALLOCFLAGS} ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${ALLOCFLAGS} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -132,9 +138,9 @@ features :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 Futures ; do \
+	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 Futures Executor ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -151,7 +157,7 @@ cobegin :
 	if ${CCAPP} -E -std=c++1y $${tmpname} > /dev/null 2>&1 ; then \
 		for filename in Cobegin ; do \
 			for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-				${INSTALLBINDIR}/u++ ${CCFLAGS} -std=c++1y $${ccflags} $${filename}.cc ; \
+				${CXX} ${CXXFLAGS} -std=c++1y $${ccflags} $${filename}.cc ; \
 				./a.out ; \
 			done ; \
 		done ; \
@@ -165,7 +171,7 @@ timeout :
 	fi ; \
 	for filename in TimeSlice TimeoutAccept TimeoutCondLock TimeoutSem TimeoutProcessor TimeoutPoke ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -178,7 +184,7 @@ pthread :
 	fi ; \
 	for filename in Pthread TimeoutPthreadsCond ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -191,7 +197,7 @@ EHM :
 	fi ; \
 	for filename in EHM1 EHM2 EHM3 EHM4 EHM5 EHM6 EHM7 EHM8 EHM9 EHM10 CRAII UncaughtException ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
 		done ; \
 	done ; \
@@ -204,7 +210,7 @@ realtime :
 	fi ; \
 	for filename in PeriodicTaskTest PeriodicTaskTest1 PeriodicTaskTestStatic RealTimePhilosophers RealTimePhilosophers1 RealTimePhilosophersStatic Disinherit Disinherit1 DisinheritStatic Disinherit1Static ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} $${filename}.cc ; \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			time -p ./a.out ; \
 		done ; \
 	done ; \
@@ -215,10 +221,10 @@ multiprocessor :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	${INSTALLBINDIR}/u++ ${CCFLAGS} uCalibrate.cc -lrt ; \
+	${CXX} ${CXXFLAGS} uCalibrate.cc -lrt ; \
 	./a.out > uCalibrate.h ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-		${INSTALLBINDIR}/u++ ${CCFLAGS} $${ccflags} Sim.cc ; \
+		${CXX} ${CXXFLAGS} $${ccflags} Sim.cc ; \
 		time -p ./a.out  1 100 500000 ; \
 		time -p ./a.out  2 100 500000 ; \
 		time -p ./a.out  4 100 500000 ; \

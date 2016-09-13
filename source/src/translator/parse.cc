@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 13 21:17:22 2016
-// Update Count     : 4503
+// Last Modified On : Sun Jul  3 20:47:22 2016
+// Update Count     : 4525
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -173,6 +173,8 @@ template_parameter
     template<template<...> class C>
     template<typename T = ...>
     template<int i = ...>
+using
+    using __rebind = typename _Tp::template rebind<_Ptr>;
 task_parameter_list
     _Task<...>
 mutex_parameter_list
@@ -216,7 +218,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 	 prev2->value == CONST_CAST || prev2->value == DYNAMIC_CAST || prev2->value == REINTERPRET_CAST || prev2->value == STATIC_CAST ||
 	 ( prev2->value == IDENTIFIER && prev2->symbol != NULL &&
 	   // This check may generate false positives because the translator does not always find all declarations.
-	   ( prev2->symbol->data->key == MEMBER || prev2->symbol->data->key == ROUTINE ) ) ) {
+	   ( prev2->prev_parse_token()->value == TEMPLATE || prev2->symbol->data->key == MEMBER || prev2->symbol->data->key == ROUTINE ) ) ) {
 	for ( ;; ) {
 	    if ( eof() ) break;
 	    if ( ! semicolon && check( ';' ) ) break;	// stop at end of statement (except "for" control clause and block/expression "{...)")
@@ -428,13 +430,12 @@ static token_t *identifier() {
 #endif // __U_DEBUG_H__
 	focus = top->tbl;
 	match( IDENTIFIER );
-	template_key();
-
 	// if this identifier has no symbol table entry associated with it, make one
 	uassert( token != NULL );
 	if ( token->symbol == NULL ) {
 	    token->symbol = new symbol_t( token->value, token->hash );
 	} // if
+	template_key();					// optional
 	return token;
     } // if
 
@@ -711,16 +712,20 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt );
 //   "if" "(" condition ")" statement else statement
 //   "switch" "(" condition ")" statement
 
-static bool if_statement( symbol_t *symbol ) {
+static bool if_statement( symbol_t *symbol, token_t *label[], int cnt ) {
     token_t *back = ahead;
 
-    if ( match( IF ) && condition() && statement( symbol ) ) {
-	if ( match( ELSE ) ) {
-	    if ( statement( symbol ) ) {
+    if ( match( IF ) && condition() ) {
+	if ( statement( symbol ) ) {
+	    if ( match( ELSE ) ) {
+		if ( statement( symbol ) ) {
+		    prefix_labels( back, ahead, label, cnt, false );
+		    return true;
+		} // if
+	    } else {
+		prefix_labels( back, ahead, label, cnt, false );
 		return true;
 	    } // if
-	} else {
-	    return true;
 	} // if
     } // if
 
@@ -822,7 +827,7 @@ static bool break_statement( symbol_t *symbol ) {
 		sprintf( name, "_U_B_%.252s", label->hash->text );
 		label->hash = hash_table->lookup( name ); // change label
 	    } else {
-		gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\" or compound \"{}\" statement." );
+		gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\", \"if\" or compound \"{}\" statement." );
 	    } // if
 	} // if
 	if ( match( ';' ) ) return true;		// must end with semi-colon
@@ -2240,9 +2245,9 @@ static bool labelled_statement( symbol_t *symbol ) {
 	} // if
     } // for
     if ( cnt > 0 ) {					// any labels ?
-	if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( LC ) ) {
+	if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( IF ) || check( LC ) ) {
 	    int targetype;
-	    if ( check( SWITCH ) || check( LC ) ) targetype = 2;
+	    if ( check( SWITCH ) || check( IF ) || check( LC ) ) targetype = 2;
 	    else targetype = 1;
 	    token_t *l;
 	    for ( int i = 0; i < cnt; i += 1 ) {
@@ -2262,6 +2267,7 @@ static bool labelled_statement( symbol_t *symbol ) {
 	    if ( while_statement( symbol, label, cnt ) ) return true;
 	    if ( do_statement( symbol, label, cnt ) ) return true;
 	    if ( switch_statement( symbol, label, cnt ) ) return true;
+	    if ( if_statement( symbol, label, cnt ) ) return true;
 	    if ( compound_statement( symbol, label, cnt ) ) return true;
 	} else if ( statement( symbol ) ) {
 	    return true;
@@ -2363,7 +2369,7 @@ static bool statement( symbol_t *symbol ) {
     token_t *back = ahead;
 
     for ( ;; ) {
-	if ( if_statement( symbol ) ) return true;
+	if ( if_statement( symbol, NULL, 0 ) ) return true;
 	if ( switch_statement( symbol, NULL, 0 ) ) return true;
 
 	if ( while_statement( symbol, NULL, 0 ) ) return true;

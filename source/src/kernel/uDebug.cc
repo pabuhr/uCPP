@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Nov 28 07:56:46 2014
-// Update Count     : 135
+// Last Modified On : Mon Sep  5 10:50:54 2016
+// Update Count     : 137
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -128,7 +128,7 @@ extern "C" void uDebugPrtBuf( char buffer[], const char fmt[], ... ) {
 	     getpid()
 #endif // __U_MULTI__
 	);
-    len += vsnprintf( ::buffer + len, BufferSize, fmt, args );	// and after that the message
+    len += vsnprintf( buffer + len, BufferSize, fmt, args ); // and after that the message
     uDebugWrite( STDERR_FILENO, buffer, len );
     va_end( args );
 } // uDebugPrt

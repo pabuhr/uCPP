@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov  5 20:47:41 2015
-// Update Count     : 489
+// Last Modified On : Thu May 26 16:14:58 2016
+// Update Count     : 490
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -248,7 +248,7 @@ class uEHM::uFinallyHandler {
   public:
     uFinallyHandler( const std::function< RETURN_DISALLOWED () > &cleanUpRtn ) : cleanUpRtn( cleanUpRtn ) {}
     ~uFinallyHandler()
-#if __cplusplus > 201103L
+#if __cplusplus >= 201103L
 	    noexcept( false )				// C++11, required to allow exception from destructor
 #endif
     {

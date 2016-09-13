@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Fri Oct 27 08:25:33 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:14:12 2011
-// Update Count     : 33
+// Last Modified On : Fri May 27 06:28:07 2016
+// Update Count     : 34
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -83,8 +83,7 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 	} // if
     } // if
 
-    // must assign a queue if none already assigned increment count.  do linear
-    // search checking priority values.
+    // Must assign a queue if none already assigned increment count.  do linear search checking priority values.
     int tpri = getBasePriority( task );
     bool flag = false;
 
@@ -120,9 +119,8 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 
 
 void uDeadlineMonotonic1::removeInitialize( uSequence<uBaseTaskDL> & ) {
-    // Although removing a task may leave a hole in the priorities, the hole
-    // should not affect the ability to schedule the task or the order the
-    // tasks execute. Therefore, no rescheduling is performed.
+    // Although removing a task may leave a hole in the priorities, the hole should not affect the ability to schedule
+    // the task or the order the tasks execute. Therefore, no rescheduling is performed.
 
 //	addInitialize( taskList );
 } // uDeadlineMonotonic1::removeInitialize

@@ -6,9 +6,9 @@
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
-// Last Modified By : 
-// Last Modified On : Wed May 15 01:48:00 2013
-// Update Count     : 784
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Sep  7 22:37:23 2016
+// Update Count     : 800
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -324,10 +324,11 @@ namespace UPP {
 
 
     uSigHandlerModule::uSigHandlerModule() {
-#ifdef __U_DEBUG__
-	// When a stack overflow encounters the sentinel page (debug only), there is no stack to deliver the signal.
-	// Hence errors that result in terminate are delivered on a separate stack.
-	static char stack[SIGSTKSZ];
+	// As a precaution (and necessity), errors that result in termination are delivered on a separate stack because
+	// task stacks might be very small (4K) and the signal delivery corrupts memory to the point that a clean
+	// shutdown is impossible. Also, when a stack overflow encounters the non-accessible sentinel page (debug only)
+	// and generates a segment fault, the signal cannot be delivered on the sentinel page.
+	static char stack[SIGSTKSZ] __attribute__(( aligned (16) ));
 	static stack_t ss;
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + SIGSTKSZ );
@@ -338,21 +339,17 @@ namespace UPP {
 	if ( sigaltstack( &ss, NULL ) == -1 ) {
 	    uAbort( "uSigHandlerModule::uSigHandlerModule : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
 	} // if
-#define ONSTACK SA_ONSTACK
-#else
-#define ONSTACK 0
-#endif // __U_DEBUG__
 
 	// Associate handlers with the set of signals that this application is interested in.  These handlers are
-	// inherited by all unix processes that are subsequently created so they need not be installed again.
+	// inherited by all unix processes that are subsequently created so they are not installed again.
 
-	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGINT,  sigTermHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGTERM, sigTermHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGBUS,  sigSegvBusHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGILL,  sigIllHandler, SA_SIGINFO | ONSTACK );
-	signal( SIGFPE,  sigFpeHandler, SA_SIGINFO | ONSTACK );
+	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGINT,  sigTermHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGTERM, sigTermHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGBUS,  sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGILL,  sigIllHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGFPE,  sigFpeHandler, SA_SIGINFO | SA_ONSTACK );
 
 	// Do NOT specify SA_RESTART for SIGALRM because "select" does not wake up when sent a SIGALRM from another UNIX
 	// process, which means non-blocking I/O does not work correctly in multiprocessor mode.

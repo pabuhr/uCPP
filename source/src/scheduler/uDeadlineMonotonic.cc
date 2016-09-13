@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Fri Oct 27 07:29:18 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:14:54 2011
-// Update Count     : 41
+// Last Modified On : Fri May 27 06:25:20 2016
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,12 +31,10 @@
 //#include <uDebug.h>
 
 
-// compare abstracts the comparison of two task's priorities.  The deadline is
-// first checked.  If the deadlines are identical for two tasks, the period or
-// frame field is checked.  Non-real-time tasks are always greater in deadline
-// than real-time tasks.  Aperiodic tasks get lowest deadline or priority among
-// all real-time tasks.  This compare function acts in the same way as strcmp
-// in terms of return value.
+// Compare abstracts the comparison of two task's priorities.  The deadline is first checked.  If the deadlines are
+// identical for two tasks, the period or frame field is checked.  Non-real-time tasks are always greater in deadline
+// than real-time tasks.  Aperiodic tasks get lowest deadline or priority among all real-time tasks.  This compare
+// function acts in the same way as strcmp in terms of return value.
 
 int uDeadlineMonotonic::compare( uBaseTask &task1, uBaseTask &task2 ) {
     uDuration temp;
@@ -45,8 +43,6 @@ int uDeadlineMonotonic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 			     { R_NR,	R_R,	NPS_PS,	NPS_PS	},
 			     { PS_NPS,  PS_NPS, PS_PS,	PS_PS	},
 			     { PS_NPS,  PS_NPS, PS_PS,	PS_PS	} };
-
-    assert( &task1 != NULL && &task2 != NULL );
 
     uRealTimeBaseTask *rbtask1, *rbtask2;
     uPeriodicBaseTask *pbtask1, *pbtask2;
@@ -155,11 +151,9 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     int cnt = 0;
     uBaseTaskDL *ref = NULL, *prev = NULL, *node = NULL;
 
-    // The cluster's list of tasks is maintained in sorted order. This
-    // algorithm relies on the kernel code adding new tasks to the end of the
-    // cluster's list of tasks.  (Perhaps better to combine adding tasks to a
-    // cluster list with initializing newly scheduled tasks so only one call is
-    // made in uTaskAdd.)
+    // The cluster's list of tasks is maintained in sorted order. This algorithm relies on the kernel code adding new
+    // tasks to the end of the cluster's list of tasks.  (Perhaps better to combine adding tasks to a cluster list with
+    // initializing newly scheduled tasks so only one call is made in uTaskAdd.)
 
     uRealTimeBaseTask *rtb = dynamic_cast<uRealTimeBaseTask *>(&(taskList.tail()->task()));
 
@@ -184,9 +178,8 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     } // for
     taskList.insertBef( ref, node );
 
-    // Find out if task was ever on cluster, if so compare verCount with
-    // verCount for cluster.  If different or first visit recalculate
-    // otherwise, stop after putting task back into task list
+    // Find out if task was ever on cluster, if so compare verCount with verCount for cluster.  If different or first
+    // visit recalculate otherwise, stop after putting task back into task list
 
     if ( verCount == (unsigned int)rtb->getVersion( uThisCluster() ) ) {
 #ifdef __U_DEBUG_H__
@@ -241,9 +234,8 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 
 
 void uDeadlineMonotonic::removeInitialize( uSequence<uBaseTaskDL> & ) {
-    // Although removing a task may leave a hole in the priorities, the hole
-    // should not affect the ability to schedule the task or the order the
-    // tasks execute. Therefore, no rescheduling is performed.
+    // Although removing a task may leave a hole in the priorities, the hole should not affect the ability to schedule
+    // the task or the order the tasks execute. Therefore, no rescheduling is performed.
 
 //	addInitialize( taskList );
 } // uDeadlineMonotonic::removeInitialize

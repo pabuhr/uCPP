@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Feb  4 10:57:13 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:14:24 2011
-// Update Count     : 54
+// Last Modified On : Fri May 27 06:29:32 2016
+// Update Count     : 55
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,8 +90,7 @@ uBaseTaskDL *uPriorityQ::head() const {
 
 
 int uPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
-    // Dynamic check to verify that the task being added to entry queue is
-    // compliant with PIHeap type.
+    // Dynamic check to verify that the task being added to entry queue is compliant with PIHeap type.
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(node->task().uPIQ);
     if ( PIHptr == NULL ) {
 	uAbort("(uPriorityQ &)%p.add : Task %p has incorrect uPIQ type for mutex object.", this, &node->task());
@@ -102,9 +101,8 @@ int uPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
 	uThisCluster().taskSetPriority( node->task(), node->task() );
     } // if
 
-    // As uCurrentSerial is updated, the calling task's priority can no longer
-    // change because the tasks uPIQ is fixed as the entry lock is acquired.
-    // So subsequent updates will only reaffirm the task's current priority.
+    // As uCurrentSerial is updated, the calling task's priority can no longer change because the tasks uPIQ is fixed as
+    // the entry lock is acquired.  So subsequent updates will only reaffirm the task's current priority.
 
     int priority = getActivePriorityValue( node->task() );
     int queueNum = getActiveQueueValue( node->task() ); // use the node for you active priority
@@ -145,8 +143,8 @@ uBaseTaskDL *uPriorityQ::drop() {
 
 
 void uPriorityQ::remove( uBaseTaskDL *node ) {
-    // use stored queue value because this task has entry lock, so its uPIQ may
-    // be updated, but not its position on the entry queue.
+    // Use stored queue value because this task has entry lock, so its uPIQ may be updated, but not its position on the
+    // entry queue.
     int queueNum = getActiveQueueValue( node->task() );	// use the node for you active priority
 
     // do remove
@@ -160,8 +158,8 @@ void uPriorityQ::remove( uBaseTaskDL *node ) {
 
 
 int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it could be Null
-    // static_cast to PIHeap are valid here as add and onAcquire already
-    // verify that the associated tasks use type uPIHeap.
+    // Static_cast to PIHeap are valid here as add and onAcquire already verify that the associated tasks use type
+    // uPIHeap.
 
     // assume entry lock acquired
     int uRelPrevLock = uLockAcquired;
@@ -175,8 +173,7 @@ int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it co
 
     // does node need to be updated?
     if ( uCalling.getActivePriorityValue() < currPriority ) {
-        // only task with entry lock can be modifying this mutex's node
-	// remove node
+        // only task with entry lock can be modifying this mutex's node remove node
 	(static_cast<uPIHeap *>(owner->uPIQ))->remove( currPriority, currQueueNum );
 
 	// reset priority value for monitor
@@ -194,14 +191,11 @@ int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it co
 	    if ( isEntryBlocked( *owner ) ) {
 		uRelPrevLock = rep.uReposition(true);
 	    } else {
-                // call cluster routine to adjust ready queue and active
-                // priority Note: can only raise priority to at most uCalling,
-                // otherwise updating owner's priority can conflit with the
-                // owner blocking on an entry queue at a particular priority
-                // level.  Furthermore, uCalling's priority is fixed while the
-                // entry lock of where it is blocked (s->lock) is acquired, but
-                // uThisTask()'s priority can change as entry lock's are
-                // released along inheritance chain.
+                // call cluster routine to adjust ready queue and active priority Note: can only raise priority to at
+                // most uCalling, otherwise updating owner's priority can conflit with the owner blocking on an entry
+                // queue at a particular priority level.  Furthermore, uCalling's priority is fixed while the entry lock
+                // of where it is blocked (s->lock) is acquired, but uThisTask()'s priority can change as entry lock's
+                // are released along inheritance chain.
 		uThisCluster().taskSetPriority( *owner, uCalling );
 	    } // if
 	} // if
@@ -212,8 +206,7 @@ int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it co
 
 
 void uPriorityQ::onAcquire(uBaseTask &owner ) {
-    // Dynamic check to verify that the task acquiring the serial is compliant
-    // with PIHeap type.
+    // Dynamic check to verify that the task acquiring the serial is compliant with PIHeap type.
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(owner.uPIQ);
     if ( PIHptr == NULL ) {
 	uAbort("(uPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
@@ -235,16 +228,15 @@ void uPriorityQ::onAcquire(uBaseTask &owner ) {
 
 
 void uPriorityQ::onRelease(uBaseTask &uOldOwner ) {
-    // static_cast to PIHeap are valid here as add and onAcquire already
-    // verify that the associated tasks use type uPIHeap.
+    // static_cast to PIHeap are valid here as add and onAcquire already verify that the associated tasks use type
+    // uPIHeap.
 
     // update task's uPIQ, reset stored values
     (static_cast<uPIHeap *>(uOldOwner.uPIQ))->remove( currPriority, currQueueNum );
     currPriority  = -1;
     currQueueNum = -1;
 
-    // reset active priority if necessary
-    // only case where priority can decrease
+    // reset active priority if necessary only case where priority can decrease
     if ( (static_cast<uPIHeap *>(uOldOwner.uPIQ))->empty() ||
 	 (static_cast<uPIHeap *>(uOldOwner.uPIQ))->getHighestPriority() > getActivePriorityValue( uOldOwner ) ) {
 	uThisCluster().taskSetPriority( uOldOwner, uOldOwner );

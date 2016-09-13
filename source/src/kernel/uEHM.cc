@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov  5 21:04:10 2015
-// Update Count     : 721
+// Last Modified On : Fri May 27 06:21:05 2016
+// Update Count     : 727
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -257,7 +257,13 @@ class uEHM::ResumeWorkHorseInit {
 
 #ifdef __U_DEBUG__
 static void Check( uBaseCoroutine &target, const char *kind ) {
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
+    // SKULLDUGGERY: simplify call with reference parameter then treat as pointer to check for overwritten memory.
     if ( &target == NULL || &target == (uBaseCoroutine *)-1 || *((void **)&target) == NULL || *((void **)&target) == (void *)-1 ) {
+#pragma GCC diagnostic pop
+
 	uAbort( "Attempt by task %.256s (%p) to %s a nonlocal exception at target %p, but the target is invalid or has been deleted",
 		uThisTask().getName(), &uThisTask(), kind, &target );
     } // if

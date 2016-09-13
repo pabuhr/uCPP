@@ -37,7 +37,7 @@ endif
 
 ## Define the header files
 
-HEADERS = ostream fstream mutex ${shell ls *.h}
+HEADERS = ostream fstream mutex std_mutex bits/std_mutex.h ${shell ls *.h}
 
 ## Define which libraries should be built.
 
@@ -81,7 +81,7 @@ include ${PACKAGE}/src/MakeRecipes
 _xxx1 := ${shell mkdir -p ${LIBDIR} ${OBJDIR}}
 
 ifeq (${MAKECMDGOALS},install)
-_xxx2 := ${shell mkdir -p ${INSTALLLIBDIR} ${INSTALLINCDIR}}
+_xxx2 := ${shell mkdir -p ${INSTALLLIBDIR} ${INSTALLINCDIR} ${INSTALLINCDIR}/bits}
 endif
 
 ## Local Variables: ##

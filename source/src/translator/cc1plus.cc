@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 27 23:12:31 2015
-// Update Count     : 174
+// Last Modified On : Wed May  4 18:29:14 2016
+// Update Count     : 175
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -121,6 +121,10 @@ void Stage1( const int argc, const char * const argv[] ) {
 
     signal( SIGINT,  sigTermHandler );
     signal( SIGTERM, sigTermHandler );
+
+#ifdef __U_DEBUG_H__
+    cerr << "Stage1" << endl;
+#endif // __U_DEBUG_H__
 
     // process all the arguments
 
@@ -393,6 +397,10 @@ void Stage2( const int argc, const char * const * argv ) {
     const char *args[argc + 100];			// leave space for 100 additional u++ command line values
     int nargs = 1;					// number of arguments in args list; 0 => command name
 
+#ifdef __U_DEBUG_H__
+    cerr << "Stage2" << endl;
+#endif // __U_DEBUG_H__
+
     // process all the arguments
 
     checkEnv( args, nargs );				// arguments passed via environment variables
@@ -489,14 +497,8 @@ int main( const int argc, const char * const argv[], const char * const env[] ) 
     // Currently, stage 1 starts with flag -E and stage 2 with flag -fpreprocessed.
 
     if ( arg == "-E" ) {
-#ifdef __U_DEBUG_H__
-	cerr << "Stage1" << endl;
-#endif // __U_DEBUG_H__
 	Stage1( argc, argv );
     } else if ( arg == "-fpreprocessed" ) {
-#ifdef __U_DEBUG_H__
-	cerr << "Stage2" << endl;
-#endif // __U_DEBUG_H__
 	Stage2( argc, argv );
     } else {
 	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;

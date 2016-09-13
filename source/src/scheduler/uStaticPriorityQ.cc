@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Mon Feb  1 15:06:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:15:15 2011
-// Update Count     : 157
+// Last Modified On : Fri May 27 06:31:16 2016
+// Update Count     : 158
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,8 +35,8 @@
 
 
 int uStaticPriorityQ::afterEntry( uBaseTask *owner ) { // use pointer to owner as it could be Null
-    // static_cast to uStaticPIQ are valid here as add and onAcquire already
-    // verify that the associated tasks use type uStaticPIQ.
+    // static_cast to uStaticPIQ are valid here as add and onAcquire already verify that the associated tasks use type
+    // uStaticPIQ.
 
     // assume entry lock acquired
     int uRelPrevLock = uLockAcquired;
@@ -50,8 +50,7 @@ int uStaticPriorityQ::afterEntry( uBaseTask *owner ) { // use pointer to owner a
 
     // does node need to be updated?
     if ( uCalling.getActivePriorityValue() < currPriority ) {
-        // only task with entry lock can be modifying this mutex's node
-	// remove node
+        // only task with entry lock can be modifying this mutex's node remove node
 	(static_cast<uStaticPIQ *>(owner->uPIQ))->remove( currPriority );
 
 	// reset priority value for monitor
@@ -141,9 +140,8 @@ int uStaticPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
 	uThisCluster().taskSetPriority( node->task(), node->task() );
     } // if
 
-    // As uCurrentSerial is updated, the calling task's priority can no longer
-    // change because the tasks uPIQ is fixed as the entry lock is acquired.
-    // So subsequent updates will only reaffirm the task's current priority.
+    // As uCurrentSerial is updated, the calling task's priority can no longer change because the tasks uPIQ is fixed as
+    // the entry lock is acquired.  So subsequent updates will only reaffirm the task's current priority.
 
     int priority = getActivePriorityValue( node->task() );
 
@@ -162,8 +160,7 @@ int uStaticPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
 
 
 void uStaticPriorityQ::onAcquire( uBaseTask &owner ) {
-    // Dynamic check to verify that the task acquiring the serial is compliant
-    // with PIHeap type.
+    // Dynamic check to verify that the task acquiring the serial is compliant with PIHeap type.
     uStaticPIQ *PIQptr = dynamic_cast<uStaticPIQ *>(owner.uPIQ);
     if ( PIQptr == NULL ) {
 	uAbort("(uStaticPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
@@ -185,15 +182,14 @@ void uStaticPriorityQ::onAcquire( uBaseTask &owner ) {
 
 
 void uStaticPriorityQ::onRelease( uBaseTask &oldOwner ) {
-    // static_cast to PIHeap are valid here as add and onAcquire already
-    // verify that the associated tasks use type uStaticPIQ.
+    // static_cast to PIHeap are valid here as add and onAcquire already verify that the associated tasks use type
+    // uStaticPIQ.
 
     // update task's uPIQ, reset stored values
     (static_cast<uStaticPIQ *>(oldOwner.uPIQ))->remove( currPriority );
     currPriority = -1;
 
-    // reset active priority if necessary
-    // only case where priority can decrease
+    // reset active priority if necessary only case where priority can decrease
     if ( (static_cast<uStaticPIQ *>(oldOwner.uPIQ))->empty() || (static_cast<uStaticPIQ *>(oldOwner.uPIQ))->getHighestPriority() > getActivePriorityValue( oldOwner ) ) {
 	uThisCluster().taskSetPriority( oldOwner, oldOwner );
     } // if
