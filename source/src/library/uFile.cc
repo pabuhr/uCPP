@@ -448,17 +448,19 @@ void uFile::StatusFailure::defaultTerminate() const {
 uFile::~uFile() {
     if ( accessCnt != 0 && ! std::uncaught_exception() ) {
 	TerminateFailure temp( *this, EINVAL, accessCnt, "terminating access with outstanding accessor(s)" );
-	if ( name != 0 ) delete name;			// safe to delete name as the name is copied in the exception object
+	if ( name != 0 ) delete[] name;			// safe to delete name as the name is copied in the exception object
 	_Throw temp;
     } // if
-    if ( name != 0 ) delete name;			// safe to delete name as the name is copied in the exception object
+    if ( name != 0 ) delete[] name;			// safe to delete name as the name is copied in the exception object
 } // uFile::~uFile
 
 
 const char *uFile::setName( char *name ) {
-    // File name is NOT copied => name must exist for the duration of the uFile object.
+    // File name is copied, so it can be deleted in the destructor
     char *temp = uFile::name;				// copy previous file-name address
-    uFile::name = name;
+    const size_t bytes = strlen( name ) + 1;
+    uFile::name = new char[bytes];
+    memcpy( uFile::name, name, bytes );
     return temp;					// return previous file-name address
 } // uFile::setName
 
