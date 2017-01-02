@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uMachContext.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 23 01:02:40 2012
-// Update Count     : 719
+// Last Modified On : Sun Dec 25 10:28:25 2016
+// Update Count     : 726
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -160,7 +160,7 @@ namespace UPP {
 	// Clean up storage associated with the task for pthread thread-specific data, e.g., exception handling
 	// associates thread-specific data with any task.
 
-	if ( This.pthreadData != NULL ) {
+	if ( This.pthreadData != nullptr ) {
 	    pthread_deletespecific_( This.pthreadData );
 	} // if
 
@@ -181,7 +181,7 @@ namespace UPP {
 	} catch( ... ) {				// control should not return
 	} // try
 
-	if ( This.pthreadData != NULL ) {		// see above for explanation
+	if ( This.pthreadData != nullptr ) {		// see above for explanation
 	    pthread_deletespecific_( This.pthreadData );
 	} // if
 
@@ -222,9 +222,9 @@ namespace UPP {
 	}; // FakeStack
 
 	((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
-	((uContext_t *)context)->FP = NULL;		// terminate stack with NULL fp
+	((uContext_t *)context)->FP = nullptr;		// terminate stack with null fp
 
-	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = NULL;
+	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
 	((FakeStack *)(((uContext_t *)context)->SP))->argument = this; // argument to uInvoke
 	((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvoke );
 #else
@@ -236,7 +236,7 @@ namespace UPP {
 	((ucontext *)context)->uc_stack.ss_flags = 0;
 	::makecontext( (ucontext *)context, (void (*)())uInvoke, 2, this );
 	// TEMPORARY: stack is incorrectly initialized to allow stack walking
-	((ucontext *)context)->uc_mcontext.gregs[ REG_EBP ] = 0; // terminate stack with NULL fp
+	((ucontext *)context)->uc_mcontext.gregs[ REG_EBP ] = 0; // terminate stack with null fp
 #endif
 
 #elif defined( __x86_64__ )
@@ -245,13 +245,13 @@ namespace UPP {
 	struct FakeStack {
 	    void *fixedRegisters[5];			// fixed registers rbx, r12, r13, r14, r15
 	    void *rturn;				// where to go on return from uSwitch
-	    void *dummyReturn;				// NULL return address to provide proper alignment
+	    void *dummyReturn;				// null return address to provide proper alignment
 	}; // FakeStack
 
 	((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
-	((uContext_t *)context)->FP = NULL;		// terminate stack with NULL fp
+	((uContext_t *)context)->FP = nullptr;		// terminate stack with null fp
 
-	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = NULL;
+	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
 	((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvokeStub );
 	((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[0] = this;
 	((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[1] = rtnAdr( (void (*)())uInvoke );
@@ -301,7 +301,7 @@ namespace UPP {
 	asm ( "mov.m %0 = ar.fpsr" : "=r" (((FakeStack *)(((uContext_t *)context)->SP))->preserved.fpsr) );
 	((FakeStack *)(((uContext_t *)context)->SP))->preserved.r4 = this;
 	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b1 = rtnAdr( (void (*)())uInvoke );
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b2 = NULL; // null terminate for stack walking
+	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b2 = nullptr; // null terminate for stack walking
 #else
 	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
 	    uAbort( "internal error, getcontext failed" );
@@ -330,7 +330,7 @@ namespace UPP {
 
 	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[0] = this; // argument to uInvoke
 	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[1] = (void *)uInvoke; // uInvoke routine
-	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[6] = NULL; // terminate stack with NULL fp
+	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[6] = nullptr; // terminate stack with null fp
 #else
 	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
 	    uAbort( " : internal error, getcontext failed" );
@@ -340,7 +340,7 @@ namespace UPP {
 	((ucontext *)context)->uc_stack.ss_flags = 0;
 	::makecontext( (ucontext *)context, (void (*)(...))uInvoke, 2, this );
 	// TEMPORARY: stack is incorrectly initialized to allow stack walking
-	*((int *)base - 8) = 0;				// terminate stack with NULL fp
+	*((int *)base - 8) = 0;				// terminate stack with null fp
 #endif
 
 #else
@@ -370,7 +370,7 @@ namespace UPP {
     void uMachContext::createContext( unsigned int storageSize ) { // used by all constructors
 	size_t cxtSize = uCeiling( sizeof(__U_CONTEXT_T__), 8 ); // minimum alignment
 
-	if ( storage == NULL ) {
+	if ( storage == nullptr ) {
 	    userStack = false;
 	    size = uCeiling( storageSize, 16 );
 	    // use malloc/memalign because "new" raises an exception for out-of-memory
@@ -383,7 +383,7 @@ namespace UPP {
 	    // assume malloc has 8 byte alignment so add 8 to allow rounding up to 16 byte alignment
 	    storage = malloc( cxtSize + size + 8 );
 #endif // __U_DEBUG__
-	    if ( storage == NULL ) {
+	    if ( storage == nullptr ) {
 		uAbort( "Attempt to allocate %d bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
 	    } // if
 #ifdef __U_DEBUG__
@@ -518,10 +518,13 @@ namespace UPP {
 	    uAbort( "Stack overflow detected: stack pointer %p below limit %p.\n"
 		    "Possible cause is allocation of large stack frame(s) and/or deep call stack.",
 		    sp, limit );
-	} else if ( stackFree() < 4 * 1024 ) {
+#define MINSTACKSIZE 1
+	} else if ( stackFree() < MINSTACKSIZE * 1024 ) {
 	    // Do not use fprintf because it uses a lot of stack space.
-#define WARNING4K "uC++ Runtime warning : within 4K of stack limit.\n"	    
-	    uDebugWrite( STDERR_FILENO, WARNING4K, sizeof(WARNING4K) - 1 );
+#define xstr(s) str(s)
+#define str(s) #s
+#define MINSTACKSIZEWARNING "uC++ Runtime warning : within " xstr(MINSTACKSIZE) "K of stack limit.\n"
+	    uDebugWrite( STDERR_FILENO, MINSTACKSIZEWARNING, sizeof(MINSTACKSIZEWARNING) - 1 );
 	} else if ( sp > base ) {
 	    uAbort( "Stack underflow detected: stack pointer %p above base %p.\n"
 		    "Possible cause is corrupted stack frame via overwriting memory.",
@@ -539,7 +542,7 @@ namespace UPP {
 
     void *uMachContext::rtnAdr( void (*rtn)() ) {
 #if defined( __linux__ ) && defined( __ia64__ )
-	if ( ! rtn ) return NULL;
+	if ( ! rtn ) return nullptr;
 
 	struct TOC {
 	    void *rtn;
@@ -555,7 +558,7 @@ namespace UPP {
 
 #if defined( __linux__ ) && defined( __ia64__ )
     void *uMachContext::gpAdr( void (*rtn)() ) {
-	if ( ! rtn ) return NULL;
+	if ( ! rtn ) return nullptr;
 
 	struct TOC {
 	    void *rtn;

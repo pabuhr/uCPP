@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Feb 13 19:35:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  2 15:36:15 2012
-// Update Count     : 64
+// Last Modified On : Tue Oct 11 21:57:35 2016
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,10 +41,11 @@
 template<typename T> class uStack: public uCollection<T> {
   protected:
     using uCollection<T>::root;
-
-    uStack(const uStack&);				// no copy
-    uStack &operator=(const uStack&);			// no assignment
   public:
+    uStack( const uStack & ) = delete;			// no copy
+    uStack( uStack && ) = delete;
+    uStack &operator=( const uStack & ) = delete;	// no assignment
+
     using uCollection<T>::head;
     using uCollection<T>::uNext;
 

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2003
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2003
 // 
 // uSemaphore.cc -- 
 // 
@@ -39,7 +39,7 @@ namespace UPP {
     } // uSemaphore::TimedWaitHandler::TimedWaitHandler
 
     uSemaphore::TimedWaitHandler::TimedWaitHandler( uSemaphore &semaphore ) : semaphore( semaphore ) {
-	This = NULL;
+	This = nullptr;
 	timedout = false;
     } // uSemaphore::TimedWaitHandler::TimedWaitHandler
 

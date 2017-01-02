@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // table.h --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:59:11 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 14 08:03:04 2014
-// Update Count     : 66
+// Last Modified On : Tue Oct 11 21:44:00 2016
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ struct lexical_t {
 
     lexical_t( table_t *tbl ) {
 	lexical_t::tbl = tbl;
-	link = NULL;
+	link = nullptr;
     }
 };
 
@@ -63,8 +63,8 @@ struct table_t {
     structor_list_t constructor;			// list of constructors for class
     structor_list_t destructor;				// list of destructors for class
     bool defined;					// class body defined (i.e., not just prototype)
-    bool hascopy;					// has a copy constructor
-    bool haseqop;					// has an equal operator
+    bool hascopy;					// has copy constructor
+    bool hasassnop;					// has assignment operator
     bool hasdefault;					// has a default constructor
     token_t *private_area;
     token_t *protected_area;

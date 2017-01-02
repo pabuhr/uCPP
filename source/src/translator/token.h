@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // token.h --
 //
@@ -43,8 +43,8 @@ struct token_t {
 
     void *operator new( size_t );
     void operator delete( void *p );
-    void init() { symbol = NULL; left = right = NULL; }
-    token_t() { hash = NULL; init(); }
+    void init() { symbol = nullptr; left = right = nullptr; }
+    token_t() { hash = nullptr; init(); }
     token_t( const token_t &t ) { *this = t; }
     token_t( int value, hash_t *hash ) : value( value ), hash( hash ) {	init(); }
     ~token_t();

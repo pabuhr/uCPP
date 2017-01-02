@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2000
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2000
 // 
 // SRC2.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 10 08:44:06 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 18 11:12:18 2010
-// Update Count     : 261
+// Last Modified On : Mon Dec 19 23:02:49 2016
+// Update Count     : 262
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSequence.h>

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Martin Karsten 1995
+// uC++ Version 7.0.0, Copyright (C) Martin Karsten 1995
 // 
 // uLocalDebugger.h -- 
 // 
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:32:37 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul  9 16:23:59 2008
-// Update Count     : 219
+// Last Modified On : Thu Dec 29 13:22:42 2016
+// Update Count     : 220
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -57,9 +57,6 @@ _Task uLocalDebugger {
 	friend class uBaseTask;								// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint, migrateULThread
 	friend _Coroutine UPP::uProcessorKernel;			// access: uLocalDebuggerInstance, dispatcher, debugger_blocked_tasks
 	friend _Task uProcessorTask;						// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint, createKernelThread, destroyKernelThread, migrateKernelThread
-    friend class uTaskConstructor;						// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint
-    friend class uTaskDestructor;						// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint
-	friend class uTaskMain;								// uLocalDebuggerInstance, uLocalDebuggerActive, createULThread, destroyULThread
 	friend class uCluster;								// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint, createCluster, destroyCluster
 	friend class uLocalDebuggerBoot;					// access: uLocalDebuggerInstance
 	friend class uLocalDebuggerHandler;					// access: uLocalDebuggerInstance, breakpointHandler

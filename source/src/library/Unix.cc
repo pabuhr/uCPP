@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2002
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2002
 // 
 // Unix.cc -- 
 // 

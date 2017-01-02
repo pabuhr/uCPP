@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // Migrate.cc -- Test migrating of tasks among clusters.
 // 
 // Author           : Peter A. Buhr
 // Created On       : Tue Jun 28 10:23:11 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 27 02:15:20 2012
-// Update Count     : 43
+// Last Modified On : Mon Dec 19 08:52:03 2016
+// Update Count     : 44
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>

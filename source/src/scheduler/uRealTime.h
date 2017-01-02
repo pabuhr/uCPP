@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim 1996
+// uC++ Version 7.0.0, Copyright (C) Philipp E. Lim 1996
 //
 // uRealTime.h --
 //
@@ -75,7 +75,7 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 	    Node *node = objects[highestPriority].head();
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPriorityScheduleQueue::head
 
@@ -106,7 +106,7 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 #endif // __U_DEBUG_H__
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPriorityScheduleQueue::drop
 
@@ -163,7 +163,7 @@ class uPrioritySeq : public uBasePrioritySeq {
 	    uBaseTaskDL *node = objects[highestPriority].head();
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPrioritySeq::head
 
@@ -190,7 +190,7 @@ class uPrioritySeq : public uBasePrioritySeq {
 	    } // if
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPrioritySeq::drop
 

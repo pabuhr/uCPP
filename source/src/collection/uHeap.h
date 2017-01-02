@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2000
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2000
 // 
 // uHeap.h -- generic heap data structure
 // 
 // Author           : Ashif S. Harji
 // Created On       : Tue Jun 20 11:12:58 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:28:46 2011
-// Update Count     : 58
+// Last Modified On : Fri Dec  2 23:14:50 2016
+// Update Count     : 59
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -239,7 +239,7 @@ template<typename KeyType, typename DataType, template<typename Elt> class Array
 	   if ( compare( A[i].key, key ) == 0 ) return A[i].data;
 	} // for
 
-	return( (DataType)NULL );
+	return( (DataType)nullptr );
     } // uGenericHeap::find
 
     void sort() {

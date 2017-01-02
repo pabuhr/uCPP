@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uIOcntl.h -- 
 // 
@@ -64,7 +64,7 @@ struct uIOClosure {
     } // uIOClosure::wrapper
 
     bool select( int mask, uDuration *timeout ) {
-	if ( timeout == NULL ) {
+	if ( timeout == nullptr ) {
 	    uThisCluster().select( *this, mask );
 	} else {
 	    timeval t = *timeout;			// convert to timeval for select

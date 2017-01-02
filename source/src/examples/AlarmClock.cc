@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // AlarmClock.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed Oct 23 16:10:01 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 26 01:36:22 2012
-// Update Count     : 99
+// Last Modified On : Sun Dec 18 23:49:01 2016
+// Update Count     : 103
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>
@@ -17,17 +30,20 @@ using std::osacquire;
 using std::endl;
 
 class Node : public uSeqable {
-	Node( Node & );										// no copy
-	Node &operator=( Node & );							// no assignment
   public:
+	Node( const Node & ) = delete;						// no copy
+	Node( Node && ) = delete;
+	Node &operator=( const Node & ) = delete;			// no assignment
+
 	int ticks;
 	uCondition block;
 	Node( int t ) { ticks = t; };
 };
 
 class OrderedList : public uSequence<Node> {
-	OrderedList( OrderedList & );						// no copy
-	OrderedList &operator=( OrderedList & );			// no assignment
+	OrderedList( const OrderedList & );					// no copy
+	OrderedList( OrderedList && );
+	OrderedList &operator=( const OrderedList & );		// no assignment
   public:
 	OrderedList() {}
 	void insert( Node *np ) {
@@ -42,7 +58,7 @@ class OrderedList : public uSequence<Node> {
 _Task Clock;											// forward declaration
 
 _Monitor Alarm {
-	friend _Task Clock;								// so Clock can call private Mutex member
+	friend _Task Clock;									// so Clock can call private Mutex member
 	int ticks;											// current time
 	OrderedList TimeReq;								// ordered list of time requests
 

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Russell Mok 1997
+// uC++ Version 7.0.0, Copyright (C) Russell Mok 1997
 // 
 // uEHM.h -- 
 // 
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 26 16:14:58 2016
-// Update Count     : 490
+// Last Modified On : Thu Dec 29 13:51:41 2016
+// Update Count     : 499
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,7 +52,7 @@ class uBaseEvent {
     mutable void *staticallyBoundObject;		// bound object for matching, set at raise
     mutable RaiseKind raiseKind;			// how the exception is raised
 
-    uBaseEvent( const char *const msg = "" ) { src = NULL; setMsg( msg ); }
+    uBaseEvent( const char *const msg = "" ) { src = nullptr; setMsg( msg ); }
     void setSrc( uBaseCoroutine &coroutine );
     const std::type_info *getEventType() const { return &typeid( *this ); };
     void setMsg( const char *const msg );
@@ -62,7 +62,7 @@ class uBaseEvent {
 
     const char *message() const { return msg; }
     const uBaseCoroutine &source() const { return *src; }
-    const char *sourceName() const { return src != NULL ? srcName : "*unknown*"; }
+    const char *sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
     RaiseKind getRaiseKind() const { return raiseKind; }
     const void *getOriginalThrower() const { return staticallyBoundObject; }
     void reraise();
@@ -155,8 +155,6 @@ class uEHM::AsyncEMsg : public uSeqable {
 // AsyncEMsgBuffer looks like public uQueue<AsyncEMsg> but with mutex
 
 class uEHM::AsyncEMsgBuffer : public uSequence<uEHM::AsyncEMsg> {
-    friend class UPP::uTaskMain;
-
     AsyncEMsgBuffer( const AsyncEMsgBuffer & );
     AsyncEMsgBuffer& operator=( const AsyncEMsgBuffer & );
   public:
@@ -214,10 +212,11 @@ class uEHM::uResumptionHandlers {
 
     const unsigned int size;				// number of handlers
     uHandlerBase *const *table;				// pointer to array of resumption handlers
-
-    uResumptionHandlers( const uResumptionHandlers & );	// no copy
-    uResumptionHandlers &operator=( const uResumptionHandlers & ); // no assignment
   public:
+    uResumptionHandlers( const uResumptionHandlers & ) = delete; // no copy
+    uResumptionHandlers( uResumptionHandlers && ) = delete;
+    uResumptionHandlers &operator=( const uResumptionHandlers & ) = delete; // no assignment
+
     uResumptionHandlers( uHandlerBase *const table[], const unsigned int size );
     ~uResumptionHandlers();
 }; // uEHM::uResumptionHandlers
@@ -232,11 +231,12 @@ class uEHM::uDeliverEStack {
     bool deliverFlag;					// true when events in table is Enable, otherwise false
     int  table_size;                                    // number of events in the table, 0 implies everything
     const std::type_info **event_table;			// event id table
-
-    uDeliverEStack( uDeliverEStack & );			// no copy
-    uDeliverEStack &operator=( uDeliverEStack & );	// no assignment
   public:
-    uDeliverEStack( bool f, const std::type_info **t = NULL, unsigned int msg = 0 ); // for enable and disable blocks
+    uDeliverEStack( const uDeliverEStack & ) = delete;	// no copy
+    uDeliverEStack( uDeliverEStack && ) = delete;
+    uDeliverEStack &operator=( const uDeliverEStack & ) = delete; // no assignment
+
+    uDeliverEStack( bool f, const std::type_info **t = nullptr, unsigned int msg = 0 ); // for enable and disable blocks
     ~uDeliverEStack();
 }; // uEHM::uDeliverEStack
 

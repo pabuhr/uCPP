@@ -1,6 +1,6 @@
 ## Define the appropriate configuration variables.
 
-PACKAGE = /u0/usystem/software/u++-6.1.0
+PACKAGE = /u0/usystem/software/u++-7.0.0
 
 ## Include the architecture dependent definitions.
 
@@ -19,7 +19,7 @@ include ${PACKAGE}/src/MakeTools
 CC := ${CCBUILD}
 
 ## Override from MakeTools
-CCFLAGS := -std=c++1y -Wall -I. -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DTVENDOR=\"${TVENDOR}\" -DTOS=\"${TOS}\" -DTCPU=\"${TCPU}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DCPP11=\"${CPP11}\" -DWORDSIZE=${WORDSIZE}
+CCFLAGS := -std=${CPP11} -Wall -I. -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DTVENDOR=\"${TVENDOR}\" -DTOS=\"${TOS}\" -DTCPU=\"${TCPU}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DCPP11=\"${CPP11}\" -DWORDSIZE=${WORDSIZE}
 
 ifeq (${STATISTICS},TRUE)
 	CCFLAGS += -DSTATISTICS

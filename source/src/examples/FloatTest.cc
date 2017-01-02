@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Robert Denda 1996
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Robert Denda 1996
 // 
 // FloatTest.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed May 11 17:30:51 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun 29 17:09:26 2012
-// Update Count     : 77
+// Last Modified On : Mon Dec 19 08:49:01 2016
+// Update Count     : 78
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <cmath>

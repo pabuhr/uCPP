@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 1997
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 1997
 // 
 // TimeoutAccept.cc -- 
 // 
 // Author           : Ashif S. Harji
 // Created On       : Thu Dec 11 10:17:16 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 11 16:18:12 2008
-// Update Count     : 98
+// Last Modified On : Mon Dec 19 23:03:55 2016
+// Update Count     : 99
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>

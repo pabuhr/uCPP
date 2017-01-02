@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Jun Shih 1995
+// uC++ Version 7.0.0, Copyright (C) Jun Shih 1995
 // 
 // uBConditionEval.cc -- 
 // 
 // Author           : Jun Shih
 // Created On       : Sat Nov 11 14:44:08 EST 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 30 21:53:17 2009
-// Update Count     : 46
+// Last Modified On : Fri Dec  2 23:15:37 2016
+// Update Count     : 47
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -283,12 +283,12 @@ uBConditionEval *uBConditionList::search( ULThreadId ul_thread_id ) {
     uSeqIter<uBConditionEval> iter;
     uBConditionEval *bc_eval;
 
-  if ( bp_list.empty() ) return NULL;
+  if ( bp_list.empty() ) return nullptr;
 
     for ( iter.over(bp_list ); iter >> bc_eval; ) {
 	if ( bc_eval->getId() == ul_thread_id ) return bc_eval;
     } // for
-    return NULL;
+    return nullptr;
 } //  uBConditionList::search
 
 

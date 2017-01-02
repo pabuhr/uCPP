@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Richard C. Bilson 2004
+// uC++ Version 7.0.0, Copyright (C) Richard C. Bilson 2004
 // 
 // uAtomic.h -- atomic routines for various processors
 // 

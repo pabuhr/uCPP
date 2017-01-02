@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2002
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2002
 // 
 // semaphore.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan 20 20:34:08 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 27 15:26:28 2008
-// Update Count     : 56
+// Last Modified On : Thu Oct  6 22:17:45 2016
+// Update Count     : 57
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,7 +36,7 @@
 extern "C" {
     int sem_init( sem_t *sem, int pshared, unsigned int value ) __THROW {
 	// storage for a sem_t must be >= u_sem_t
-	_STATIC_ASSERT_( sizeof(sem_t) >= sizeof(uSemaphore) );
+	static_assert( sizeof(sem_t) >= sizeof(uSemaphore), "sizeof(sem_t) < sizeof(uSemaphore)" );
 	new( sem ) uSemaphore( value );			// run constructor on supplied storage
 	// pshared ignored
 	return 0;

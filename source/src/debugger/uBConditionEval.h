@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Jun Shih 1995
+// uC++ Version 7.0.0, Copyright (C) Jun Shih 1995
 // 
 // uBConditionEval.h -- 
 // 

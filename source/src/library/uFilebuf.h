@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uFilebuf.h -- nonblocking stream buffer
 // 
@@ -156,8 +156,8 @@ namespace std {
 
     template< typename char_t, typename traits >
     basic_filebuf<char_t, traits>::basic_filebuf() {
-	ufile = NULL;
-	ufileacc = NULL;
+	ufile = nullptr;
+	ufileacc = nullptr;
 	setbuf( buffer, __U_BUFFER_SIZE__ );		// reset all buffer pointers
 	endOfFile = false;
     } // basic_filebuf<char_t, traits>::basic_filebuf
@@ -195,19 +195,19 @@ namespace std {
 
     template< typename char_t, typename traits >
     bool basic_filebuf<char_t, traits>::is_open() const {
-	return ufileacc != NULL;
+	return ufileacc != nullptr;
     } // basic_filebuf<char_t, traits>::is_open
 
 
     template< typename char_t, typename traits >
     basic_filebuf<char_t, traits> *basic_filebuf<char_t, traits>::open( const char *filename, ios_base::openmode mode ) {
-	if ( is_open() ) return NULL;
+	if ( is_open() ) return nullptr;
 	ufile = new uFile( filename );
 	ufileacc = new uFile::FileAccess( *ufile, IosToUnixMode( mode ) );
 	if ( mode & ios_base::ate ) {			// seek to the end of the file
 	    if ( seekoff( 0, ios_base::end ) == pos_type( off_type( -1 ) ) ) {
 		close();
-		return NULL;
+		return nullptr;
 	    } // if
 	} // if
 	endOfFile = false;
@@ -220,7 +220,7 @@ namespace std {
 	basic_filebuf<char_t, traits> *ret = this;
 	if ( pptr() > pbase() ) {
 	    if ( overflow( traits::eof() ) == traits::eof() ) {
-		ret = NULL;
+		ret = nullptr;
 	    } // if
 	} // if
 	if ( is_open() ) {
@@ -320,7 +320,7 @@ namespace std {
     basic_filebuf<char_t, traits> *basic_filebuf<char_t, traits>::setbuf( char_type *buf, streamsize size ) {
 	// It is necessary to have at least one character of storage to hold the last character read by underflow.
 	// Having one character also simplifies the implementation of overflow.
-	if ( buf == NULL || size == 0 ) {
+	if ( buf == nullptr || size == 0 ) {
 	    bufptr = buffer;
 	    bufsize = 1;
 	} else {

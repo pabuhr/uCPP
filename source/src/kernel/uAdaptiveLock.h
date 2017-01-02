@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Richard C. Bilson 2008
+// uC++ Version 7.0.0, Copyright (C) Richard C. Bilson 2008
 // 
 // uAdaptiveLock.h -- 
 // 
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 14 16:46:34 2014
-// Update Count     : 32
+// Last Modified On : Tue Oct 11 21:59:56 2016
+// Update Count     : 35
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,9 +36,6 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
     uQueue<uBaseTaskDL> waiting;
     volatile int spinners;
     volatile unsigned int waker;
-
-    uAdaptiveLock( uAdaptiveLock & );			// no copy
-    uAdaptiveLock &operator=( uAdaptiveLock & );	// no assignment
 
     // NB: if tryacquireInternal returns false, "spin" is held
     //     if tryacquireInternal returns true, "spin" is released
@@ -86,6 +83,10 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
     } // tryacquireInternal
 
   public:
+    uAdaptiveLock( const uAdaptiveLock & ) = delete;	// no copy
+    uAdaptiveLock( uAdaptiveLock && ) = delete;
+    uAdaptiveLock &operator=( const uAdaptiveLock & ) = delete;	// no assignment
+
     void *operator new( size_t, void *storage ) {
 	return storage;
     } // operator new
@@ -95,7 +96,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
     } // operator new
 
     uAdaptiveLock() {
-	owner_ = NULL;					// no one owns the lock
+	owner_ = nullptr;					// no one owns the lock
 	count = 0;					// so count is zero
 	spinners = 0;
 	waker = 0;
@@ -215,10 +216,10 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 
 	count -= 1;					// release the lock
 	if ( count == 0 ) {				// if this is the last
-	    owner_ = NULL;
+	    owner_ = nullptr;
 #ifdef __U_MULTI__
 	    for ( int adaptCount = releaseSpins; spinners && adaptCount > 0; adaptCount -= 1 ) { // adaptive
-		if ( owner_ != NULL ) {
+		if ( owner_ != nullptr ) {
 		    return;
 		} // if
 	    } // for
@@ -229,7 +230,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	    // NB: it doesn't work to put this here:
 	    //		if ( ! waiting.empty() ) {
 	    // This test here would only work if it was known that a task that is attempting to queue itself based on
-	    // observing owner != NULL before we cleared owner would actually succeed in doing so and that the results
+	    // observing owner != nullptr before we cleared owner would actually succeed in doing so and that the results
 	    // of that operation would become visible to this task before the above test. But there is no guarantee of
 	    // that.
 

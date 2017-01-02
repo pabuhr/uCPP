@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSocket.h -- Nonblocking UNIX Socket I/O
 // 
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:04:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 29 14:06:52 2011
-// Update Count     : 373
+// Last Modified On : Sun Dec 25 10:31:01 2016
+// Update Count     : 376
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -60,8 +60,9 @@ class uSocket {
 
     const int domain, type, protocol;			// copies for information purposes
 
-    uSocket( uSocket & );				// no copy
-    uSocket &operator=( uSocket & );			// no assignment
+    uSocket( const uSocket & ) = delete;		// no copy
+    uSocket( uSocket && ) = delete;
+    uSocket &operator=( const uSocket & ) = delete;	// no assignment
 
     static void convertFailure( const char *msg, const char *addr ) __attribute__ ((noreturn));
 
@@ -162,25 +163,25 @@ class uSocketIO : public uFileIO {
 	return ::getpeername( access.fd, name, len );
     } // uSocketIO::getpeername
 
-    int send( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-    int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = NULL );
+    int send( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+    int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = nullptr );
 
-    int sendto( char *buf, int len, int flags = 0, uDuration *timeout = NULL ) {
+    int sendto( char *buf, int len, int flags = 0, uDuration *timeout = nullptr ) {
 	return sendto( buf, len, saddr, saddrlen, flags, timeout );
     } // uSocketIO::sendto
 
-    int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-    int recv( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-    int recvfrom( char *buf, int len, struct sockaddr *from, socklen_t *fromlen, int flags = 0, uDuration *timeout = NULL );
+    int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+    int recv( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+    int recvfrom( char *buf, int len, struct sockaddr *from, socklen_t *fromlen, int flags = 0, uDuration *timeout = nullptr );
 
-    int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = NULL ) {
+    int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = nullptr ) {
 	saddrlen = baddrlen;				// set to receive buffer size
 	return recvfrom( buf, len, saddr, &saddrlen, flags, timeout );
     } // uSocketIO::recvfrom
 
-    int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
+    int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
 
-    ssize_t sendfile( uFile::FileAccess &file, off_t *off, size_t len, uDuration *timeout = NULL );
+    ssize_t sendfile( uFile::FileAccess &file, off_t *off, size_t len, uDuration *timeout = nullptr );
 }; // uSocketIO
 
 
@@ -241,7 +242,7 @@ _Monitor uSocketServer : public uSocketIO {
 	const int backlog;
       public:
 	OpenFailure( const uSocketServer &server, int errno_, const char *const name, const unsigned short port, const in_addr ip, const int domain, const int type, const int protocol, int backlog, const char *const msg );
-	const char *name() const;			// return socket name, or NULL when hostname is used
+	const char *name() const;			// return socket name, or null when hostname is used
 	virtual void defaultTerminate() const;
     }; // uSocketServer::OpenFailure
 
@@ -486,27 +487,27 @@ _Monitor uSocketAccept : public uSocketIO {
     }; // uSocketAccept::SendfileTimeout
 
 
-    uSocketAccept( uSocketServer &s, struct sockaddr *adr = NULL, socklen_t *len = NULL ) :
-	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( NULL ), adr( adr ), len( len ) {
-	createSocketAcceptor( NULL, adr, len );
+    uSocketAccept( uSocketServer &s, struct sockaddr *adr = nullptr, socklen_t *len = nullptr ) :
+	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( nullptr ), adr( adr ), len( len ) {
+	createSocketAcceptor( nullptr, adr, len );
 	socketserver.acceptor();
     } // uSocketAccept::uSocketAccept
 
-    uSocketAccept( uSocketServer &s, uDuration *timeout, struct sockaddr *adr = NULL, socklen_t *len = NULL ) :
+    uSocketAccept( uSocketServer &s, uDuration *timeout, struct sockaddr *adr = nullptr, socklen_t *len = nullptr ) :
 	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( timeout ), adr( adr ), len( len ) {
 	createSocketAcceptor( timeout, adr, len );
 	socketserver.acceptor();
     } // uSocketAccept::uSocketAccept
 
-    uSocketAccept( uSocketServer &s, bool doAccept, struct sockaddr *adr = NULL, socklen_t *len = NULL ) :
-	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( NULL ), adr( adr ), len( len ) {
+    uSocketAccept( uSocketServer &s, bool doAccept, struct sockaddr *adr = nullptr, socklen_t *len = nullptr ) :
+	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( nullptr ), adr( adr ), len( len ) {
 	if ( doAccept ) {
-	    createSocketAcceptor( NULL, adr, len );
+	    createSocketAcceptor( nullptr, adr, len );
 	} // if
 	socketserver.acceptor();
     } // uSocketAccept::uSocketAccept
 
-    uSocketAccept( uSocketServer &s, uDuration *timeout, bool doAccept, struct sockaddr *adr = NULL, socklen_t *len = NULL ) :
+    uSocketAccept( uSocketServer &s, uDuration *timeout, bool doAccept, struct sockaddr *adr = nullptr, socklen_t *len = nullptr ) :
 	    uSocketIO( access, s.saddr ), socketserver( s ), openAccept( false ), timeout( timeout ), adr( adr ), len( len ) {
 	if ( doAccept ) {
 	    createSocketAcceptor( timeout, adr, len );
@@ -654,7 +655,7 @@ _Monitor uSocketClient : public uSocketIO {
     // AF_UNIX
     uSocketClient( const char *name, int type = SOCK_STREAM, int protocol = 0 ) :
 	    uSocketIO( socket.access, (sockaddr *)new sockaddr_un ), socket( AF_UNIX, type, protocol ) {
-	createSocketClient1( name, NULL, type, protocol );
+	createSocketClient1( name, nullptr, type, protocol );
     } // uSocketClient::uSocketClient
 
     uSocketClient( const char *name, uDuration *timeout, int type = SOCK_STREAM, int protocol = 0 ) :
@@ -665,7 +666,7 @@ _Monitor uSocketClient : public uSocketIO {
     // AF_INET, local host
     uSocketClient( unsigned short port, int type = SOCK_STREAM, int protocol = 0 ) :
 	    uSocketIO( socket.access, (sockaddr *)new inetAddr( port, uSocket::itoip( INADDR_ANY ) ) ), socket( AF_INET, type, protocol ) {
-	createSocketClient2( port, "", NULL, type, protocol );
+	createSocketClient2( port, "", nullptr, type, protocol );
     } // uSocketClient::uSocketClient
 
     uSocketClient( unsigned short port, uDuration *timeout, int type = SOCK_STREAM, int protocol = 0 ) :
@@ -676,7 +677,7 @@ _Monitor uSocketClient : public uSocketIO {
     // AF_INET, other host
     uSocketClient( unsigned short port, in_addr ip, int type = SOCK_STREAM, int protocol = 0 ) :
 	    uSocketIO( socket.access, (sockaddr *)new inetAddr( port, ip ) ), socket( AF_INET, type, protocol ) {
-	createSocketClient2( port, "", NULL, type, protocol );
+	createSocketClient2( port, "", nullptr, type, protocol );
     } // uSocketClient::uSocketClient
 
     uSocketClient( unsigned short port, in_addr ip, uDuration *timeout, int type = SOCK_STREAM, int protocol = 0 ) :

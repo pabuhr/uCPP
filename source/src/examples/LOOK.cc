@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // LOOK.cc -- Look Disk Scheduling Algorithm
 //
@@ -10,8 +10,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 29 21:46:11 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 18 11:06:04 2010
-// Update Count     : 281
+// Last Modified On : Mon Dec 19 08:51:38 2016
+// Update Count     : 286
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>
@@ -38,9 +51,11 @@ class IORequest {
 }; // IORequest
 
 class WaitingRequest : public uSeqable {				// element for a waiting request list
-	WaitingRequest( WaitingRequest & );					// no copy
-	WaitingRequest &operator=( WaitingRequest & );		// no assignment
   public:
+	WaitingRequest( const WaitingRequest & ) = delete;	// no copy
+	WaitingRequest( WaitingRequest && ) = delete;
+	WaitingRequest &operator=( const WaitingRequest & ) = delete; // no assignment
+
 	uCondition block;
 	IOStatus status;
 	IORequest req;
@@ -53,8 +68,9 @@ class Elevator : public uSequence<WaitingRequest> {
 	int Direction;
 	WaitingRequest *Current;
 
-	Elevator( Elevator & );								// no copy
-	Elevator &operator=( Elevator & );					// no assignment
+	Elevator( const Elevator & ) = delete;				// no copy
+	Elevator( Elevator && ) = delete;
+	Elevator &operator=( const Elevator & ) = delete;	// no assignment
   public:
 	Elevator() {
 		Direction = 1;
@@ -134,7 +150,7 @@ void Disk::main() {
 void DiskScheduler::main() {
 	uSeqIter<WaitingRequest> iter;						// declared here because of gcc compiler bug
 
-	CurrentRequest = NULL;								// no current request at start
+	CurrentRequest = nullptr;								// no current request at start
 	for ( ;; ) {
 		_Accept( ~DiskScheduler ) {						// request from system
 			break;
@@ -183,7 +199,7 @@ IOStatus DiskScheduler::DiskRequest( IORequest &req ) {
 } // DiskScheduler::DiskRequest
 
 IORequest DiskScheduler::WorkRequest( IOStatus status ) {
-	if ( CurrentRequest != NULL ) {						// client waiting for request to complete ?
+	if ( CurrentRequest != nullptr ) {						// client waiting for request to complete ?
 		CurrentRequest->status = status;				// set request status
 		CurrentRequest->block.ignal();					// reactivate waiting client
 	} // if

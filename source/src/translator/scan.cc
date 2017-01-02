@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // scan.c --
 //
@@ -52,7 +52,7 @@ void scan() {
 	// the value of the token the value of the keyword.
 
 	ahead->value = ahead->hash->value;
-    } else if ( ahead->symbol != NULL ) {
+    } else if ( ahead->symbol != nullptr ) {
 	// symbol has already been looked up and the parser has backtracked to it again.
     } else if ( ahead->value == IDENTIFIER ) {
 	// use the symbol to determine whether the identifier is a type or a variable.
@@ -60,9 +60,9 @@ void scan() {
 #ifdef __U_DEBUG_H__
 	cerr << "scan: token " << ahead << " (" << ahead->hash->text << ") focus " << focus << endl;
 #endif // __U_DEBUG_H__
-	if ( focus != NULL ) {			// scanning mode
+	if ( focus != nullptr ) {			// scanning mode
 	    ahead->symbol = focus->search_table( ahead->hash );
-	    if ( ahead->symbol != NULL ) {
+	    if ( ahead->symbol != nullptr ) {
 #ifdef __U_DEBUG_H__
 		cerr << "scan: setting token " << ahead << " (" << ahead->hash->text << ") to value " << ahead->symbol->value << endl;
 #endif // __U_DEBUG_H__
@@ -76,10 +76,10 @@ void scan() {
 void unscan( token_t *back ) {
     for ( token_t *t = back->next_parse_token(); t != ahead->next_parse_token(); t = t->next_parse_token() ) {
 #ifdef __U_DEBUG_H__
-	if ( t->value == TYPE || t->symbol != NULL ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl;
+	if ( t->value == TYPE || t->symbol != nullptr ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl;
 #endif // __U_DEBUG_H__
 	if ( t->value == TYPE ) t->value = IDENTIFIER;
-	t->symbol = NULL;
+	t->symbol = nullptr;
     } // for
     ahead = back;
 } // unscan

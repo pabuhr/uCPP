@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // gen.h --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:36:43 1992
-// Last Modified By : 
-// Last Modified On : Sat Oct 12 15:36:26 2013
-// Update Count     : 78
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Oct 11 22:05:49 2016
+// Update Count     : 79
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -61,7 +61,6 @@ void gen_class_suffix( token_t *before, symbol_t *symbol );
 void gen_access( token_t *before, int access );
 void gen_PIQ( token_t *before, symbol_t *symbol );
 void gen_mutex( token_t *before, symbol_t *symbol );
-void gen_hascopy( token_t *before, symbol_t *symbol );
 void gen_mutex_entry( token_t *before, symbol_t *symbol );
 void gen_base_specifier_name( token_t *before, symbol_t *symbol );
 void gen_verify( token_t *before );

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2005
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2005
 // 
 // ostream.h -- 
 // 
@@ -52,7 +52,7 @@ namespace std {
 	basic_acquire( streamtype &ios ) : lockedStream( ios ) {
 #ifdef __U_DEBUG__
 	    filebuf *buf = dynamic_cast<filebuf *>( ios.rdbuf() );
-	    if ( buf == NULL ) {
+	    if ( buf == nullptr ) {
 		uAbort( "Attempt to acquire mutual exclusion for a non-concurrent stream." );
 	    } // if
 #else

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 //
 // uStaticPriorityQ.cc --
 //
 // Author           : Ashif S. Harji
 // Created On       : Mon Feb  1 15:06:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:31:16 2016
-// Update Count     : 158
+// Last Modified On : Sun Dec 25 10:11:10 2016
+// Update Count     : 159
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,11 +42,11 @@ int uStaticPriorityQ::afterEntry( uBaseTask *owner ) { // use pointer to owner a
     int uRelPrevLock = uLockAcquired;
 
     // if entry queue empty (called by owner) or no owner, then no inheritance
-    if ( empty() || owner == NULL /* || currPriority == -1 */ ) {
+    if ( empty() || owner == nullptr /* || currPriority == -1 */ ) {
 	return uRelPrevLock;
     } // if
 
-    uBaseTask &uCalling = head()->task();		// can't be NULL as not empty
+    uBaseTask &uCalling = head()->task();		// can't be null as not empty
 
     // does node need to be updated?
     if ( uCalling.getActivePriorityValue() < currPriority ) {
@@ -130,7 +130,7 @@ int uStaticPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
     // Dynamic check to verify that the task being added to entry queue is
     // compliant with PIHeap type.
     uStaticPIQ *PIQptr = dynamic_cast<uStaticPIQ *>(node->task().uPIQ);
-    if ( PIQptr == NULL ) {
+    if ( PIQptr == nullptr ) {
     //return uLockAcquired; // TEMPORARY
 	uAbort("(uStaticPriorityQ &)%p.add : Task %p has incorrect uPIQ type for mutex object.", this, &node->task());
     } //if
@@ -162,7 +162,7 @@ int uStaticPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
 void uStaticPriorityQ::onAcquire( uBaseTask &owner ) {
     // Dynamic check to verify that the task acquiring the serial is compliant with PIHeap type.
     uStaticPIQ *PIQptr = dynamic_cast<uStaticPIQ *>(owner.uPIQ);
-    if ( PIQptr == NULL ) {
+    if ( PIQptr == nullptr ) {
 	uAbort("(uStaticPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
     } //if
 

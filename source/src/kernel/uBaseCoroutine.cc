@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1997
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1997
 // 
 // uBaseCoroutine.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 29 20:32:38 2015
-// Update Count     : 538
+// Last Modified On : Thu Dec 29 12:05:56 2016
+// Update Count     : 553
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -80,18 +80,18 @@ void uBaseCoroutine::createCoroutine() {
     state = Start;
     notHalted = true;					// must be a non-zero value so detectable after memory is scrubbed
 
-    last = NULL;					// see ~uCoroutineDestructor
+    last = nullptr;					// see ~uCoroutineDestructor
 #ifdef __U_DEBUG__
-    currSerialOwner = NULL;				// for error checking
+    currSerialOwner = nullptr;				// for error checking
     currSerialCount = 0;
 #endif // __U_DEBUG__
 
     // exception handling / cancellation
 
-    handlerStackTop = handlerStackVisualTop = NULL;
-    resumedObj = NULL;
-    topResumedType = NULL;
-    DEStack = NULL;
+    handlerStackTop = handlerStackVisualTop = nullptr;
+    resumedObj = nullptr;
+    topResumedType = nullptr;
+    DEStack = nullptr;
     unexpectedRtn = uEHM::unexpected;			// initialize default unexpected routine
     unexpected = false;
 
@@ -105,13 +105,13 @@ void uBaseCoroutine::createCoroutine() {
 #ifdef __U_PROFILER__
     // profiling
 
-    profileTaskSamplerInstance = NULL;
+    profileTaskSamplerInstance = nullptr;
 #endif // __U_PROFILER__
 } // uBaseCoroutine::createCoroutine
 
 
 // SKULLDUGGERY: __errno_location may be defined with attribute "const" so its result can be stored and reused. So in
-// contextSw, the thread-local address may be stored in a register on the front side of the context switch, but on the
+// taskCxtSw, the thread-local address may be stored in a register on the front side of the context switch, but on the
 // back side of the context switch the processor may have changed so the stored value is wrong. This routine forces
 // another call to __errno_location on the back side of the context switch.
 
@@ -123,7 +123,7 @@ static int *my_errno_location() {
 #endif // ! __U_ERRNO_FUNC__
 
 
-void uBaseCoroutine::contextSw() {			// switch between a task and the kernel
+void uBaseCoroutine::taskCxtSw() {			// switch between a task and the kernel
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     uBaseTask &currTask = uThisTask();
 
@@ -136,7 +136,7 @@ void uBaseCoroutine::contextSw() {			// switch between a task and the kernel
     coroutine.setState( Inactive );			// set state of current coroutine to inactive
 
 #ifdef __U_DEBUG_H__
-    uDebugPrt( "(uBaseCoroutine &)%p.contextSw, coroutine:%p, coroutine.SP:%p, coroutine.storage:%p, storage:%p\n",
+    uDebugPrt( "(uBaseCoroutine &)%p.taskCxtSw, coroutine:%p, coroutine.SP:%p, coroutine.storage:%p, storage:%p\n",
 	       this, &coroutine, coroutine.stackPointer(), coroutine.storage, storage );
 #endif // __U_DEBUG_H__
 
@@ -161,22 +161,22 @@ void uBaseCoroutine::contextSw() {			// switch between a task and the kernel
 	(*uProfiler::uProfiler_builtinRegisterTaskUnblock)( uProfiler::profilerInstance, currTask );
     } // if
 #endif // __U_PROFILER__
-} // uBaseCoroutine::contextSw
+} // uBaseCoroutine::taskCxtSw
 
 
-void uBaseCoroutine::contextSw2() {			// switch between two coroutine contexts
+void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     uBaseTask &currTask = uThisTask();
 
 #ifdef __U_DEBUG__
     // reset task in current coroutine?
     if ( coroutine.currSerialCount == currTask.currSerialLevel ) {
-	coroutine.currSerialOwner = NULL;
+	coroutine.currSerialOwner = nullptr;
     } // if
     
     // check and set for new owner
     if ( currSerialOwner != &currTask ) {
-	if ( currSerialOwner != NULL  ) {
+	if ( currSerialOwner != nullptr  ) {
 	    if ( &currSerialOwner->getCoroutine() != this ) {
 		uAbort( "Attempt by task %.256s (%p) to activate coroutine %.256s (%p) currently executing in a mutex object owned by task %.256s (%p).\n"
 			"Possible cause is task attempting to logically change ownership of a mutex object via a coroutine.",
@@ -204,7 +204,7 @@ void uBaseCoroutine::contextSw2() {			// switch between two coroutine contexts
     coroutine.setState( Inactive );			// set state of current coroutine to inactive
 
 #ifdef __U_DEBUG_H__
-    uDebugPrt( "(uBaseCoroutine &)%p.contextSw2, coroutine:%p, coroutine.SP:%p\n",
+    uDebugPrt( "(uBaseCoroutine &)%p.corCxtSw, coroutine:%p, coroutine.SP:%p\n",
 	       this, &coroutine, coroutine.stackPointer() );
 #endif // __U_DEBUG_H__
     coroutine.save();					// save user specified contexts
@@ -230,7 +230,7 @@ void uBaseCoroutine::contextSw2() {			// switch between two coroutine contexts
 	(*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
     } // if
 #endif // __U_PROFILER__
-} // uBaseCoroutine::contextSw2
+} // uBaseCoroutine::corCxtSw
 
 
 void uBaseCoroutine::corFinish() {			// resumes the coroutine that first resumed this coroutine
@@ -242,7 +242,7 @@ void uBaseCoroutine::corFinish() {			// resumes the coroutine that first resumed
 		    uThisCoroutine().getName(), &uThisCoroutine(), starter_->getName(), starter_ );
     } // if
 #endif // __U_DEBUG__
-    starter_->contextSw2();
+    starter_->corCxtSw();
     // CONTROL NEVER REACHES HERE!
     uAbort( "(uBaseCoroutine &)%p.corFinish() : internal error, attempt to return.", this );
 } // uBaseCoroutine::corFinish
@@ -262,7 +262,7 @@ const char *uBaseCoroutine::setName( const char *name ) {
 
 const char *uBaseCoroutine::getName() const {
     // storage might be uninitialized or scrubbed
-    return name == NULL
+    return name == nullptr
 #ifdef __U_DEBUG__
 	     || name == (const char *)-1		// only scrub in debug
 #endif // __U_DEBUG__
@@ -330,7 +330,7 @@ const char *uBaseCoroutine::UnhandledException::origName() const {
 } // uBaseCoroutine::origName
 
 void uBaseCoroutine::UnhandledException::triggerCause() {
-    if ( cause != NULL ) cause->reraise();
+    if ( cause != nullptr ) cause->reraise();
 } // uBaseCoroutine::UnhandledException::triggerCause
 
 void uBaseCoroutine::UnhandledException::defaultTerminate() const {
@@ -345,22 +345,66 @@ void uBaseCoroutine::UnhandledException::defaultTerminate() const {
 } // uBaseCoroutine::UnhandledException::defaultTerminate
 
 void uBaseCoroutine::handleUnhandled( UnhandledException *event ) {
-    UnhandledException *cpy = event->duplicate();
-    _Resume uBaseCoroutine::UnhandledException( cpy ) _At resumer();
-    notHalted = false;
+    _Resume uBaseCoroutine::UnhandledException( event->duplicate() ) _At resumer();
+    notHalted = false;					// terminate coroutine
 } // uBaseCoroutine::handleUnhandled
 
 void uBaseCoroutine::handleUnhandled( uBaseEvent *event ) {
 #   define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
 #   define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
     char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
-    uBaseEvent::RaiseKind raisekind = event == NULL ? uBaseEvent::ThrowRaise : event->getRaiseKind();
+    uBaseEvent::RaiseKind raisekind = event == nullptr ? uBaseEvent::ThrowRaise : event->getRaiseKind();
     strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
     uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
-    _Resume uBaseCoroutine::UnhandledException( event == NULL ? event : event->duplicate(), msg ) _At resumer();
-    notHalted = false;				// terminate coroutine
+    _Resume uBaseCoroutine::UnhandledException( event == nullptr ? event : event->duplicate(), msg ) _At resumer();
+    notHalted = false;					// terminate coroutine
 } // uBaseCoroutine::handleUnhandled
 
+
+uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor( UPP::uAction f, UPP::uSerial &serial, uBaseCoroutine &coroutine, const char *name ) {
+    if ( f == UPP::uYes ) {
+	coroutine.startHere( (void (*)( uMachContext & ))uMachContext::invokeCoroutine );
+	coroutine.name = name;
+	coroutine.serial = &serial;			// set cormonitor's serial instance
+
+#ifdef __U_PROFILER__
+	if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutine && // profiling & coroutine registered for profiling ?
+	     dynamic_cast<uProcessorKernel *>(&coroutine) == nullptr ) { // and not kernel coroutine
+	    (*uProfiler::uProfiler_registerCoroutine)( uProfiler::profilerInstance, coroutine, serial );
+	} // if
+#endif // __U_PROFILER__
+    } // if
+} // uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor
+
+
+uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor( UPP::uAction f, uBaseCoroutine &coroutine ) : f( f ), coroutine( coroutine ) {
+    // Clean up the stack of a non-terminated coroutine (i.e., run its destructors); a terminated coroutine's stack is
+    // already cleaned up. Ignore the uProcessorKernel coroutine because it has a special shutdown sequence.
+
+    // Because code executed during stack unwinding may access any coroutine data, unwinding MUST occur before running
+    // the coroutine's destructor. A consequence of this semantics is that the destructor may not resume the coroutine,
+    // so it is asymmetric with the coroutine's constructor.
+
+    if ( coroutine.getState() != uBaseCoroutine::Halt	// coroutine not halted
+	 && &coroutine.resumer() != nullptr		// and its main is started
+	 && dynamic_cast<UPP::uProcessorKernel *>(&coroutine) == nullptr ) { // but not the processor Kernel
+	// Mark for cancellation, then resume the coroutine to trigger a call to uPoll on the backside of its
+	// suspend(). uPoll detects the cancellation and calls unwind_stack, which throws exception UnwindStack to
+	// unwinding the stack. UnwindStack is ultimately caught inside uMachContext::uInvokeCoroutine.
+	coroutine.cancel();
+	coroutine.resume();
+    } // if
+} // uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor
+
+#ifdef __U_PROFILER__
+uBaseCoroutine::uCoroutineDestructor::~uCoroutineDestructor() {
+    if ( f == uYes ) {
+	if ( uThisTask().profileActive && uProfiler::uProfiler_deregisterCoroutine ) { // profiling this coroutine & coroutine registered for profiling ? 
+	    (*uProfiler::uProfiler_deregisterCoroutine)( uProfiler::profilerInstance, coroutine );
+	} // if
+    } // if
+} // uBaseCoroutine::uCoroutineDestructor::~uCoroutineDestructor
+#endif // __U_PROFILER__
 
 // Local Variables: //
 // compile-command: "make install" //

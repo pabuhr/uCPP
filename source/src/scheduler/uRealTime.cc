@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 //
 // uRealTime.cc --
 //
@@ -97,7 +97,7 @@ uDuration uRealTimeBaseTask::setDeadline( uDuration deadline_ ) {
 
 int uRealTimeBaseTask::getVersion( uCluster &cluster ) {
     uSeqIter<VerCount> iter;
-    VerCount *node = NULL;
+    VerCount *node = nullptr;
 
     for ( iter.over( verCountSeq ); iter >> node; ) {
 	if ( node->cluster == &cluster ) {
@@ -110,14 +110,14 @@ int uRealTimeBaseTask::getVersion( uCluster &cluster ) {
 
 int uRealTimeBaseTask::setVersion( uCluster &cluster, int version ) {
     uSeqIter<VerCount> iter;
-    VerCount *ref = NULL, *node = NULL, *prev = NULL;
+    VerCount *ref = nullptr, *node = nullptr, *prev = nullptr;
     int temp;
 
-    for ( iter.over(verCountSeq), prev = NULL; iter >> node ; prev = node ) { // find place in the list to insert
+    for ( iter.over(verCountSeq), prev = nullptr; iter >> node ; prev = node ) { // find place in the list to insert
 	if ( &cluster < node->cluster ) break;
     } // for
 
-    if ( prev != NULL && prev->cluster == &cluster ) {
+    if ( prev != nullptr && prev->cluster == &cluster ) {
 	temp = prev->version;
 	prev->version = version;
     } else {

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Robert Denda 1997
+// uC++ Version 7.0.0, Copyright (C) Robert Denda 1997
 // 
 // uProfilerFunctionPointers.cc -- 
 // 
@@ -30,7 +30,7 @@
 #include "uProfiler.h"
 
 
-uProfiler *uProfiler::profilerInstance = NULL;
+uProfiler *uProfiler::profilerInstance = nullptr;
 
 void (* uProfiler::uProfiler_registerTask)(uProfiler *, const uBaseTask &, const UPP::uSerial &, const uBaseTask &) = (void (*)(uProfiler *, const uBaseTask &, const UPP::uSerial &, const uBaseTask &)) 0; 
 void (* uProfiler::uProfiler_deregisterTask)(uProfiler *, const uBaseTask &) = (void (*)(uProfiler *, const uBaseTask &)) 0;

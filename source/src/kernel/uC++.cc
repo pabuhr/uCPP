@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uC++.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 11 23:13:17 2015
-// Update Count     : 2980
+// Last Modified On : Thu Dec 29 13:52:29 2016
+// Update Count     : 2998
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -219,16 +219,16 @@ bool uKernelModule::deadlock = false;
 #endif // ! __U_MULTI__
 bool uKernelModule::globalAbort = false;
 bool uKernelModule::globalSpinAbort = false;
-uSpinLock *uKernelModule::globalAbortLock = NULL;
-uSpinLock *uKernelModule::globalProcessorLock = NULL;
-uSpinLock *uKernelModule::globalClusterLock = NULL;
-uDefaultScheduler *uKernelModule::systemScheduler = NULL;
-uCluster *uKernelModule::systemCluster = NULL;
-uProcessor *uKernelModule::systemProcessor = NULL;
+uSpinLock *uKernelModule::globalAbortLock = nullptr;
+uSpinLock *uKernelModule::globalProcessorLock = nullptr;
+uSpinLock *uKernelModule::globalClusterLock = nullptr;
+uDefaultScheduler *uKernelModule::systemScheduler = nullptr;
+uCluster *uKernelModule::systemCluster = nullptr;
+uProcessor *uKernelModule::systemProcessor = nullptr;
 UPP::uBootTask *uKernelModule::bootTask = (uBootTask *)&bootTaskStorage;
-uSystemTask *uKernelModule::systemTask = NULL;
-uCluster *uKernelModule::userCluster = NULL;
-uProcessor **uKernelModule::userProcessors = NULL;
+uSystemTask *uKernelModule::systemTask = nullptr;
+uCluster *uKernelModule::userCluster = nullptr;
+uProcessor **uKernelModule::userProcessors = nullptr;
 unsigned int uKernelModule::numUserProcessors = 0;
 
 unsigned int uKernelModule::attaching = 0; // debugging
@@ -237,13 +237,13 @@ char uKernelModule::systemClusterStorage[sizeof(uCluster)] __attribute__(( align
 char uKernelModule::systemProcessorStorage[sizeof(uProcessor)] __attribute__(( aligned (16) ));
 char uKernelModule::bootTaskStorage[sizeof(uBootTask)] __attribute__(( aligned (16) ));
 
-std::filebuf *uKernelModule::cerrFilebuf = NULL, *uKernelModule::clogFilebuf = NULL, *uKernelModule::coutFilebuf = NULL, *uKernelModule::cinFilebuf = NULL;
+std::filebuf *uKernelModule::cerrFilebuf = nullptr, *uKernelModule::clogFilebuf = nullptr, *uKernelModule::coutFilebuf = nullptr, *uKernelModule::cinFilebuf = nullptr;
 
 // Fake uKernelModule used before uKernelBoot::startup.
 volatile __U_THREAD__ uKernelModule::uKernelModuleData uKernelModule::uKernelModuleBoot;
 
-uProcessorSeq *uKernelModule::globalProcessors = NULL;
-uClusterSeq *uKernelModule::globalClusters = NULL;
+uProcessorSeq *uKernelModule::globalProcessors = nullptr;
+uClusterSeq *uKernelModule::globalClusters = nullptr;
 
 bool uKernelModule::afterMain = false;
 int uKernelModule::retCode = 0;
@@ -260,7 +260,7 @@ bool uHeapControl::traceHeap_ = false;
 #define __U_DESTRUCTORPOSN__ 1				// bit 1 is reserved for destructor
 
 #ifndef __U_MULTI__
-uNBIO *uCluster::NBIO = NULL;
+uNBIO *uCluster::NBIO = nullptr;
 #endif // ! __U_MULTI__
 
 int UPP::uKernelBoot::count = 0;
@@ -309,7 +309,7 @@ void uKernelFailure::defaultTerminate() const {
 
 uMutexFailure::uMutexFailure( const UPP::uSerial *const serial, const char *const msg ) : uKernelFailure( msg ), serial( serial ) {}
 
-uMutexFailure::uMutexFailure( const char *const msg ) : uKernelFailure( msg ), serial( NULL ) {}
+uMutexFailure::uMutexFailure( const char *const msg ) : uKernelFailure( msg ), serial( nullptr ) {}
 
 const UPP::uSerial *uMutexFailure::serialId() const { return serial; }
 
@@ -321,7 +321,7 @@ uMutexFailure::EntryFailure::EntryFailure( const char *const msg ) : uMutexFailu
 uMutexFailure::EntryFailure::~EntryFailure() {}
 
 void uMutexFailure::EntryFailure::defaultTerminate() const {
-    if ( src == NULL ) {				// raised synchronously ?
+    if ( src == nullptr ) {				// raised synchronously ?
 	uAbort( "(uSerial &)%p : Entry failure while executing mutex destructor: %.256s.",
 		serialId(), message() );
     } else {
@@ -482,7 +482,7 @@ bool uLock::tryacquire() {
 
 void uOwnerLock::add_( uBaseTask &task ) {		// used by uCondLock::signal
     spinLock.acquire();
-    if ( owner_ != NULL ) {				// lock in use ?
+    if ( owner_ != nullptr ) {				// lock in use ?
 	waiting.addTail( &(task.entryRef) );		// move task to owner lock list
     } else {
 	owner_ = &task;					// become owner
@@ -500,7 +500,7 @@ void uOwnerLock::release_() {				// used by uCondLock::wait
 	count = 1;
 	owner_->wake();					// restart new owner
     } else {
-	owner_ = NULL;					// release, no owner
+	owner_ = nullptr;					// release, no owner
 	count = 0;
     } // if
     spinLock.release();
@@ -529,7 +529,7 @@ void uOwnerLock::acquire() {
     task.setActivePriority( task.getActivePriorityValue() + 1 );
 #endif // KNOT
     if ( owner_ != &task ) {				// don't own lock yet
-	if ( owner_ != NULL ) {				// but if lock in use
+	if ( owner_ != nullptr ) {				// but if lock in use
 	    waiting.addTail( &(task.entryRef) );	// suspend current task
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::owner_lock_queue, 1 );
@@ -555,14 +555,14 @@ bool uOwnerLock::tryacquire() {
 
     uBaseTask &task = uThisTask();			// optimization
 
-  if ( owner_ != NULL && owner_ != &task ) return false; // don't own lock yet
+  if ( owner_ != nullptr && owner_ != &task ) return false; // don't own lock yet
 
     spinLock.acquire();
 #ifdef KNOT
     task.setActivePriority( task.getActivePriorityValue() + 1 );
 #endif // KNOT
     if ( owner_ != &task ) {				// don't own lock yet
-	if ( owner_ != NULL ) {				// but if lock in use
+	if ( owner_ != nullptr ) {				// but if lock in use
 	    spinLock.release();
 	    return false;				// don't wait for the lock
 	} // if
@@ -581,7 +581,7 @@ void uOwnerLock::release() {
 
     spinLock.acquire();
 #ifdef __U_DEBUG__
-    if ( owner_ == NULL ) {
+    if ( owner_ == nullptr ) {
 	spinLock.release();
 	uAbort( "Attempt to release owner lock (%p) that is not locked.", this );
     } // if
@@ -602,7 +602,7 @@ void uOwnerLock::release() {
 	    count = 1;
 	    owner_->wake();				// restart new owner
 	} else {
-	    owner_ = NULL;				// release, no owner
+	    owner_ = nullptr;				// release, no owner
 	} // if
     } // if
 #ifdef KNOT
@@ -634,7 +634,7 @@ void uCondLock::wait( uOwnerLock &lock ) {
     uBaseTask *owner = lock.owner();			// owner could change
     if ( owner != &task ) {
 	uAbort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
-		task.getName(), &task, owner == NULL ? "no-owner" : owner->getName(), owner );
+		task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
     } // if
 #endif // __U_DEBUG__
     task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
@@ -662,7 +662,7 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     uBaseTask *owner = lock.owner();			// owner could change
     if ( owner != &task ) {
 	uAbort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
-		task.getName(), &task, owner == NULL ? "no-owner" : owner->getName(), owner );
+		task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
     } // if
 #endif // __U_DEBUG__
     task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
@@ -780,7 +780,7 @@ uCondLock::TimedWaitHandler::TimedWaitHandler( uBaseTask &task, uCondLock &condl
 } // uCondLock::TimedWaitHandler::TimedWaitHandler
 
 uCondLock::TimedWaitHandler::TimedWaitHandler( uCondLock &condlock ) : condlock( condlock ) {
-    This = NULL;
+    This = nullptr;
     timedout = false;
 } // uCondLock::TimedWaitHandler::TimedWaitHandler
 
@@ -926,20 +926,20 @@ namespace UPP {
 	static void *library;
 	const char *error;
 	void *originalFunc;
-	if ( library == NULL ) {
+	if ( library == nullptr ) {
 #if defined( RTLD_NEXT )
 	    library = RTLD_NEXT;
 #else
 	    // missing RTLD_NEXT => must hard-code library name, assuming libstdc++
 	    library = dlopen( "libstdc++.so", RTLD_LAZY );
 	    error = dlerror();
-	    if ( error != NULL ) {
+	    if ( error != nullptr ) {
 		uAbort( "RealRtn::interposeSymbol : internal error, %s\n", error );
 	    } // if
 #endif // RTLD_NEXT
 	} // if
 #if defined( __linux__ )
-	if ( version == NULL ) {
+	if ( version == nullptr ) {
 #endif // __linux__
 	    originalFunc = dlsym( library, symbolName );
 #if defined( __linux__ )
@@ -948,7 +948,7 @@ namespace UPP {
 	} // if
 #endif // __linux__
 	error = dlerror();
-	if ( error != NULL ) {
+	if ( error != nullptr ) {
 	    uAbort( "RealRtn::interposeSymbol : internal error, %s\n", error );
 	} // if
 	return originalFunc;
@@ -979,7 +979,7 @@ namespace UPP {
 
 
     void RealRtn::startup() {
-	const char *version = NULL;
+	const char *version = nullptr;
 	INIT_REALRTN( exit, version );
 	INIT_REALRTN( abort, version );
 #if defined( __solaris__ ) && FD_SETSIZE > 1024 && __U_WORDSIZE__ == 32
@@ -1014,7 +1014,7 @@ namespace UPP {
 
 #if defined( __linux__ ) || defined( __freebsd__ )
 extern "C" int dl_iterate_phdr( int (*callback)( dl_phdr_info *, size_t, void * ), void *data ) {
-    assert( RealRtn::dl_iterate_phdr != NULL );
+    assert( RealRtn::dl_iterate_phdr != nullptr );
     THREAD_GETMEM( This )->disableInterrupts();
     int ret = RealRtn::dl_iterate_phdr( callback, data );
     THREAD_GETMEM( This )->enableInterrupts();
@@ -1113,26 +1113,26 @@ namespace UPP {
 	mutexOwner->mutexRecursion = 0;			// reset recursive count
 
 	acceptMask = false;
-	mutexMaskLocn = NULL;
+	mutexMaskLocn = nullptr;
 
-	destructorTask = NULL;
+	destructorTask = nullptr;
 	destructorStatus = NoDestructor;
 	constructorTask = mutexOwner;
 
 	// real-time
 
 	timeoutEvent.executeLocked = true;
-	events = NULL;
+	events = nullptr;
 
 	// exception handling
 
-	lastAcceptor = NULL;
+	lastAcceptor = nullptr;
 	notAlive = false;
 
 #ifdef __U_PROFILER__
 	// profiling
 
-	profileSerialSamplerInstance = NULL;
+	profileSerialSamplerInstance = nullptr;
 #endif // __U_PROFILER__
     } // uSerial::uSerial
 
@@ -1144,7 +1144,7 @@ namespace UPP {
 
 	for ( ;; ) {
 	    uBaseTaskDL *p = acceptSignalled.drop();
-	  if ( p == NULL ) break;
+	  if ( p == nullptr ) break;
 	    mutexOwner = &(p->task());
 	    _Resume uMutexFailure::EntryFailure( this, "blocked on acceptor/signalled stack" ) _At *(mutexOwner->currCoroutine);
 	    acceptSignalled.add( &(task.mutexRef) );	// suspend current task on top of accept/signalled stack
@@ -1155,11 +1155,11 @@ namespace UPP {
 	    for ( ;; ) {
 		spinLock.acquire();
 		uBaseTaskDL *p = entryList.drop();
-	      if ( p == NULL ) break;
+	      if ( p == nullptr ) break;
 		mutexOwner = &(p->task());
 		mutexOwner->calledEntryMem->remove( &(mutexOwner->mutexRef) );
 		_Resume uMutexFailure::EntryFailure( this, "blocked on entry queue" ) _At *(mutexOwner->currCoroutine);
-		acceptSignalled.add( &(task.mutexRef) );	// suspend current task on top of accept/signalled stack
+		acceptSignalled.add( &(task.mutexRef) ); // suspend current task on top of accept/signalled stack
 		uProcessorKernel::schedule( &spinLock, mutexOwner );
 	    } // for
 	    spinLock.release();
@@ -1169,7 +1169,7 @@ namespace UPP {
 
     void uSerial::resetDestructorStatus() {
 	destructorStatus = NoDestructor;
-	destructorTask = NULL;
+	destructorTask = nullptr;
     } // uSerial::rresetDestructorStatus
 
 
@@ -1203,9 +1203,9 @@ namespace UPP {
 	    task.mutexRecursion = 0;			// reset recursive count
 	    _Enable <uMutexFailure>;			// implicit poll
 	} // if
-	if ( mutexMaskLocn != NULL ) {			// part of a rendezvous ? (i.e., member accepted)
+	if ( mutexMaskLocn != nullptr ) {			// part of a rendezvous ? (i.e., member accepted)
 	    *mutexMaskLocn = mp;			// set accepted mutex member
-	    mutexMaskLocn = NULL;			// mark as further mutex calls are not part of rendezvous
+	    mutexMaskLocn = nullptr;			// mark as further mutex calls are not part of rendezvous
 	} // fi
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uSerial &)%p.enter exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
@@ -1251,9 +1251,9 @@ namespace UPP {
 	    mr = task.mutexRecursion;			// save previous recursive count
 	    task.mutexRecursion = 0;			// reset recursive count
 	} // if
-	if ( mutexMaskLocn != NULL ) {			// part of a rendezvous ? (i.e., member accepted)
+	if ( mutexMaskLocn != nullptr ) {			// part of a rendezvous ? (i.e., member accepted)
 	    *mutexMaskLocn = mp;			// set accepted mutex member
-	    mutexMaskLocn = NULL;			// mark as further mutex calls are not part of rendezvous
+	    mutexMaskLocn = nullptr;			// mark as further mutex calls are not part of rendezvous
 	} // fi
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uSerial &)%p.exitDestructor exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
@@ -1314,7 +1314,7 @@ namespace UPP {
 	    if ( acceptMask ) {
 		// lock is acquired and mask set by accept statement
 		acceptMask = false;
-		mutexOwner = NULL;			// reset no task in mutex object
+		mutexOwner = nullptr;			// reset no task in mutex object
 		if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 		    entryList.onRelease( task );
 		} // if
@@ -1326,7 +1326,7 @@ namespace UPP {
 		    if ( entryList.empty() ) {		// no tasks waiting entry to mutex object ?
 			mask.setAll();			// accept all members
 			mask.clr( 0 );			// except timeout
-			mutexOwner = NULL;		// reset no task in mutex object
+			mutexOwner = nullptr;		// reset no task in mutex object
 			if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 			    entryList.onRelease( task );
 			} // if
@@ -1402,7 +1402,7 @@ namespace UPP {
 	if ( acceptMask ) {
 	    // lock is acquired and mask set by accept statement
 	    acceptMask = false;
-	    mutexOwner = NULL;				// reset no task in mutex object
+	    mutexOwner = nullptr;				// reset no task in mutex object
 	    if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 		entryList.onRelease( task );
 	    } // if
@@ -1414,7 +1414,7 @@ namespace UPP {
 		if ( entryList.empty() ) {		// no tasks waiting entry to mutex object ?
 		    mask.setAll();			// accept all members
 		    mask.clr( 0 );			// except timeout
-		    mutexOwner = NULL;
+		    mutexOwner = nullptr;
 		    if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 			entryList.onRelease( task );
 		    } // if
@@ -1469,7 +1469,7 @@ namespace UPP {
 
 
     void uSerial::removeTimeout() {
-	if ( events != NULL ) {
+	if ( events != nullptr ) {
 	    timeoutEvent.remove();
 	} // if
     } // uSerial::removeTimeout
@@ -1480,7 +1480,7 @@ namespace UPP {
     } // uSerial::checkHookConditions
 
 
-    // The field uSerial::lastAcceptor is set in acceptTry and acceptPause and reset to NULL in
+    // The field uSerial::lastAcceptor is set in acceptTry and acceptPause and reset to null in
     // uSerialMember::uSerialMember, so an exception can be thrown when all the guards in the accept statement fail.
     // This ensures that lastAcceptor is set only when a task rendezouvs with another task.
 
@@ -1542,7 +1542,7 @@ namespace UPP {
 		uProcessorKernel::schedule( &spinLock, mutexOwner ); // find someone else to execute; release lock and wake on kernel stack
 		if ( task.acceptedCall ) {		// accepted entry is suspended if true
 		    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
-		    task.acceptedCall = NULL;
+		    task.acceptedCall = nullptr;
 		} // if
 		_Enable <uMutexFailure::RendezvousFailure>; // implicit poll
 		return true;
@@ -1565,7 +1565,7 @@ namespace UPP {
 		uProcessorKernel::schedule( &spinLock, mutexOwner ); // find someone else to execute; release lock and wake on kernel stack
 		if ( task.acceptedCall ) {		// accepted entry is suspended if true
 		    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
-		    task.acceptedCall = NULL;
+		    task.acceptedCall = nullptr;
 		} // if
 		_Enable <uMutexFailure::RendezvousFailure>; // implicit poll
 		return true;
@@ -1631,7 +1631,7 @@ namespace UPP {
 	lastAcceptor = &task;				// saving the acceptor thread of a rendezvous
 	acceptSignalled.add( &(task.mutexRef) );	// suspend current task on top of accept/signalled stack
 
-	mutexOwner = NULL;
+	mutexOwner = nullptr;
 	if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 	    entryList.onRelease( task );
 	} // if
@@ -1639,7 +1639,7 @@ namespace UPP {
 
 	if ( task.acceptedCall ) {			// accepted entry is suspended if true
 	    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
-	    task.acceptedCall = NULL;
+	    task.acceptedCall = nullptr;
 	} // if
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uSerial &)%p.acceptPause restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
@@ -1673,7 +1673,7 @@ namespace UPP {
 	lastAcceptor = &task;				// saving the acceptor thread of a rendezvous
 	acceptSignalled.add( &(task.mutexRef) );	// suspend current task on top of accept/signalled stack
 
-	mutexOwner = NULL;
+	mutexOwner = nullptr;
 	if ( entryList.executeHooks && checkHookConditions( &task ) ) {
 	    entryList.onRelease( task );
 	} // if
@@ -1683,7 +1683,7 @@ namespace UPP {
 
 	if ( task.acceptedCall ) {			// accepted entry is suspended if true
 	    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
-	    task.acceptedCall = NULL;
+	    task.acceptedCall = nullptr;
 	} // if
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uSerial &)%p.acceptPause( time ) restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
@@ -1694,7 +1694,7 @@ namespace UPP {
 
 
     void uSerial::acceptEnd() {
-	mutexMaskLocn = NULL;				// not reset after timeout
+	mutexMaskLocn = nullptr;				// not reset after timeout
 
 #ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_registerAcceptEnd ) { // task registered for profiling ?              
@@ -1749,7 +1749,7 @@ namespace UPP {
 
 	    serial.enterDestructor( mr, ml, mp );
 	    if ( ! serial.acceptSignalled.empty() ) {
-		serial.lastAcceptor = NULL;
+		serial.lastAcceptor = nullptr;
 		uBaseTask &uCallingTask = task;		// optimization
 		serial.mutexOwner = &(serial.acceptSignalled.drop()->task());
 		serial.acceptSignalled.add( &(uCallingTask.mutexRef) ); // suspend terminating task on top of accept/signalled stack
@@ -1823,17 +1823,17 @@ namespace UPP {
 #endif // __U_DEBUG__
 	    serial.enter( mr, ml, mp );
 	    acceptor = serial.lastAcceptor;
-	    acceptorSuspended = acceptor != NULL;
+	    acceptorSuspended = acceptor != nullptr;
 	    if ( acceptorSuspended ) {
 		acceptor->acceptedCall = this;
 	    } // if
-	    serial.lastAcceptor = NULL;			// avoid messing up subsequent mutex method invocation
+	    serial.lastAcceptor = nullptr;			// avoid messing up subsequent mutex method invocation
 	} catch( ... ) {				// UNDO EFFECTS OF FAILED SERIAL ENTRY
 	    finalize( task );
 	    if ( serial.lastAcceptor ) {
-		serial.lastAcceptor->acceptedCall = NULL; // the rendezvous did not materialize
+		serial.lastAcceptor->acceptedCall = nullptr; // the rendezvous did not materialize
 		_Resume uMutexFailure::RendezvousFailure( &serial, "accepted call" ) _At *serial.lastAcceptor->currCoroutine; // acceptor is not initialized
-		serial.lastAcceptor = NULL;
+		serial.lastAcceptor = nullptr;
 	    } // if
 	    serial.leave( mr );				// look at ~uSerialMember()
 	    _Throw;
@@ -1849,14 +1849,14 @@ namespace UPP {
     } // uSerialMember::uSerialMember
 
     // Used in conjunction with macro uRendezvousAcceptor inside mutex types to determine if a rendezvous has ended.
-    // NULL means rendezvous is ended; otherwise address of the rendezvous partner is returned.  In addition, calling
+    // null means rendezvous is ended; otherwise address of the rendezvous partner is returned.  In addition, calling
     // uRendezvousAcceptor has the side effect of cancelling the implicit resume of uMutexFailure::RendezvousFailure at
     // the acceptor, which allows a mutex member to terminate with an exception without informing the acceptor.
 
     uBaseTask *uSerialMember::uAcceptor() {
 	uBaseTask *temp = acceptor;
-	acceptor->acceptedCall = NULL;
-	acceptor = NULL;
+	acceptor->acceptedCall = nullptr;
+	acceptor = nullptr;
 	return temp;
     } // uSerialMember::uAcceptor
 
@@ -1866,16 +1866,16 @@ namespace UPP {
 
 	finalize( task );
 	if ( acceptor ) {				// not cancelled by uRendezvousAcceptor ?
-	    acceptor->acceptedCall = NULL;		// accepted mutex member terminates
+	    acceptor->acceptedCall = nullptr;		// accepted mutex member terminates
 	    // raise a concurrent exception at the acceptor
 	    if ( std::uncaught_exception() && noUserOverride && ! serial.notAlive && acceptorSuspended ) {
 		// Return the acceptor only when the acceptor remains suspended and the mutex object has yet to be
-		// destroyed, otherwise return a NULL reference.  Side-effect: prevent the kernel from resuming
+		// destroyed, otherwise return a null reference.  Side-effect: prevent the kernel from resuming
 		// (_Resume) a concurrent exception at the suspended acceptor if the rendezvous terminates with an
 		// exception.
 
 		noUserOverride = false;
-		_Resume uMutexFailure::RendezvousFailure( &serial, "accepted call" ) _At *(( ! serial.notAlive && acceptorSuspended ) ? acceptor->currCoroutine : NULL);
+		_Resume uMutexFailure::RendezvousFailure( &serial, "accepted call" ) _At *(( ! serial.notAlive && acceptorSuspended ) ? acceptor->currCoroutine : nullptr);
 	    } // if
 	} // if
 
@@ -1887,167 +1887,6 @@ namespace UPP {
 
 	serial.leave( mr );
     } // uSerialMember::~uSerialMember
-
-
-    uCoroutineConstructor::uCoroutineConstructor( uAction f, uSerial &serial, uBaseCoroutine &coroutine, const char *name ) {
-	if ( f == uYes ) {
-	    coroutine.startHere( (void (*)( uMachContext & ))uMachContext::invokeCoroutine );
-	    coroutine.name = name;
-	    coroutine.serial = &serial;			// set cormonitor's serial instance
-
-#ifdef __U_PROFILER__
-	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutine && // profiling & coroutine registered for profiling ?
-		 dynamic_cast<uProcessorKernel *>(&coroutine) == NULL ) { // and not kernel coroutine
-		(*uProfiler::uProfiler_registerCoroutine)( uProfiler::profilerInstance, coroutine, serial );
-	    } // if
-#endif // __U_PROFILER__
-	} // if
-    } // uCoroutineConstructor::uCoroutineConstructor
-
-
-    uCoroutineDestructor::uCoroutineDestructor( uAction f, uBaseCoroutine &coroutine ) : f( f ), coroutine( coroutine ) {
-	// Clean up the stack of a non-terminated coroutine (i.e., run its destructors); a terminated coroutine's stack
-	// is already cleaned up. Ignore the uProcessorKernel coroutine because it has a special shutdown sequence.
-
-	// Because code executed during stack unwinding may access any coroutine data, unwinding MUST occur before
-	// running the coroutine's destructor. A consequence of this semantics is that the destructor may not resume the
-	// coroutine, so it is asymmetric with the coroutine's constructor.
-
-	if ( coroutine.getState() != uBaseCoroutine::Halt // coroutine not halted
-	     && &coroutine.resumer() != NULL		// and its main is started
-	     && dynamic_cast<uProcessorKernel *>(&coroutine) == NULL ) { // but not the processor Kernel
-	    // Mark for cancellation, then resume the coroutine to trigger a call to uPoll on the backside of its
-	    // suspend(). uPoll detects the cancellation and calls unwind_stack, which throws exception UnwindStack to
-	    // unwinding the stack. UnwindStack is ultimately caught inside uMachContext::uInvokeCoroutine.
-	    coroutine.cancel();
-	    coroutine.resume();
-	} // if
-    } // uCoroutineDestructor::uCoroutineDestructor
-
-
-    uCoroutineDestructor::~uCoroutineDestructor() {
-#ifdef __U_PROFILER__
-	if ( f == uYes ) {
-	    if ( uThisTask().profileActive && uProfiler::uProfiler_deregisterCoroutine ) { // profiling this coroutine & coroutine registered for profiling ? 
-		(*uProfiler::uProfiler_deregisterCoroutine)( uProfiler::profilerInstance, coroutine );
-	    } // if
-	} // if
-#endif // __U_PROFILER__
-    } // uCoroutineDestructor::~uCoroutineDestructor
-
-
-    uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBaseTask &task, uBasePIQ &piq, const char *n, bool profile ) : f( f ), serial( serial ), task( task ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uTaskConstructor &)%p.uTaskConstructor, f:%d, s:%p, t:%p, piq:%p, n:%s, profile:%d\n", this, f, &serial, &task, &piq, n, profile );
-#endif // __U_DEBUG_H__
-	if ( f == uYes ) {
-	    task.startHere( (void (*)( uMachContext & ))uMachContext::invokeTask );
-	    task.name = n;
-	    task.serial = &serial;			// set task's serial instance
-	    task.setSerial( serial );
-	    task.uPIQ = &piq;
-
-#ifdef __U_PROFILER__
-	    task.profileActive = profile;
-
-	    if ( task.profileActive && uProfiler::uProfiler_registerTask ) { // profiling this task & task registered for profiling ? 
-		(*uProfiler::uProfiler_registerTask)( uProfiler::profilerInstance, task, serial, uThisTask() );
-	    } // if
-#endif // __U_PROFILER__
-
-	    serial.acceptSignalled.add( &(task.mutexRef) );
-
-#if __U_LOCALDEBUGGER_H__
-	    if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
-
-	    task.currCluster->taskAdd( task );		// add task to the list of tasks on this cluster
-	} // if
-    } // uTaskConstructor::uTaskConstructor
-
-
-    uTaskConstructor::~uTaskConstructor() {
-	if ( f == uYes && std::uncaught_exception() ) {
-	    // An exception was thrown during task construction. It is necessary to clean up constructor side-effects.
-
-	    // Since no task could have been accepted, the acceptor/signaller stack should only contain this task.  It
-	    // must be removed here so that it is not scheduled by ~uSerial.
-	    serial.acceptSignalled.drop();
-
-	    uTaskDestructor::cleanup( task );
-	} // if
-    } // uTaskConstructor::~uTaskConstructor
-
-
-    uTaskDestructor::~uTaskDestructor() {
-	if ( f == uYes ) {
-#ifdef __U_DEBUG__
-	    if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
-		uAbort( "Attempt to delete task %.256s (%p) that is not halted.\n"
-			"Possible cause is task blocked on a condition queue.",
-			task.getName(), &task );
-	    } // if
-#endif // __U_DEBUG__
-
-	    cleanup( task );
-	} // if
-    } // uTaskDestructor::uTaskDestructor
-
-
-    void uTaskDestructor::cleanup( uBaseTask &task ) {
-#if __U_LOCALDEBUGGER_H__
-	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
-
-#ifdef __U_PROFILER__
-	task.profileActive = false;
-	if ( task.profileTaskSamplerInstance && uProfiler::uProfiler_deregisterTask ) { // task registered for profiling ?
-	    (*uProfiler::uProfiler_deregisterTask)( uProfiler::profilerInstance, task );
-	} // if
-#endif // __U_PROFILER__
-
-	task.currCluster->taskRemove( task );		// remove the task from the list of tasks that live on this cluster.
-    } // uTaskDestructor::cleanup
-
-
-    uTaskMain::uTaskMain( uBaseTask &task ) : task( task ) {
-	// SKULLDUGGERY: To allow "main" to be treated as a normal member routine, a counter is used to allow recursive
-	// entry.
-
-	task.recursion += 1;
-	if ( task.recursion == 1 ) {			// first call ?
-#ifdef __U_PROFILER__
-	    if ( task.profileActive && uProfiler::uProfiler_registerTaskStartExecution ) { 
-		(*uProfiler::uProfiler_registerTaskStartExecution)( uProfiler::profilerInstance, task ); 
-	    } // if
-#endif // __U_PROFILER__
-
-#if __U_LOCALDEBUGGER_H__
-	    // Registering a task with the global debugger must occur in this routine for the register set to be
-	    // correct.
-
-	    if ( uLocalDebugger::uLocalDebuggerActive ) {
-		uLocalDebugger::uLocalDebuggerInstance->createULThread();
-	    } // if
-#endif // __U_LOCALDEBUGGER_H__
-	} // if
-    } // uTaskMain::uTaskMain
-
-
-    uTaskMain::~uTaskMain() {
-	task.recursion -= 1;
-	if ( task.recursion == 0 ) {
-#ifdef __U_PROFILER__
-	    if ( task.profileActive && uProfiler::uProfiler_registerTaskEndExecution ) {
-		(*uProfiler::uProfiler_registerTaskEndExecution)( uProfiler::profilerInstance, task ); 
-	    } // if
-#endif // __U_PROFILER__
-
-#if __U_LOCALDEBUGGER_H__
-	    if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->destroyULThread();
-#endif // __U_LOCALDEBUGGER_H__
-	} // if
-    } // uTaskMain::~uTaskMain
 } // UPP
 
 
@@ -2061,7 +1900,7 @@ uCondition::~uCondition() {
 	// wake each task blocked on the condition with an async event
 	for ( ;; ) {
 	    uBaseTaskDL *p = condQueue.head();		// get the task blocked at the start of the condition
-	  if ( p == NULL ) break;			// list empty ?
+	  if ( p == nullptr ) break;			// list empty ?
 	    uEHM::uDeliverEStack dummy( false );	// block all async exceptions in destructor
 	    uBaseTask &task = p->task();
 	    _Resume WaitingFailure( *this, "found blocked task on condition variable during deletion" ) _At *(task.currCoroutine); // throw async event at blocked task
@@ -2083,12 +1922,12 @@ void uCondition::wait() {				// wait on a condition
     UPP::uSerial &serial = task.getSerial();
 
 #ifdef __U_DEBUG__
-    if ( owner != NULL && &task != owner->mutexOwner ) { // must have mutex lock to wait
+    if ( owner != nullptr && &task != owner->mutexOwner ) { // must have mutex lock to wait
 	uAbort( uConditionMsg( "wait on" ) );
     } // if
 #endif // __U_DEBUG__
     if ( owner != &serial ) {				// only owner can use condition
-	if ( owner == NULL ) {				// owner exist ?
+	if ( owner == nullptr ) {				// owner exist ?
 	    owner = &serial;				// set condition owner
 	} // if
     } // if
@@ -2115,7 +1954,7 @@ void uCondition::wait() {				// wait on a condition
 #ifdef __U_DEBUG__
 #define uSignalCheck() \
     /* must have mutex lock to signal */ \
-    if ( owner != NULL && &task != owner->mutexOwner ) uAbort( uConditionMsg( "signal" ) );
+    if ( owner != nullptr && &task != owner->mutexOwner ) uAbort( uConditionMsg( "signal" ) );
 #endif // __U_DEBUG__
 
 
@@ -2391,12 +2230,12 @@ void UPP::uKernelBoot::finishup() {
 
     delete uKernelModule::cinFilebuf;
     std::cout.flush();
-    std::cout.rdbuf( NULL );
+    std::cout.rdbuf( nullptr );
     delete uKernelModule::coutFilebuf;
-    std::clog.rdbuf( NULL );
+    std::clog.rdbuf( nullptr );
     delete uKernelModule::clogFilebuf;
     std::cerr.flush();
-    std::cerr.rdbuf( NULL );
+    std::cerr.rdbuf( nullptr );
     delete uKernelModule::cerrFilebuf;
 
     // If afterMain is false, control has reached here due to an "exit" call before the end of uMain::main. In this
@@ -2416,7 +2255,7 @@ void UPP::uKernelBoot::finishup() {
     delete uKernelModule::userCluster;
 
     delete uKernelModule::systemTask;
-    uKernelModule::systemTask = NULL;
+    uKernelModule::systemTask = nullptr;
 
 #ifdef __U_DEBUG__
     // Turn off uOwnerLock checking.
@@ -2425,7 +2264,7 @@ void UPP::uKernelBoot::finishup() {
 
     THREAD_GETMEM( This )->disableInterrupts();
     // Block all signals as system can no longer handle them, and there may be pending timer values.
-    if ( sigprocmask( SIG_BLOCK, &UPP::uSigHandlerModule::block_mask, NULL ) == -1 ) {
+    if ( sigprocmask( SIG_BLOCK, &UPP::uSigHandlerModule::block_mask, nullptr ) == -1 ) {
 	uAbort( "internal error, sigprocmask" );
     } // if
     THREAD_GETMEM( This )->enableInterrupts();
@@ -2467,7 +2306,7 @@ void UPP::uKernelBoot::finishup() {
     // *after* all calls that might call std::uncaught_exception, otherwise the exception data-structures are created
     // again for the task. (Note: ~uSerialX members call std::uncaught_exception).
 
-    if ( ((uBootTask *)uKernelModule::bootTask)->pthreadData != NULL ) {
+    if ( ((uBootTask *)uKernelModule::bootTask)->pthreadData != nullptr ) {
 	pthread_deletespecific_( ((uBootTask *)uKernelModule::bootTask)->pthreadData );
     } // if
 

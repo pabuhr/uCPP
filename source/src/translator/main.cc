@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // main.c --
 //
@@ -79,8 +79,8 @@ void check( string arg ) {
 #define FILE_NAME "no file name"
 
 int main( int argc, char *argv[] ) {
-    char *infile = NULL;
-    char *outfile = NULL;
+    char *infile = nullptr;
+    char *outfile = nullptr;
     file = new char[sizeof(FILE_NAME)];
     strcpy( file, FILE_NAME );
 
@@ -111,7 +111,7 @@ int main( int argc, char *argv[] ) {
 		check( arg.substr(2) );
 	    } // if
 	} else {
-	    if ( infile == NULL ) {
+	    if ( infile == nullptr ) {
 		infile = argv[i];
 #ifdef __U_DEBUG_H__
 		cerr << "infile:" << infile << endl;
@@ -121,7 +121,7 @@ int main( int argc, char *argv[] ) {
 		    cerr << "uC++ Translator error: could not open file " << infile << " for reading." << endl;
 		    exit( EXIT_FAILURE );
 		} // if
-	    } else if ( outfile == NULL ) {
+	    } else if ( outfile == nullptr ) {
 		outfile = argv[i];
 #ifdef __U_DEBUG_H__
 		cerr << "outfile:" << outfile << endl;
@@ -153,17 +153,17 @@ int main( int argc, char *argv[] ) {
 
     hash_table = new hash_table_t;
 
-    focus = root = new table_t( NULL );			// start at the root table
+    focus = root = new table_t( nullptr );			// start at the root table
     top = new lexical_t( focus );
 
     // Insert the keywords into the root symbol table.
 
     int i;
-    for ( i = 0; key[i].text != NULL; i += 1 ) {
+    for ( i = 0; key[i].text != nullptr; i += 1 ) {
 	hash_table->lookup( key[i].text, key[i].value );
     } // for
     if ( stdcpp11 ) {					// insert C++11 keywords
-	for ( i += 1; key[i].text != NULL; i += 1 ) {
+	for ( i += 1; key[i].text != nullptr; i += 1 ) {
 	    hash_table->lookup( key[i].text, key[i].value );
 	} // for
     } // if

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1995, 1997
+// uC++ Version 7.0.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1995, 1997
 // 
 // uAlarm.cc -- 
 // 
@@ -72,12 +72,12 @@ uEventNode::uEventNode( uBaseTask &task, uSignalHandler &sig, uTime alarm, uDura
 
 
 uEventNode::uEventNode( uSignalHandler &sig ) {
-    createEventNode( NULL, &sig, 0, 0 );
+    createEventNode( nullptr, &sig, 0, 0 );
 } // uEventNode::uEventNode
 
 
 uEventNode::uEventNode() {
-    createEventNode( NULL, NULL, 0, 0 );
+    createEventNode( nullptr, nullptr, 0, 0 );
 } // uEventNode::uEventNode
 
 
@@ -174,7 +174,7 @@ bool uEventList::userEventPresent() {
     } // for
     eventLock.release();
 
-    return event != NULL;
+    return event != nullptr;
 } // uEventList::userEventPresent
 #endif // ! __U_MULTI__
 
@@ -226,7 +226,7 @@ void uEventList::setTimer( uTime time ) {		// time parameter is real-time (not v
 void uEventListPop::over( uEventList &events, bool inKernel ) {
     uEventListPop::events = &events;
     currTime = activeProcessorKernel->kernelClock.getTime();
-    cxtSwHandler = NULL;
+    cxtSwHandler = nullptr;
     uEventListPop::inKernel = inKernel;
     assert( ! THREAD_GETMEM( RFinprogress ) );		// should not be on
     THREAD_SETMEM( RFinprogress, true );		// starting roll forward
@@ -254,7 +254,7 @@ uEventListPop::~uEventListPop() {
 
     events->eventLock.acquire_( true );
     uEventNode *head = events->eventlist.head();	// optimization
-    if ( head != NULL && ! THREAD_GETMEM( RFpending ) ) { // reset timer to next available event
+    if ( head != nullptr && ! THREAD_GETMEM( RFpending ) ) { // reset timer to next available event
 	events->setTimer( head->alarm );
     } // if
     THREAD_SETMEM( RFinprogress, false );
@@ -301,7 +301,7 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
     } // if
 
 #ifdef __U_DEBUG_H__
-    uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, currTime:%lld node:%p %s alarm:%lld period:%lld\n", this, currTime.nanoseconds(), node, node->task != NULL ? node->task->getName() : "*noname*", node->alarm.nanoseconds(), node->period.nanoseconds() );
+    uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, currTime:%lld node:%p %s alarm:%lld period:%lld\n", this, currTime.nanoseconds(), node, node->task != nullptr ? node->task->getName() : "*noname*", node->alarm.nanoseconds(), node->period.nanoseconds() );
 #endif // __U_DEBUG_H__
 
   if ( node->alarm > currTime ) {			// event time delay greater than the start time for the iteration
@@ -322,13 +322,13 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
     } // if
 
     uCxtSwtchHndlr *cxtSwEvent = dynamic_cast<uCxtSwtchHndlr *>(node->sigHandler);
-    if ( cxtSwEvent != NULL ) {				// ContextSwitch event ?
+    if ( cxtSwEvent != nullptr ) {				// ContextSwitch event ?
 #if defined( __U_MULTI__ )
 	if ( &cxtSwEvent->processor == uKernelModule::systemProcessor ) {
 #endif // ! __U_MULTI__
 	    // Defer ContextSwitch for system processor until after all events processed so SIGUSR1 not delivered during
 	    // event processing.
-	    assert( cxtSwHandler == NULL );
+	    assert( cxtSwHandler == nullptr );
 	    cxtSwHandler = node->sigHandler;
 	    events->eventLock.release_( true );
 #if defined( __U_MULTI__ )
@@ -345,8 +345,8 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
 	// same priority as the task on the front of the ready queue, the current task is preempted even if it has only
 	// just started execution.
 #if defined( __U_MULTI__ )
-	if ( dynamic_cast<uWakeupHndlr *>(node->sigHandler) != NULL ) { // uWakeupHndlr event ?
-	    assert( node->task != NULL );
+	if ( dynamic_cast<uWakeupHndlr *>(node->sigHandler) != nullptr ) { // uWakeupHndlr event ?
+	    assert( node->task != nullptr );
 	    if ( ! node->task->currCluster->wakeupList.listed() ) { // already on list ?
 		wakeupList.addTail( &(node->task->currCluster->wakeupList) ); // defer until destructor
 	    } // if

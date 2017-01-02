@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 17:35:59 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:29:45 2011
-// Update Count     : 111
+// Last Modified On : Tue Oct 11 21:57:23 2016
+// Update Count     : 115
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,10 +43,11 @@ template<typename T> class uQueue : public uCollection<T> {
     using uCollection<T>::root;
 
     T *last;						// last element, or 0 if queue is empty.
-
-    uQueue(const uQueue &);				// no copy
-    uQueue &operator=(const uQueue &);			// no assignment
   public:
+    uQueue( const uQueue & ) = delete;			// no copy
+    uQueue( uQueue && ) = delete;
+    uQueue &operator=( const uQueue & ) = delete;	// no assignment
+
     using uCollection<T>::empty;
     using uCollection<T>::head;
     using uCollection<T>::uNext;

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // output.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 13 23:25:04 2015
-// Update Count     : 201
+// Last Modified On : Sun Dec 25 08:13:58 2016
+// Update Count     : 204
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,8 +35,8 @@
 
 #include <cstring>					// strcpy, strlen
 
-char *file = NULL;
-token_t *file_token = NULL;
+char *file = nullptr;
+token_t *file_token = nullptr;
 unsigned int line = 1;
 
 void context() {
@@ -45,16 +45,16 @@ void context() {
 
     cerr << "=====>\"";
     // backup up to 10 tokens
-    for ( i = 0, p = ahead; i < 10 && p->aft != NULL; i += 1, p = p->aft );
+    for ( i = 0, p = ahead; i < 10 && p->aft != nullptr; i += 1, p = p->aft );
     // print up to 10 tokens before problem area
     for ( ; p != ahead; p = p->fore ) {
-      if ( p->hash == NULL ) continue;
+      if ( p->hash == nullptr ) continue;
 	cerr << p->hash->text << " ";
     } // for
     cerr << " @ " << ahead->hash->text << " @ ";
     // print up to 10 tokens after problem area
-    for ( i = 0, p = ahead->fore; i < 10 && p != NULL; i += 1, p = p->fore ) {
-      if ( p->hash == NULL ) continue;
+    for ( i = 0, p = ahead->fore; i < 10 && p != nullptr; i += 1, p = p->fore ) {
+      if ( p->hash == nullptr ) continue;
 	cerr << p->hash->text << " ";
     } // for
     cerr << "\"" << endl;
@@ -83,7 +83,7 @@ void parse_directive( char *text, char *&file, unsigned int &line ) {
 	    c = s;
 	    while ( *c != '\"' ) c += 1;		// look for the end of the file name
 	    *c = '\0';					// terminate the string containing the file name
-	    if ( file != NULL ) delete [] file;		// deallocate old string
+	    if ( file != nullptr ) delete [] file;		// deallocate old string
 	    file = new char[ strlen( s ) + 1 ];		// allocate new string
 	    strcpy( file, s );				// copy the file name into this string
 	    *c = '\"';					// fill in the end quote again
@@ -98,9 +98,9 @@ void parse_directive( char *text, char *&file, unsigned int &line ) {
 // can be displayed.
 
 void putoutput( token_t *token ) {
-    uassert( token != NULL );
-    uassert( token->hash != NULL );
-    uassert( token->hash->text != NULL );
+    uassert( token != nullptr );
+    uassert( token->hash != nullptr );
+    uassert( token->hash->text != nullptr );
 
     switch ( token->value ) {
       case '\n':
@@ -124,6 +124,7 @@ void putoutput( token_t *token ) {
 	*yyout << token->hash->text;			// no space
 	break;
       case AT:						// do not print these keywords
+      case CATCHRESUME:
       case CONN_OR:
       case CONN_AND:
       case SELECT_LP:
@@ -131,8 +132,8 @@ void putoutput( token_t *token ) {
       case MUTEX:
       case NOMUTEX:
       case WHEN:
-      case CATCHRESUME:
 	break;
+      case ACTOR:
       case EVENT:
       case COROUTINE:
       case TASK:

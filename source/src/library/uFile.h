@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uFile.h -- Nonblocking UNIX I/O library
 // 
@@ -59,10 +59,10 @@ class uFileIO {						// monitor
     virtual ~uFileIO() {
     } // uFileIO::~uFileIO
   public:
-    int read( char *buf, int len, uDuration *timeout = NULL );
-    int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-    _Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-    int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
+    int read( char *buf, int len, uDuration *timeout = nullptr );
+    int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+    _Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+    int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
 
     int fd() {
 	return access.fd;
@@ -223,7 +223,7 @@ class uFile {
 
 
     uFile() {
-	name = NULL;
+	name = nullptr;
 	accessCnt = 0;
     } // uFile::uFile
 

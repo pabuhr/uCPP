@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 // 
 // ServerINETDGRAM.cc -- Server for INET/datagram socket test. Server reads data from multiple clients. The server reads
 //     the data from the client and writes it back.
@@ -8,8 +8,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:02:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 17:48:21 2011
-// Update Count     : 44
+// Last Modified On : Wed Dec 21 22:15:15 2016
+// Update Count     : 45
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSocket.h>

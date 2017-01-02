@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 //
 // uNBIO.cc -- non-blocking IO
 //
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 30 20:59:56 2015
-// Update Count     : 1483
+// Last Modified On : Sun Dec 25 10:29:14 2016
+// Update Count     : 1485
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -56,12 +56,12 @@ namespace UPP {
 #ifdef __U_DEBUG_H__
     static void printFDset( uNBIO *nbio, const char *title, int nmasks, fd_set *fds ) {
 	uDebugPrt2( "(uNBIO &)%p.printFDset, masks %d, %s:", nbio, nmasks, title );
-	if ( fds != NULL ) {
+	if ( fds != nullptr ) {
 	    for ( int i = 0; i < nmasks; i += 1 ) {
 		uDebugPrt2( "%lx ", fds->fds_bits[i] );
 	    } // for
 	} else {
-	    uDebugPrt2( "NULL" );
+	    uDebugPrt2( "nullptr" );
 	} // if
 	uDebugPrt2( "\n" );
     } // printFDset
@@ -158,12 +158,12 @@ namespace UPP {
 
 	// This code makes assumptions about the implementation of fd_set.  Namely that the size of each chunk is the
 	// same as the size of "combined" and the most significant bit contains the highest numbered fd.
-	_STATIC_ASSERT_( (sizeof(combined) * 8) == NFDBITS );
+	static_assert( (sizeof(combined) * 8) == NFDBITS, "(sizeof(combined) * 8) != NFDBITS" );
 
 	for ( int i = tmask; 0 <= i; i -= 1 ) {		// search backwards from previous max
-	    if ( rfds != NULL ) combined |= rfds->fds_bits[i];
-	    if ( wfds != NULL ) combined |= wfds->fds_bits[i];
-	    if ( efds != NULL ) combined |= efds->fds_bits[i];
+	    if ( rfds != nullptr ) combined |= rfds->fds_bits[i];
+	    if ( wfds != nullptr ) combined |= wfds->fds_bits[i];
+	    if ( efds != nullptr ) combined |= efds->fds_bits[i];
 	    if ( combined != 0 ) {			// at least one bit set ?
 		nfds = msbpos( combined ) + i * NFDBITS + 1;
 		break;
@@ -254,8 +254,8 @@ namespace UPP {
 	// orig_mask => original mask before masking SIGALRM/SIGURS1 to provide mutual exclusion, installing this mask
 	//              exits mutual exclusion
 	descriptors = RealRtn::pselect( maxFD, &mRFDs, &mWFDs, // use library verion
-					! efdsUsed ? NULL : &mEFDs, // no exceptions ?
-					selectBlock ? NULL : &timeout_, orig_mask ); // poll or block ?
+					! efdsUsed ? nullptr : &mEFDs, // no exceptions ?
+					selectBlock ? nullptr : &timeout_, orig_mask ); // poll or block ?
 	IOPollerPid = (uPid_t)-1;			// reset IOPoller
 	return errno;
     } // uNBIO::select
@@ -294,7 +294,7 @@ namespace UPP {
 	if ( ! uThisCluster().readyQueueEmpty() || ! uThisProcessor().external.empty() || ! uEntryList.empty() ) {
 	    // tasks slipped through, so release mutual exclusion and allow tasks to execute after I/O polling.
 	    uThisCluster().readyIdleTaskLock.release();
-	    terrno = select( NULL );			// poll for descriptors
+	    terrno = select( nullptr );			// poll for descriptors
 	} else {
 	    // Block any SIGALRM/SIGUSR1 signals from external sources, i.e., the system processor performing
 	    // time-slicing.
@@ -313,10 +313,10 @@ namespace UPP {
 		// interrupt slipped through, so release mutual exclusion, reset the signal mask, and allow tasks to
 		// execute after I/O polling.
 		uThisCluster().readyIdleTaskLock.release();
-		if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) {
+		if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
 		    uAbort( "internal error, sigprocmask" );
 		} // if
-		terrno = select( NULL );		// poll for descriptors
+		terrno = select( nullptr );		// poll for descriptors
 	    } else {
 		// Tasks migrating to a cluster wake a processor. When there is more than one processor on a cluster, do
 		// not signal the one blocked on select (by not putting it on the idle list), otherwise there can be a
@@ -349,7 +349,7 @@ namespace UPP {
 
 		terrno = select( &old_mask );
 
-		if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) { // new mask restored so install old signal mask over new one
+		if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // new mask restored so install old signal mask over new one
 		    uAbort( "internal error, sigprocmask" );
 		} // if
 
@@ -461,7 +461,7 @@ namespace UPP {
 	p->pending.V();					// wake up waiting task
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uNBIO &)%p.unblockFD, poller %.256s (%p) nominating task %.256s (%p) to be next poller\n",
-		   this, uThisTask().getName(), &uThisTask(), (IOPoller != NULL ? IOPoller->getName() : "NULL"), IOPoller );
+		   this, uThisTask().getName(), &uThisTask(), (IOPoller != nullptr ? IOPoller->getName() : "nullptr"), IOPoller );
 #endif // __U_DEBUG_H__
     } // uNBIO::unblockFD
 
@@ -528,7 +528,7 @@ namespace UPP {
 		    fd_mask temp;
 		    tcnt = cnt = 0;
 
-		    if ( p->smfd.mfd.trfds != NULL ) {	// non-null user mask ?
+		    if ( p->smfd.mfd.trfds != nullptr ) {	// non-null user mask ?
 			for ( i = 0; i < tmasks - 1; i += 1 ) {
 			    temp = p->smfd.mfd.trfds->fds_bits[i] & mRFDs.fds_bits[i];
 			    if ( temp != 0 ) cnt += countBits( temp ); // some bits on ?
@@ -546,7 +546,7 @@ namespace UPP {
 		    tcnt += cnt;
 
 		    cnt = 0;
-		    if ( p->smfd.mfd.twfds != NULL ) {	// non-null user mask ?
+		    if ( p->smfd.mfd.twfds != nullptr ) {	// non-null user mask ?
 			for ( i = 0; i < tmasks - 1; i += 1 ) {
 			    temp = p->smfd.mfd.twfds->fds_bits[i] & mWFDs.fds_bits[i];
 			    if ( temp != 0 ) cnt += countBits( temp ); // some bits on ?
@@ -564,7 +564,7 @@ namespace UPP {
 		    tcnt += cnt;
 
 		    cnt = 0;
-		    if ( p->smfd.mfd.tefds != NULL ) {	// non-null user mask ?
+		    if ( p->smfd.mfd.tefds != nullptr ) {	// non-null user mask ?
 			for ( i = 0; i < tmasks - 1; i += 1 ) {
 			    temp = p->smfd.mfd.tefds->fds_bits[i] & mEFDs.fds_bits[i];
 			    if ( temp != 0 ) cnt += countBits( temp ); // some bits on ?
@@ -601,11 +601,11 @@ namespace UPP {
 			pending -= 1;
 		    } else {				// task is not waking up
 			tmasks = howmany( p->smfd.mfd.tnfds, NFDBITS );
-			if ( p->smfd.mfd.trfds != NULL )
+			if ( p->smfd.mfd.trfds != nullptr )
 			    for ( i = 0; i < tmasks; i += 1 ) mrfds.fds_bits[i] |= p->smfd.mfd.trfds->fds_bits[i];
-			if ( p->smfd.mfd.twfds != NULL )
+			if ( p->smfd.mfd.twfds != nullptr )
 			    for ( i = 0; i < tmasks; i += 1 ) mwfds.fds_bits[i] |= p->smfd.mfd.twfds->fds_bits[i];
-			if ( p->smfd.mfd.tefds != NULL )
+			if ( p->smfd.mfd.tefds != nullptr )
 			    for ( i = 0; i < tmasks; i += 1 ) mefds.fds_bits[i] |= p->smfd.mfd.tefds->fds_bits[i];
 
 #ifdef __U_DEBUG_H__
@@ -624,7 +624,7 @@ namespace UPP {
 			     efdsUsed &&
 			     FD_ISSET( last, &mefds ) ) ) ) {
 		    mmaxFD = findMaxFD( mmaxFD, &mrfds, &mwfds,
-					! efdsUsed ? NULL :
+					! efdsUsed ? nullptr :
 					    &mefds );
 		} // if
 	    } // if
@@ -684,7 +684,7 @@ namespace UPP {
 	    } // for
 
 	    smaxFD = findMaxFD( smaxFD, &srfds, &swfds,
-				! efdsUsed ? NULL :
+				! efdsUsed ? nullptr :
 				    &sefds );
 
 #ifdef __U_DEBUG_H__
@@ -785,7 +785,7 @@ namespace UPP {
 		unblockFD( pendingIOMfds );
 	    } else {
 		if ( smaxFD == 0 || pendingIOSfds[smaxFD - 1].empty() ) {
-		    IOPoller = NULL;
+		    IOPoller = nullptr;
 		} else {
 		    unblockFD( pendingIOSfds[smaxFD - 1] );
 		} // if
@@ -809,7 +809,7 @@ namespace UPP {
 	Return: return true if first task, false otherwise.
     **************************************************/
     bool uNBIO::checkPoller() {
-	if ( IOPoller == NULL ) {
+	if ( IOPoller == nullptr ) {
 	    IOPoller = &uThisTask();			// make this task the poller
 
 #ifdef __U_DEBUG_H__
@@ -862,7 +862,7 @@ namespace UPP {
 	uDebugPrt( "(uNBIO &)%p.initSfd, adding node %p for fd %d\n", this, &node, fd );
 #endif // __U_DEBUG_H__
 
-	if ( timeoutEvent != NULL ) {
+	if ( timeoutEvent != nullptr ) {
 	    timeoutEvent->add();
 	    pendingIOMfds.addTail( &node );		// node is removed by IOPoller
 	} else {
@@ -881,19 +881,19 @@ namespace UPP {
 	    mmaxFD = nfds;
 	} // if
 
-	// set the appropriate fd bits in the master fd mask; mask pointers can be NULL => nothing in that mask
+	// set the appropriate fd bits in the master fd mask; mask pointers can be null => nothing in that mask
 	unsigned int tmask = howmany( nfds, NFDBITS );
-	if ( node.smfd.mfd.trfds != NULL ) {
+	if ( node.smfd.mfd.trfds != nullptr ) {
 	    for ( unsigned int i = 0; i < tmask; i += 1 ) {
 		mrfds.fds_bits[i] |= node.smfd.mfd.trfds->fds_bits[i];
 	    } // for
 	} // if
-	if ( node.smfd.mfd.twfds != NULL ) {
+	if ( node.smfd.mfd.twfds != nullptr ) {
 	    for ( unsigned int i = 0; i < tmask; i += 1 ) {
 		mwfds.fds_bits[i] |= node.smfd.mfd.twfds->fds_bits[i];
 	    } // for
 	} // if
-	if ( node.smfd.mfd.tefds != NULL ) {
+	if ( node.smfd.mfd.tefds != nullptr ) {
 	    efdsUsed = true;
 	    for ( unsigned int i = 0; i < tmask; i += 1 ) {
 		mefds.fds_bits[i] |= node.smfd.mfd.tefds->fds_bits[i];
@@ -904,7 +904,7 @@ namespace UPP {
 	uDebugPrt( "(uNBIO &)%p.initMfds, adding node %p\n", this, &node );
 #endif // __U_DEBUG_H__
 
-	if ( timeoutEvent != NULL ) {
+	if ( timeoutEvent != nullptr ) {
 	    timeoutEvent->add();
 	} // if
 
@@ -931,7 +931,7 @@ namespace UPP {
 	smaxFD = 0;					// all masks are clear
 	mmaxFD = 0;					// all masks are clear
 	pending = 0;
-	IOPoller = NULL;				// no poller task
+	IOPoller = nullptr;				// no poller task
 	IOPollerPid = (uPid_t)-1;			// IOPoller not blocked on a processor
 	timeoutOccurred = false;
 #if ! defined( __U_MULTI__ )
@@ -944,7 +944,7 @@ namespace UPP {
 #ifdef __U_DEBUG_H__
 	uDebugAcquire();
 	uDebugPrt2( "(uNBIO &)%p.select1, fd:%d, rwe:0x%x", this, closure.access.fd, rwe );
-	if ( timeout != NULL ) uDebugPrt2( ", timeout:%ld.%ld", timeout->tv_sec, timeout->tv_usec );
+	if ( timeout != nullptr ) uDebugPrt2( ", timeout:%ld.%ld", timeout->tv_sec, timeout->tv_usec );
 	uDebugPrt2( "\n" );
 	uDebugRelease();
 #endif // __U_DEBUG_H__
@@ -964,7 +964,7 @@ namespace UPP {
 	node.smfd.sfd.closure = &closure;
 	node.smfd.sfd.uRWE = &rwe;
 
-	if ( timeout != NULL ) {			// timeout ?
+	if ( timeout != nullptr ) {			// timeout ?
 	    if ( timeout->tv_sec == 0 && timeout->tv_usec == 0 ) { // optimization
 		// It is unnecessary to create a timeout event for this trivial case. Just mark the timeout as having
 		// already occurred.
@@ -1003,7 +1003,7 @@ namespace UPP {
 	printFDset( this, "rfds", tmasks, rfds );
 	printFDset( this, "wfds", tmasks, wfds );
 	printFDset( this, "efds", tmasks, efds );
-	if ( timeout != NULL ) uDebugPrt2( "(uNBIO &)%p.select2, timeout:%ld.%ld\n", this, timeout->tv_sec, timeout->tv_usec );
+	if ( timeout != nullptr ) uDebugPrt2( "(uNBIO &)%p.select2, timeout:%ld.%ld\n", this, timeout->tv_sec, timeout->tv_usec );
 	uDebugRelease();
 #endif // __U_DEBUG_H__
 
@@ -1026,7 +1026,7 @@ namespace UPP {
 	node.smfd.mfd.twfds = wfds;
 	node.smfd.mfd.tefds = efds;
 
-	if ( timeout != NULL ) {			// timeout ?
+	if ( timeout != nullptr ) {			// timeout ?
 	    if ( timeout->tv_sec == 0 && timeout->tv_usec == 0 ) { // optimization
 		// It is unnecessary to create a timeout event for this trivial case. Just mark the timeout as having
 		// already occurred.
@@ -1071,14 +1071,14 @@ extern "C" int pselect( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, const t
     } // if
 
     int ready;
-    if ( timeout == NULL ) {
-        ready = select( nfds, rfd, wfd, efd, NULL );
+    if ( timeout == nullptr ) {
+        ready = select( nfds, rfd, wfd, efd, nullptr );
     } else {
     	timeval ttime = { timeout->tv_sec, timeout->tv_nsec / 1000 };
     	ready = select( nfds, rfd, wfd, efd, &ttime );
     } // if
 
-    if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) {
+    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
         uAbort( "internal error, sigprocmask" );
     } // if
 
@@ -1120,7 +1120,7 @@ extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
 	timeval ttime = { timeout / 1000, timeout % 1000 * 1000 };
 	if ( select( maxfd + 1, &rfd, &wfd, &efd, &ttime ) < 0 ) return -1;
     } else {
-	if ( select( maxfd + 1, &rfd, &wfd, &efd, NULL ) < 0 ) return -1;
+	if ( select( maxfd + 1, &rfd, &wfd, &efd, nullptr ) < 0 ) return -1;
     } // if
 
     int nresults = 0;
@@ -1148,7 +1148,7 @@ extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
 
 
 extern "C" int ppoll( struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask ) { // replace
-    int timeout = (timeout_ts == NULL) ? -1 : (timeout_ts->tv_sec * 1000 + timeout_ts->tv_nsec / 1000000);
+    int timeout = (timeout_ts == nullptr) ? -1 : (timeout_ts->tv_sec * 1000 + timeout_ts->tv_nsec / 1000000);
 
     sigset_t old_mask;
     sigemptyset( &old_mask );
@@ -1159,7 +1159,7 @@ extern "C" int ppoll( struct pollfd *fds, nfds_t nfds, const struct timespec *ti
 
     int ready = poll( fds, nfds, timeout );
 
-    if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) {
+    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
         uAbort( "internal error, sigprocmask" );
     } // if
 

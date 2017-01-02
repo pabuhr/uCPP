@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uFile.cc -- 
 // 
@@ -466,7 +466,7 @@ const char *uFile::setName( char *name ) {
 const char *uFile::getName() const {
     return
 #ifdef __U_DEBUG__
-	( name == NULL || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
+	( name == nullptr || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
 #endif // __U_DEBUG__
 	name;
 } // uFile::getName

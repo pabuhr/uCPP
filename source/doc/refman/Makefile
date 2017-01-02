@@ -1,6 +1,6 @@
 ## Define the appropriate configuration variables.
 
-PACKAGE = /u0/usystem/software/u++-6.1.0
+PACKAGE = /u0/usystem/software/u++-7.0.0
 
 ## Include the architecture dependent definitions.
 
@@ -34,6 +34,7 @@ CyclicFullCoroutine \
 uC++MutexObject \
 DirectComm \
 ServerStructures \
+Actor \
 ClientServerUnconnected \
 ClientServerConnected \
 RunTimeStructure \

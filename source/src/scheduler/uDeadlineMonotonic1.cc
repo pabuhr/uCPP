@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim 1996
+// uC++ Version 7.0.0, Copyright (C) Philipp E. Lim 1996
 //
 // uDeadlineMonotonic1.cc --
 //
@@ -39,7 +39,7 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     uBaseTask &task = taskList.tail()->task();
 
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(task.uPIQ);
-    if ( PIHptr == NULL ) {
+    if ( PIHptr == nullptr ) {
 	uAbort("(uDeadlineMonotonic1 &)%p.addInitialize : Task %p has incorrect uPIQ type.", this, &task );
     } // if
 
@@ -49,7 +49,7 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     uPeriodicBaseTask *pbtask;
     uSporadicBaseTask *sbtask;
 
-    if ( ( rbtask = dynamic_cast<uRealTimeBaseTask *>(&task) ) == NULL ) {
+    if ( ( rbtask = dynamic_cast<uRealTimeBaseTask *>(&task) ) == nullptr ) {
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uDeadlineMonotonic1 &)%p.addInitialize: exit1\n", this );
 #endif // __U_DEBUG_H__
@@ -60,14 +60,14 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 	} else {
 	    setActivePriority( task, priority );
 	} // if
-    } else if ( ( pbtask = dynamic_cast<uPeriodicBaseTask *>(&task) ) != NULL ) {
+    } else if ( ( pbtask = dynamic_cast<uPeriodicBaseTask *>(&task) ) != nullptr ) {
 	setBasePriority( task, (int)(pbtask->getPeriod().nanoseconds() / 1000000) );
 	if ( queueNum == -1 ) {
 	    setActivePriority( *pbtask, task );
 	} else {
 	    setActivePriority( *pbtask, priority );
 	} // if
-    } else if ( ( sbtask = dynamic_cast<uSporadicBaseTask *>(&task) ) != NULL ) {
+    } else if ( ( sbtask = dynamic_cast<uSporadicBaseTask *>(&task) ) != nullptr ) {
 	setBasePriority( task, (int)(sbtask->getFrame().nanoseconds() / 1000000) );
 	if ( queueNum == -1 ) {
 	    setActivePriority( *sbtask, task );

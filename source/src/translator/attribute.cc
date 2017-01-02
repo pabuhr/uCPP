@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // attribute.cc --
 //
@@ -26,28 +26,28 @@
 
 #include "attribute.h"
 
-#include <cstddef>					// NULL
+#include <cstddef>					// nullptr
 
 attribute_t::attribute_t() {
     Mutex = false;
     dclkind.value = dclmutex.value = dclqual.value = 0;
     rttskkind.value = 0;
-    typedef_base = NULL;
-    focus = NULL;
+    typedef_base = nullptr;
+    focus = nullptr;
     emptyparms = nestedqual = false;
-    plate = NULL;
-    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = NULL;
+    plate = nullptr;
+    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::attribute_t
 
 attribute_t::~attribute_t() {
     Mutex = false;
     dclkind.value = dclmutex.value = dclqual.value = 0;
     rttskkind.value = 0;
-    typedef_base = NULL;
-    focus = NULL;
+    typedef_base = nullptr;
+    focus = nullptr;
     emptyparms = nestedqual = false;
-    plate = NULL;
-    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = NULL;
+    plate = nullptr;
+    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::~attribute_t
 
 // Local Variables: //

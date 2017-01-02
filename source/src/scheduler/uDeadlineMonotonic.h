@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim 1996
+// uC++ Version 7.0.0, Copyright (C) Philipp E. Lim 1996
 //
 // uDeadlineMonotonic.h --
 //

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 //
 // uHeapQ.h --
 //
@@ -128,7 +128,7 @@ template<typename List, typename Node> class uPriorityScheduleQ : public uBaseSc
 	    heap.getRoot( rqueue );
 	    return rqueue.data->queue.head();
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPriorityScheduleQ::head
 
@@ -157,7 +157,7 @@ template<typename List, typename Node> class uPriorityScheduleQ : public uBaseSc
 	    } // if
 	    return pnode;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uPriorityScheduleQ::drop
 

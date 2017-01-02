@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Richard Bilson and Ashif Harji 2003
+// uC++ Version 7.0.0, Copyright (C) Richard Bilson and Ashif Harji 2003
 // 
 // uKernelThreads.h -- 
 // 
 // Author           : Richard Bilson and Ashif Harji
 // Created On       : Wed Jul 16 16:44:10 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 14 13:31:43 2014
-// Update Count     : 48
+// Last Modified On : Thu Oct  6 22:25:23 2016
+// Update Count     : 49
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,8 +51,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("movb %%gs:_ZN13uKernelModule17uKernelModuleBootE@ntpoff+%P2,%b0" \
 			  : "=q" (__value)					\
@@ -80,8 +80,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("movb %0,%%gs:_ZN13uKernelModule17uKernelModuleBootE@ntpoff+%P1" : \
 			  : "q" (__value),					\
@@ -109,8 +109,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("movb %%fs:_ZN13uKernelModule17uKernelModuleBootE@tpoff+%P2,%b0" \
 			  : "=q" (__value)					\
@@ -135,8 +135,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("movb %0,%%fs:_ZN13uKernelModule17uKernelModuleBootE@tpoff+%P1" : \
 			  : "q" (__value),					\
@@ -268,8 +268,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8. */		\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof (__value) == 1)							\
     GETMEM_ASM( "ld1", member );						\
   else if (sizeof (__value) == 4)						\
@@ -295,8 +295,8 @@
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8. */		\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof (__value) == 1)							\
     SETMEM_ASM( "st1", member );						\
   else if (sizeof (__value) == 4)						\
@@ -325,8 +325,8 @@ __asm__( ".register %g7,#ignore" );
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value;		\
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("sethi %%tle_hix22(_ZN13uKernelModule17uKernelModuleBootE), %%g1\n\t" \
 		  	  "xor %%g1, %%tle_lox10(_ZN13uKernelModule17uKernelModuleBootE), %%g1\n\t" \
@@ -362,8 +362,8 @@ __asm__( ".register %g7,#ignore" );
 ({										\
   __typeof__(((uKernelModule::uKernelModuleData *)0)->member) __value = (value); \
   /* There should not be any value with a size other than 1, 4 or 8.  */	\
-  _STATIC_ASSERT_( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
-		   sizeof(__value) == 8 );					\
+  static_assert( sizeof(__value) == 1 || sizeof(__value) == 4 ||		\
+		 sizeof(__value) == 8, "" );					\
   if (sizeof(__value) == 1)							\
     __asm__ __volatile__ ("sethi %%tle_hix22(_ZN13uKernelModule17uKernelModuleBootE), %%g1\n\t" \
 		  	  "xor %%g1, %%tle_lox10(_ZN13uKernelModule17uKernelModuleBootE), %%g1\n\t" \

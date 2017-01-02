@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSemaphore.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 13:42:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  4 09:44:01 2014
-// Update Count     : 78
+// Last Modified On : Fri Dec 16 14:51:27 2016
+// Update Count     : 80
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -56,12 +56,29 @@ _Monitor uSemaphore {
 	if ( count < 0 ) blockedTasks.wait();		// if semaphore less than zero, wait for next V
     } // uSemaphore::P
 
-    // This routine forces the implementation to use internal scheduling, otherwise there is a deadlock problem with
-    // accepting V in the previous P routine, which prevents calls entering this routine to V the parameter and wait.
+    // This routine forces the implementation to use internal scheduling, otherwise there is a deadlock problem with    // accepting V in the previous P routine, which prevents calls entering this routine to V the parameter and wait.
     // Essentially, it is necessary to enter the monitor and do some work *before* possibly blocking. To use external
     // scheduling requires accepting either the V routine OR this P routine, which is currently impossible because there
-    // is no differentiation between overloaded routines. I'm not sure the external scheduling solution would be any
-    // more efficient than the internal scheduling solution.
+    // is no differentiation between overloaded routines.
+    //
+    //  _Monitor Semaphore {
+    //      int cnt;
+    //    public:
+    //      Semaphore( int cnt = 1 ) : cnt(cnt) {}
+    //      void V() {
+    //  	cnt += 1;
+    //      }
+    //      void P() {
+    //  	if ( cnt == 0 ) _Accept( V, P( Semaphore ) );
+    //  	cnt -= 1;
+    //      }
+    //      void P( Semaphore &s ) {
+    //  	s.V();
+    //  	P();  // reuse code
+    //      }
+    //  };
+    //
+    // I'm not sure the external scheduling solution would be any more efficient than the internal scheduling solution.
 
     void P( uSemaphore &s ) {				// wait on a semaphore and release another
 	s.V();						// release other semaphore

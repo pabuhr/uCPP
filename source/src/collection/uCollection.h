@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 14:18:43 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:29:34 2011
-// Update Count     : 103
+// Last Modified On : Tue Oct 11 21:58:10 2016
+// Update Count     : 106
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -74,10 +74,11 @@ template<typename T> class uCollection : protected uCFriend {
   protected:
     T *root;						// Pointer to root element of list.
     // class invariant: root == 0 & empty() | *root in *this
-
-    uCollection( const uCollection & );			// no copy
-    uCollection &operator=( const uCollection & );	// no assignment
   public:
+    uCollection( const uCollection & ) = delete;	// no copy
+    uCollection( uCollection && ) = delete;
+    uCollection &operator=( const uCollection & ) = delete; // no assignment
+
     inline uCollection() {	
 	root = 0;
     }							// post: empty().

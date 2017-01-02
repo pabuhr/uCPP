@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uCluster.cc -- 
 // 
@@ -105,7 +105,7 @@ void uCluster::processorPause() {
 	if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
 	    readyIdleTaskLock.release();
 
-	    if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) { // restored old signal mask over new one
+	    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // restored old signal mask over new one
 		uAbort( "internal error, sigprocmask" );
 	    } // if
 #ifdef __U_DEBUG_H__
@@ -125,7 +125,7 @@ void uCluster::processorPause() {
 
 	    sigsuspend( &old_mask );			// install old signal mask over new one and wait for signal to arrive
 
-	    if ( sigprocmask( SIG_SETMASK, &old_mask, NULL ) == -1 ) { // new mask restored so install old signal mask over new one
+	    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // new mask restored so install old signal mask over new one
 		uAbort( "internal error, sigprocmask" );
 	    } // if
 
@@ -192,7 +192,7 @@ void uCluster::makeProcessorActive() {
 
 void uCluster::makeTaskReady( uBaseTask &readyTask ) {
     readyIdleTaskLock.acquire();
-    if ( &readyTask.bound != NULL ) {			// task bound to a specific processor ?
+    if ( &readyTask.bound != nullptr ) {			// task bound to a specific processor ?
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uCluster &)%p.makeTaskReady(1): task %.256s (%p) makes task %.256s (%p) ready\n",
 		  this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask );
@@ -291,7 +291,7 @@ uBaseTask &uCluster::readyQueueTryRemove() {
     if ( ! readyQueueEmpty() ) {
 	task = &(readyQueue->drop()->task());
     } else {
-	task = NULL;
+	task = nullptr;
     } // if
     readyIdleTaskLock.release();
     return *task;
@@ -301,7 +301,7 @@ uBaseTask &uCluster::readyQueueTryRemove() {
 void uCluster::taskAdd( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
     tasksOnCluster.addTail( &(task.clusterRef) );
-    if ( &task.bound == NULL ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    if ( &task.bound == nullptr ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskAdd
 
@@ -309,7 +309,7 @@ void uCluster::taskAdd( uBaseTask &task ) {
 void uCluster::taskRemove( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
     tasksOnCluster.remove( &(task.clusterRef) );
-    if ( &task.bound == NULL ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    if ( &task.bound == nullptr ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskRemove
 
@@ -341,7 +341,7 @@ void uCluster::processorRemove( uProcessor &processor ) {
 void uCluster::processorPoke() {
     processorsOnClusterLock.acquire();
     uProcessorDL *head = processorsOnCluster.head();
-    if ( head != NULL ) {
+    if ( head != nullptr ) {
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
 // occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
 // pthread_kill.
@@ -399,7 +399,7 @@ void uCluster::createCluster( unsigned int stackSize, const char *name ) {
     if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->createCluster( *this );
 #endif // __U_LOCALDEBUGGER_H__
 
-    if ( readyQueue == NULL ) {
+    if ( readyQueue == nullptr ) {
 	readyQueue = new uDefaultScheduler;
 	defaultReadyQueue = true;
     } else {
@@ -418,12 +418,12 @@ void uCluster::createCluster( unsigned int stackSize, const char *name ) {
 } // uCluster::createCluster
 
 
-uCluster::uCluster( unsigned int stackSize, const char *name ) : globalRef( *this ), readyQueue( NULL ), wakeupList( *this ) {
+uCluster::uCluster( unsigned int stackSize, const char *name ) : globalRef( *this ), readyQueue( nullptr ), wakeupList( *this ) {
     createCluster( stackSize, name );
 } // uCluster::uCluster
 
 
-uCluster::uCluster( const char *name ) : globalRef( *this ), readyQueue( NULL ), wakeupList( *this ) {
+uCluster::uCluster( const char *name ) : globalRef( *this ), readyQueue( nullptr ), wakeupList( *this ) {
     createCluster( uDefaultStackSize(), name );
 } // uCluster::uCluster
 
@@ -471,7 +471,7 @@ uCluster::~uCluster() {
 #ifdef __U_DEBUG__
     uBaseTaskDL *tr;
     tr = tasksOnCluster.head();
-    if ( tr != NULL ) {
+    if ( tr != nullptr ) {
 	uAbort( "Attempt to delete cluster %.256s (%p) with task %.256s (%p) still on it.\n"
 		"Possible cause is the task has not been deleted.",
 		getName(), this, tr->task().getName(), &(tr->task()) );

@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 // 
 // TaskConditionBB.cc -- Generic bounded buffer using a task
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Nov 22 21:32:23 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 18:50:40 2005
-// Update Count     : 13
+// Last Modified On : Mon Dec 19 23:03:34 2016
+// Update Count     : 14
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 

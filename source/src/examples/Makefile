@@ -1,6 +1,6 @@
 ## Define the appropriate configuration variables.
 
-PACKAGE = /u0/usystem/software/u++-6.1.0
+PACKAGE = /u0/usystem/software/u++-7.0.0
 
 ## Include the architecture dependent definitions.
 
@@ -28,9 +28,9 @@ ifdef ALLOCATOR
     CXXFLAGS += -uAlloc${ALLOCATOR}
 endif
 
-.SILENT : all abortexit bench allocation features pthread EHM realtime multiprocessor
+.SILENT : all abortexit bench allocation features future actor pthread EHM realtime multiprocessor
 
-all : bench allocation features cobegin timeout pthread EHM realtime multiprocessor
+all : bench allocation features future actor cobegin timeout pthread EHM realtime multiprocessor
 
 errors : ownership abortexit
 
@@ -139,6 +139,32 @@ features :
 		multi=${MULTI} ; \
 	fi ; \
 	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 Futures Executor ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+future :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in Futures Executor ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+actor :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in ActorInherit ActorFib1 ActorFib2 ActorFork ActorFuture ActorHello ActorPingPong ActorRestart ActorRing ActorSieve ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \

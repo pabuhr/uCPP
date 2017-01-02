@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 19:56:07 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:29:03 2011
-// Update Count     : 162
+// Last Modified On : Tue Oct 11 21:57:48 2016
+// Update Count     : 165
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,10 +67,11 @@ class uSFriend {
 template<typename T> class uSequence: public uCollection<T>, protected uSFriend {
   protected:
     using uCollection<T>::root;
-
-    uSequence( const uSequence & );			// no copy
-    uSequence &operator=( const uSequence );		// no assignment
   public:
+    uSequence( const uSequence & ) = delete;		// no copy
+    uSequence( uSequence && ) = delete;
+    uSequence &operator=( const uSequence ) = delete;	// no assignment
+
     using uCollection<T>::empty;
     using uCollection<T>::head;
     using uCollection<T>::uNext;

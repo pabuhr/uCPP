@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2014
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2014
 // 
 // std_mutex.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri May 13 12:39:12 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 12:39:46 2016
-// Update Count     : 2
+// Last Modified On : Mon Oct 10 20:46:50 2016
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the

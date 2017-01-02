@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // parse.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul  3 20:47:22 2016
-// Update Count     : 4525
+// Last Modified On : Sun Dec 25 10:33:48 2016
+// Update Count     : 4542
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,18 +50,18 @@ using namespace std;
 
 #ifdef __U_DEBUG_H__
 static void print_focus_change( const char *name, table_t *from, table_t *to ) {
-    cerr << " top:" << top << " (" << (top->tbl->symbol != NULL ? top->tbl->symbol->hash->text : (top->tbl == root) ? "root" : "template/compound") << ") " <<
+    cerr << " top:" << top << " (" << (top->tbl->symbol != nullptr ? top->tbl->symbol->hash->text : (top->tbl == root) ? "root" : "template/compound") << ") " <<
 	name << " change focus from:";
-    if ( from != NULL ) {
-	cerr << from << " (" << (from->symbol != NULL ? from->symbol->hash->text : (from == root) ? "root" : "template/compound") << ")";
+    if ( from != nullptr ) {
+	cerr << from << " (" << (from->symbol != nullptr ? from->symbol->hash->text : (from == root) ? "root" : "template/compound") << ")";
     } else {
-	cerr << "NULL";
+	cerr << "nullptr";
     } // if
     cerr << " to ";
-    if ( to != NULL ) {
-	cerr << to << " (" << (to->symbol != NULL ? to->symbol->hash->text : (to == root) ? "root" : "template/compound") << ")";
+    if ( to != nullptr ) {
+	cerr << to << " (" << (to->symbol != nullptr ? to->symbol->hash->text : (to == root) ? "root" : "template/compound") << ")";
     } else {
-	cerr << "NULL";
+	cerr << "nullptr";
     } // if
     cerr << endl;
 } // print_focus_change
@@ -127,6 +127,8 @@ static const char *kind( symbol_t *symbol ) {
 	return "TASK";
     } else if ( symbol->data->key == EVENT ) {
 	return "EVENT";
+    } else if ( symbol->data->key == ACTOR ) {
+	return "ACTOR";
     } else {
 	return "*UNKNOWN*";
     } // if
@@ -216,7 +218,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
     if ( left != LA || prev2->value == TYPE || prev2->value == TEMPLATE || prev2->prev_parse_token()->value == OPERATOR ||
 	 prev2->value == MUTEX || prev2->prev_parse_token()->value == TASK ||
 	 prev2->value == CONST_CAST || prev2->value == DYNAMIC_CAST || prev2->value == REINTERPRET_CAST || prev2->value == STATIC_CAST ||
-	 ( prev2->value == IDENTIFIER && prev2->symbol != NULL &&
+	 ( prev2->value == IDENTIFIER && prev2->symbol != nullptr &&
 	   // This check may generate false positives because the translator does not always find all declarations.
 	   ( prev2->prev_parse_token()->value == TEMPLATE || prev2->symbol->data->key == MEMBER || prev2->symbol->data->key == ROUTINE ) ) ) {
 	for ( ;; ) {
@@ -249,7 +251,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 		ahead = ahead->next_parse_token();	// advance to LA
 	    } else {
 		// must correctly parse type-names to allow the above check
-		if ( left != LA || type() == NULL ) {
+		if ( left != LA || type() == nullptr ) {
 		    scan();				// always executed
 		} // if
 	    } // if
@@ -287,8 +289,8 @@ static bool typeof_specifier();
 
 static token_t *nested_name_specifier() {
     token_t *back = ahead;
-    token_t *token = NULL;
-    token_t *prev = NULL;
+    token_t *token = nullptr;
+    token_t *prev = nullptr;
 
     for ( ;; ) {
       if ( eof() ) break;
@@ -305,8 +307,8 @@ static token_t *nested_name_specifier() {
 	    match( TYPE );
 	    template_key();
 
-	    uassert( token->symbol != NULL );
-	    uassert( token->symbol->data != NULL );
+	    uassert( token->symbol != nullptr );
+	    uassert( token->symbol->data != nullptr );
 	    if ( check( COLON_COLON ) && ( token->symbol->typname || token->symbol->data->key != 0 ) ) { // type must have substructure
 		if ( token->symbol->data->key != 0 ) {
 #ifdef __U_DEBUG_H__
@@ -319,7 +321,7 @@ static token_t *nested_name_specifier() {
 		    match( COLON_COLON );
 		} // if
 	    } else {
-		if ( prev == NULL ) break;		// no "::" found
+		if ( prev == nullptr ) break;		// no "::" found
 //		if ( token->symbol->data->key != 0 ) return token;
 		// backup to the previous type, which is the last type that is part of the nested-name-specifier, i.e.,
 		// the last type *before* the last "::".
@@ -334,7 +336,7 @@ static token_t *nested_name_specifier() {
 //		match( TEMPLATE );
 //	    } // if
 	} else {
-	    if ( token == NULL ) break;			// handle 1st case of no type
+	    if ( token == nullptr ) break;			// handle 1st case of no type
 	    return token;				// otherwise return last type (not prev)
 	} // if
     } // for
@@ -343,7 +345,7 @@ static token_t *nested_name_specifier() {
 //    print_focus_change( "nested_name_specifier4", focus, top->tbl );
 #endif // __U_DEBUG_H__
     focus = top->tbl;
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // nested_name_specifier
 
 
@@ -376,7 +378,7 @@ static token_t *type() {
 //    print_focus_change( "type4", focus, top->tbl );
 #endif // __U_DEBUG_H__
     focus = top->tbl;
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // type
 
 
@@ -405,7 +407,7 @@ static token_t *epyt() {				// destructor
 //    print_focus_change( "epyt5", focus, top->tbl );
 #endif // __U_DEBUG_H__
     focus = top->tbl;
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // epyt
 
 
@@ -431,8 +433,8 @@ static token_t *identifier() {
 	focus = top->tbl;
 	match( IDENTIFIER );
 	// if this identifier has no symbol table entry associated with it, make one
-	uassert( token != NULL );
-	if ( token->symbol == NULL ) {
+	uassert( token != nullptr );
+	if ( token->symbol == nullptr ) {
 	    token->symbol = new symbol_t( token->value, token->hash );
 	} // if
 	template_key();					// optional
@@ -443,7 +445,7 @@ static token_t *identifier() {
 //    print_focus_change( "identifier4", focus, top->tbl );
 #endif // __U_DEBUG_H__
     focus = top->tbl;
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // identifier
 
 
@@ -521,7 +523,7 @@ static token_t *op() {
 	return back;
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // op
 
 
@@ -554,30 +556,30 @@ static token_t *operater() {
 
     if ( match( OPERATOR ) ) {
 	token_t *start = ahead;
-	if ( ( token = op() ) != NULL ) {
+	if ( ( token = op() ) != nullptr ) {
 	    template_key();
 
 	    // if this operator has no symbol table entry associated with it, make one
 
 	    token->symbol = focus->search_table( token->hash );	// look up token
-	    if ( token->symbol == NULL ) {
+	    if ( token->symbol == nullptr ) {
 		token->symbol = new symbol_t( OPERATOR, token->hash );
 	    } // if
 
 	    // check if this is a fundamental assignment operator so the translator does not generate a null, private
 	    // assignment operator.
 
-	    if ( '=' == token->value && focus->symbol != NULL ) {
+	    if ( '=' == token->value && focus->symbol != nullptr ) {
 		token_t *save = ahead;
 
 		if ( match( LP ) ) {
 		    cv_qualifier_list();		// optional
 		    token_t *temp = type();
-		    if ( temp != NULL && temp->symbol == focus->symbol ) {
-			if ( match( '&' ) ) {
+		    if ( temp != nullptr && temp->symbol == focus->symbol ) {
+			if ( (match( CONST ) && match( '&' )) || match( '&' ) ) {
 			    match( IDENTIFIER );	// optional identifier
 			    if ( match( RP ) ) {
-				focus->haseqop = true;
+				focus->hasassnop = true;
 			    } // if
 			} // if
 		    } // if
@@ -618,7 +620,7 @@ static token_t *operater() {
 
 		token = gen_code( ahead, name, TYPE );	// insert new token into the token stream
 		token->symbol = focus->search_table( token->hash ); // look up token
-		if ( token->symbol == NULL ) {
+		if ( token->symbol == nullptr ) {
 		    // if the symbol is not defined in the symbol table, define it
 		    token->symbol = new symbol_t( OPERATOR, token->hash );
 		} else {
@@ -648,8 +650,8 @@ static token_t *operater() {
 	template_key();
 
 	// if this identifier has no symbol table entry associated with it, make one
-	uassert( token != NULL );
-	if ( token->symbol == NULL ) {
+	uassert( token != nullptr );
+	if ( token->symbol == nullptr ) {
 	    token->symbol = new symbol_t( token->value, token->hash );
 	} // if
 	return token;
@@ -659,7 +661,7 @@ static token_t *operater() {
 //    print_focus_change( "operater6", focus, top->tbl );
 #endif // __U_DEBUG_H__
     focus = top->tbl;
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // operater
 
 
@@ -684,7 +686,7 @@ static void prefix_labels( token_t *before, token_t *after, token_t *label[], in
 	if ( contlabels ) {				// continue labels ?
 	    for ( int i = 0; i < cnt; i += 1 ) {
 		l = label[i];				// optimization
-		if ( l != NULL && l->symbol != NULL ) {	// ignore duplicate and non-prefix labels
+		if ( l != nullptr && l->symbol != nullptr ) {	// ignore duplicate and non-prefix labels
 		    sprintf( name, "_U_C_%.248s : ;", l->hash->text );
 		    gen_code( after, name );
 		} // if
@@ -693,7 +695,7 @@ static void prefix_labels( token_t *before, token_t *after, token_t *label[], in
 	gen_code( after, "}" );
 	for ( int i = 0; i < cnt; i += 1 ) {
 	    l = label[i];				// optimization
-	    if ( l != NULL && l->symbol != NULL ) {	// ignore duplicate and non-prefix labels
+	    if ( l != nullptr && l->symbol != nullptr ) {	// ignore duplicate and non-prefix labels
 		sprintf( name, "_U_B_%.248s : ;", l->hash->text );
 		gen_code( ahead, name );
 	    } // if
@@ -819,7 +821,7 @@ static bool break_statement( symbol_t *symbol ) {
     if ( match( BREAK ) ) {
 	token_t *label = ahead;
 	if ( match( IDENTIFIER ) ) {
-	    if ( label->symbol != NULL ) {		// prefix label ?
+	    if ( label->symbol != nullptr ) {		// prefix label ?
 		// cannot remove "break" token as there may be pointers to it
 		blocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 		blocn->value = blocn->hash->value;
@@ -848,7 +850,7 @@ static bool continue_statement( symbol_t *symbol ) {
     if ( match( CONTINUE ) ) {
 	token_t *label = ahead;
 	if ( match( IDENTIFIER ) ) {
-	    if ( label->symbol != NULL && label->symbol->data->index == 1 ) {		// prefix label ?
+	    if ( label->symbol != nullptr && label->symbol->data->index == 1 ) {		// prefix label ?
 		// cannot remove "continue" token as there may be pointers to it
 		clocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 		clocn->value = clocn->hash->value;
@@ -930,7 +932,7 @@ struct jump_t {
 
 
 static void when_clause( token_t *&wstart, token_t *&wend ) {
-    wstart = NULL;					// NULL => no _When clause
+    wstart = nullptr;					// null => no _When clause
     if ( match( WHEN ) ) {				// optional
 	wstart = ahead;					// includes opening parenthesis but not _When
 	if ( condition() ) {
@@ -938,7 +940,7 @@ static void when_clause( token_t *&wstart, token_t *&wend ) {
 	} else {
 	    // no reason to backtrack
 	    gen_error( wstart, "parenthesized conditional must follow _When." );
-	    wstart = NULL;				// ignore ill-formed _When
+	    wstart = nullptr;				// ignore ill-formed _When
 	} // if
     } // if
 } // when_clause
@@ -955,7 +957,7 @@ static void accept_end( token_t *before, jump_t *&list, unsigned int &accept_no 
     char helpText[32];
 
     gen_code( before, "switch ( uProtectAcceptStmtInstance . mutexMaskPosn ) {" );
-    for ( ; list != NULL; ) {
+    for ( ; list != nullptr; ) {
 	gen_code( before, "case" );
 	gen_mask( before, list->index );
 	sprintf( helpText, ": goto _U_A%04x_%04x ;", accept_no, list->index );
@@ -977,7 +979,7 @@ static bool accept_mutex_list( token_t *before, jump_t *&list, symbol_t *symbol,
     gen_code( start, "this -> uSerialInstance ." );
     gen_code( start, tryname );
     gen_code( start, "(" );
-    if ( ( member = identifier() ) != NULL || ( member = operater() ) != NULL || ( member = epyt() ) != NULL ) {
+    if ( ( member = identifier() ) != nullptr || ( member = operater() ) != nullptr || ( member = epyt() ) != nullptr ) {
 	while ( start != ahead ) {			// remove the member name from the token stream as it is not printed
 	    token_t *dump = start;
 	    start = start->next_parse_token();
@@ -986,13 +988,13 @@ static bool accept_mutex_list( token_t *before, jump_t *&list, symbol_t *symbol,
 	} // while
 
 	symbol_t *msymbol = member->symbol;
-	uassert( msymbol != NULL );
+	uassert( msymbol != nullptr );
 
-	if ( msymbol->data->table != NULL || msymbol->data->attribute.Mutex ) {
-	    if ( msymbol->data->table != NULL ) {	// must be the destructor
-		uassert( symbol->data->found != NULL );
+	if ( msymbol->data->table != nullptr || msymbol->data->attribute.Mutex ) {
+	    if ( msymbol->data->table != nullptr ) {	// must be the destructor
+		uassert( symbol->data->found != nullptr );
 		// check destructor name is the same as the containing class
-		if ( symbol->data->found->symbol != NULL && // destructor may not be defined yet but its name can be used
+		if ( symbol->data->found->symbol != nullptr && // destructor may not be defined yet but its name can be used
 		     symbol->data->found->symbol != msymbol ) {
 		    char msg[strlen(symbol->data->found->symbol->hash->text) + 256];
 
@@ -1007,7 +1009,7 @@ static bool accept_mutex_list( token_t *before, jump_t *&list, symbol_t *symbol,
 
 	    // check if multiple accepts for this member in the accept statement
 
-	    for ( jump_t *p = list; p != NULL; p = p->link ) {
+	    for ( jump_t *p = list; p != nullptr; p = p->link ) {
 		if ( index == p->index ) {
 		    char msg[strlen(msymbol->hash->text) + 256];
 		    sprintf( msg, "multiple accepts of mutex member \"%s\".", msymbol->hash->text );
@@ -1064,7 +1066,7 @@ static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list,
     if ( match( ACCEPT ) ) {
 	start = ahead;
 	if ( match( LP ) ) {				// start of mutex member list
-	    if ( list == NULL ) {			// start of accept statement ?
+	    if ( list == nullptr ) {			// start of accept statement ?
 		accept_cnt += 1;			// next accept statement
 		accept_no = accept_cnt;			// retain value for this statement
 		accept_start( startposn );
@@ -1072,7 +1074,7 @@ static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list,
 
 	    jump_t *end = list;				// save current position on mutex member stack
 	    if ( accept_mutex_list( ahead, list, symbol ) ) {
-		if ( wstart != NULL ) {			// _When ?
+		if ( wstart != nullptr ) {			// _When ?
 		    gen_code( wstart, "if (" );		// insert before condition
 		    gen_code( start, "&&" );		// insert after condition
 		} else {
@@ -1109,7 +1111,7 @@ static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&l
     bool left = accept_clause( startposn, uncondaccept, list, accept_no, symbol );
     if ( left ) {
 	token_t *posn = ahead;
-	token_t *elsePosn = NULL;
+	token_t *elsePosn = nullptr;
 
 	if ( check( ELSE ) ) {
 	    elsePosn = ahead;
@@ -1126,7 +1128,7 @@ static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&l
 		gen_code( separator, "else" );
 		return true;
 	    } else {
-		if ( elsePosn != NULL ) {
+		if ( elsePosn != nullptr ) {
 		    elsePosn->value = ELSE;		// change token kind back
 		} // if
 		// could be an error or a timeout
@@ -1145,7 +1147,7 @@ static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&l
 static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol ) {
     token_t *back = ahead;
     token_t *wstart, *wend;
-    token_t *elsePosn = NULL;
+    token_t *elsePosn = nullptr;
 
     if ( check( ELSE ) ) {
 	elsePosn = ahead;
@@ -1163,7 +1165,7 @@ static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &unco
 		const char *kind = uncondaccept ? "U" : "C";
 		char helpText[64];
 		sprintf( helpText, "else { if ( this -> uSerialInstance . execute%s (", kind );
-		if ( wstart != NULL ) {			// conditional timeout ?
+		if ( wstart != nullptr ) {			// conditional timeout ?
 		    gen_code( wstart, helpText );
 		    gen_code( posn, "," );		// after _When condition
 		} else {
@@ -1181,7 +1183,7 @@ static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &unco
 		gen_error( ahead, "expression must follow _Timeout." );
 	    } // if
 	} else {
-	    if ( elsePosn != NULL ) {
+	    if ( elsePosn != nullptr ) {
 		elsePosn->value = ELSE;			// change token kind back
 		goto fini;
 	    } // if
@@ -1204,8 +1206,8 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 
     posn = ahead;
     if ( match( UELSE ) ) {				// end of accept clause list ?
-	if ( wstart != NULL ) {				// _When ?
-	    if ( timeout != NULL ) {
+	if ( wstart != nullptr ) {				// _When ?
+	    if ( timeout != nullptr ) {
 		gen_code( timeout, "," );
 		move_tokens( timeout, wstart, wend );
 	    } else {
@@ -1224,7 +1226,7 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 	} else {
 	    posn->hash = hash_table->lookup( "else" );	// reuse "else" by changing to "_Else" token
 	    posn->value = ELSE;				// change token kind back
-	    if ( timeout != NULL ) {
+	    if ( timeout != nullptr ) {
 		gen_warning( posn, "_Timeout preceding unconditional \"_Else\" is never executed." );
 		gen_code( timeout, ", true" );		// force "else" clause with "true" _When value
 		gen_code( posn, "}" );
@@ -1247,9 +1249,9 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 static bool accept_statement( symbol_t *symbol ) {
     token_t *back = ahead;
     token_t *start = ahead;
-    jump_t *list = NULL;
+    jump_t *list = nullptr;
     unsigned int accept_no;
-    token_t *timeout = NULL;
+    token_t *timeout = nullptr;
     bool uncondaccept = false, hasTimeout, hasElse;
 
     bool root = or_accept_clause( start, uncondaccept, list, accept_no, symbol );
@@ -1274,7 +1276,7 @@ static bool accept_statement( symbol_t *symbol ) {
 	if ( match ( TIMEOUT ) ) {
 	    start = ahead;
 	    if ( condition() ) {
-		if ( wstart != NULL ) {			// conditional timeout ?
+		if ( wstart != nullptr ) {			// conditional timeout ?
 		    gen_code( wstart, "if (" );		// insert before condition
 		    gen_code( start, ")" );		// insert after condition
 		} // if
@@ -1298,7 +1300,7 @@ static bool acceptreturn_statement( symbol_t *symbol ) {
     token_t *back = ahead;
     token_t *start = ahead;
     token_t *posn;
-    jump_t *list = NULL;
+    jump_t *list = nullptr;
 
     if ( match( ACCEPTRETURN ) ) {
 	posn = ahead;
@@ -1321,7 +1323,7 @@ static bool acceptreturn_statement( symbol_t *symbol ) {
 		scan();
 	    } // for
 
-	    for ( ; list != NULL; ) {			// remove mutex member nodes allocated for member list
+	    for ( ; list != nullptr; ) {			// remove mutex member nodes allocated for member list
 		jump_t *curr = list;
 		list = list->link;
 		delete curr;
@@ -1344,7 +1346,7 @@ static bool acceptwait_statement( symbol_t *symbol ) {
     token_t *back = ahead;
     token_t *start = ahead;
     token_t *posn;
-    jump_t *list = NULL;
+    jump_t *list = nullptr;
 
     if ( match( ACCEPTWAIT ) ) {
 	posn = ahead;
@@ -1358,7 +1360,7 @@ static bool acceptwait_statement( symbol_t *symbol ) {
 	    gen_code( posn, "if (" );
 	    gen_code( ahead, "} else { this -> uSerialInstance . acceptSetMask ( ) ; }" ); // end of accept clause list
 
-	    for ( ; list != NULL; ) {			// remove mutex member nodes allocated for member list
+	    for ( ; list != nullptr; ) {			// remove mutex member nodes allocated for member list
 		jump_t *curr = list;
 		list = list->link;
 		delete curr;
@@ -1403,7 +1405,7 @@ static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &sel
 	    if ( match( RP ) || match( SELECT_RP ) ) {
 		start->value = SELECT_LP;		// change token kind
 		ahead->prev_parse_token()->value = SELECT_RP; // change token kind
-		if ( wstart != NULL ) {			// _When ?
+		if ( wstart != nullptr ) {			// _When ?
 		    move_tokens( wlocn, wstart, wend );
 		    gen_code( wlocn, "," );
 		} // if
@@ -1428,7 +1430,7 @@ static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &sel
 	    sprintf( helpText, " > uSelector%d (", selector );
 	    gen_code( startposn, helpText );
 	    posn1 = startposn->prev_parse_token();
-	    if ( wstart != NULL ) {			// _When ?
+	    if ( wstart != nullptr ) {			// _When ?
 		move_tokens( startposn, wstart, wend );
 		gen_code( startposn, "," );
 	    } // if
@@ -1544,7 +1546,7 @@ static bool select_timeout_clause( token_t *start, unsigned int &select_no, symb
 		char label[32];
 
 		gen_code( start, "," );
-		if ( wstart != NULL ) {			// _When ?
+		if ( wstart != nullptr ) {			// _When ?
 		    move_tokens( start, wstart, wend );
 		} else {
 		    gen_code( start, "true" );
@@ -1584,7 +1586,7 @@ static bool select_else_clause( token_t *start, unsigned int &select_no, symbol_
 	char label[32];
 
 	gen_code( start, "," );
-	if ( wstart != NULL ) {
+	if ( wstart != nullptr ) {
 	    move_tokens( start, wstart, wend );
 	} else {
 	    gen_code( start, "true" );
@@ -1608,7 +1610,7 @@ static bool select_else_clause( token_t *start, unsigned int &select_no, symbol_
 static bool select_statement( symbol_t *symbol ) {
     token_t *back = ahead;
     unsigned int select_no, selector = 0, leaf = 3;	//  0 => finished, 1 => else, 2 => timeout
-    token_t *start = ahead, *wlocn = NULL;
+    token_t *start = ahead, *wlocn = nullptr;
 
     int root = or_select_clause( start, wlocn, select_no, selector, leaf, symbol );
     if ( root != -1 ) {
@@ -1675,10 +1677,10 @@ static bool catchResume_body( symbol_t *symbol, attribute_t &attribute, token_t 
 
     token_t *startblock = ahead;
 
-  if ( ! compound_statement( symbol, NULL, 0 ) ) return false; // body ?
+  if ( ! compound_statement( symbol, nullptr, 0 ) ) return false; // body ?
 
     uassert( symbol->data->key == ROUTINE || symbol->data->key == MEMBER );
-    uassert( symbol->data->attribute.startCR != NULL );
+    uassert( symbol->data->attribute.startCR != nullptr );
 
     // resumption table entry
 
@@ -1693,7 +1695,7 @@ static bool catchResume_body( symbol_t *symbol, attribute_t &attribute, token_t 
     sprintf( buffer, "uHandler%d (", handler );		// begin handler constructor
     gen_code( startTry, buffer );
 
-    if ( bound.oleft != NULL ) {			// bound object ?
+    if ( bound.oleft != nullptr ) {			// bound object ?
 	gen_code( startTry, "& (" );
 	move_tokens( startTry, bound.oleft, bound.oright ); // move bound object
 	bound.oright->remove_token();			// remove the dot
@@ -1720,7 +1722,7 @@ static bool catchResume_clause( symbol_t *symbol, token_t *startTry, unsigned in
 	if ( match( LP ) ) {
 	    attribute_t attribute;
 	    token_t *dotdotdot = ahead;
-	    bound_t bound = { NULL };			// set all fields to NULL
+	    bound_t bound = { nullptr };			// set all fields to null
 
 	    if ( exception_declaration( attribute, bound ) ) {
 		return catchResume_body( symbol, attribute, back, startTry, handler, bound );
@@ -1759,7 +1761,7 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 	    attribute_t attribute;
 	    if ( exception_declaration( attribute, bound ) || ( match( DOT_DOT_DOT ) && match( RP ) ) ) {
 		prefix = ahead;
-		if ( compound_statement( symbol, NULL, 0 ) ) {
+		if ( compound_statement( symbol, nullptr, 0 ) ) {
 		    exception_type = attribute.typedef_base; // used to check whether splitting is necessary
 		    gen_code( prefix, "{" );
 		    gen_code( prefix, "if ( uOrigRethrow ) throw ;" );
@@ -1769,17 +1771,17 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 		    gen_code( ahead, "catch( ... ) { uOrigRethrow = true; throw; }" );
 		    try_catches.push_front( ahead->prev_parse_token() ); // possible later deletion if the try block is not split
 		    gen_code( ahead, "}" );
-		    para_name = NULL;			// prevent optimization
+		    para_name = nullptr;			// prevent optimization
 		    return true;
 		} // if
-//		para_name = NULL;			// prevent optimization
+//		para_name = nullptr;			// prevent optimization
 	    } else if ( bound_exception_declaration( bound ) ) {
 		token_t *p, *next;
 		token_t *start_catch;
-		hash_t *local_param_name = NULL;
+		hash_t *local_param_name = nullptr;
 		prefix = ahead;
 
-		if ( compound_statement( symbol, NULL, 0 ) ) {
+		if ( compound_statement( symbol, nullptr, 0 ) ) {
 		    gen_code( prefix, "{ ");
 		    gen_code( prefix, "if ( uOrigRethrow ) throw ;");
 		    if_rethrow.push_front( prefix->prev_parse_token() ); // possible later deletion if this is the innermost try block
@@ -1850,7 +1852,7 @@ static bool split_tryblock( symbol_t *sym, symbolset &parents, symbolset &extype
     // given a symbol sym, and the two sets parents and extypes, decides whether a try-block splitting is necessary or
     // not, by checking if sym is in the parents, or any of its parents have catch clauses in the try block already
 
-    if ( sym == NULL ) {
+    if ( sym == nullptr ) {
 	return ! extypes.empty();			// if catch_any split, if there were bound clauses before
     } //if
 
@@ -1893,10 +1895,10 @@ static bool finally_clause( symbol_t *symbol, token_t *start ) {
 	char linedir[32 + strlen( file )];
 	sprintf( linedir, "# %d \"%s\"\n", line, file );
 
-      if ( ! compound_statement( symbol, NULL, 0 ) ) return false; // parse finally body
+      if ( ! compound_statement( symbol, nullptr, 0 ) ) return false; // parse finally body
 
 	uassert( symbol->data->key == ROUTINE || symbol->data->key == MEMBER );
-	uassert( symbol->data->attribute.startCR != NULL );
+	uassert( symbol->data->attribute.startCR != nullptr );
 
 	// hoist finally clause into lambda, return special type to prevent returns in finally body
 
@@ -1919,7 +1921,7 @@ static bool try_block( symbol_t *symbol ) {
     token_t *start, *prefix;
 
     symbolset parents, extypes;
-    symbol_t *exception_type = NULL;
+    symbol_t *exception_type = nullptr;
 
     start = ahead;
     if ( match( TRY ) ) {
@@ -1933,7 +1935,7 @@ static bool try_block( symbol_t *symbol ) {
 	prefix = gen_code( ahead, '\n' );
 	gen_code( ahead, linedir, '#' );
 
-	if ( compound_statement( symbol, NULL, 0 ) ) {
+	if ( compound_statement( symbol, nullptr, 0 ) ) {
 	    token_t *prev;
 	    bool bound;					// is catch clause bound ?
 	    prev = ahead;				// location before catch clause
@@ -2254,13 +2256,13 @@ static bool labelled_statement( symbol_t *symbol ) {
 		l = label[i];				// optimization
 		// only need to create a symbol table for labels that need to be looked up by break and continue.
 		l->symbol = focus->search_table( l->hash );
-		if ( l->symbol == NULL ) {		// not defined in this scope ?
+		if ( l->symbol == nullptr ) {		// not defined in this scope ?
 		    l->symbol = new symbol_t( l->value, l->hash );
 		    focus->insert_table( l->symbol );
 		    // SKULLDUGGERY: put label target kind into mutex index field
 		    l->symbol->data->index = targetype;
 		} else {				// already defined ? => duplicate label
-		    label[i] = NULL;
+		    label[i] = nullptr;
 		} // if
 	    } // for
 	    if ( for_statement( symbol, label, cnt ) ) return true;
@@ -2323,7 +2325,7 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 	    if ( Yield ) gen_yield( ahead );
 	} // if
 #endif
-	table_t *table = new table_t( NULL );		// no symbol to connect to
+	table_t *table = new table_t( nullptr );		// no symbol to connect to
 	uassert( focus == top->tbl );
 	table->lexical = top->tbl;
 	table->push_table();
@@ -2369,12 +2371,12 @@ static bool statement( symbol_t *symbol ) {
     token_t *back = ahead;
 
     for ( ;; ) {
-	if ( if_statement( symbol, NULL, 0 ) ) return true;
-	if ( switch_statement( symbol, NULL, 0 ) ) return true;
+	if ( if_statement( symbol, nullptr, 0 ) ) return true;
+	if ( switch_statement( symbol, nullptr, 0 ) ) return true;
 
-	if ( while_statement( symbol, NULL, 0 ) ) return true;
-	if ( do_statement( symbol, NULL, 0 ) ) return true;
-	if ( for_statement( symbol, NULL, 0 ) ) return true;
+	if ( while_statement( symbol, nullptr, 0 ) ) return true;
+	if ( do_statement( symbol, nullptr, 0 ) ) return true;
+	if ( for_statement( symbol, nullptr, 0 ) ) return true;
 
 	if ( break_statement( symbol ) ) return true;
 	if ( continue_statement( symbol ) ) return true;
@@ -2397,7 +2399,7 @@ static bool statement( symbol_t *symbol ) {
 	if ( case_statement( symbol ) ) return true;
 	if ( default_statement( symbol ) ) return true;
 
-	if ( compound_statement( symbol, NULL, 0 ) ) return true;
+	if ( compound_statement( symbol, nullptr, 0 ) ) return true;
 	if ( object_declaration() ) return true;
 
 	// handles statements currently not parsed: goto, return, expression.
@@ -2405,7 +2407,7 @@ static bool statement( symbol_t *symbol ) {
 	for ( ;; ) {
 	    if ( eof() ) goto fini;
 	    if ( match( ';' ) ) return true;
-	    if ( compound_statement( symbol, NULL, 0 ) ) return true; // gcc compound in expression
+	    if ( compound_statement( symbol, nullptr, 0 ) ) return true; // gcc compound in expression
 	    if ( check( RC ) ) return false;		// don't backtrack
 	    scan();
 	    if ( ahead->value >= ASM ) break;		// check again if keyword
@@ -2441,7 +2443,7 @@ static token_t *base_specifier( unsigned int &access ) {
     token_t *back = ahead;
     token_t *base;
 
-    if ( ( base = type() ) != NULL ) {
+    if ( ( base = type() ) != nullptr ) {
 	base->left = back;
 	base->right = ahead->prev_parse_token();
 	access = PRIVATE;				// default
@@ -2449,7 +2451,7 @@ static token_t *base_specifier( unsigned int &access ) {
     } else if ( match( VIRTUAL ) ) {
 	access = access_specifier();
 	token_t *temp = ahead;
-	if ( ( base = type() ) != NULL ) {
+	if ( ( base = type() ) != nullptr ) {
 	    base->left = temp;
 	    base->right = ahead->prev_parse_token();
 	    return base;
@@ -2457,14 +2459,14 @@ static token_t *base_specifier( unsigned int &access ) {
     } else if ( ( access = access_specifier() ) != 0 ) {
 	match( VIRTUAL );
 	token_t *temp = ahead;
-	if ( ( base = type() ) != NULL ) {
+	if ( ( base = type() ) != nullptr ) {
 	    base->left = temp;
 	    base->right = ahead->prev_parse_token();
 	    return base;
 	} // if
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // base_specifier
 
 
@@ -2478,18 +2480,18 @@ static bool base_specifier_list( symbol_t *symbol ) {
     symbol_t *base;
     unsigned int access;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
-    if ( ( token = base_specifier( access ) ) != NULL && symbol != token->symbol ) { // prevent inheriting from oneself, e.g., class x : public x
+    if ( ( token = base_specifier( access ) ) != nullptr && symbol != token->symbol ) { // prevent inheriting from oneself, e.g., class x : public x
 	base = token->symbol;
-	uassert( base != NULL );
+	uassert( base != nullptr );
 #if 0
 	printf( "base_specifier_list, symbol:%s, symbol->data->key:%s (%d), symbol->data->Mutex:%d, symbol->data->index:%d, "
 		"base:%s, base->key:%s (%d), base->Mutex:%d, base->index:%d\n",
 		symbol->hash->text, kind( symbol ), symbol->data->key, symbol->data->attribute.Mutex, symbol->data->index,
 		base->hash->text, kind( base ), base->data->key, base->data->attribute.Mutex, base->data->index );
 #endif
-	if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EVENT ) {
+	if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EVENT || base->data->key == ACTOR ) {
 
 	    // copy the left and right template delimiters from the scanned token
 
@@ -2497,12 +2499,12 @@ static bool base_specifier_list( symbol_t *symbol ) {
 	    symbol->data->right = token->right;
 
 	    if ( ( ( symbol->data->key == EVENT || base->data->key == EVENT ) && ( symbol->data->key != base->data->key || access != PUBLIC ) )
-		 || symbol->data->base != NULL ) {
+		 || symbol->data->base != nullptr ) {
 		// This section only handles EVENT and multiple inheritance problems. The error checking for coroutine,
 		// monitor, comonitor and task is in class_specifier, after the type's members are parsed because mutex
 		// members affect a type's kind. A side effect of separating the checking is for error messages to
 		// appear out of order.
-		if ( symbol->data->base != NULL ) {
+		if ( symbol->data->base != nullptr ) {
 		    char msg[strlen(symbol->data->base->hash->text) + strlen(base->hash->text) + 256];
 		    sprintf( msg, "multiple inheritance disallowed between base type \"%s\" of kind \"%s\" and base type \"%s\" of kind \"%s\"; inheritance ignored.",
 			     symbol->data->base->hash->text, kind( symbol->data->base ), base->hash->text, kind( base ) );
@@ -2528,7 +2530,7 @@ static bool base_specifier_list( symbol_t *symbol ) {
 	    } // if
 	} // if
 
-	if ( symbol->data->attribute.startE != NULL || symbol->data->attribute.startP != NULL ) {
+	if ( symbol->data->attribute.startE != nullptr || symbol->data->attribute.startP != nullptr ) {
 	    gen_error( ahead, "base kind has already specified mutex/task data-structure arguments." );
 	} // if
 
@@ -2632,21 +2634,27 @@ static int class_key( attribute_t &attribute ) {
 	return EVENT;
     } // if
 
+    if ( match( ACTOR ) ) {
+	gen_code( ahead, "class" );
+	if ( check( LA ) && ! task_parameter_list( attribute ) ) goto fini;
+	return ACTOR;
+    } // if
+
   fini:
     ahead = back; return 0;
 } // class_key
 
 
 static void make_type( token_t *token, symbol_t *&symbol, table_t *locn = focus ) { // symbol is in/out parameter because it may be changed
-    uassert( token != NULL );
-    uassert( symbol != NULL );
+    uassert( token != nullptr );
+    uassert( symbol != nullptr );
 
     if ( symbol->data->found == focus ) {
 	// if the symbol already exists in the current symbol table as an identifier, make it a type
 
 	token->value = symbol->value = TYPE;
     } else {
-	if ( symbol->data->found != NULL ) {
+	if ( symbol->data->found != nullptr ) {
 	    // if the symbol exists in some other symbol table, make a copy of the symbol
 
 	    token->symbol = symbol = new symbol_t( symbol->value, symbol->hash );
@@ -2693,7 +2701,7 @@ static bool template_parameter( attribute_t &attribute ) {
 
 	// if a class key is found
 
-	if ( ( token = identifier() ) != NULL ) {
+	if ( ( token = identifier() ) != nullptr ) {
 	    symbol = token->symbol;
 
 	    // change the token's and symbol's value to TYPE
@@ -2705,7 +2713,7 @@ static bool template_parameter( attribute_t &attribute ) {
 	    } else {
 		// template parameter declarations have no parent (yet) and so the symbol table created during scan
 		// lookup is used
-		if ( symbol->data->found != NULL /* && symbol->data->found != focus */ ) {
+		if ( symbol->data->found != nullptr /* && symbol->data->found != focus */ ) {
 		    // if the symbol exists in some other symbol table, make a copy of the symbol
 
 		    token->symbol = symbol = new symbol_t( symbol->value, symbol->hash );
@@ -2718,11 +2726,11 @@ static bool template_parameter( attribute_t &attribute ) {
 	    // set the symbol's key to class key
 
 	    symbol->data->key = ckey;
-	} else if ( ( token = type() ) != NULL ) {
+	} else if ( ( token = type() ) != nullptr ) {
 	    // if a type token is found, grab the symbol associated with the token and prepare to do some analysis
 
 	    symbol = token->symbol;
-	    uassert( symbol != NULL );
+	    uassert( symbol != nullptr );
 
 	    if ( symbol->data->found == attribute.plate ) {
 		// if the symbol already exists in the current symbol table as a type, verify that its kind is the same
@@ -2739,7 +2747,7 @@ static bool template_parameter( attribute_t &attribute ) {
 		    } // if
 		} // if
 	    } else {
-		//if ( symbol->data->found != NULL /* && symbol->data->found != focus */ ) {
+		//if ( symbol->data->found != nullptr /* && symbol->data->found != focus */ ) {
 		    // if the symbol exists in some other symbol table make a new symbol for the current symbol table
 
 		    token->symbol = symbol = new symbol_t( token->value, token->hash );
@@ -2769,7 +2777,7 @@ static bool template_parameter( attribute_t &attribute ) {
 		if ( check( ',' ) ) break;
 		if ( check( RA ) ) break;
 		// must correctly parse type-names to allow the above match_closing check
-		if ( type() == NULL ) {
+		if ( type() == nullptr ) {
 		    scan();
 		} // if
 	    } // for
@@ -2796,7 +2804,7 @@ static bool template_parameter( attribute_t &attribute ) {
 	  if ( check( ',' ) ) break;
 	  if ( check( RA ) ) break;
 	    // must correctly parse type-names to allow the above match_closing check
-	    if ( type() == NULL ) {
+	    if ( type() == nullptr ) {
 		scan();
 	    } // if
 	} // for
@@ -2807,8 +2815,8 @@ static bool template_parameter( attribute_t &attribute ) {
 
 	// does not handle unnamed routine pointer: template<double (*)() > struct P {};
  	declarator( attribute );
-	if ( attribute.startI != NULL ) {		// named parameter ?
-	    uassert( attribute.startI->symbol != NULL );
+	if ( attribute.startI != nullptr ) {		// named parameter ?
+	    uassert( attribute.startI->symbol != nullptr );
 	    if ( attribute.startI->symbol->data->found != focus ) {
 		attribute.plate->insert_table( attribute.startI->symbol ); // insert the symbol into the template symbol
 	    } // if
@@ -2823,7 +2831,7 @@ static bool template_parameter( attribute_t &attribute ) {
  	      if ( check( ',' ) ) break;
  	      if ( check( RA ) ) break;
  		// must correctly parse type-names to allow the above match_closing check
- 		if ( type() == NULL ) {
+ 		if ( type() == nullptr ) {
  		    scan();
  		} // if
  	    } // for
@@ -2927,7 +2935,7 @@ static bool mutex_parameter_list( attribute_t &attribute ) {
 	    endM = ahead;
 	    if ( ! match( RA ) ) goto fini;		// match closing '>'
 
-	    if ( attribute.startE != NULL && attribute.startE != startE ) {
+	    if ( attribute.startE != nullptr && attribute.startE != startE ) {
 		gen_error( startE, "multiple mutex qualifiers specified, only one allowed." );
 	    } // if
 
@@ -3003,8 +3011,8 @@ static bool template_qualifier( attribute_t &attribute ) {
     token_t *start = ahead;
     if ( match( TEMPLATE ) ) {
 	if ( match( LA ) ) {
-	    if ( attribute.plate == NULL ) {
-		attribute.plate = new table_t( NULL );
+	    if ( attribute.plate == nullptr ) {
+		attribute.plate = new table_t( nullptr );
 	    } // if
 
 	    // must push this table on the lookup stack as types in the table can be used immediately.
@@ -3043,36 +3051,36 @@ static token_t *class_head( attribute_t &attribute ) {
 	attribute_clause_list();			// optional
 
 	if ( attribute.dclkind.kind.FRIEND ) {		// friend declaration ?
-	    if ( ( token = identifier() ) != NULL ) {	// undefined ?
+	    if ( ( token = identifier() ) != nullptr ) {	// undefined ?
 		// Undefined friend declarations are moved to the root scope.
 		symbol = token->symbol;
-		uassert( symbol != NULL );
+		uassert( symbol != nullptr );
 		make_type( token, symbol, root );
 		symbol->data->key = key;		// set the symbol's class key to the class key
-	    } else if ( ( token = type() ) != NULL ) {
+	    } else if ( ( token = type() ) != nullptr ) {
 	    } // if
 	    return token;
 	} // if
 
-	if ( ( token = identifier() ) != NULL ) {
+	if ( ( token = identifier() ) != nullptr ) {
 	    match( FINAL );				// optional
 
 	    symbol = token->symbol;
-	    uassert( symbol != NULL );
+	    uassert( symbol != nullptr );
 	    // if the top of the lexical stack is a template, add this type to the actual table below it.
 	    make_type( token, symbol, top->tbl == attribute.plate ? top->link->tbl : top->tbl );
 	    symbol->data->key = key;			// set the symbol's class key to the class key
-	} else if ( ( token = type() ) != NULL ) {
+	} else if ( ( token = type() ) != nullptr ) {
 	    match( FINAL );				// optional
 	    // if a type token is found, grab the symbol associated with the token and do some analysis
 
 	    symbol = token->symbol;
-	    uassert( symbol != NULL );
+	    uassert( symbol != nullptr );
 
 	    // look ahead for old style C struct declarations.
 	    if ( ( symbol->data->key == STRUCT || symbol->data->key == UNION ) && ( ! check( ':' ) && ! check( LC ) && ! check( ';' ) ) ) return token;
 
-	    uassert( symbol->data->found != NULL );
+	    uassert( symbol->data->found != nullptr );
 
 	    table_t *containing = focus == attribute.plate ? focus->lexical : focus;
 	    symbol_t *checksym;
@@ -3083,7 +3091,7 @@ static token_t *class_head( attribute_t &attribute ) {
 	    // lookup the type name again to determine if it was specified using a nested name (qualified).  (this could
 	    // have been accomplished by creating a flag in attribute to indicate a nested name.)
 	    if ( outside != symbol->data->found &&
-		 ( checksym = outside->search_table( symbol->hash ) ) != NULL &&
+		 ( checksym = outside->search_table( symbol->hash ) ) != nullptr &&
 		 ( checksym->data->found == symbol->data->found ) ) {
 
 		// if found in the same previous table => no nested naming => hiding => create a new entry
@@ -3141,7 +3149,7 @@ static token_t *class_head( attribute_t &attribute ) {
 	return token;
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // class_head
 
 
@@ -3153,7 +3161,7 @@ static bool access_declaration() {
 	if ( match( ':' ) ) {
 	    // modify the access privileges of member functions added to the symbol table after this point
 
-	    uassert( top != NULL );
+	    uassert( top != nullptr );
 	    focus->access = access;
 
 	    return true;
@@ -3183,7 +3191,7 @@ static bool class_specifier( attribute_t &attribute ) {
     table_t *table;
     symbol_t *symbol;
 
-    if ( ( clss = class_head( attribute ) ) != NULL ) {
+    if ( ( clss = class_head( attribute ) ) != nullptr ) {
 	// specialized template: "template<...> class T<...>" => create new symbol table
 	if ( strcmp( ahead->aft->hash->text, ">" ) == 0 ) { // specialization ?
 	    // SKULLDUGGERY: Naming specializations is difficult. Instead, assume the template specialization is
@@ -3191,23 +3199,23 @@ static bool class_specifier( attribute_t &attribute ) {
 	    // specialization simply drops all local declarations from the previous one and starts again.  This hack
 	    // does not handle non-inline definitions of specialization members, as uC++ does not track the
 	    // specialization name that prefixes the non-inline definition.
-	    clss->symbol->data->attribute.plate = NULL;	// free old storage ?
+	    clss->symbol->data->attribute.plate = nullptr;	// free old storage ?
 	    clss->symbol->data->index = 1;		// reset mutex member counter
 	} // if
 
 	symbol = clss->symbol;
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 
 	attribute.typedef_base = symbol;
 
 	// copy these fields to complete symbol attribute
 
-	if ( attribute.startE != NULL ) {
+	if ( attribute.startE != nullptr ) {
 	    symbol->data->attribute.startE = attribute.startE;
 	    symbol->data->attribute.startM = attribute.startM;
 	    symbol->data->attribute.endM = attribute.endM;
 	} // if
-	if ( attribute.startP != NULL ) {
+	if ( attribute.startP != nullptr ) {
 	    symbol->data->attribute.startP = attribute.startP;
 	    symbol->data->attribute.endP = attribute.endP;
 	} // if
@@ -3240,7 +3248,7 @@ static bool class_specifier( attribute_t &attribute ) {
 		    // this declaration is complete declaration -- ignore previous attributes
 		    gen_error( ahead, "may not specify both mutex and nomutex attributes for a class. Ignoring previous declaration." );
 		    symbol->data->attribute.dclmutex.value = 0;
-		} else if ( symbol->data->table != NULL ) {
+		} else if ( symbol->data->table != nullptr ) {
 		    // previous declaration was complete declaration -- ignore current attributes
 		    gen_error( ahead, "may not specify both mutex and nomutex attributes for a class. Ignoring this declaration." );
 		    attribute.dclmutex.value = 0;
@@ -3269,7 +3277,7 @@ static bool class_specifier( attribute_t &attribute ) {
 	if ( check( LC ) ) {
 	    // copy these fields to complete symbol attribute
 
-	    if ( attribute.plate != NULL && symbol->data->attribute.plate == NULL ) {
+	    if ( attribute.plate != nullptr && symbol->data->attribute.plate == nullptr ) {
 		symbol->data->attribute.startT = attribute.startT;
 		symbol->data->attribute.endT = attribute.endT;
 		symbol->data->attribute.plate = attribute.plate;
@@ -3281,10 +3289,10 @@ static bool class_specifier( attribute_t &attribute ) {
 
 	    gen_base_clause( symbol->data->base_token, symbol );
 
-	    if ( symbol->data->attribute.plate != NULL ) {
+	    if ( symbol->data->attribute.plate != nullptr ) {
 		// use the template table as the symbol table for this class
 
-//		uassert( symbol->data->table == NULL );
+//		uassert( symbol->data->table == nullptr );
 		symbol->data->table = table = symbol->data->attribute.plate; // already pushed
 
 		// link the symbol and table together because it was not originally done when the template table was
@@ -3294,7 +3302,7 @@ static bool class_specifier( attribute_t &attribute ) {
 	    } else {
 		// create a new symbol table
 
-//		uassert( symbol->data->table == NULL );
+//		uassert( symbol->data->table == nullptr );
 		symbol->data->table = table = new table_t( symbol );
 		table->push_table();
 	    } // if
@@ -3333,7 +3341,7 @@ static bool class_specifier( attribute_t &attribute ) {
 	    table->defined = true;
 	    table->access = PRIVATE;
 
-	    if ( symbol->data->base != NULL ) {		// check inheritance matching
+	    if ( symbol->data->base != nullptr ) {		// check inheritance matching
 		symbol_t *base = symbol->data->base;
 
 		// check that derived kind only inherits from appropriate base kind
@@ -3356,7 +3364,7 @@ static bool class_specifier( attribute_t &attribute ) {
 		    sprintf( msg, "derived type \"%s\" of kind \"%s\" is incompatible with the base type \"%s\" of kind \"%s\"; inheritance ignored.",
 			     symbol->hash->text, kind( symbol ), base->hash->text, kind( base ) );
 		    gen_error( ahead, msg );
-		    symbol->data->base = NULL;
+		    symbol->data->base = nullptr;
 		} // if
 	    } // if
 
@@ -3373,11 +3381,11 @@ static bool class_specifier( attribute_t &attribute ) {
 	    attribute_clause_list();			// optional
 
 	    pop_table();				// pop class table
-	    attribute.plate = NULL;
+	    attribute.plate = nullptr;
 	} else {					// ";"
-	    if ( attribute.plate != NULL ) {
+	    if ( attribute.plate != nullptr ) {
 		delete pop_table();
-		attribute.plate = NULL;
+		attribute.plate = nullptr;
 	    } // if
 	} // if
 
@@ -3391,7 +3399,7 @@ static bool class_specifier( attribute_t &attribute ) {
 static bool enumerator() {
     token_t *back = ahead;
 
-    if ( identifier() != NULL || type() != NULL ) {
+    if ( identifier() != nullptr || type() != nullptr ) {
 	if ( match( '=' ) ) {				// scan off optional enumerator initializer
 	    for ( ;; ) {
 	      if ( eof() ) break;
@@ -3411,7 +3419,7 @@ static bool enumerator() {
 	      if ( check( ',' ) ) break;
 	      if ( check( RC ) ) break;
 		// must correctly parse type-names to allow the above match_closing check
-		if ( type() == NULL ) {
+		if ( type() == nullptr ) {
 		    scan();
 		} // if
 	    } // for
@@ -3450,7 +3458,7 @@ static bool enumerator_specifier() {
 	match( STRUCT ) || match( CLASS );
 	nested_name_specifier();			// optional
 
-	if ( ( token = identifier() ) != NULL || ( token = type() ) != NULL ) {	// optional
+	if ( ( token = identifier() ) != nullptr || ( token = type() ) != nullptr ) {	// optional
 	    make_type( token, token->symbol );
 	} // if
 
@@ -3498,12 +3506,12 @@ static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attrib
     // check for a (, don't match because the focus has to be set before scanning the next token, which may be a type
 
     if ( check( LP ) ) {
-	if ( token != NULL ) {
+	if ( token != nullptr ) {
 	    symbol = token->symbol;
 	    if ( ctordtor ) {				// constructor/destructor routine ?
 		uassert( symbol->value == TYPE );
-		if ( symbol != focus->symbol && ( focus->lexical == NULL || symbol != focus->lexical->symbol ) ) { // not inlined definition ?
-		    if ( attribute.plate == NULL ) {	// non-template constructor ?
+		if ( symbol != focus->symbol && ( focus->lexical == nullptr || symbol != focus->lexical->symbol ) ) { // not inlined definition ?
+		    if ( attribute.plate == nullptr ) {	// non-template constructor ?
 			pushflag = true;
 			// place class containing constructor above current lexical context
 			symbol->data->table->push_table();
@@ -3512,7 +3520,7 @@ static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attrib
 			attribute.plate->lexical = symbol->data->table;
 		    } // if
 		} // if
-	    } else if ( symbol->data->found != NULL ) {	// not inlined definition ?
+	    } else if ( symbol->data->found != nullptr ) {	// not inlined definition ?
 		// if a template function, use the enclosing scope to store the symbol.
 		table_t *containing = focus == attribute.plate ? focus->lexical : focus;
 
@@ -3521,10 +3529,10 @@ static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attrib
 		symbol_t *checksym = containing->search_table( symbol->hash );
 
 		// if not found or found in a different table => nested naming => push table identifier found in
-		if ( checksym == NULL || checksym->data->found != symbol->data->found ) {
+		if ( checksym == nullptr || checksym->data->found != symbol->data->found ) {
 		    attribute.nestedqual = true;
 		    if ( symbol->data->found != focus && symbol->data->found != focus->lexical ) { // not inlined definition ?
-			if ( attribute.plate == NULL ) {	// non-template routine ?
+			if ( attribute.plate == nullptr ) {	// non-template routine ?
 			    pushflag = true;
 			    // place class/namespace containing routine above current lexical context
 			    symbol->data->found->push_table();
@@ -3590,7 +3598,7 @@ static bool ptr_operator() {
 	    focus = root;
 	    match( COLON_COLON );
 	} // if
-	if ( nested_name_specifier() != NULL ) {	// must be type names
+	if ( nested_name_specifier() != nullptr ) {	// must be type names
 	    // nested_name_specifier leaves the focus set to the specified class
 #ifdef __U_DEBUG_H__
 	    print_focus_change( "pointer", focus, top->tbl );
@@ -3726,7 +3734,7 @@ static token_t *declarator( attribute_t &attribute ) {
     attribute_clause_list();				// optional
 
     if ( match( LP ) ) {
-	if ( ( token = declarator( attribute ) ) != NULL ) {
+	if ( ( token = declarator( attribute ) ) != nullptr ) {
 	    if ( match( RP ) ) {
 		more_declarator( attribute );
 		return token;
@@ -3737,14 +3745,14 @@ static token_t *declarator( attribute_t &attribute ) {
 	    more_declarator( attribute );
 	    return ABSTRACT;
 	} // if
-	if ( ( token = declarator( attribute ) ) != NULL ) {
+	if ( ( token = declarator( attribute ) ) != nullptr ) {
 	    more_declarator( attribute );
 	    return token;
 	} // if
     } else if ( array_dimension() ) {			// array dimension
 	more_declarator( attribute );
 	return ABSTRACT;
-    } else if ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) {
+    } else if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
 	attribute.startI = token;
 	more_declarator( attribute );
 	return token;
@@ -3753,10 +3761,10 @@ static token_t *declarator( attribute_t &attribute ) {
 	while ( ! check( ',' ) && ! check( ';' ) && ! check( '}' ) ) {
 	    scan();
 	} // while
-	return NULL;
+	return nullptr;
     } // if
 
-    return NULL;
+    return nullptr;
 } // declarator
 
 
@@ -3764,11 +3772,11 @@ static token_t *paren_identifier( attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
 
-    if ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) {
+    if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
 	return token;
     } else if ( match( '(' ) && ( token = paren_identifier( attribute ) ) && match( ')' ) ) return token; /* redundant parenthesis */
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // paren_identifier
 
 
@@ -3788,7 +3796,7 @@ static token_t *function_declarator( attribute_t &attribute ) {
 	return token;
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // function_declarator
 
 
@@ -3810,7 +3818,7 @@ static token_t *function_no_ptr( attribute_t &attribute ) {
 	} // if
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // function_no_ptr
 
 
@@ -3825,7 +3833,7 @@ static token_t *function_ptr( attribute_t &attribute ) {
 	if ( match( '(' ) && ( token = function_ptr( attribute ) ) && match( ')' ) ) return token;
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // function_ptr
 
 static token_t *function_array( attribute_t &attribute ) {
@@ -3844,7 +3852,7 @@ static token_t *function_array( attribute_t &attribute ) {
 	} // if
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // function_array
 
 
@@ -3854,11 +3862,11 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
     bool pushflag = false;
 
     symbol = token->symbol;
-    if ( symbol == NULL || symbol->data->table == NULL ) return false;
+    if ( symbol == nullptr || symbol->data->table == nullptr ) return false;
 
     if ( check( LP ) ) {
-	if ( symbol != focus->symbol && ( focus->lexical == NULL || symbol != focus->lexical->symbol ) ) { // not inlined definition ?
-	    if ( attribute.plate == NULL ) {		// non-template constructor ?
+	if ( symbol != focus->symbol && ( focus->lexical == nullptr || symbol != focus->lexical->symbol ) ) { // not inlined definition ?
+	    if ( attribute.plate == nullptr ) {		// non-template constructor ?
 		pushflag = true;
 		// place class containing constructor above current lexical context
 		symbol->data->table->push_table();
@@ -3872,8 +3880,8 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
 
 	cv_qualifier_list();				// optional
 	token_t *temp = type();
-	if ( temp != NULL && temp->symbol == token->symbol ) {
-	    if ( match( '&' ) ) {			// looks good so far
+	if ( temp != nullptr && temp->symbol == token->symbol ) {
+	    if ( (match( CONST ) && match( '&' )) || match( '&' ) || match( AND_AND ) ) { // looks good so far
 		int commas = 0;				// if a copy constructor, every comma has a corresponding '=' after it
 		int level = 1;
 		match( IDENTIFIER );			// optional identifier
@@ -3912,7 +3920,7 @@ static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
 
-    if ( ( token = type() ) != NULL ) {
+    if ( ( token = type() ) != nullptr ) {
 	// constructors and destructors are not put in the symbol table.  the class symbol table is the one set for
 	// further name look ups.
 
@@ -3925,7 +3933,7 @@ static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
 	} // if
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // constructor_declarator
 
 
@@ -3933,14 +3941,14 @@ static token_t *destructor_declarator( attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
 
-    if ( ( token = epyt() ) != NULL ) {
+    if ( ( token = epyt() ) != nullptr ) {
 	if ( formal_parameter( true, token, attribute ) ) { // should be empty
 	    cv_qualifier_list();			// optional post qualifiers
 	    return token;
 	} // if
     } // if
 
-    ahead = back; return NULL;
+    ahead = back; return nullptr;
 } // destructor_declarator
 
 
@@ -3951,15 +3959,15 @@ static bool body( table_t *search, token_t *function, attribute_t &attribute, sy
     // identifier
 
     if ( check( LC ) ) {
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 	table_t *table;
 
-	if ( attribute.plate != NULL ) {
+	if ( attribute.plate != nullptr ) {
 	    table = attribute.plate;			// already allocated & pushed
-	    uassert( table->symbol == NULL );
+	    uassert( table->symbol == nullptr );
 	    table->symbol = symbol;			// connect routine table temporarily to routine symbol
 	} else {
-	    table = new table_t( NULL );
+	    table = new table_t( nullptr );
 	    table->symbol = symbol;			// connect routine table temporarily to routine symbol
 	    table->push_table();
 	} // if
@@ -4003,7 +4011,7 @@ static bool body( table_t *search, token_t *function, attribute_t &attribute, sy
 	// otherwise the serach starts in the function scope.
 
 	delete pop_table();
-	attribute.plate = NULL;
+	attribute.plate = nullptr;
 
 	match( RC );
 	return true;
@@ -4043,15 +4051,15 @@ static bool delete_default_specific() {
 
 
 static void make_mutex_class( symbol_t *clss ) {
-    uassert( clss != NULL );
+    uassert( clss != nullptr );
 
     // If there are no mutex members, make the type mutex (should be checked by caller). Notice, a derived type may find
     // existing mutex members from the base type, and hence, does not recreate declarations that appear in the root base
     // type of the inheritance chain.
 
-    if ( clss->data->base == NULL || ! clss->data->base->data->attribute.Mutex ) {
+    if ( clss->data->base == nullptr || ! clss->data->base->data->attribute.Mutex ) {
 	table_t *table = clss->data->table;
-	uassert( table != NULL );
+	uassert( table != nullptr );
 
 	gen_mutex( table->protected_area, clss );
 	gen_mutex_entry( table->protected_area, clss );
@@ -4064,11 +4072,11 @@ static void make_mutex_member( symbol_t *symbol ) {
     table_t *table;
     symbol_t *clss;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->found;
-    uassert( table != NULL );
+    uassert( table != nullptr );
     clss = table->symbol;
-    uassert( clss != NULL );
+    uassert( clss != nullptr );
 
     // if the containing type is not mutex, make it so now to ensure the destructor mutex is numbered DESTRUCTORPOSN
 
@@ -4122,15 +4130,15 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
     // if the declarator is a function declarator with an explicit type specifier (return type) or an operator routine
     // (conversion routines do not have explicit return types).
 
-    uassert( top != NULL );
+    uassert( top != nullptr );
 
     function = function_declarator( attribute );
-    if ( function != ABSTRACT && ( ( function != NULL && explict ) || ( function != NULL && function->symbol->value == OPERATOR ) ) ) {
+    if ( function != ABSTRACT && ( ( function != nullptr && explict ) || ( function != nullptr && function->symbol->value == OPERATOR ) ) ) {
 	cv_qualifier_list();				// optional post qualifiers
 	pure_specific();				// optional pure specifier for virtual functions
 
 	symbol = function->symbol;			// grab the symbol associated with the token
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 
 	// if a template function, use the class/namespace scope to store the symbol.
 	table_t *containing = focus == attribute.plate ? focus->lexical : focus;
@@ -4138,7 +4146,7 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 	// the scope that is (lexically) outside this declaration (for double lookup)
 	table_t *outside = top->tbl == attribute.plate ? top->link->tbl : top->tbl;
 
-	if ( symbol->data->found == NULL ) {
+	if ( symbol->data->found == nullptr ) {
 	    // the symbol is not defined in the symbol table so define it
 	    if ( attribute.dclkind.kind.FRIEND ) {	// friend routines are placed into the root namespace
 		root->insert_table( symbol );
@@ -4158,7 +4166,7 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 	} // if
 
 	if ( symbol->value != TYPE ) {			// already defined as a struct/class so ignore this definition
-	    if ( symbol->data->found->symbol != NULL ) { // member routine ?
+	    if ( symbol->data->found->symbol != nullptr ) { // member routine ?
 		symbol->data->key = MEMBER;
 	    } else {
 		symbol->data->key = ROUTINE;
@@ -4169,25 +4177,25 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 
 	symbol->data->attribute.dclqual.value |= attribute.dclqual.value;
 	symbol->data->attribute.nestedqual = attribute.nestedqual;
-	if ( attribute.plate != NULL ) {
+	if ( attribute.plate != nullptr ) {
 	    symbol->data->attribute.startT = attribute.startT;
 	    symbol->data->attribute.endT = attribute.endT;
 	    symbol->data->attribute.plate = attribute.plate;
 	    symbol->data->attribute.plate->startT = attribute.plate->startT;
 	    symbol->data->attribute.plate->endT = attribute.plate->endT;
 	} // if
-	if ( symbol->data->attribute.startMRP == NULL ) {
+	if ( symbol->data->attribute.startMRP == nullptr ) {
 	    symbol->data->attribute.startMRP = attribute.startCR;
 	} // if
 
 	table = symbol->data->found;			// grab the table in which this symbol is found
-	uassert( table != NULL );
+	uassert( table != nullptr );
 
 	// spend some time determining what attributes are attached to this function.  attributes can be explicitly
 	// specified, inherited from the class in which a member function is defined, or specified by the default rules
 	// of the language.
 
-	if ( table->symbol != NULL ) {
+	if ( table->symbol != nullptr ) {
 	    // if this symbol is found in a table that has a symbol associated with it, this table must be a class
 	    // table.  follow the default rules for other members, constructors and destructors
 
@@ -4203,7 +4211,7 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 		    // if in the public area of a class, use the attribute associated with the class except for the new
 		    // or delete operators
 
-		    uassert( table->symbol != NULL );
+		    uassert( table->symbol != nullptr );
 		    attribute.dclmutex.qual.MUTEX = table->symbol->data->attribute.dclmutex.qual.MUTEX;
 		    attribute.dclmutex.qual.NOMUTEX = table->symbol->data->attribute.dclmutex.qual.NOMUTEX;
 		} else {
@@ -4218,7 +4226,7 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 		    gen_error( ahead, msg );
 		    attribute.dclmutex.qual.MUTEX = false;
 		} // if
-		if ( attribute.startE != NULL ) {
+		if ( attribute.startE != nullptr ) {
 		    char msg[strlen(symbol->hash->text) + 256];
 		    sprintf( msg, "mutex qualifier on member \"%s\" can only specify queue types when modifying a class or task, queue types ignored.",
 			     symbol->hash->text );
@@ -4275,26 +4283,26 @@ static bool function_declaration( int explict, attribute_t &attribute ) {
 
 	if ( body( table, function, attribute, symbol ) ) {
 	    suffix = ahead;
-	    uassert( table != NULL );
-	    uassert( function != NULL );
-	    uassert( function->hash != NULL );
+	    uassert( table != nullptr );
+	    uassert( function != nullptr );
+	    uassert( function->hash != nullptr );
 	    if ( symbol->data->attribute.Mutex ) {
 		gen_member_prefix( prefix, symbol );
 		// must be contained between member prefix and suffix
-		if ( table->symbol != NULL && strcmp( function->hash->text, "main" ) == 0 ) {
+		if ( table->symbol != nullptr && strcmp( function->hash->text, "main" ) == 0 ) {
 		    gen_main_prefix( prefix, symbol );
 		    gen_main_suffix( suffix, symbol );
 		} // if
 		gen_member_suffix( suffix, symbol );
-	    } else if ( table->symbol != NULL && strcmp( function->hash->text, "main" ) == 0 ) {
+	    } else if ( table->symbol != nullptr && strcmp( function->hash->text, "main" ) == 0 ) {
 		gen_main_prefix( prefix, symbol );
 		gen_main_suffix( suffix, symbol );
 	    } // if
 	    return true;
 	} else if ( match( ';' ) ) {
-	    if ( attribute.plate != NULL ) {
+	    if ( attribute.plate != nullptr ) {
 		delete pop_table();
-		attribute.plate = NULL;
+		attribute.plate = nullptr;
 	    } // if
 	    if ( attribute.dclkind.kind.TYPEDEF ) {
 		make_type( function, symbol );
@@ -4312,14 +4320,14 @@ static bool member_initializer( symbol_t *symbol, token_t *&start ) {
     token_t *token;
     token_t *rp;
 
-    if ( ( token = type() ) != NULL ) {
+    if ( ( token = type() ) != nullptr ) {
 	if ( condition() || ( match( LC ) && match_closing( LC, RC ) ) ) { // argument list
-	    uassert( symbol != NULL );
+	    uassert( symbol != nullptr );
 	    symbol_t *base = token->symbol;
-	    uassert( base != NULL );
+	    uassert( base != nullptr );
 	    if ( symbol->data->base == base ) {
 		base->data->used = true;
-		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex ) {
+		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == ACTOR ) {
 		    rp = ahead->prev_parse_token();
 		    if ( rp->prev_parse_token()->value == LP || rp->prev_parse_token()->value == LC ) {
 			gen_code( rp, "UPP :: uNo" );
@@ -4330,10 +4338,10 @@ static bool member_initializer( symbol_t *symbol, token_t *&start ) {
 	    } // if
 	    return true;
 	} // if
-    } else if ( ( token = identifier() ) != NULL ) {
+    } else if ( ( token = identifier() ) != nullptr ) {
 	if ( condition() || ( match( LC ) && match_closing( LC, RC ) ) ) { // argument list
 	    // first non-base-class constructor
-	    if ( start == NULL ) start = token;
+	    if ( start == nullptr ) start = token;
 	    return true;
 	} // if
     } // if
@@ -4363,11 +4371,11 @@ static bool constructor_initializer( symbol_t *symbol, token_t *&start ) {
     token_t *back = ahead;
 
     if ( match( ':' ) ) {
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 
 	// if a base class exists, clear the used flag for now
 
-	if ( symbol->data->base != NULL ) {
+	if ( symbol->data->base != nullptr ) {
 	    symbol->data->base->data->used = false;
 	} // if
 
@@ -4386,7 +4394,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
     symbol_t *symbol;
     table_t *table;
     token_t *prefix, *suffix;
-    token_t *start = NULL;
+    token_t *start = nullptr;
     token_t *rp;
 
     bool initializer;
@@ -4394,9 +4402,9 @@ static bool constructor_declaration( attribute_t &attribute ) {
     while ( type_qualifier( attribute ) || template_qualifier( attribute ) );
 
     prefix = ahead;
-    if ( ( constructor = constructor_declarator( rp, attribute ) ) != NULL ) {
+    if ( ( constructor = constructor_declarator( rp, attribute ) ) != nullptr ) {
 	symbol = constructor->symbol;
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 //      if ( symbol != focus->symbol ) goto fini;		// type must be the same as containing class
 	table = symbol->data->table;
 
@@ -4404,7 +4412,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 	    gen_error( prefix, "constructor must be mutex, nomutex attribute ignored." );
 	} // if
 
-	if ( table != NULL ) {				// must be complete type
+	if ( table != nullptr ) {				// must be complete type
 	    if ( attribute.emptyparms ) {		// default constructor ?
 		symbol->data->table->hasdefault = true;
 	    } // if
@@ -4422,7 +4430,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 
 	    // there is no reason to assign the mutex qualifier to this symbol because it is always NO_ATTRIBUTE.
 
-	    if ( body( symbol->data->table, NULL, attribute, symbol ) ) {
+	    if ( body( symbol->data->table, nullptr, attribute, symbol ) ) {
 		bool dummy;
 		bool d1;
 		hash_t *d2;
@@ -4441,8 +4449,8 @@ static bool constructor_declaration( attribute_t &attribute ) {
 			// if a base class exists, and the used flags is still cleared, it means the user has not called
 			// its constructor explicitly.  that means the translator has to add a call to its constructor.
 
-			if ( symbol->data->base != NULL && ! symbol->data->base->data->used ) {
-			    if ( start == NULL ) {
+			if ( symbol->data->base != nullptr && ! symbol->data->base->data->used ) {
+			    if ( start == nullptr ) {
 				gen_initializer( prefix, symbol, ',', false );
 			    } else {
 				gen_initializer( start, symbol, ',', true );
@@ -4456,10 +4464,10 @@ static bool constructor_declaration( attribute_t &attribute ) {
 		} else {
 		    // inline definition, do not know if mutex
 		    structor_t *structor = new structor_t;
-		    uassert( structor != NULL );
+		    uassert( structor != nullptr );
 		    if ( ! initializer ) {
 			structor->separator = ':';
-		    } else if ( symbol->data->base != NULL && ! symbol->data->base->data->used ) {
+		    } else if ( symbol->data->base != nullptr && ! symbol->data->base->data->used ) {
 			structor->separator = ',';
 		    } else {
 			structor->separator = '\0';
@@ -4473,23 +4481,23 @@ static bool constructor_declaration( attribute_t &attribute ) {
 		} // if
 		return true;
 	    } else if ( match( ';' ) ) {
-		if ( attribute.plate != NULL ) {
+		if ( attribute.plate != nullptr ) {
 		    delete pop_table();
-		    attribute.plate = NULL;
+		    attribute.plate = nullptr;
 		} // if
 
-		uassert( table != NULL );
+		uassert( table != nullptr );
 
 		if ( table->defined ) {
 		    gen_constructor_parameter( rp, symbol, true );
 		} else {
 		    // inline definition, do not know if mutex
 		    structor_t *structor = new structor_t;
-		    uassert( structor != NULL );
+		    uassert( structor != nullptr );
 		    structor->rp = rp;
 		    structor->defarg = true;
-		    structor->prefix = NULL;
-		    structor->suffix = NULL;
+		    structor->prefix = nullptr;
+		    structor->suffix = nullptr;
 		    table->constructor.add_structor( structor );
 		} // if
 
@@ -4511,14 +4519,14 @@ static bool destructor_declaration( attribute_t &attribute ) {
 
     while ( type_qualifier( attribute ) || template_qualifier( attribute ) );
 
-    if ( ( destructor = destructor_declarator( attribute ) ) != NULL ) {
+    if ( ( destructor = destructor_declarator( attribute ) ) != nullptr ) {
 	symbol = destructor->symbol;
-	uassert( symbol != NULL );
+	uassert( symbol != nullptr );
 	uassert( focus == top->tbl );
 //	if ( symbol != focus->symbol ) goto fini;		// type must be the same as containing class
 	table = symbol->data->table;
 
-	if ( table != NULL ) {				// must be complete type
+	if ( table != nullptr ) {				// must be complete type
 	    delete_default_specific();			// optional delete/default
 
 	    prefix = ahead;
@@ -4532,7 +4540,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
 	    // check for incorrect mutex qualifier of the destructor is performed during destructor code generation
 	    // because a (nomutex) class may become mutex if it has a mutex member.
 
-	    if ( body( symbol->data->table, NULL, attribute, symbol ) ) {
+	    if ( body( symbol->data->table, nullptr, attribute, symbol ) ) {
 		suffix = ahead->prev_parse_token();
 
 		if ( table->defined ) {
@@ -4541,7 +4549,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
 		} else {
 		    structor_t *structor = new structor_t();
 
-		    uassert( structor != NULL );
+		    uassert( structor != nullptr );
 		    structor->prefix = prefix;
 		    structor->suffix = suffix;
 		    structor->dclmutex.value = attribute.dclmutex.value;
@@ -4549,19 +4557,19 @@ static bool destructor_declaration( attribute_t &attribute ) {
 		} // if
 		return true;
 	    } else if ( match( ';' ) ) {
-		if ( attribute.plate != NULL ) {
+		if ( attribute.plate != nullptr ) {
 		    delete pop_table();
-		    attribute.plate = NULL;
+		    attribute.plate = nullptr;
 		} // if
 
-		uassert( table != NULL );
+		uassert( table != nullptr );
 
 		if ( ! table->defined ) {
 		    structor_t *structor = new structor_t();
-		    uassert( structor != NULL );
+		    uassert( structor != nullptr );
 
-		    structor->prefix = NULL;
-		    structor->suffix = NULL;
+		    structor->prefix = nullptr;
+		    structor->suffix = nullptr;
 		    structor->dclmutex.value = attribute.dclmutex.value;
 		    table->destructor.add_structor( structor );
 		} // if
@@ -4640,7 +4648,7 @@ static bool elaborated_type_specifier( attribute_t &attribute ) {
 
 		if ( check( COLON_COLON ) ) {
 		    // for typename, the qualification list is not always defined
-		    if ( token->symbol != NULL && token->symbol->data->table != NULL ) {
+		    if ( token->symbol != nullptr && token->symbol->data->table != nullptr ) {
 #ifdef __U_DEBUG_H__
 			print_focus_change( "elaborated_type_specifier2", focus, token->symbol->data->table );
 #endif // __U_DEBUG_H__
@@ -4675,14 +4683,14 @@ static bool type_specifier( attribute_t &attribute, bool &ts ) {
     token_t *name;
 
     if ( simple_type_specifier() ) { ts = true; return true; }
-    if ( ! ts && ( name = type() ) != NULL ) { attribute.typedef_base = name->symbol; ts = true; return true; }
+    if ( ! ts && ( name = type() ) != nullptr ) { attribute.typedef_base = name->symbol; ts = true; return true; }
     if ( ! ts && enumerator_specifier() ) { ts = true; return true; }
     if ( ! ts && class_specifier( attribute ) ) { ts = true; return true; }
     if ( ! ts && elaborated_type_specifier( attribute ) ) { ts = true; return true; }
     if ( attribute_clause() ) return true;		// gcc specific
     // handle builtin g++ types
 //    if ( ! ts && strncmp( ahead->hash->text, "__builtin_", 10 ) == 0 ) { scan(); ts = true; return true; }
-    if ( ! ts && ( name = identifier() ) != NULL ) { ts = true; return true; }
+    if ( ! ts && ( name = identifier() ) != nullptr ) { ts = true; return true; }
 
     ahead = back; return false;
 } // type_specifier
@@ -4739,7 +4747,7 @@ static bool initializer() {
 	  if ( check( ',' ) ) return true;		// separator
 	  if ( check( ';' ) ) return true;		// terminator
 	    // must correctly parse type-names to allow the above match_closing check
-	    if ( type() == NULL ) {
+	    if ( type() == nullptr ) {
 		scan();
 	    } // if
 	} // for
@@ -4758,15 +4766,15 @@ static void declarator_list( attribute_t &attribute ) {
     symbol_t *symbol;
 
     token = declarator( attribute );
-    if ( token != ABSTRACT && token != NULL ) {
+    if ( token != ABSTRACT && token != nullptr ) {
 	symbol = token->symbol;
 	// There is no separate namespace for structures so if target symbol of the typedef is already defined, assume
 	// it is a type, which is sufficient to parse declarations.
 	if ( attribute.dclkind.kind.TYPEDEF &&
-	     ( symbol->data->key == 0 || symbol->data->found != NULL ) ) {
+	     ( symbol->data->key == 0 || symbol->data->found != nullptr ) ) {
 	    make_type( token, symbol );
 
-	    if ( attribute.typedef_base != NULL ) {	// null => base type without substructure (e.g., "int")
+	    if ( attribute.typedef_base != nullptr ) {	// null => base type without substructure (e.g., "int")
 		// deleting does not work because "struct"s are not is separate name space, so storage is leaked.
 
 		//delete symbol->data;
@@ -4789,7 +4797,7 @@ static bool exception_declaration( attribute_t &attribute, bound_t &bound ) {
     token_t *back = ahead;
 
     if ( specifier_list( attribute ) ) {
-	bound.oleft = bound.oright = NULL;
+	bound.oleft = bound.oright = nullptr;
 	bound.exbegin = back;
 	bound.idleft = ahead;
 	declarator( attribute );
@@ -4816,8 +4824,8 @@ static bool bound_exception_declaration( bound_t &b ) {
 	    // SKULLDUGGERY: When parsing statements, identifiers are just scanned. Scanning looks up the tokens without
 	    // handling type qualification (e.g., T1::T2). Therefore, tokens in the statement stream may have incorrect
 	    // symbol pointers. To get correct lookup for the bound exception type, the "type" tokens are reset to
-	    // "identifier" with NULL symbols, and looked up again correctly in exception_declaration.
-	  if ( p->value == TYPE ) { p->value = IDENTIFIER; p->symbol = NULL; }
+	    // "identifier" with null symbols, and looked up again correctly in exception_declaration.
+	  if ( p->value == TYPE ) { p->value = IDENTIFIER; p->symbol = nullptr; }
 	} // for
 	b.idright = ahead;				// end of exception parameter (')')
 	ahead = prefix;					// backup to the start of the exception declaration, excluding '('
@@ -4828,7 +4836,7 @@ static bool bound_exception_declaration( bound_t &b ) {
 	b.exbegin = p;					// start of exception type
 	ahead = b.exbegin;				// backup to the start of the exception type
 	token_t *name = type();				// properly parse the exception type (could contain '::')
-      if ( name == NULL ) goto fini;			// bad type ?
+      if ( name == nullptr ) goto fini;			// bad type ?
 	b.extype = name->symbol;			// set the type of the exception parameter
 	b.idleft = ahead;				// start of exception parameter
 	if ( b.idleft == b.idright ) {			// no exception parameter ?
@@ -4865,13 +4873,13 @@ static bool object_declaration() {
     bool explict = specifier_list( attribute );
     if ( function_declaration( explict, attribute ) ) return true;
 
-    if ( attribute.typedef_base == NULL ) {		// => not aggregate specifier, e.g., struct, class, etc.
+    if ( attribute.typedef_base == nullptr ) {		// => not aggregate specifier, e.g., struct, class, etc.
 	if ( attribute.dclmutex.qual.mutex ) gen_error( ahead, "_Mutex must qualify a class or member routine." );
 	if ( attribute.dclmutex.qual.nomutex ) gen_error( ahead, "_Nomutex must qualify a class or member routine." );
     } // if
     declarator_list( attribute );
     if ( match( ';' ) ) {
-	if ( attribute.plate != NULL ) {
+	if ( attribute.plate != nullptr ) {
 	    delete pop_table();
 	} // if
 	return true;
@@ -4907,17 +4915,17 @@ static bool namespace_definition() {
     bool inlne = match( INLINE );			// optional
 
     if ( match( NAMESPACE ) ) {
-	if ( ( token = identifier() ) == NULL )	token = type();	// optional name
+	if ( ( token = identifier() ) == nullptr )	token = type();	// optional name
 	attribute_clause_list();			// optional
 	// check for a {, don't match because a symbol table has to be built before scanning the next token, which may
         // be a type
 	if ( check( LC ) ) {
-	    if ( token != NULL ) {			// named ?
+	    if ( token != nullptr ) {			// named ?
 		symbol = token->symbol;
 		if ( symbol->data->key != NAMESPACE ) {
 		    make_type( token, symbol );
 		    symbol->data->key = NAMESPACE;
-		    if ( symbol->data->table == NULL ) {
+		    if ( symbol->data->table == nullptr ) {
 			symbol->data->table = new table_t( symbol ); // create a new symbol table
 			symbol->data->attribute.dclqual.qual.INLINE = inlne;
 		    } // if
@@ -4927,7 +4935,7 @@ static bool namespace_definition() {
 	    } // if
 	    match( LC );				// now scan passed the '{' for the next token
 	    while ( declaration() );
-	    if ( token != NULL ) pop_table();
+	    if ( token != nullptr ) pop_table();
 	    if ( match( RC ) ) {
 		if ( symbol->data->attribute.dclqual.qual.INLINE ) {
 		    local_t *use = new local_t;
@@ -4936,7 +4944,7 @@ static bool namespace_definition() {
 		    use->kind.tbl = symbol->data->table;
 		    use->link = focus->local;
 		    //cerr << "adding using table:" << use << " (" << ns->hash->text << ") to:" << focus
-		    //     << " (" << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+		    //     << " (" << (focus->symbol != nullptr ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
 		    focus->useing = true;			// using entries in this list
 		    focus->local = use;
 		} // if
@@ -4957,11 +4965,11 @@ static bool namespace_alias_definition() {
     token_t *lhs, *rhs;
     symbol_t *symbol;
 
-    if ( match( NAMESPACE ) && ( lhs = identifier() ) != NULL && match( '=' ) && ( rhs = type() ) != NULL && match( ';' ) ) {
+    if ( match( NAMESPACE ) && ( lhs = identifier() ) != nullptr && match( '=' ) && ( rhs = type() ) != nullptr && match( ';' ) ) {
 	symbol = lhs->symbol;
 	make_type( lhs, symbol );
 	symbol->data->key = NAMESPACE;
-	if ( symbol->data->table == NULL ) {
+	if ( symbol->data->table == nullptr ) {
 	    delete symbol->data;
 	    symbol->data = rhs->symbol->data;		// set to exisitng symbol table
 	} // if
@@ -4982,21 +4990,21 @@ static bool using_definition() {
 
     if ( match( USING ) ) {
 	bool typname = match( TYPENAME );		// optional
-	if ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) {
+	if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
 	    attribute_clause_list();			// optional
 	    if ( check( ';' ) ) {			// don't scan ahead yet
-		uassert( token->symbol != NULL );
+		uassert( token->symbol != nullptr );
 		symbol_t *symbol = token->symbol;
 		if ( typname ) {
 		    make_type( token, token->symbol );
-		} else if ( symbol != NULL ) {
+		} else if ( symbol != nullptr ) {
 		    local_t *use = new local_t;
 		    use->useing = true;
 		    use->tblsym = false;
 		    use->kind.sym = symbol;
 		    use->link = focus->local;
 		    //cerr << "adding using symbol:" << use << " (" << symbol->hash->text << ") to:" << focus << " ("
-		    //     << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+		    //     << (focus->symbol != nullptr ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
 		    focus->useing = true;			// using entries in this list
 		    focus->local = use;
 		} // if
@@ -5017,18 +5025,18 @@ static bool using_directive() {
     token_t *back = ahead;
     token_t *token;
 
-    if ( match( USING ) && match( NAMESPACE ) && ( ( token = identifier() ) != NULL || ( token = operater() ) != NULL || ( token = type() ) != NULL ) ) {
+    if ( match( USING ) && match( NAMESPACE ) && ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) ) {
 	attribute_clause_list();			// optional
 	if ( check( ';' ) ) {				// don't scan ahead yet
 	    symbol_t *symbol = token->symbol;
-	    if ( symbol != NULL && symbol->data->table != NULL ) {
+	    if ( symbol != nullptr && symbol->data->table != nullptr ) {
 		local_t *use = new local_t;
 		use->useing = true;
 		use->tblsym = true;
 		use->kind.tbl = symbol->data->table;
 		use->link = focus->local;
 		//cerr << "adding using table:" << use << " (" << symbol->hash->text << ") to:" << focus
-		//     << " (" << (focus->symbol != NULL ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+		//     << " (" << (focus->symbol != nullptr ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
 		focus->useing = true;			// using entries in this list
 		focus->local = use;
 	    } // if
@@ -5051,8 +5059,8 @@ static bool using_alias( attribute_t &attribute ) {
     symbol_t *symbol;
 
     if ( ( match( USING ) || ( template_qualifier( attribute ) && match( USING ) ) ) &&
-	 ( ( token = identifier() ) != NULL || ( token = type() ) != NULL ) ) {
-	uassert( token != NULL );
+	 ( ( token = identifier() ) != nullptr || ( token = type() ) != nullptr ) ) {
+	uassert( token != nullptr );
 	symbol = token->symbol;
 	// place alias in current lexical context if there is a template qualifier
 	table_t *lexical = focus == attribute.plate ? focus->lexical : focus;
@@ -5061,22 +5069,22 @@ static bool using_alias( attribute_t &attribute ) {
 	if ( match( '=' ) ) {
 	    bool typname = match( TYPENAME );		// optional
 	    specifier_list( attribute );
-	    uassert( token->symbol != NULL );
+	    uassert( token->symbol != nullptr );
 	    token->symbol->typname = typname;
 	    if ( function_declarator( attribute ) == ABSTRACT ) return true; // function prototype ?
 
-	    if ( attribute.typedef_base == NULL ) {	// => not aggregate specifier, e.g., struct, class, etc.
+	    if ( attribute.typedef_base == nullptr ) {	// => not aggregate specifier, e.g., struct, class, etc.
 		if ( attribute.dclmutex.qual.mutex ) gen_error( ahead, "_Mutex must qualify a class or member routine." );
 		if ( attribute.dclmutex.qual.nomutex ) gen_error( ahead, "_Nomutex must qualify a class or member routine." );
 	    } // if
 
 	    declarator( attribute );			// abstract
-	    if ( attribute.typedef_base != NULL ) {	// null => base type without substructure (e.g., "int")
+	    if ( attribute.typedef_base != nullptr ) {	// null => base type without substructure (e.g., "int")
 		symbol->data = attribute.typedef_base->data;
 		symbol->copied = true;
 	    } // if
 	    if ( match( ';' ) ) {
-		if ( attribute.plate != NULL ) {
+		if ( attribute.plate != nullptr ) {
 		    delete pop_table();
 		} // if
 		return true;

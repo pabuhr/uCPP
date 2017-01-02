@@ -1,6 +1,12 @@
 \providecommand{\etalchar}[1]{$^{#1}$}
 \begin{thebibliography}{TvRvS{\etalchar{+}}90}
 
+\bibitem[Agh86]{Actors}
+Gul~A. Agha.
+\newblock {\em Actors: A Model of Concurrent Computation in Distributed
+  Systems}.
+\newblock MIT Press, Cambridge, 1986.
+
 \bibitem[AGMK94]{Adelberg94}
 B.~Adelberg, H.~Garcia-Molina, and B.~Kao.
 \newblock Emulating Soft Real-Time Scheduling Using Traditional Operating
@@ -146,6 +152,12 @@ Edsger~W. Dijkstra.
   1965.
 \newblock Reprinted in \cite{Genuys68} pp. 43--112.
 
+\bibitem[Erl16]{Erlang}
+Erlang AB.
+\newblock {\em Erlang/OTP System Documentation 8.1}, September 2016.
+\newblock
+  \href{http://erlang.org/doc/pdf/otp-system-documentation.pdf}{\textsf{http://\-erlang.org/\-doc/\-pdf/\-otp-system-documentation.pdf}}.
+
 \bibitem[Geh92]{ExceptionalC}
 N.~H. Gehani.
 \newblock Exceptional {C} or {C} with Exceptions.
@@ -191,6 +203,13 @@ Robert~H. Halstead, Jr.
 \newblock Multilisp: A Language for Concurrent Symbolic Programming.
 \newblock {\em ACM Transactions on Programming Languages and Systems},
   7(4):501--538, October 1985.
+
+\bibitem[HBS73]{Hewitt73}
+Carl Hewitt, Peter Bishop, and Richard Steiger.
+\newblock A Universal Modular {ACTOR} Formalism for Artificial Intelligence.
+\newblock In {\em Proceedings of the 3rd International Joint Conference on
+  Artificial Intelligence}, pages 235--245, Standford, California, U.S.A.,
+  August 1973.
 
 \bibitem[HM92]{Halang92a}
 W.A. Halang and K.~Mangold.
@@ -320,6 +339,12 @@ Robert~E. Strom, David~F. Bacon, Arthur~P. Goldberg, Andy Lowry, Daniel~M.
 \newblock Technical report, IBM T. J. Watson Research Center, Yorktown Heights,
   New York, U.S.A., 10598, October 1990.
 
+\bibitem[Sca16]{Scala}
+\'{E}cole Polytechnique F\'{e}d\'{e}rale de Lausanne.
+\newblock {\em {Scala} Language Specification, Version 2.11}, 2016.
+\newblock
+  \href{http://www.scala-lang.org/files/archive/spec/2.11}{http://\-www.scala-lang.org/\-files/\-archive/\-spec/\-2.11}.
+
 \bibitem[SD92]{Sahraoui92}
 A.E.K. Sahraoui and D.~Delfieu.
 \newblock {ZAMAN}, A Simple Language for Expressing Timing Constraints.
@@ -375,7 +400,7 @@ Andrew~S. Tanenbaum, Robbert van Renesse, Hans van Staveren, Gregory~J. Sharp,
 \bibitem[Uni83]{Ada}
 United States Department of Defense.
 \newblock {\em The Programming Language {Ada}: Reference Manual},
-  ansi/mil-std-1815a-1983 edition, February 1983.
+  {ANSI/MIL-STD-1815A-1983} edition, February 1983.
 \newblock Springer, New York.
 
 \bibitem[Yea91]{Yeager91}

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2007
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2007
 // 
 // ClientUNIXSTREAMSendfile.cc -- Client for UNIX/stream/sendfile socket test. Client reads from standard input, writes
 //     the data to the server, reads the data from the server, and writes that data to standard output.
@@ -8,8 +8,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:30:01 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 17:42:45 2011
-// Update Count     : 28
+// Last Modified On : Wed Dec 21 22:13:25 2016
+// Update Count     : 29
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSocket.h>

@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2012
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2012
 // 
 // TimeoutPoke.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr  5 08:08:27 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun 25 17:37:01 2012
-// Update Count     : 79
+// Last Modified On : Mon Dec 19 23:04:06 2016
+// Update Count     : 80
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uRealTime.h>

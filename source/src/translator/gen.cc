@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // gen.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 11 23:25:08 2015
-// Update Count     : 913
+// Last Modified On : Thu Dec 29 12:22:22 2016
+// Update Count     : 955
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,7 +52,7 @@ token_t *gen_code( token_t *before, const char *text, int value ) {
 
 
 token_t *gen_quote_code( token_t *before, const char *text ) {
-    uassert( text != NULL );
+    uassert( text != nullptr );
     char copy[strlen( text ) + 2 + 1];
     strcpy( copy, "\"" ); strcat( copy, text ); strcat( copy, "\"" );
     return gen_code( before, copy );
@@ -74,12 +74,12 @@ token_t *gen_warning( token_t *before, const char *text ) {
 
 
 void gen_base_clause( token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
-    if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EVENT ) &&
-	 ( symbol->data->base == NULL ||
+    if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EVENT || symbol->data->key == ACTOR ) &&
+	 ( symbol->data->base == nullptr ||
 	   ( symbol->data->base->data->attribute.Mutex && ( symbol->data->base->data->key == STRUCT || symbol->data->base->data->key == CLASS ) ) ) ) {
-	uassert( before != NULL );
+	uassert( before != nullptr );
 
 	token_t *next;
 
@@ -90,7 +90,7 @@ void gen_base_clause( token_t *before, symbol_t *symbol ) {
 	    // appears at the start of the base specifier list
 
 	    next = before->next_parse_token();
-	    uassert( next != NULL );
+	    uassert( next != nullptr );
 	} else {
 	    next = before;
 	    gen_code( next, ":" );
@@ -110,6 +110,10 @@ void gen_base_clause( token_t *before, symbol_t *symbol ) {
 	    } // if
 	} else if ( symbol->data->key == EVENT ) {
 	    gen_code( next, "public uBaseEvent" );
+	} else if ( symbol->data->key == ACTOR ) {
+	    gen_code( next, "public uActorType <" );
+	    gen_code( next, symbol->hash->text );
+	    gen_code( next, ">" );
 	} // if
 
 	// insert a comma if the base specifier list is already started
@@ -152,13 +156,13 @@ void gen_entry( token_t *before, unsigned int index ) {
 
 
 void gen_hash( token_t *before, hash_t *hash ) {
-    uassert( hash != NULL );
+    uassert( hash != nullptr );
     gen_code( before, hash->text );
 } // gen_hash
 
 
 void gen_quote_hash( token_t *before, hash_t *hash ) {
-    uassert( hash != NULL );
+    uassert( hash != nullptr );
     gen_quote_code( before, hash->text );
 } // gen_hash
 
@@ -166,7 +170,7 @@ void gen_quote_hash( token_t *before, hash_t *hash ) {
 void gen_member_prefix( token_t *before, symbol_t *symbol ) {
     gen_code( before, "{" );
     gen_code( before, "UPP :: uSerialMember uSerialMemberInstance ( this -> uSerialInstance , this ->" );
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     gen_entry( before, symbol->data->index );
     gen_code( before, "," );
     gen_mask( before, symbol->data->index );
@@ -181,15 +185,15 @@ void gen_member_suffix( token_t *before, symbol_t *symbol ) {
 
 void gen_main_prefix( token_t *before, symbol_t *symbol ) {
     table_t *table;
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->found;
-    uassert( table != NULL );
-    uassert( table->symbol != NULL );
+    uassert( table != nullptr );
+    uassert( table->symbol != nullptr );
     if ( table->symbol->data->key == COROUTINE ) {
 //	gen_code( before, "{ UPP :: uCoroutineMain uCoroutineMainInstance ( * this ) ;" );
 	gen_code( before, "{" );
     } else if ( table->symbol->data->key == TASK ) {
-	gen_code( before, "{ UPP :: uTaskMain uTaskMainInstance ( * this ) ;" );
+	gen_code( before, "{ uTaskMain uTaskMainInstance ( * this ) ;" );
     } // if
 
     if ( table->symbol->data->key == TASK ) {
@@ -219,10 +223,10 @@ void gen_main_prefix( token_t *before, symbol_t *symbol ) {
 
 void gen_main_suffix( token_t *before, symbol_t *symbol ) {
     table_t *table;
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->found;
-    uassert( table != NULL );
-    uassert( table->symbol != NULL );
+    uassert( table != nullptr );
+    uassert( table->symbol != nullptr );
 
     if ( table->symbol->data->key == COROUTINE || table->symbol->data->key == TASK ) {
 	if ( table->symbol->data->attribute.rttskkind.kind.PERIODIC ) {
@@ -245,13 +249,13 @@ void gen_main_suffix( token_t *before, symbol_t *symbol ) {
 
 
 void gen_constructor_parameter( token_t *before, symbol_t *symbol, bool defarg ) {
-    uassert( before != NULL );
+    uassert( before != nullptr );
     uassert( before->value == ')' );
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
 	token_t *prev = before->prev_parse_token();
-	uassert( prev != NULL );
+	uassert( prev != nullptr );
 
 	if ( prev->value == '(' ) {
 	    gen_code( before, "UPP :: uAction uConstruct" );
@@ -270,11 +274,13 @@ void gen_constructor_parameter( token_t *before, symbol_t *symbol, bool defarg )
 
 
 void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
-    uassert( symbol->data->table != NULL );
+    uassert( symbol != nullptr );
+    uassert( symbol->data->table != nullptr );
 
     if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
 	gen_code( before, "{ uDestruct = uConstruct ;" );
+    } else if ( symbol->data->key == ACTOR ) {
+	gen_code( before, "{" );
     } // if
 
     // if mutex, generate constructor code
@@ -293,17 +299,17 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 
     if ( symbol->data->key == COROUTINE ) {
 	if ( symbol->data->attribute.Mutex ) {		// is it a coroutine monitor?
-	    gen_code( before, "UPP :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , this -> uSerialInstance , * this ," );
+	    gen_code( before, "uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , this -> uSerialInstance , * this ," );
 	} else {
-	    gen_code( before, "UPP :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * ( UPP :: uSerial * ) 0, * this ," );
+	    gen_code( before, "uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * ( UPP :: uSerial * ) 0, * this ," );
 	} // if
 	gen_quote_hash( before, symbol->hash );
 	gen_code( before, ") ;" );
     } else if ( symbol->data->key == TASK ) {
-	if ( symbol->data->attribute.startP == NULL ) {
-	    gen_code( before, "UPP :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * ( uBasePIQ * ) 0 ," );
+	if ( symbol->data->attribute.startP == nullptr ) {
+	    gen_code( before, "uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * ( uBasePIQ * ) 0 ," );
 	} else {
-	    gen_code( before, "UPP :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , uPIQInstance ," );
+	    gen_code( before, "uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , uPIQInstance ," );
 	} // if
 	gen_quote_hash( before, symbol->hash );
 	if ( profile ) {
@@ -312,21 +318,23 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	    gen_code( before, ", false" );
 	} // if
 	gen_code( before, ") ;" );
+    } else if ( symbol->data->key == ACTOR ) {
+	gen_code( before, "uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
     } // if
 } // gen_constructor_prefix
 
 
 void gen_constructor_suffix( token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
 	gen_code( before, "}" );
     } // if
 } // gen_constructor_suffix
 
 
 void gen_PIQ( token_t *before, symbol_t *symbol ) {
-    if ( symbol->data->attribute.startP != NULL ) {
+    if ( symbol->data->attribute.startP != nullptr ) {
 	token_t *curr = symbol->data->attribute.startP->prev_parse_token(); // backup to '<'
 	curr->remove_token();				// remove '<'
 	delete curr;
@@ -346,7 +354,7 @@ void gen_PIQ( token_t *before, symbol_t *symbol ) {
 
 
 void gen_mutex( token_t *before, symbol_t *symbol ) {
-    if ( symbol->data->attribute.startE == NULL ) {
+    if ( symbol->data->attribute.startE == nullptr ) {
 	if ( symbol->data->attribute.rttskkind.value != 0 ) {	// => realtime task
 	    gen_code( before, "uPrioritySeq uEntryList ;" );
 	    gen_code( before, "typedef uPrioritySeq uMutexList ;" );
@@ -397,7 +405,7 @@ void gen_mutex_entry( token_t *before, symbol_t *symbol ) {
 
 void gen_base_specifier_name( token_t *before, symbol_t *symbol ) {
     token_t *token = symbol->data->left;
-    if ( token != NULL ) {
+    if ( token != nullptr ) {
 	for ( ;; ) {
 	    gen_code( before, token->hash->text );
 	  if ( token == symbol->data->right ) break;
@@ -411,13 +419,13 @@ void gen_base_specifier_name( token_t *before, symbol_t *symbol ) {
 // source code. This allows a consistent check for user and generated source when checking for exisitng initializers.
 
 void gen_initializer( token_t *before, symbol_t *symbol, char prefix, bool after ) {
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
 	symbol_t *base = symbol->data->base;
-	// If base->table is NULL, the type is incomplete; let g++ deal with it.
-	if ( base != NULL && base->data->table != NULL && base->data->table->hasdefault ) {
-	    if ( base->data->key == COROUTINE || base->data->attribute.Mutex ) {
+	// If base->table is null, the type is incomplete; let g++ deal with it.
+	if ( base != nullptr && base->data->table != nullptr && base->data->table->hasdefault ) {
+	    if ( base->data->key == COROUTINE || base->data->attribute.Mutex || symbol->data->key == ACTOR ) {
 		if ( ! after ) {
 		    gen_code( before, prefix );		// not entered as CODE
 		} // if
@@ -433,14 +441,14 @@ void gen_initializer( token_t *before, symbol_t *symbol, char prefix, bool after
 
 
 void gen_serial_initializer( token_t *rp, token_t *end, token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
-    if ( symbol->data->attribute.Mutex && ( symbol->data->base == NULL || ! symbol->data->base->data->attribute.Mutex ) ) {
+    uassert( symbol != nullptr );
+    if ( symbol->data->attribute.Mutex && ( symbol->data->base == nullptr || ! symbol->data->base->data->attribute.Mutex ) ) {
 	// check if there is already a base specifier for this type
 
 	if ( rp->next_parse_token() == end ) {		// no initializer ?, i.e., "C() {"
 	    before = end;
 	    gen_code( end, ":" );
-	} else if ( before == NULL ) {			// last initializer ?
+	} else if ( before == nullptr ) {			// last initializer ?
 	    before = end;
 	    gen_code( before, "," );
 	} // if
@@ -457,19 +465,19 @@ void gen_serial_initializer( token_t *rp, token_t *end, token_t *before, symbol_
 void gen_constructor( token_t *before, symbol_t *symbol ) {
     table_t *table;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->table;
-    uassert( table != NULL );
+    uassert( table != nullptr );
 
     // if necessary, generate a default constructor
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT || symbol->data->key == ACTOR ) {
 
 	symbol->data->table->hasdefault = true;
 	gen_hash( table->public_area, symbol->hash );
 
 	token_t *rp, *end;
-	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
+	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
 	    gen_code( table->public_area, "( UPP :: uAction uConstruct = UPP :: uYes )" );
 	    rp = table->public_area->prev_parse_token();
 	    gen_initializer( table->public_area, symbol, ':', false );
@@ -479,7 +487,7 @@ void gen_constructor( token_t *before, symbol_t *symbol ) {
 	} // if
 	end = table->public_area;
 
-	gen_serial_initializer( rp, end, NULL, symbol );
+	gen_serial_initializer( rp, end, nullptr, symbol );
 	gen_constructor_prefix( table->public_area, symbol );
 	gen_code( table->public_area, "{ }" );
 	gen_constructor_suffix( table->public_area, symbol );
@@ -488,10 +496,10 @@ void gen_constructor( token_t *before, symbol_t *symbol ) {
 
 
 void gen_destructor_prefix( token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
     table_t *table = symbol->data->table;
-    uassert( table != NULL );
+    uassert( table != nullptr );
 
     if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
 	gen_code( before, "{" );
@@ -510,15 +518,15 @@ void gen_destructor_prefix( token_t *before, symbol_t *symbol ) {
     // if task, generate task destructor code
 
     if ( symbol->data->key == COROUTINE ) {
-	gen_code( before, "UPP :: uCoroutineDestructor uCoroutineDestructorInstance ( uDestruct , ( uBaseCoroutine & ) * this ) ;" );
+	gen_code( before, "uCoroutineDestructor uCoroutineDestructorInstance ( uDestruct , ( uBaseCoroutine & ) * this ) ;" );
     } else if ( symbol->data->key == TASK ) {
-	gen_code( before, "UPP :: uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
+	gen_code( before, "uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
     } // if
 } // gen_destructor_prefix
 
 
 void gen_destructor_suffix( token_t *before, symbol_t *symbol ) {
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
 
     // if destructor code is generated, close the code
 
@@ -531,9 +539,9 @@ void gen_destructor_suffix( token_t *before, symbol_t *symbol ) {
 void gen_destructor( token_t *before, symbol_t *symbol ) {
     table_t *table;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->table;
-    uassert( table != NULL );
+    uassert( table != nullptr );
 
     // if necessary, generate a default destructor
 
@@ -551,9 +559,9 @@ void gen_destructor( token_t *before, symbol_t *symbol ) {
 void gen_class_prefix( token_t *before, symbol_t *symbol ) {
     table_t *table;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->table;
-    uassert( table != NULL );
+    uassert( table != nullptr );
 
     gen_code( before, "private :" );
     gen_code( before, "protected :" );
@@ -568,6 +576,7 @@ void gen_class_prefix( token_t *before, symbol_t *symbol ) {
       case COROUTINE:
       case TASK:
       case EVENT:
+      case ACTOR:
 	gen_code( before, "private :" );
 	break;
       default:
@@ -581,29 +590,12 @@ void gen_class_prefix( token_t *before, symbol_t *symbol ) {
 } // gen_class_prefix
 
 
-void gen_hascopy( token_t *before, symbol_t *symbol ) {
-    gen_code( before, "UPP :: uAction uDestruct ;" );
-    if ( ! symbol->data->table->hascopy ) {			// no copy operator ?
-	gen_code( before, symbol->hash->text );
-	gen_code( before, "(" );
-	gen_code( before, symbol->hash->text );
-	gen_code( before, "& ) ;" );
-    } // if
-    if ( ! symbol->data->table->haseqop ) {			// no equal operator ?
-	gen_code( before, symbol->hash->text );
-	gen_code( before, "& operator = (" );
-	gen_code( before, symbol->hash->text );
-	gen_code( before, "& ) ;" );
-    } // if
-} // gen_hascopy
-
-
 void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     table_t *table;
 
-    uassert( symbol != NULL );
+    uassert( symbol != nullptr );
     table = symbol->data->table;
-    uassert( table != NULL );
+    uassert( table != nullptr );
 
     if ( symbol->data->key == EVENT ) {
 	gen_code( table->protected_area, "virtual" );
@@ -618,14 +610,14 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     // there are outstanding tasks awaiting entry.
 
     if ( symbol->data->attribute.Mutex ) {
-	 if ( symbol->data->base == NULL || ! symbol->data->base->data->attribute.Mutex ) {
+	 if ( symbol->data->base == nullptr || ! symbol->data->base->data->attribute.Mutex ) {
 	     gen_code( table->protected_area, "UPP :: uSerial uSerialInstance ;" );
 //	     gen_code( table->protected_area, " public : UPP :: uSerial uSerialInstance ; private :" );
 	 } else {
 	     // for a derived monitor that is a template or lexically contained in a template, it is necessary to create
 	     // a local typedef to reference the mutex-queue type in its parent.
 	     for ( symbol_t *ptr = symbol;; ptr = ptr->data->found->symbol ) {
-	       if ( ptr->data->attribute.plate != NULL ) {
+	       if ( ptr->data->attribute.plate != nullptr ) {
 		     gen_code( table->private_area, "typedef typename" );
 		     gen_base_specifier_name( table->private_area, symbol );
 		     gen_code( table->private_area, ":: uMutexList uMutexList ;" );
@@ -639,7 +631,7 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     // classes (not mutex), structs, unions may not have mutex arguments
 
     if ( ( symbol->data->key == STRUCT || symbol->data->key == CLASS || symbol->data->key == UNION ) && ! symbol->data->attribute.Mutex ) {
-	if ( symbol->data->attribute.startE != NULL ) {
+	if ( symbol->data->attribute.startE != nullptr ) {
 	    gen_error( ahead, "cannot specify mutex arguments for nomutex type." );
 	} // if
     } // if
@@ -656,7 +648,7 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
 		gen_error( ahead, "destructor must be mutex for mutex type, nomutex attribute ignored." );
 	    } // if
 
-	    if ( structor->prefix != NULL ) {
+	    if ( structor->prefix != nullptr ) {
 		gen_destructor_prefix( structor->prefix, symbol );
 		gen_destructor_suffix( structor->suffix, symbol );
 	    } // if
@@ -675,9 +667,9 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
 
 	    gen_constructor_parameter( structor->rp, symbol, true );
 
-	    if ( structor->prefix != NULL ) {
+	    if ( structor->prefix != nullptr ) {
 		if ( structor->separator != '\0' ) {
-		    if ( structor->start != NULL && structor->separator == ',' ) {
+		    if ( structor->start != nullptr && structor->separator == ',' ) {
 			gen_initializer( structor->start, symbol, structor->separator, true );
 		    } else {
 			gen_initializer( structor->prefix, symbol, structor->separator, false );
@@ -695,7 +687,13 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     // if this is a mutex, coroutine or task, check for copy/assignment operator
 
     if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
-	gen_hascopy( table->private_area, symbol );
+	gen_code( table->private_area, "UPP :: uAction uDestruct ;" );
+	if ( symbol->data->table->hascopy ) {		// copy operator ?
+	    gen_error( ahead, "copy constructor(s) not allowed for coroutine or mutex type." );
+	} // if
+	if ( symbol->data->table->hasassnop ) {		// assignment operator ?
+	    gen_error( ahead, "assignment operator(s) not allowed for coroutine or mutex type." );
+	} // if
     } // if
 } // gen_class_suffix
 

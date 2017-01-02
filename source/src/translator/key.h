@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // key.h --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  5 23:22:26 2015
-// Update Count     : 95
+// Last Modified On : Thu Dec 22 22:18:09 2016
+// Update Count     : 96
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -165,6 +165,7 @@ enum key_value_t {
     ACCEPT,
     ACCEPTRETURN,
     ACCEPTWAIT,
+    ACTOR,
     AT,
     CATCHRESUME,
     COROUTINE,
@@ -196,7 +197,7 @@ enum key_value_t {
     DECLTYPE,						// C++11
     FINAL,						// C++11
     NOEXCEPT,						// C++11
-    NULLPTR,						// C++11
+    nullptrPTR,						// C++11
     STATIC_ASSERT,					// C++11
     THREAD_LOCAL,					// C++11
 

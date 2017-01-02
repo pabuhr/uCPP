@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// Copyright (C) Richard C. Bilson 2003
+// Copyright (C) Peter A. Buhr 2003
 // 
 // uBitSet.h -- Fast bit-set operations
 // 
-// Author           : Richard C. Bilson and Peter A. Buhr
+// Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Dec 15 14:05:51 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat May  2 11:54:05 2009
-// Update Count     : 18
+// Last Modified On : Fri Oct 21 11:13:15 2016
+// Update Count     : 271
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,115 +30,176 @@
 #pragma __U_NOT_USER_CODE__
 
 
-#include <uStaticAssert.h>				// _STATIC_ASSERT_
-#include <assert.h>					// assert
-
+#include <cassert>					// assert
 #include <cstring>					// ffs, memset
+#include <cstdint>					// uint32_t, uint64_t, __int128
+#include <climits>					// CHAR_BIT
+
+namespace UPP {
+    inline int FFS( uint32_t v ) {
+	return ::ffs( v );
+    } // FFS
+
+    inline int FFS( uint64_t v ) {
+	return ::ffsll( v );
+    } // FFS
+
+#if _GLIBCXX_USE_INT128 == 1
+    inline int FFS( unsigned __int128 v ) {
+	if ( (uint64_t)v != 0 ) {			// most significant bits
+	    return ::ffsll( (uint64_t)v );
+	} else if ( (uint64_t)(v >> 64) != 0 ) {	// least significant bits
+	    return ::ffsll( (uint64_t)(v >> 64) ) + 64;
+	} else return 0;
+    } // FFS
+#endif // _GLIBCXX_USE_INT128 == 1
 
 
-template<int nbits> class uBitSet {
-    _STATIC_ASSERT_( nbits > 0 );
-    
-    typedef int BaseType;
-    _STATIC_ASSERT_( sizeof( BaseType ) == 4 );
+    template<unsigned int nbits, unsigned int size> class uBitSetImpl {
+	static_assert( nbits == size, "nbits != size" ); // size unnecessary
+#if __WORDSIZE == 64
+	typedef uint64_t BaseType;
+	static_assert( sizeof( BaseType ) == 8, "sizeof( BaseType ) != 8" );
+	enum { idxshift = 6, idxmask = 0x3f, nbase = ( ( nbits - 1 ) >> idxshift ) + 1 };
+#else
+	typedef uint32_t BaseType;
+	static_assert( sizeof( BaseType ) == 4, "sizeof( BaseType ) != 4" );
+	enum { idxshift = 5, idxmask = 0x1f, nbase = ( ( nbits - 1 ) >> idxshift ) + 1 };
+#endif // __WORDSIZE == 64
+	BaseType bits[ nbase ];
+      public:
+	void set( unsigned int idx ) {
+	    assert( idx >= 0 && idx < nbits );
+	    bits[ idx >> idxshift ] |= (BaseType)1 << ( idx & idxmask );
+	} // uBitSetImpl::set
 
-    enum { idxshift = 5, idxmask = 0x1f,
-           nbase = ( ( nbits - 1 ) >> idxshift ) + 1 };
-    BaseType bits[ nbase ];
+	void clr( unsigned int idx ) {
+	    assert( idx < nbits );
+	    bits[ idx >> idxshift ] &= ~((BaseType)1 << ( idx & idxmask ));
+	} // uBitSetImpl::clr
+
+	void setAll() {
+	    memset( bits, -1, nbase * sizeof( BaseType ) ); // assumes 2's complement
+	} // uBitSetImpl::setAll
+
+	void clrAll() {
+	    memset( bits, 0, nbase * sizeof( BaseType ) );
+	} // uBitSetImpl::clrAll
+
+	bool isSet( unsigned int idx ) const {
+	    assert( idx < nbits );
+	    return bits[ idx >> idxshift ] & ( (BaseType)1 << ( idx & idxmask ) );
+	} // uBitSetImpl::isSet
+
+	bool isAllClr() const {
+	    int elt;
+	    for ( elt = 0; elt < nbase; elt += 1 ) {
+		if ( bits[ elt ] != 0 ) break;
+	    } // for
+	    return elt == nbase;
+	} // uBitSetImpl::isAllClr
+
+	int ffs() const {
+	    int elt;
+	    for ( elt = 0;; elt += 1 ) {
+	      if ( elt >= nbase ) return nbits;		// no bits set
+	      if ( bits[ elt ] != 0 ) break;
+	    } // for
+	    return (UPP::FFS( bits[ elt ] ) - 1) + ( elt << idxshift );	// range 0..N-1
+	} // uBitSetImpl::ffs
+
+	BaseType operator[]( unsigned int i ) const {
+	    assert( i < nbase );
+	    return bits[ i ];
+	} // uBitSetImpl::operator[]
+    }; // uBitSetImpl
+
+
+    // optimizations for hardware supported integral types
+
+    template<unsigned int nbits> class uBitSetType;
+
+    template<> struct uBitSetType< sizeof( uint32_t ) * CHAR_BIT > {
+	typedef uint32_t type;
+    }; // uBitSetType
+
+    template<> struct uBitSetType< sizeof( uint64_t ) * CHAR_BIT > {
+	typedef uint64_t type;
+    }; // uBitSetType
+
+#if _GLIBCXX_USE_INT128 == 1
+    template<> struct uBitSetType< sizeof( unsigned __int128 ) * CHAR_BIT > {
+	typedef unsigned __int128 type;
+    }; // uBitSetType
+#endif // _GLIBCXX_USE_INT128 == 1
+
+    template<unsigned int nbits, unsigned int size> class uSpecBitSet {
+	typename uBitSetType<nbits>::type bits;
+      public:
+	void set( unsigned int idx ) {
+	    assert( idx < size );
+	    bits |= (decltype( bits ))1 << idx;
+	} // uSpecBitSet::set
+
+	void clr( unsigned int idx ) {
+	    assert( idx < size );
+	    bits &= ~((decltype( bits ))1 << idx);
+	} // uSpecBitSet::clr
+
+	void setAll() {
+	    bits = (decltype( bits ))-1;		// assumes 2's complement
+	} // uSpecBitSet::setAll
+
+	void clrAll() {
+	    bits = 0;
+	} // uSpecBitSet::clrAll
+
+	bool isSet( unsigned int idx ) const {
+	    assert( idx < size );
+	    return bits & ((decltype( bits ))1 << idx);
+	} // uSpecBitSet::is Set
+
+	bool isAllClr() const {
+	    return bits == 0;
+	} // uSpecBitSet::isAllClr
+
+	int ffs() const {
+	    int temp = UPP::FFS( bits );
+	    return temp == 0 ? size			// no bits set
+		: temp - 1;				// range 0..N-1
+	} // uSpecBitSet::ffs
+
+	decltype( bits ) operator[]( unsigned int i ) const {
+	    assert( i == 0 );
+	    return bits;
+	} // uSpecBitSet::operator[]
+    }; // uSpecBitSet
+
+    template<unsigned int Size> class uBitSetImpl< sizeof( uint32_t ) * CHAR_BIT, Size > :
+	public uSpecBitSet< sizeof( uint32_t ) * CHAR_BIT, Size > {};
+
+    template<unsigned int Size> class uBitSetImpl< sizeof( uint64_t ) * CHAR_BIT, Size > :
+	public uSpecBitSet< sizeof( uint64_t ) * CHAR_BIT, Size > {};
+
+#if _GLIBCXX_USE_INT128 == 1
+    template<unsigned int Size> class uBitSetImpl< sizeof( unsigned __int128 ) * CHAR_BIT, Size > :
+	public uSpecBitSet< sizeof( unsigned __int128 ) * CHAR_BIT, Size > {};
+#endif // _GLIBCXX_USE_INT128 == 1
+} // UPP
+
+template<unsigned int N> class uBitSet : public UPP::uBitSetImpl<
+	N <= sizeof( uint32_t ) * CHAR_BIT ? sizeof( uint32_t ) * CHAR_BIT :
+	N <= sizeof( uint64_t ) * CHAR_BIT ? sizeof( uint64_t ) * CHAR_BIT :
+#if _GLIBCXX_USE_INT128 == 1
+	N <= sizeof( unsigned __int128 ) * CHAR_BIT ? sizeof( unsigned __int128 ) * CHAR_BIT :
+#endif // _GLIBCXX_USE_INT128 == 1
+	N, N> {
   public:
-    void set( int idx ) {
-	assert( idx >= 0 && idx < nbits );
-	bits[ idx >> idxshift ] |= ( 1u << ( idx & idxmask ) );
-    } // uBitSet::set
-
-    void clr( int idx ) {
-	assert( idx >= 0 && idx < nbits );
-	bits[ idx >> idxshift ] &= ~( 1u << ( idx & idxmask ) );
-    } // uBitSet::clr
-
-    void setAll() {
-	memset( bits, -1, nbase * sizeof( BaseType ) );	// assumes 2's complement
-    } // uBitSet::setAll
-
-    void clrAll() {
-	memset( bits, 0, nbase * sizeof( BaseType ) );
-    } // uBitSet::clrAll
-
-    bool isSet( int idx ) const {
-	assert( idx >= 0 && idx < nbits );
-	return bits[ idx >> idxshift ] & ( 1u << ( idx & idxmask ) );
-    } // uBitSet::is Set
-
-    bool isAllClr() const {
-	int elt;
-	for ( elt = 0; elt < nbase; elt += 1 ) {
-	  if ( bits[ elt ] != 0 ) break;
-	} // for
-	return elt == nbase;
-    } // uBitSet::isAllClr
-
-    int findFirstSet() const {
-	int elt;
-	for ( elt = 0;; elt += 1 ) {
-	  if ( elt >= nbase ) return -1;
-	  if ( bits[ elt ] != 0 ) break;
-	} // for
-	return ffs( bits[ elt ] ) - 1 + ( elt << idxshift );
-    } // uBitSet::findFirstSet
-
-    int operator[]( int i ) const {
-	assert( i >= 0 && i < nbase );
-	return bits[ i ];
-    } // uBitSet::operator[]
-}; // uBitSet
-
-
-// Special optimization when the number of bits in __U_MAXENTRYBITS__ is a long.
-
-template<> class uBitSet< sizeof( long ) * 8 > {
-    unsigned long bits;
-    enum { nbits = sizeof( long ) * 8 };
-  public:
-    void set( int idx ) {
-	assert( idx >= 0 && idx < nbits );
-	bits |= ( 1ul << idx );
-    } // uBitSet::set
-
-    void clr( int idx ) {
-	assert( idx >= 0 && idx < nbits );
-	bits &= ~( 1ul << idx );
-    } // uBitSet::clr
-
-    void setAll() {
-	bits = (unsigned long)-1;
-    } // uBitSet::setAll
-
-    void clrAll() {
-	bits = 0;
-    } // uBitSet::clrAll
-
-    bool isSet( int idx ) const {
-	assert( idx >= 0 && idx < nbits );
-	return bits & ( 1ul << idx );
-    } // uBitSet::is Set
-
-    bool isAllClr() const {
-	return bits == 0;
-    } // uBitSet::isAllClr
-
-    int findFirstSet() const {
-	return ffs( bits );
-    } // uBitSet::findFirstSet
-
-    int operator[]( int i ) const {
-	assert( i == 0 );
-	return bits;
-    } // uBitSet::operator[]
-}; // uBitSet
+    unsigned int size() const { return N; };
+};
 
 
 #endif // __U_BITSET_H__
-
 
 // Local Variables: //
 // compile-command: "make install" //

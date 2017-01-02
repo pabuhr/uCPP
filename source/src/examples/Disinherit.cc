@@ -1,16 +1,28 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 // 
 // Disinherit.cc -- 
 // 
 // Author           : Ashif S. Harji
 // Created On       : Mon Feb 14 14:22:08 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 26 09:15:06 2007
-// Update Count     : 19
+// Last Modified On : Sun Dec 18 23:50:45 2016
+// Update Count     : 20
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
 // 
-
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
+// 
 
 #include <uDeadlineMonotonic1.h>
 #include <iostream>

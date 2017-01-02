@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // hash.c --
 //
@@ -47,7 +47,7 @@ hash_t::~hash_t() {
 
 hash_table_t::hash_table_t() {
     for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
-	table[i] = NULL;
+	table[i] = nullptr;
     } // for
 } // hash_table_t::hash_table_t
 
@@ -55,7 +55,7 @@ hash_table_t::hash_table_t() {
 hash_table_t::~hash_table_t() {
     for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
 	hash_t *hash = table[i];
-	while ( hash != NULL ) {
+	while ( hash != nullptr ) {
 	    hash_t *temp = hash;
 	    hash = hash->link;
 	    delete temp;
@@ -77,7 +77,7 @@ hash_t *hash_table_t::lookup( const char *text, int value ) {
     // if matching entry found in the hash table, return pointer to entry
 
     hash_t *hash;
-    for ( hash = table[ key ]; hash != NULL; hash = hash->link ) {
+    for ( hash = table[ key ]; hash != nullptr; hash = hash->link ) {
 	if ( strcmp( hash->text, text ) == 0 ) return hash;
     } // for
 

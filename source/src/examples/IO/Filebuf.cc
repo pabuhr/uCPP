@@ -140,7 +140,7 @@ void uMain::main() {
     const int ibufsizes[] = { 0, 1, 512 };
     const int obufsizes[] = { 0, 1, 512 };
     bool success = true;
-    srand( time( NULL ) ) ;
+    srand( time( nullptr ) ) ;
     for ( unsigned i = 0; i < sizeof( ibufsizes ) / sizeof( int ); i += 1 ) {
 	for ( unsigned j = 0; j < sizeof( obufsizes ) / sizeof( int ); j += 1 ) {
 	    for ( int arg = 1; arg < argc; arg += 1 ) {

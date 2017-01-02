@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 // 
-// uC++ Version 6.1.0, Copyright (C) Martin Karsten 1995
+// uC++ Version 7.0.0, Copyright (C) Martin Karsten 1995
 // 
 // LangBasics.h -- 
 // 
 // Author           : Martin Karsten
 // Created On       : Sat May 13 14:55:53 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 09:00:30 2005
-// Update Count     : 9
+// Last Modified On : Fri Dec  2 23:15:23 2016
+// Update Count     : 10
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,7 +45,7 @@ struct ULThreadDescriptor {
 		return x.id != id;
 	} // operator !=
 	ULThreadDescriptor( ULThreadId id, ULThread* p ) : id(id), pointer(p) {}
-	ULThreadDescriptor( ULThreadId id ) : id(id), pointer(NULL) {}
+	ULThreadDescriptor( ULThreadId id ) : id(id), pointer(nullptr) {}
 	ULThreadDescriptor();
 }; // struct ULThreadDescriptor
 
@@ -60,7 +60,7 @@ struct ClusterDescriptor {
 		return x.id != id;
 	} // operator !=
 	ClusterDescriptor( ClusterId id, Cluster* p ) : id(id), pointer(p) {}
-	ClusterDescriptor( ClusterId id ) : id(id), pointer(NULL) {}
+	ClusterDescriptor( ClusterId id ) : id(id), pointer(nullptr) {}
 	ClusterDescriptor();
 }; // struct ClusterDescriptor
 
@@ -75,7 +75,7 @@ struct KernelThreadDescriptor {
 		return x.id != id;
 	} // operator !=
 	KernelThreadDescriptor( KernelThreadId id, KernelThread* p ) : id(id), pointer(p) {}
-	KernelThreadDescriptor( KernelThreadId id ) : id(id), pointer(NULL) {}
+	KernelThreadDescriptor( KernelThreadId id ) : id(id), pointer(nullptr) {}
 	KernelThreadDescriptor();
 }; // struct KernelThreadDescriptor
 

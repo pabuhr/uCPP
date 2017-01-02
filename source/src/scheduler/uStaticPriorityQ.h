@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 //
 // uStaticPriorityQ.h --
 //
@@ -68,7 +68,7 @@ class uStaticPriorityQ : public uBasePrioritySeq {
 	    uBaseTaskDL *node = objects[highestPriority].head();
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uStaticPriorityQ::head
 
@@ -84,7 +84,7 @@ class uStaticPriorityQ : public uBasePrioritySeq {
 	    } // if
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uStaticPriorityQ::drop
 
@@ -131,7 +131,7 @@ template<typename List, typename Node> class uStaticPriorityScheduleQ : public u
 	    Node *node = objects[highestPriority].head();
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uStaticPriorityScheduleQ::head
 
@@ -162,7 +162,7 @@ template<typename List, typename Node> class uStaticPriorityScheduleQ : public u
 #endif // __U_DEBUG_H__
 	    return node;
 	} else {
-	    return NULL;
+	    return nullptr;
 	} // if
     } // uStaticPriorityScheduleQ::drop
 

@@ -1,6 +1,6 @@
 //                               -*- Mode: Asm -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSwitch-mip.s -- 
 // 

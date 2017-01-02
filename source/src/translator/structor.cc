@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // structor.c --
 //
@@ -29,10 +29,10 @@
 #include <cstddef>					// size_t
 
 structor_t::structor_t() {
-    prefix = NULL;
-    suffix = NULL;
-    rp = NULL;
-    link = NULL;
+    prefix = nullptr;
+    suffix = nullptr;
+    rp = nullptr;
+    link = nullptr;
 } // structor_t::structor_t
 
 
@@ -40,7 +40,7 @@ structor_t::~structor_t() {
 } // structor_t::structor_t
 
 
-structor_list_t::structor_list_t() : head( NULL ) {
+structor_list_t::structor_list_t() : head( nullptr ) {
 } // structor_list_t:: structor_list_t
 
 
@@ -62,7 +62,7 @@ structor_t *structor_list_t::remove_structor() {
 
 
 int structor_list_t::empty_structor_list() {
-    return ( head == NULL );
+    return ( head == nullptr );
 } // structor_list_t::empty_structor_list
 
 

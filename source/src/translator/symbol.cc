@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // symbol.c --
 //
@@ -24,7 +24,7 @@
 // along  with this library.
 //
 
-#include <cstddef>					// NULL
+#include <cstddef>					// nullptr
 #include "table.h"
 #include "symbol.h"
 
@@ -36,14 +36,14 @@ using std::endl;
 //#define __U_DEBUG_H__
 
 symbol_data_t::symbol_data_t() {
-    found = NULL;
-    table = NULL;
+    found = nullptr;
+    table = nullptr;
     key = 0;
     index = DESTRUCTORPOSN;				// start allocating entry bits from this value
-    base = NULL;
+    base = nullptr;
     used = false;
-    base_token = NULL;
-    left = right = NULL;
+    base_token = nullptr;
+    left = right = nullptr;
 } // symbol_data_t::symbol_data_t
 
 
@@ -76,7 +76,7 @@ symbol_t::~symbol_t() {
     if ( ! copied ) {					// data shared for typedef and using
 	delete data->table;
 	delete data;
-	data = NULL;
+	data = nullptr;
     } // if
     copied = false;
 } // symbol_t::~symbol_t

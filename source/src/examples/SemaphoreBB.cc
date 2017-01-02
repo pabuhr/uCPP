@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // SemaphoreBB.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 15 16:42:42 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 11 23:09:51 2015
-// Update Count     : 55
+// Last Modified On : Mon Dec 19 23:03:06 2016
+// Update Count     : 59
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSemaphore.h>
@@ -19,10 +32,11 @@ template<typename ELEMTYPE> class BoundedBuffer {
 	uSemaphore full, empty;								// synchronize for full and empty BoundedBuffer
 	uSemaphore ilock, rlock;							// insertion and removal locks
 	ELEMTYPE *Elements;
-
-	BoundedBuffer( BoundedBuffer & );					// no copy
-	BoundedBuffer &operator=( BoundedBuffer & );		// no assignment
   public:
+	BoundedBuffer( const BoundedBuffer & ) = delete;	// no copy
+	BoundedBuffer( BoundedBuffer && ) = delete;
+	BoundedBuffer &operator=( const BoundedBuffer & ) = delete;	// no assignment
+
 	BoundedBuffer( const unsigned int size = 10 ) : size( size ), full( 0 ), empty( size ) {
 		front = back = 0;
 		Elements = new ELEMTYPE[size];

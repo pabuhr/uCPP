@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2010
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2010
 // 
 // DeleteProcessor.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:03:54 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 18 21:30:26 2012
-// Update Count     : 3
+// Last Modified On : Sun Dec 18 23:50:39 2016
+// Update Count     : 4
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>

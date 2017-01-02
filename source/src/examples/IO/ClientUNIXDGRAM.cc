@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1999
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 // 
 // ClientUNIXDGRAM.cc -- Client for UNIX/datagram socket test. Client reads from standard input, writes the data to the
 //     server, reads the data from the server, and writes that data to standard output.
@@ -8,8 +8,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:05:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 24 15:44:15 2012
-// Update Count     : 49
+// Last Modified On : Wed Dec 21 22:13:14 2016
+// Update Count     : 51
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSemaphore.h>
@@ -107,7 +120,7 @@ void uMain::main() {
 	} // switch
 
 	// remove tie due to race between cin flush and cout write by writer and reader tasks
-	cin.tie( NULL );
+	cin.tie( nullptr );
 	uSocketClient client( argv[1], SOCK_DGRAM );		// connection to server
 	{
 		Reader rd( client );							// emit worker to read from server and write to output

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2003
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2003
 //
 // cc1plus.cc --
 //
@@ -56,7 +56,7 @@ void checkEnv( const char *args[], int &nargs ) {
     char *value;
 
     value = getenv( "__U_COMPILER__" );
-    if ( value != NULL ) {
+    if ( value != nullptr ) {
 	compiler_name = value;
 #ifdef __U_DEBUG_H__
 	cerr << "env arg:\"" << compiler_name << "\"" << endl;
@@ -64,7 +64,7 @@ void checkEnv( const char *args[], int &nargs ) {
     } // if
 
     value = getenv( "__U_GCC_MACHINE__" );
-    if ( value != NULL ) {
+    if ( value != nullptr ) {
 	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
 #ifdef __U_DEBUG_H__
 	cerr << "env arg:\"" << args[nargs] << "\"" << endl;
@@ -73,7 +73,7 @@ void checkEnv( const char *args[], int &nargs ) {
     } // if
 
     value = getenv( "__U_GCC_VERSION__" );
-    if ( value != NULL ) {
+    if ( value != nullptr ) {
 	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
 #ifdef __U_DEBUG_H__
 	cerr << "env arg:\"" << args[nargs] << "\"" << endl;
@@ -107,12 +107,12 @@ void Stage1( const int argc, const char * const argv[] ) {
     string arg;
     string bprefix;
 
-    const char *cpp_in = NULL;
-    const char *cpp_out = NULL;
+    const char *cpp_in = nullptr;
+    const char *cpp_out = nullptr;
 
     bool upp_flag = false;
     bool cpp_flag = false;
-    const char *o_name = NULL;
+    const char *o_name = nullptr;
 
     const char *args[argc + 100];			// leave space for 100 additional cpp command line values
     int nargs = 1;					// number of arguments in args list; 0 => command name
@@ -221,12 +221,12 @@ void Stage1( const int argc, const char * const argv[] ) {
 		} // if
 	    } // if
 	} else {					// obtain input and possibly output files
-	    if ( cpp_in == NULL ) {
+	    if ( cpp_in == nullptr ) {
 		cpp_in = argv[i];
 #ifdef __U_DEBUG_H__
 		cerr << "cpp_in:\"" << cpp_in << "\"" << endl;
 #endif // __U_DEBUG_H__
-	    } else if ( cpp_out == NULL ) {
+	    } else if ( cpp_out == nullptr ) {
 		cpp_out = argv[i];
 #ifdef __U_DEBUG_H__
 		cerr << "cpp_out:\"" << cpp_out << "\""<< endl;
@@ -243,12 +243,12 @@ void Stage1( const int argc, const char * const argv[] ) {
     for ( i = 1; i < nargs; i += 1 ) {
 	cerr << " " << args[i];
     } // for
-    if ( cpp_in != NULL ) cerr << " " << cpp_in;
-    if ( cpp_out != NULL ) cerr << " " << cpp_out;
+    if ( cpp_in != nullptr ) cerr << " " << cpp_in;
+    if ( cpp_out != nullptr ) cerr << " " << cpp_out;
     cerr << endl;
 #endif // __U_DEBUG_H__
 
-    if ( cpp_in == NULL ) {
+    if ( cpp_in == nullptr ) {
 	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 	exit( EXIT_FAILURE );
     } // if
@@ -260,17 +260,17 @@ void Stage1( const int argc, const char * const argv[] ) {
 	args[0] = compiler_name.c_str();
 	args[nargs] = cpp_in;
 	nargs += 1;
-	if ( o_name != NULL ) {				// location for output
+	if ( o_name != nullptr ) {				// location for output
 	    args[nargs] = "-o";
 	    nargs += 1;
 	    args[nargs] = o_name;
 	    nargs += 1;
 	} // if
-	args[nargs] = NULL;				// terminate argument list
+	args[nargs] = nullptr;				// terminate argument list
 
 #ifdef __U_DEBUG_H__
 	cerr << "nargs: " << nargs << endl;
-	for ( i = 0; args[i] != NULL; i += 1 ) {
+	for ( i = 0; args[i] != nullptr; i += 1 ) {
 	    cerr << args[i] << " ";
 	} // for
 	cerr << endl;
@@ -299,7 +299,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	// -o xxx.ii cannot be used to write the output file from cpp because no output file is created if cpp detects
 	// an error (e.g., cannot find include file). Whereas, output is always generated, even when there is an error,
 	// when cpp writes to stdout. Hence, stdout is redirected into the temporary file.
-	if ( freopen( tmpname, "w", stdout ) == NULL ) { // redirect stdout to tmpname
+	if ( freopen( tmpname, "w", stdout ) == nullptr ) { // redirect stdout to tmpname
 	    perror( "uC++ Translator error: cpp level, freopen" );
 	    exit( EXIT_FAILURE );
 	} // if
@@ -307,11 +307,11 @@ void Stage1( const int argc, const char * const argv[] ) {
 	args[0] = compiler_name.c_str();
 	args[nargs] = cpp_in;				// input to cpp
 	nargs += 1;
-	args[nargs] = NULL;				// terminate argument list
+	args[nargs] = nullptr;				// terminate argument list
 
 #ifdef __U_DEBUG_H__
 	cerr << "cpp nargs: " << nargs << endl;
-	for ( i = 0; args[i] != NULL; i += 1 ) {
+	for ( i = 0; args[i] != nullptr; i += 1 ) {
 	    cerr << args[i] << " ";
 	} // for
 	cerr << endl;
@@ -347,18 +347,18 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	uargs[nuargs] = tmpname;
 	nuargs += 1;
-	if ( o_name != NULL ) {
+	if ( o_name != nullptr ) {
 	    uargs[nuargs] = o_name;
 	    nuargs += 1;
 	} else if ( ! upp_flag ) {			// run u++-cpp ?
 	    uargs[nuargs] = cpp_out;
 	    nuargs += 1;
 	} // if
-	uargs[nuargs] = NULL;				// terminate argument list
+	uargs[nuargs] = nullptr;				// terminate argument list
 
 #ifdef __U_DEBUG_H__
 	cerr << "u++-cpp nuargs: " << o_name << " " << upp_flag << " " << nuargs << endl;
-	for ( i = 0; uargs[i] != NULL; i += 1 ) {
+	for ( i = 0; uargs[i] != nullptr; i += 1 ) {
 	    cerr << uargs[i] << " ";
 	} // for
 	cerr << endl;
@@ -392,7 +392,7 @@ void Stage2( const int argc, const char * const * argv ) {
 
     string arg;
 
-    const char *cpp_in = NULL;
+    const char *cpp_in = nullptr;
 
     const char *args[argc + 100];			// leave space for 100 additional u++ command line values
     int nargs = 1;					// number of arguments in args list; 0 => command name
@@ -443,7 +443,7 @@ void Stage2( const int argc, const char * const * argv ) {
 		} // if
 	    } // if
 	} else {					// obtain input and possibly output files
-	    if ( cpp_in == NULL ) {
+	    if ( cpp_in == nullptr ) {
 		cpp_in = argv[i];
 #ifdef __U_DEBUG_H__
 		cerr << "cpp_in:\"" << cpp_in << "\"" << endl;
@@ -461,7 +461,7 @@ void Stage2( const int argc, const char * const * argv ) {
 	cerr << " " << args[i];
     } // for
     cerr << endl;
-    if ( cpp_in != NULL ) cerr << " " << cpp_in;
+    if ( cpp_in != nullptr ) cerr << " " << cpp_in;
 #endif // __U_DEBUG_H__
 
     args[0] = compiler_name.c_str();
@@ -469,11 +469,11 @@ void Stage2( const int argc, const char * const * argv ) {
     nargs += 1;
     args[nargs] = cpp_in;
     nargs += 1;
-    args[nargs] = NULL;					// terminate argument list
+    args[nargs] = nullptr;					// terminate argument list
 
 #ifdef __U_DEBUG_H__
     cerr << "stage2 nargs: " << nargs << endl;
-    for ( i = 0; args[i] != NULL; i += 1 ) {
+    for ( i = 0; args[i] != nullptr; i += 1 ) {
 	cerr << args[i] << " ";
     } // for
     cerr << endl;
@@ -487,7 +487,7 @@ void Stage2( const int argc, const char * const * argv ) {
 
 int main( const int argc, const char * const argv[], const char * const env[] ) {
 #ifdef __U_DEBUG_H__
-    for ( int i = 0; env[i] != NULL; i += 1 ) {
+    for ( int i = 0; env[i] != nullptr; i += 1 ) {
 	cerr << env[i] << endl;
     } // for
 #endif // __U_DEBUG_H__

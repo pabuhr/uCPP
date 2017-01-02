@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uDebug.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  5 10:50:54 2016
-// Update Count     : 137
+// Last Modified On : Sun Dec 25 10:29:05 2016
+// Update Count     : 138
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,7 +90,7 @@ extern "C" void uDebugPrt( const char fmt[], ... ) {
     uDebugLock->acquire();
     int len = sprintf( ::buffer, "(%ld) ", (long int)
 #if defined( __U_MULTI__ )
-	     // NULL if called early in boot sequence
+	     // null if called early in boot sequence
 	     (RealRtn::pthread_self == 0 ? 0 : RealRtn::pthread_self())
 #else
 	     getpid()

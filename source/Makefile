@@ -1,5 +1,5 @@
 ## Release version number; do not change.
-VERSION = 6.1.0
+VERSION = 7.0.0
 
 ## Define where the final targets are installed. If you wish to put the final
 ## pieces in different places, you MUST change these macros before you create
@@ -51,7 +51,7 @@ CCAPP ?= ${CCBUILD}
 
 ## Define the maximum number of mutex methods in a monitor or task; N-1 mutex
 ## members, including destructor, and timeout. 128 is a good number for most
-## uses, special optimization for word size (32/64)
+## uses, special optimization for architectures supporting word sizes 32/64/128.
 
 MAXENTRYBITS ?= 128
 
@@ -59,9 +59,9 @@ MAXENTRYBITS ?= 128
 
 STATISTICS ?= TRUE
 
-## Define version of C++11 (-std=): c++0x (minimum), c++11, c++1y
+## Define version of C++11 (-std=): c++11 (minimum), c++14, c++17, c++1y
 
-CPP11 ?= c++0x
+CPP11 ?= c++11
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -205,9 +205,9 @@ configure :
 	printf "Checking compiler..." ; \
 	if which ${CCAPP} > /dev/null ; then \
 		tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
-		echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 5;\n#endif\n}' > $${tmpname} ; \
+		echo 'int main() {\n#ifndef __GNUC__\nreturn 1;\n#else\nreturn __GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 8;\n#endif\n}' > $${tmpname} ; \
 		if ${CCAPP} $${tmpname} > /dev/null 2>&1 && ./a.out > /dev/null 2>&1 ; then \
-			printf "Version of gcc too old for build, requires at least gcc 4.5.0\n" ; \
+			printf "Version of gcc too old for build, requires at least gcc 4.8.0 to access C++11 features\n" ; \
 			rm -f a.out $${tmpname} ; \
 			rm -f CONFIG ; \
 			exit 1 ; \

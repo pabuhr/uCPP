@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uHeapLmmm.cc -- Lean Mean Malloc Machine - a runtime configurable replacement
 //                 for malloc.
@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 28 23:23:27 2016
-// Update Count     : 1221
+// Last Modified On : Sun Dec 25 10:30:09 2016
+// Update Count     : 1224
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,8 +42,8 @@
 #include <new>
 #include <unistd.h>					// sbrk, sysconf
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
+#define LIKELY(x)       __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)     __builtin_expect(!!(x), 0)
 
 
 namespace UPP {
@@ -52,7 +52,7 @@ namespace UPP {
 #endif // __U_DEBUG__
     static char uHeapStorage[sizeof(uHeapManager)] __attribute__(( aligned (128) )) = {0}; // size of cache line to prevent false sharing
 
-    uHeapManager *uHeapManager::heapManagerInstance = NULL;
+    uHeapManager *uHeapManager::heapManagerInstance = nullptr;
     size_t uHeapManager::pageSize;
     unsigned int uHeapManager::maxBucketsUsed;
     size_t uHeapManager::heapExpand;
@@ -163,7 +163,7 @@ namespace UPP {
 
     inline bool uHeapManager::headers( const char *name, void *addr, Storage::Header *&header, FreeHeader *&freeElem, size_t &size, size_t &alignment ) {
 	header = (Storage::Header *)( (char *)addr - sizeof(Storage::Header) );
-	if ( unlikely( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
+	if ( UNLIKELY( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
 	    size_t offset = header->kind.fake.offset;
 	    alignment = header->kind.fake.alignment & -2; // remove flag from value
 #ifdef __U_DEBUG__
@@ -171,7 +171,7 @@ namespace UPP {
 #endif // __U_DEBUG__
 	    header = (Storage::Header *)((char *)header - offset);
 	} // if
-	if ( unlikely( addr < heapBegin || heapEnd < addr ) ) {	// mmapped ?
+	if ( UNLIKELY( addr < heapBegin || heapEnd < addr ) ) {	// mmapped ?
 	    size = header->kind.real.blockSize & -3;
 	    return true;
 	} else {
@@ -203,11 +203,11 @@ namespace UPP {
 	    if ( sbrk( increase ) == (void *)-1 ) {
 #ifdef __U_DEBUG_H__
 		uDebugPrt( "0x%zx = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
-			   NULL, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
+			   nullptr, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
 #endif // __U_DEBUG_H__
 		extlock.release();
 		errno = ENOMEM;
-		return NULL;
+		return nullptr;
 	    } // if
 #ifdef __U_STATISTICS__
 	    sbrk_calls += 1;
@@ -284,7 +284,7 @@ namespace UPP {
 	    // Spin until the lock is acquired for this particular size of block.
 
 	    freeElem->lock.acquire();
-	    if ( likely( freeElem->freeList != NULL ) ) {
+	    if ( LIKELY( freeElem->freeList != nullptr ) ) {
 		block = freeElem->freeList;		// remove node from stack
 		freeElem->freeList = block->header.kind.real.next;
 		freeElem->lock.release();
@@ -295,7 +295,7 @@ namespace UPP {
 		// and then carve it off.
 
 		block = (Storage *)extend( tsize );	// mutual exclusion on call
-		if ( unlikely( block == NULL ) ) return NULL;
+		if ( UNLIKELY( block == nullptr ) ) return nullptr;
 	    } // if
 
 	    block->header.kind.real.home = freeElem;	// pointer back to free list of apropriate size
@@ -328,7 +328,7 @@ namespace UPP {
 #endif // __U_DEBUG_H__
 
 #ifdef __U_DEBUG__
-	if ( uHeapManager::heapManagerInstance == NULL ) {
+	if ( uHeapManager::heapManagerInstance == nullptr ) {
 	    uAbort( "uHeapManager::doFree( %p ) : internal error, called before heap is initialized.", addr );
 	} // if
 #endif // __U_DEBUG__
@@ -401,7 +401,7 @@ namespace UPP {
 #ifdef __U_STATISTICS__
 	    unsigned int N = 0;
 #endif // __U_STATISTICS__
-	    for ( Storage *p = freeLists[i].freeList; p != NULL; p = p->header.kind.real.next ) {
+	    for ( Storage *p = freeLists[i].freeList; p != nullptr; p = p->header.kind.real.next ) {
 		total += size;
 #ifdef __U_STATISTICS__
 		N += 1;
@@ -510,13 +510,13 @@ namespace UPP {
 
 
     bool uHeapControl::initialized() {
-	return uHeapManager::heapManagerInstance != NULL;
+	return uHeapManager::heapManagerInstance != nullptr;
     } // uHeapControl::initialized
 
     void uHeapControl::startup() {
 	// Just in case no previous malloc, initialization of heap.
 
-	if ( uHeapManager::heapManagerInstance == NULL ) {
+	if ( uHeapManager::heapManagerInstance == nullptr ) {
 	    uHeapManager::boot();
 	} // if
 
@@ -551,7 +551,7 @@ namespace UPP {
 
 extern "C" {
     void *malloc( size_t size ) __THROW {
-	if ( unlikely( UPP::uHeapManager::heapManagerInstance == NULL ) ) {
+	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
 	    UPP::uHeapManager::boot();
 	} // if
 
@@ -561,7 +561,7 @@ extern "C" {
 #endif // __U_STATISTICS__
 
 	void *area = UPP::uHeapManager::heapManagerInstance->doMalloc( size );
-	if ( unlikely( area == NULL ) ) errno = ENOMEM;	// POSIX
+	if ( UNLIKELY( area == nullptr ) ) errno = ENOMEM;	// POSIX
 
 #ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
@@ -584,7 +584,7 @@ extern "C" {
 #endif // __U_STATISTICS__
 
 	char *area = (char *)malloc( size );
-      if ( unlikely( area == NULL ) ) return NULL;
+      if ( UNLIKELY( area == nullptr ) ) return nullptr;
 	UPP::uHeapManager::Storage::Header *header;
 	UPP::uHeapManager::FreeHeader *freeElem;
 	size_t asize, alignment;
@@ -609,7 +609,7 @@ extern "C" {
 #endif // __U_STATISTICS__
 
 	char *area = (char *)memalign( alignment, size );
-      if ( unlikely( area == NULL ) ) return NULL;
+      if ( UNLIKELY( area == nullptr ) ) return nullptr;
 	UPP::uHeapManager::Storage::Header *header;
 	UPP::uHeapManager::FreeHeader *freeElem;
 	size_t asize;
@@ -627,7 +627,7 @@ extern "C" {
 
 
     void *realloc( void *addr, size_t size ) __THROW {
-	if ( unlikely( UPP::uHeapManager::heapManagerInstance == NULL ) ) {
+	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
 	    UPP::uHeapManager::boot();
 	} // if
 
@@ -635,8 +635,8 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
 #endif // __U_STATISTICS__
 
-      if ( unlikely( addr == NULL ) ) return malloc( size ); // special cases
-      if ( unlikely( size == 0 ) ) { free( addr ); return NULL; }
+      if ( UNLIKELY( addr == nullptr ) ) return malloc( size ); // special cases
+      if ( UNLIKELY( size == 0 ) ) { free( addr ); return nullptr; }
 
 	UPP::uHeapManager::Storage::Header *header;
 	UPP::uHeapManager::FreeHeader *freeElem;
@@ -655,13 +655,13 @@ extern "C" {
 #endif // __U_STATISTICS__
 
 	void *area;
-	if ( unlikely( alignment != 0 ) ) {		// previous request memalign?
+	if ( UNLIKELY( alignment != 0 ) ) {		// previous request memalign?
 	    area = memalign( alignment, size );		// create new area
 	} else {
 	    area = malloc( size );			// create new area
 	} // if
-      if ( unlikely( area == NULL ) ) return NULL;
-	if ( unlikely( header->kind.real.blockSize & 2 ) ) { // previous request zero fill (calloc/cmemalign) ?
+      if ( UNLIKELY( area == nullptr ) ) return nullptr;
+	if ( UNLIKELY( header->kind.real.blockSize & 2 ) ) { // previous request zero fill (calloc/cmemalign) ?
 	    assert( (header->kind.real.blockSize & 1) == 0 );
 	    bool mapped __attribute__(( unused )) = UPP::uHeapManager::heapManagerInstance->headers( "realloc", area, header, freeElem, asize, alignment );
 #ifndef __U_DEBUG__
@@ -680,7 +680,7 @@ extern "C" {
 
 
     void *memalign( size_t alignment, size_t size ) __THROW {
-	if ( unlikely( UPP::uHeapManager::heapManagerInstance == NULL ) ) {
+	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
 	    UPP::uHeapManager::boot();
 	} // if
 
@@ -694,7 +694,7 @@ extern "C" {
 #endif // __U_DEBUG__
 
 	// if alignment <= default alignment, do normal malloc as two headers are unnecessary
-      if ( unlikely( alignment <= uAlign() ) ) return malloc( size );
+      if ( UNLIKELY( alignment <= uAlign() ) ) return malloc( size );
 
 	// Allocate enough storage to guarantee an address on the alignment boundary, and sufficient space before it for
 	// administrative storage. NOTE, WHILE THERE ARE 2 HEADERS, THE FIRST ONE IS IMPLICITLY CREATED BY DOMALLOC.
@@ -706,7 +706,7 @@ extern "C" {
 	// subtract uAlign() because it is already the minimum alignment
 	// add sizeof(Storage) for fake header
 	char *area = (char *)UPP::uHeapManager::heapManagerInstance->doMalloc( size + alignment - uAlign() + sizeof(UPP::uHeapManager::Storage) );
-      if ( unlikely( area == NULL ) ) return area;
+      if ( UNLIKELY( area == nullptr ) ) return area;
 
 	// address in the block of the "next" alignment address
 	char *user = (char *)uCeiling( (uintptr_t)(area + sizeof(UPP::uHeapManager::Storage)), alignment );
@@ -736,7 +736,7 @@ extern "C" {
     int posix_memalign( void **memptr, size_t alignment, size_t size ) {
 	if ( alignment < sizeof(void *) || ! uPow2( alignment ) ) return EINVAL; // check alignment
 	*memptr = memalign( alignment, size );
-	if ( unlikely( *memptr == NULL ) ) return ENOMEM;
+	if ( UNLIKELY( *memptr == nullptr ) ) return ENOMEM;
 	return 0;
     } // posix_memalign
 
@@ -751,7 +751,7 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::free_calls, 1 );
 #endif // __U_STATISTICS__
 
-      if ( unlikely( addr == NULL ) ) {			// special case
+      if ( UNLIKELY( addr == nullptr ) ) {			// special case
 #ifdef __U_PROFILER__
 	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
 		(*uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, 0, 0 ); 
@@ -760,7 +760,7 @@ extern "C" {
 #ifdef __U_DEBUG__
 	    if ( UPP::uHeapControl::traceHeap() ) {
 #		define nullmsg "Free( 0x0 ) size:0\n"
-		// Do not debug print free( NULL ), as it can cause recursive entry from sprintf.
+		// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
 		//uDebugWrite( STDERR_FILENO, nullmsg, sizeof(nullmsg) - 1 );
 	    } // if
 #endif // __U_DEBUG__
@@ -769,14 +769,14 @@ extern "C" {
 
 	UPP::uHeapManager::heapManagerInstance->doFree( addr );
 #ifdef __U_DEBUG_H__
-	// Do not debug print free( NULL ), as it can cause recursive entry from sprintf.
+	// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
 	uDebugPrt( "free( %p )\n", addr );
 #endif // __U_DEBUG_H__
     } // free
 
 
     size_t malloc_alignment( void *addr ) __THROW {
-      if ( unlikely( addr == NULL ) ) return uAlign(); // minimum alignment
+      if ( UNLIKELY( addr == nullptr ) ) return uAlign(); // minimum alignment
 	UPP::uHeapManager::Storage::Header *header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage::Header) );
 	if ( (header->kind.fake.alignment & 1) == 1 ) {	// fake header ?
 	    return header->kind.fake.alignment & -2;	// remove flag from value
@@ -787,7 +787,7 @@ extern "C" {
 
 
 //     bool malloc_zero_fill( void *addr ) __THROW {
-//      if ( unlikely( addr == NULL ) ) return false;	// NULL allocation is not zero fill
+//      if ( UNLIKELY( addr == nullptr ) ) return false;	// nullptr allocation is not zero fill
 // 	UPP::uHeapManager::Storage::Header *header;
 // 	UPP::uHeapManager::FreeHeader *freeElem;
 // 	size_t size, alignment;
@@ -797,7 +797,7 @@ extern "C" {
 //     } // malloc_zero_fill
 
     bool malloc_zero_fill( void *addr ) __THROW {
-      if ( unlikely( addr == NULL ) ) return false;	// NULL allocation is not zero fill
+      if ( UNLIKELY( addr == nullptr ) ) return false;	// null allocation is not zero fill
 	UPP::uHeapManager::Storage::Header *header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage::Header) );
 	if ( (header->kind.fake.alignment & 1) == 1 ) { // fake header ?
 	    header = (UPP::uHeapManager::Storage::Header *)((char *)header - header->kind.fake.offset);
@@ -807,7 +807,7 @@ extern "C" {
 
 
     size_t malloc_usable_size( void *addr ) __THROW {
-      if ( unlikely( addr == NULL ) ) return 0;		// NULL allocation has 0 size
+      if ( UNLIKELY( addr == nullptr ) ) return 0;	// null allocation has 0 size
  	UPP::uHeapManager::Storage::Header *header;
  	UPP::uHeapManager::FreeHeader *freeElem;
  	size_t size, alignment;

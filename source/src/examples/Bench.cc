@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // Bench.cc -- Timing benchmarks for the basic features in uC++.
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 15 22:03:16 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  7 22:35:40 2016
-// Update Count     : 443
+// Last Modified On : Sun Dec 18 23:49:22 2016
+// Update Count     : 445
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <iostream>
@@ -656,9 +669,7 @@ void uMain::main() {
       if ( cpu == CPU_SETSIZE ) uAbort( "could not find available CPU to set affinity" );
       if ( CPU_ISSET( cpu, &mask ) ) break;
     } // for
-    CPU_ZERO( &mask );
-    CPU_SET( cpu, &mask );				// create mask with specific CPU
-    uThisProcessor().setAffinity( mask );		// execute benchmark on this CPU
+    uThisProcessor().setAffinity( cpu );		// execute benchmark on this CPU
 #endif // __U_AFFINITY__
 
     const int NoOfTimes =

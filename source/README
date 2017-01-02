@@ -5,8 +5,7 @@ REQUIREMENTS
 
 uC++ requires at least:
 
-  * g++-4.5.0 or greater. uC++ does NOT compile using other compilers or
-    operating systems.
+  * g++-4.8 or greater. uC++ does NOT compile using other compilers or operating systems.
 
   * gmake-3.79.1 or greater, which is available by anonymous ftp from any FSF mirror
     site. (All instructions below assume the "make" command is "gmake".)
@@ -40,29 +39,29 @@ DOWNLOAD
 
    * copy repository to build directory
 
-     $ wget http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.1.0.sh
+     $ wget http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-7.0.0.sh
 
 
 AUTOMATIC uC++ BUILD
 
   Option 1:
 
-    * into local directory ./u++-6.1.0 with u++ command installed in ./u++-6.1.0/bin 
+    * into local directory ./u++-7.0.0 with u++ command installed in ./u++-7.0.0/bin 
 
-      $ sh u++-6.1.0.sh
+      $ sh u++-7.0.0.sh
 
   Option 2:
 
     * into non-local directory /usr/local with u++ command installed in /usr/local/bin
 
-      $ sudo sh u++-6.1.0.sh
+      $ sudo sh u++-7.0.0.sh
 
   Option 3:
 
     * into specified directory /software/local with u++ command installed in
       /software/local/bin
 
-      $ sh u++-6.1.0.sh -p /software/local -c /software/local/bin
+      $ sh u++-7.0.0.sh -p /software/local -c /software/local/bin
 
 
 MANUAL uC++ BUILD
@@ -77,11 +76,11 @@ MANUAL uC++ BUILD
 
     * extract tarball
 
-       $ sh u++-6.1.0.sh -e
+       $ sh u++-7.0.0.sh -e
 
     * change to source directory
 
-       $ cd u++-6.1.0
+       $ cd u++-7.0.0
 
   * Read the comments and edit the variables in the top level make file,
     ./Makefile.

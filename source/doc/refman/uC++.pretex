@@ -1,14 +1,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -*- Mode: Latex -*- %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 
-%% uC++ Version 6.1.0, Copyright (C) Peter A. Buhr
+%% uC++ Version 7.0.0, Copyright (C) Peter A. Buhr
 %% 
 %% uC++.pretex -- uC++ Annotated Reference Manual
 %% 
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Sep 13 07:53:58 2016
-%% Update Count     : 6897
+%% Last Modified On : Tue Dec 27 09:00:36 2016
+%% Update Count     : 7252
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -22,6 +22,7 @@
 
 \newcommand{\NT}[1]{\nterminal{#1}}
 \renewcommand{\newtermFontInline}{\color{OliveGreen}\textbf}
+\newcommand{\BF}[1]{\Textbf{#1}}
 
 \setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
 
@@ -30,7 +31,7 @@
 \makeindex
 
 
-\newcommand{\Version}{6.1.0}
+\newcommand{\Version}{7.0.0}
 \newcommand{\nopageno}[1]{}
 
 
@@ -46,14 +47,14 @@
 \vspace{1in}
 \href{http://plg.uwaterloo.ca/~usystem/uC++.html}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/uC++.html}} \\
 \vspace{0.125in}
-\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.1.0.sh}{\uC download} or \href{https://github.com/pabuhr/uCPP}{Github} (installation: \textsf{sudo sh u++-6.1.0.sh}) \\
+\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-7.0.0.sh}{\uC download} or \href{https://github.com/pabuhr/uCPP}{Github} (installation: \textsf{sudo sh u++-7.0.0.sh}) \\
 } % title
 \author{
-\Large Peter A. Buhr \copyright\thanks{\normalsize
+\large Peter A. Buhr \copyright\thanks{\normalsize
 Permission is granted to redistribute this manual unmodified in any form;
 permission is granted to redistribute modified versions of this	manual in any form, provided the modified version explicitly attributes said modifications to their respective authors, and provided that no modification is made to these terms of redistribution.
-} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012 \\
-\Large Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
+} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016 \\
+Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
 } % author
 
 \pagenumbering{roman}
@@ -935,7 +936,7 @@ The amount of storage for the coroutine's stack is always greater than this stac
 -- creates a coroutine on the current cluster using the specified storage and \emph{maximum} storage size (in bytes) for the coroutine's stack.
 The amount of storage for the coroutine's stack is always less than actual storage size, as extra information is stored on the stack.
 \Emph{This storage is NOT freed at coroutine deallocation}.
-If the specified storage address is zero ( %(NULL%)), the storage size becomes a stack size, as in the previous constructor.
+If the specified storage address is zero ( %(nullptr%)), the storage size becomes a stack size, as in the previous constructor.
 \end{prefix}
 A coroutine type can be designed to allow declarations to specify the stack storage and size by doing the following:
 %[
@@ -1057,7 +1058,7 @@ Hence, there is a difference between who is executing and where execution is occ
 \VRef[Figure]{f:SemiProdCons} shows a semi-coroutine producer and consumer coroutine, and a driver routine.
 Notice the explicit call from %(Prod%)'s %(main%) routine to %(delivery%) and then the return back when %(delivery%) completes.
 %(delivery%) always activates its coroutine, which subsequently activates %(delivery%).
-% \VRef[Appendix]{s:CoroutineBinaryInsertionSort} shows a complex binary insertion sort implemented as a semi-coroutine.
+% \VRef[Appendix]{s:CoroutineBinaryInsertionSort} shows a complex binary-insertion sort implemented as a semi-coroutine.
 
 \begin{figure}
 \centering
@@ -2517,7 +2518,7 @@ z = new uOwnerLock;
 The declarations create three owner-lock variables and initializes them to open.
 
 The member routine %(times%)\index{times@%(times%)} returns the number of times the lock has been acquired by the lock owner.
-The member routine %(owner%)\index{owner@%(owner%)} returns the task owning the lock or NULL if there is no owner.
+The member routine %(owner%)\index{owner@%(owner%)} returns the task owning the lock or nullptr if there is no owner.
 The member routine %(acquire%)\index{acquire@%(acquire%)} acquires the lock if it is open, otherwise the calling task blocks until it can acquire the lock.
 The member routine %(tryacquire%)\index{tryacquire@%(tryacquire%)} makes one attempt to try to acquire the lock, i.e., it does not block;
 the value %(true%) is returned if the lock is acquired and %(false%) otherwise.
@@ -3136,6 +3137,8 @@ Future_ISM<int> result;
 result.exception( new E );	// exception deleted by future
 %]
 exception deleted by %(reset%) or when future deleted
+\item[%(delivery( uBaseEvent *cause )%)]
+-- same as member %(exception%).
 \end{prefix}
 
 A server may require storage to buffer call arguments and other data needed for cancellation of futures.
@@ -3215,7 +3218,7 @@ Note that because of this guarantee provided by %(cancel%), it may be the case t
 
 \subsection{Example}
 
-This example illustrates how a client uses a number of futures to communicate asynchronously with a server:
+This example illustrates how a client uses a number of futures to communicate asynchronously with a server (see \VRef{s:streamIO} for %(osacquire%)):
 %[
 Server server;								// server thread to process async call
 Future_ESM<int, Server::IMsg> f[10];		// created on the stack
@@ -3527,7 +3530,7 @@ The client blocks if there is no available future.
 If multiple futures are available, one is chosen arbitrarily to return;
 other available futures can be obtained by further calls to %(drop%).
 Calling drop on an empty ISM queue is an error;
-calling drop on an empty ESM queue returns %(NULL%).
+calling drop on an empty ESM queue returns %(nullptr%).
 \end{prefix}
 
 The %(drop%) method is an example of ``\Index{wait-any}'' semantics in homogeneous selection:
@@ -3594,12 +3597,12 @@ This latter requirement is necessary because the buffer is a shared resource tha
 However, polling can obscure server code and polling frequency is always an issue.
 The only way to remove polling is to separate the buffer's mutual-exclusion from the server's.
 
-The middle structure in \VRef[Figure]{f:BasicServerStructures} handles multiple asynchronous calls by transforming the direct communication between client and server into indirect communication by composing the server as one of more worker tasks to perform computations and a monitor buffering future requests from asynchronous calls between client(s) and worker(s).
-A client places arguments into the input buffer along with a future to return a result, and then continues.
+The middle structure in \VRef[Figure]{f:BasicServerStructures} handles multiple asynchronous calls by transforming direct communication between client and server into indirect communication via composing the server as one or more worker tasks to perform computations and a monitor buffering future requests from asynchronous calls between client(s) and worker(s) (see \VRef{s:Actor})
+A client insert arguments into the buffer and receives a future result, and then continues.
 A worker removes arguments from the input buffer for computation and places the result of the computation into the supplied future;
 inserting the result implicitly unblocks any waiting client(s) attempting access to the future.
-Clients may block if there is contention on accessing the buffer or the buffer is full;
-workers may block if there is contention on accessing the buffer or the buffer is empty.
+Clients may block if there is buffer contention or the buffer is full;
+workers may block if there is buffer contention or the buffer is empty.
 Any buffer management is performed by the client and/or worker when manipulating the buffer(s).
 
 \begin{figure}
@@ -3628,7 +3631,7 @@ _Monitor InputServer {
 		int requested;
 
 		bool cancel() {
-			server->requests[requested] = NULL;
+			server->requests[requested] = nullptr;
 			return true;
 		} // ServerData::cancel
 		ServerData() {}
@@ -3658,7 +3661,7 @@ _Monitor InputServer {
 
 	_Mutex void input( int value, string text ) {
 		if ( requests.size() > value ) {
-			if ( requests[value] != NULL ) {
+			if ( requests[value] != nullptr ) {
 				requests[value]->delivery( text );
 			}
 		}
@@ -3745,7 +3748,7 @@ Each server has server-specific data, %(ServerData%), created in each future for
 When a client cancels a future associated with this server, member %(ServerData::cancel%) is called, and both servers mark the position in the request queue to indicate that future is cancelled.
 The worker-task type, %(InputWorker%), and an instance of it, %(is%), are local to the server for abstraction and encapsulation reasons.
 %(InputWorker%) reads an $<integer, string>$ tuple and communicates the tuple to the server via a synchronous call to the private mutex-member %(input%), which checks if a future exists with a matching integer key, and if so, places the string into that future as its result value.
-The ESM server conditionally inserts the string into the future by checking if the future at position %(value%) is %(NULL%) indicating it has been cancelled.
+The ESM server conditionally inserts the string into the future by checking if the future at position %(value%) is %(nullptr%) indicating it has been cancelled.
 The ISM server does not conditionally insert the string because an empty future is inserted at position %(value%) to hold the string if the original future is cancelled.
 Asynchronous calls from clients are made by calling mutex member %(request%), specifying an integer key and a future to return the associated string read by the input worker.
 The ESM server resets the future passed to it as it reuses the future, and the ISM server creates a new future.
@@ -3754,19 +3757,22 @@ The future is then buffered in vector %(requests%) until the input worker subseq
 
 
 \subsection{Executors}
+\label{s:Executors}
 
 An executor is a predefined, generic server with a fixed-size pool of worker threads performing submitted units of work, where work is formed by a routine or functor.
+Each worker thread has its own work queue and arriving work requests are demultiplexed among the queues in roughly round-robin order.
+No work sharing or stealing is performed among the work queues.
 %[
 class uExecutor {
-    enum { DefaultWorkers = 16, DefaultProcessors = 2 };
+    enum { DefaultWorkers = 16, DefaultProcessors = 4 };
   public:
     enum Cluster { Same, Sep };				// use same or separate cluster
     uExecutor();
     uExecutor( Cluster clus );
     uExecutor( unsigned int nworkers, Cluster clus = Same );
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same );
-    template <typename Func> void send( Func action );
-    template <typename Func> auto sendrecv( Func action ) -> Future_ISM<decltype(action())>;
+    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset = -1, Cluster clus = Same );
+    template< typename Func > void send( Func action );
+    template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
 };
 %]
 \index{uExecutor@%(uExecutor%)!send@%(send%)}%
@@ -3775,13 +3781,16 @@ The constructor routines have the following form:
 \begin{prefix}
 \item[%(uExecutor()%)]
 \begin{sloppypar}
--- creates an executor containing a work queue, %(DefaultWorkers%) worker threads, running on %(DefaultProcessors%) processors, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
+-- creates an executor containing %(DefaultWorkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
 \item[%(uExecutor( Cluster clus )%)]
--- creates an executor containing a work queue, %(DefaultWorkers%) worker threads, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+-- creates an executor containing %(DefaultWorkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \item[%(uExecutor( unsigned int nworkers, Cluster clus = Same )%)]
--- creates an executor containing a work queue, %(nworkers%) worker threads, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same )%)]
--- creates an executor containing a work queue, %(nworkers%) worker threads, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+-- creates an executor containing %(nworkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset = -1, Cluster clus = Same )%)]
+-- creates an executor containing %(nworkers%) worker threads and queues, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+If %(affOffset%) is positive, the %(nprocessors%) processors are locked (affinity) on the CPUs starting at the specified starting value;
+e.g., for %(nprocessors%) of 4 and %(affOffset%) of 16, the processors are locked on CPUS 16, 17, 18, 19.
+Otherwise, the processors are run on an CPUs selected by the operating system.
 \end{sloppypar}
 \end{prefix}
 
@@ -3797,49 +3806,555 @@ The member routine %(sendrecv%) queues a unit of work %(action%), with a return 
 using namespace std;
 
 int routine() {
-	return 3;											// preform work and return result
+	return 3;											// perform work and return result
 }
 struct Functor {										// closure: allows arguments to work
 	double val;
 	double operator()() {								// function-call operator
-		return val;										// preform work and return result
+		return val;										// perfom work and return result
 	}
 	Functor( double val ) : val( val ) {}
 } functor( 4.5 );
 
 void routine2() {
-	osacquire( cout ) << -1 << endl;					// preform work and no result
+	osacquire( cout ) << -1 << endl;					// perfom work and no result
 }
 struct Functor2 {										// closure: allows arguments to work
 	double val;
 	void operator()() {									// function-call operator
-		osacquire( cout ) << val << endl;				// preform work and no result
+		osacquire( cout ) << val << endl;				// perfom work and no result
 	}
 	Functor2( double val ) : val( val ) {}
 } functor2( 7.3 );
 
 void uMain::main() {
+	enum { NoOfRequests = 10 };
 	uExecutor executor;									// work-pool of threads and processors
-	Future_ISM<int> fi[10];
-	Future_ISM<double> fd[10];
-	Future_ISM<char> fc[10];
+	Future_ISM<int> fi[NoOfRequests];
+	Future_ISM<double> fd[NoOfRequests];
+	Future_ISM<char> fc[NoOfRequests];
 
-	for ( int i = 0; i < 10; i += 1 ) {					// send off work for executor
+	for ( int i = 0; i < NoOfRequests; i += 1 ) {		// send off work for executor
 		fi[i] = executor.sendrecv( routine );			//  and get return future
 		fd[i] = executor.sendrecv( functor );
 		fc[i] = executor.sendrecv( []() { return 'a'; } );
-	} // for
+	}
 	executor.send( routine2 );							// send off work but no return value
 	executor.send( functor2 );
 	executor.send( []() { osacquire( cout ) << 'd' << endl; } );
-	for ( int i = 0; i < 10; i += 1 ) {					// wait for results
+	for ( int i = 0; i < NoOfRequests; i += 1 ) {		// wait for results
 		osacquire( cout ) << fi[i]() << " " << fd[i]() << " " << fc[i]() << " ";
-	} // for
-	cout << endl;
+	}
+	osacquire( cout ) << endl;
 }
 %]
 \caption{Executor Example}
 \label{f:ExecutorExample}
+\end{figure}
+
+
+\section{Actor}
+\label{s:Actor}
+
+The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
+Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
+\VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (worker) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
+A mailbox contains heterogeneous typed messages.
+Actors do not have a thread;
+instead they are executed by an underlying thread-pool, which calls an actor's %(receive%) member with each message from its mailbox.
+Actor execution guarantees messages are executed sequentially and in FIFO order from the mailbox (i.e., messages are never executed concurrently for a specific actor).
+Actors also create other other actors and communicate with these new actors by sending messages to their mailbox.
+Messages are divided into those that do and do not require a response.
+Responses are handled asynchronously through \Index{future}s, where the actor processing the message deliveries the future result.
+Actor references, futures, and routines/functors/lambdas can be passed in messages.
+Most actor systems leverage \Index{garbage collection} to manage actors and messages, and the actor system terminates when all actors terminate.
+Since \CC does not have implicit garbage collection, \uC actors and messages involve explicit storage management, so programmers need to deal with actor/message life-time by returning an allocation status after processing a message.
+%[
+class uActor {
+	enum Allocation { Nodelete, Delete };				// allocation status
+	...
+};
+%]
+\index{uActor@%(uActor%)!Nodelete@%(Nodelete%)}%
+\index{uActor@%(uActor%)!Delete@%(Delete%)}%
+Allocation status is %(Nodelete%) or %(Delete%).
+%(Nodelete%) means either the actor or message persists after an actor processes a message, while %(Delete%) means either the actor or message is deleted after an actor processes a message.
+
+\begin{figure}
+\centering
+\input{Actor}
+\caption{Actor model}
+\label{f:ActorModel}
+\end{figure}
+
+In \uC, actor messages inherit from base-type %(uActor::Message%):
+%[
+struct Message {
+	uActor *sender;										// delegated sender
+	Allocation allocation;								// allocation status
+	Message( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	Message( uActor * sender );							// allocation = Delete
+};	
+%]
+\index{Message@%(Message%)!sender@%(sender%)}%
+\index{Message@%(Message%)!allocation@%(allocation%)}%
+\index{uActor@%(uActor%)!Message!sender@%(sender%)}%
+\index{uActor@%(uActor%)!Message!allocation@%(allocation%)}%
+
+The overloaded constructor routine %(Message%)\index{Message@%(Message%)} has the following forms:
+\begin{prefix}
+\item[%(Message( Allocation allocation = Nodelete, uActor * sender = nullptr )%)]
+-- creates a message with a default allocation of %(Nodelete%), and specifies the actor that sent the message or an actor delegated as the message sender.
+\item[%(Message( uActor * sender )%)]
+-- creates a message with a default allocation of %(Delete%), and specifies the actor that sent the message or an actor delegated as the message sender.
+\end{prefix}
+Note, the default constructor assumes the message persists, while specifying the sender constructor assumes the message is deleted.
+
+The %(Message%) member %(sender%)\index{sender@%(sender%)} is a pointer to the actor delegated as the message sender or %(nullptr%).
+The %(Message%) member %(allocation%)\index{allocation@%(allocation%)} is the message allocation status.
+
+The message %(uActor::ReplyMsg%) inherits from %(uActor::Message%) and is used to discriminate if a message type requires a reply, and if so, all non-type specific operations are accessible on the generic future in the future message.
+%[
+struct ReplyMsg : public Message {						// untyped future message
+	ReplyMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	ReplyMsg( uActor * sender );						// allocation = Delete
+	virtual bool available() = 0;						// untyped future operations
+	virtual bool cancelled() = 0;
+	virtual void cancel() = 0;
+	virtual bool delivery( uBaseEvent * ex ) = 0;
+	virtual void reset() = 0;
+};
+%]
+\index{ReplyMsg@%(ReplyMsg%)!available@%(available%)}%
+\index{ReplyMsg@%(ReplyMsg%)!cancelled@%(cancelled%)}%
+\index{ReplyMsg@%(ReplyMsg%)!cancel@%(cancel%)}%
+\index{ReplyMsg@%(ReplyMsg%)!delivery@%(delivery%)}%
+\index{ReplyMsg@%(ReplyMsg%)!reset@%(reset%)}%
+The generic future message inherits from %(uActor::ReplyMsg%)\index{ReplyMsg@%(ReplyMsg%)} and contains the matching future to the one returned at the message send.
+%[
+template< typename Result > struct FutureMessage : public ReplyMsg { // typed future message
+	Future_ISM< Result > result;						// delivered future
+	FutureMessage( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	FutureMessage( uActor * sender );					// allocation = Delete
+	// available, cancelled, cancel, delivery, reset from ReplyMsg
+	bool delivery( Result res );
+};
+%]
+\index{FutureMessage@%(FutureMessage%)!delivery@%(delivery%)}%
+
+\VRef[Figure]{f:ActorType} shows an actor has two members to send messages, %(tell%) and %(ask%), for sending messages without and with a return value, and at least one %(receive%) member must be created, where messages are delivered.
+The %(tell%) send has the following forms:
+%[
+IntMsg msg;
+actor->\(\BF{\)tell\(}\)( *new IntMsg );\(}\Tab{36}{\)// send message to actor, do not identify sender
+*actor \(\BF{\)|\(}\) *new IntMsg;	// short form
+actor->tell( msg, this );			// send message to actor, identify sender
+%]
+%(tell%) message sends can be cascaded:
+%[
+actor->tell( *new IntMsg, this )->tell( *new IntMsg, sender )->tell( *new IntMsg );
+*actor | *new IntMsg | *new IntMsg | *new IntMsg;
+%]
+The %(ask%) send has the following forms:
+%[
+future = actor->\(\BF{\)ask\(}\)( msg );\(}\Tab{36}{\)// send message to actor with future result, do not identify sender
+future = *actor \(\BF{\)||\(}\) *new IntMsg;\(}\Tab{36}{\)// short form
+future = actor->ask( msg, this );	// send message to actor, identify sender
+%]
+
+\begin{figure}
+%[
+class uActor {
+	virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
+  protected:
+	virtual void preStart() { /* default empty */ };	// user supplied actor initialization
+	virtual Handler become( Handler handler );			// dynamically change message handler
+  public:
+	enum Allocation { Nodelete, Delete };				// allocation status
+	struct Message { ... };
+	struct ReplyMsg : public Message { ... }
+	template< typename Result > struct FutureMessage : public ReplyMsg { ... }
+
+	// Communication
+	uActor & tell( Message & msg, uActor * sender = nullptr ); // async call, no return
+	uActor & operator|( Message & msg );
+	template< typename Result > Future_ISM< Result > ask( FutureMessage< Result > & msg,
+			uActor * sender = nullptr ) {				// async call, return future
+	template< typename Result > Future_ISM< Result >operator||( FutureMessage< Result > &msg );
+
+	// Administration
+	void restart();										// reset actor to initial state
+	static struct StopMsg : public uActor::Message {} stopMsg; // for termination
+	static bool stop( uDuration duration = 0 );			// wait for all actors to terminate or timeout
+
+	// Error handling
+	static struct UnhandledMsg : public uActor::Message {} unhandledMsg; // tell error
+
+	_Event Unhandled {									// ask error
+	  public:
+		Message * msg;
+		Unhandled( Message * msg ) : msg( msg );
+	};
+};
+%]
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Nodelete@%(Nodelete%)}%
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Delete@%(Delete%)}%
+\index{uActor@%(uActor%)!preStart@%(preStart%)}%
+\index{uActor@%(uActor%)!Handler@%(Handler%)}%
+\index{uActor@%(uActor%)!become@%(become%)}%
+\index{uActor@%(uActor%)!tell@%(tell%)}%
+\index{uActor@%(uActor%)!ask@%(ask%)}%
+\index{uActor@%(uActor%)!restart@%(restart%)}%
+\index{uActor@%(uActor%)!stopMsg@%(stopMsg%)}%
+\index{uActor@%(uActor%)!StopMsg@%(StopMsg%)}%
+\index{uActor@%(uActor%)!stop@%(stop%)}%
+\index{uActor@%(uActor%)!unhandledMsg@%(unhandledMsg%)}%
+\index{uActor@%(uActor%)!UnhandledMsg@%(UnhandledMsg%)}%
+\index{uActor@%(uActor%)!Case@%(Case%)}%
+\caption{Actor Type}
+\label{f:ActorType}
+\end{figure}
+
+An actor receive-member begins by discriminating the kind of message passed to it based on the message type using the %(Case%)\index{Case@%(Case%)} macro:
+%[
+Allocation \(\BF{\)receive\(}\)( Message &msg ) {		// deliver message from mailbox
+	\(\BF{\)Case\(}\)( MsgInt, msg ) {					// msg of type MsgInt ?
+		msg\(\BF{\)_t\(}\)->i = msg_t->i + ... ;		// msg_t is MsgInt pointer to message
+	} else Case( MsgFloat, msg ) {						// msg of type MsgFloat ?
+		... msg_t + 5.6 ... ;							// msg_t is MsgFloat ponter to message
+	} else // unknown message type
+	return \(\BF{\)...\(}\) ;							// Nodelete or Delete
+}
+%]
+Within each %(Case%) clause, a new pointer variable is created with name \emph{message-name}%(_t%) and type specified in the %(Case%) clause.
+This local variable is used to access the specific fields associated with the kind of received message.
+Finally, a receive member ends by returning whether the actor is to persist (%(Nodelete%)) or be deleted (%(Delete%)).
+
+For messages derived from %(FutureMessage%)\index{FutureMessage@%(FutureMessage%)}, the receive can deliver a value into the future associated with the message:
+%[
+	Case( FMsg, msg ) {									// FutureMessage FMsg ?
+		// compute val
+		msg_t->\(\BF{\)delivery\(}\)( val );			// deliver value into future
+	} ...
+%]
+All future operations are available through the variable %(msg_t%).
+
+An actor is create from an actor type, which has all the properties of a %(class%) and implicitly inherits from %(uActor%).
+%[
+\(\BF{\)_Actor\(}\) MyActor {							// new actor type
+	OtherActor * partner;
+	void \(\BF{\)preStart()\(}\) {						// executed by executor
+		*partner | *new IntMsg( 7 );					// contact partner
+	}
+	...
+  public:
+	MyActor( OtherActor *partner ) : partner( partner ) {} // executed by creator's thread
+};
+%]
+The member %(preStart%)\index{preStart@%(preStart%)} is run after an actor's constructor by an executor thread versus the creating thread executing the actor's constructor.
+%(MyActor%) is created with a partner actor and its first action is to send a message to its partner.
+
+The member %(become%)\index{become@%(become%)} changes the receive member and returns the previous receive member.
+%[
+_Actor MyActor {
+	Allocation receive {								// initial receiver
+		... Handler prev = \(\BF{\)become\(}\)( receiver2 ); ...\(}\Tab{56}{\)// toggle to different receiver
+	}
+	Allocation receive2 {								// alternate receiver
+		... \(\BF{\)become\(}\)( receiver ); ...		// toggle back
+	}
+};
+%]
+The type %(Handle%)\index{Handle@%(Handle%)} represents a pointer to an actor member that matches the %(receive%) prototype.
+Initially, messages are delivered to member %(receive%) but are redirected to %(receive2%) after executing the %(become%) in %(receive%).
+A similar redirection occurs in member %(receive2%).
+
+The member %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleting and creating a new actor.
+The predefined message %(uActor::stopMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StopMsg%)\index{StopMsg@%(StopdMsg%)} is the \emph{suggested} way to stop an actor.
+%(uActor::stop%) is called to wait for all actors in the system to terminate;
+therefore, actors must be created prior to calling %(uActor::stop%) or the program ends immediately.
+The optional duration (in seconds) unblocks the waiting task after the time interval has expired and returns %(false%), i.e., all the actors did not stop in the time interval.
+
+There are two mechanisms to deal with message errors.
+The most common error is a sent message not understood by the receiver, i.e., the type of the message is not one a receive member knows how to handle.
+In this case, the predefined message %(uActor::unhandledMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)} can be returned to the sender to indicate it sent an unhandleable message.
+The following idiom for an actor's receive handles sending and receiving unknown messages for %(tell%) messages.
+%[
+Allocation receive( Message &msg ) {
+	Case( MsgType1, msg ) {								// handle known message types
+		...
+	// error cases
+	} else Case( \(\BF{\)UnhandledMsg\(}\), msg ) {		// receiver complain
+		uAbort( "sent unknown message to %p", msg.sender );
+	} else {											// unknown message
+		*msg.sender | \(\BF{\)uActor::unhandledMsg\(}\);\(}\Tab{56}{\)// sender complain
+	}		
+}
+%]
+In this case, the type of the %(unhandledMsg%) message (%(UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)}) is used to receive the %(unhandledMsg%) message from a complaining receiver.
+As well, the predefined message %(unhandledMsg%) is returned to the sender to indicate it sent an unhandleable message.
+
+The following idiom for an actor's receive handles sending and receiving unknown messages for %(ask%) messages.
+%[
+Allocation receive( Message &msg ) {
+	Case( MsgType1, msg ) {								// handle known message types
+		...
+	// error cases
+	} else Case( \(\BF{\)uActor::ReplyMsg\(}\), msg ) {\(}\Tab{56}{\)// unknown future message
+		msg_t->delivery( \(\BF{\)new MyEvent( ... )\(}\) );\(}\Tab{56}{\)// future complain
+		// _Throw uActor::Unhandled( msg_t );			// alternative
+	...													// unknown tell message
+}
+%]
+In this case, the message type %(ReplyMsg%)\index{ReplyMsg@%(ReplyMsg%)} is used to determine if the message is an unknown %(ask%) message (%(FutureMessage%)) versus an unknown %(tell%) message.
+Instead of returning an %(unhandledMsg%) to the sender, it is possible to inform the sender through the future in the %(FutureMessage%).
+One approach is to explicitly deliver an exception (%(MyEvent%)) into the future;
+the other approach is to raise an exception, which is caught by the worker thread executing the actor and the worker thread implicitly duplicates the exception into the %(FutureMessage%).
+
+Finally, there are three routines that control the actor system.
+The following routines control the actor executor by adjusting its thread pool.
+%[
+extern unsigned int uDefaultActorThreads();				// user threads servicing executor thread-pool
+extern unsigned int uDefaultActorProcessors();			// kernel threads servicing executor thread-pool
+%]
+These routines set the number of threads and processors created by the actor executor (see \VRef{s:Executors}).
+Currently, the defaults are 8 threads and 3 processors (assuming an existing processor makes 4) and the actor executor runs in the user cluster.
+
+Actors may inherit from other actors\index{actor!inheritance}:
+%[
+_Actor B {
+	Allocation receive( Message & ) { return Delete; }
+  protected:
+	void preStart() { ... }
+  public:
+	B() {}
+	B( int i ) {}
+};
+_Actor D : public B {
+	void preStart() { B::preStart(); }					// call base member
+	Allocation receive( Message & ) { return Delete; }
+  public:
+	D() {}
+	D( int i ) : B( i ) {}
+};
+B b;	// B::preStart called after constructor
+D d;	// D::prestart called after constructor, which calls B::preStart
+%]
+For variable %(b%), only %(B::preStart%) is called;
+for variable %(d%), only %(D::preStart%) is called.
+In general, the most derived actor knows how it wants to initialize the entire actor object.
+However, it is possible for the derived actor to explicitly invoke the base actors %(preStart%), as in %(D::prestart%), which calls %(B::preStart%).
+
+\begin{figure}
+%[
+#include <iostream>
+using namespace std;
+#include <uActor.h>
+
+struct StrMsg : public uActor::Message {				// actor messages
+	string val;
+	StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
+};
+
+_Actor Hello {
+	Allocation receive( Message &msg ) {
+		Case( StrMsg, msg ) {							// determine message kind
+			osacquire acq( cout );
+			cout << msg_t->val;
+			if ( msg_t->val == "hello" ) {
+				cout << ", hello back at you!" << endl;
+			} else {
+				cout << ", do not understand?" << endl;
+			}
+		} else Case( StopMsg, msg ) {
+			return Delete;								// delete actor
+		} // Case
+		return Nodelete;								// reuse actor
+	}
+};
+void uMain::main() {
+	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
+	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
+	uActor::stop();										// wait for all actors to end
+}
+%]
+\caption{Hello Actor}
+\label{f:HelloActor}
+\end{figure}
+
+\VRef[Figure]{f:HelloActor} shows a simple actor that receives a number of messages and then stops.
+There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
+The %(receive%) routine discriminates the kind of message and then examines the string within the message to print an appropriate message.
+Once in a discrimination clause, the variable %(msg_t%) is used to access the string in the message.
+For a %(StrMsg%), the actor continues to exist by returning %(Nodelete%);
+for a %(StopMsg%), the actor terminates by returning %(Delete%).
+The %(main%) member creates two actors and passes each actor three messages, two string messages and a stop message.
+Then the %(main%) program waits for all actors to end.
+
+\VRef[Figure]{f:FibonacciActor} shows two actors computing Fibonacci numbers, the left actor manages the three states of the Fibonacci algorithm using the flag variable %(state%), and the right actor uses %(become%) to change the receive target for each of the three states.
+The actors accept a %(NextMsg%) to compute the next Fibonacci number and a %(StopMsg%) to terminate.
+The %(NextMsg%) contains the sending actor, so the Fibonacci actor returns the new Fibonacci number back to the sender.
+
+\begin{figure}
+\centering
+\LGindent=0pt
+\begin{tabular}{@{}l@{}}
+%[
+struct NextMsg : public uActor::Message {} nextMsg;
+struct FibMsg : public uActor::Message { long long int fib; } fibMsg;
+%]
+\\
+\begin{tabular}{@{}l|l@{}}
+%[
+_Actor Fib {
+	long long int fn1, fn2;
+	int state = 1;
+
+	Allocation receive( Message &msg ) {
+		Case( NextMsg, msg ) {
+			switch( state ) {
+			  case 1:
+				fibMsg.fib = 0;
+				fn1 = fibMsg.fib;
+				state = 2;
+				break;
+			  case 2:
+				fibMsg.fib = 1;
+				fn2 = fn1; fn1 = fibMsg.fib;
+				state = 3;
+				break;
+			  case 3:
+				fibMsg.fib = fn1 + fn2;
+				fn2 = fn1; fn1 = fibMsg.fib;
+				break;
+			} // switch
+			msg.sender() | fibMsg;
+		} else Case( StopMsg, msg ) {
+			return Delete;
+		} // Case
+		return Nodelete;
+	}
+};
+%]
+&
+%[
+_Actor Fib{
+	long long int fn1, fn2;
+
+
+	Allocation receive( Message &msg ) {
+		Case( NextMsg, msg ) {
+			fibMsg.fib = 0;
+			fn1 = fibMsg.fib;
+			become( &Fib::receive2 );
+			msg.sender() | fibMsg;
+		} else Case( StopMsg, msg ) {
+			return Delete;
+		} // Case
+		return Nodelete;
+	}
+	Allocation receive2( Message &msg ) {
+		Case( NextMsg, msg ) {
+			fibMsg.fib = 1;
+			fn2 = fn1; fn1 = fibMsg.fib;
+			become( &Fib::receive3 );
+			msg.sender() | fibMsg;
+		} else Case( StopMsg, msg ) {
+			return Delete;
+		} // Case
+		return Nodelete;
+	}
+	Allocation receive3( Message &msg ) {
+		Case( NextMsg, msg ) {
+			fibMsg.fib = fn1 + fn2;
+			fn2 = fn1; fn1 = fibMsg.fib;
+			msg.sender() | fibMsg;
+		} else Case( StopMsg, msg ) {
+			return Delete;
+		} // Case
+		return Nodelete;
+	}
+};
+%]
+\end{tabular}
+\end{tabular}
+\caption{Fibonacci Actor: explicit and implicit state}
+\label{f:FibonacciActor}
+\end{figure}
+
+\VRef[Figure]{f:FutureActor} illustrates %(ask%) messages with futures.
+The message kinds are: %(IntMsg%), %(StrMsg%), %(IntStrMsg%), and %(StopMsg%).
+Message %(IntStrMsg%) shows the message type %(string%) is independent of the returned future-type %(int%).
+The actor receives each kind of message, prints its specific value and delivers an appropriate result into the message future.
+The main member starts by sending %(tell%) requests using the future messages.
+However, the future values are not assigned, so the future result is lost (ignored).
+Next, the main member sends %(ask%) requests using the future messages, and the futures are stored for each message send.
+After which, the main member prints each future by accessing the futures, blocking if necessary, until the actor deliveries a value into each kind of future.
+Finally, the main member sends %(ask%) requests for the future with a different message (%(string%)) and future type (%(int%)).
+The %(int%) futures are reused to store the returned futures, and then the futures are accessed printing the delivered value for each future.
+
+\begin{figure}
+%[
+struct IntMsg : public uActor::FutureMessage< int > {
+	int val;
+	IntMsg( int val ) : FutureMessage( uActor::Delete ), val( val ) {}
+};
+struct StrMsg : public uActor::FutureMessage< string > {
+	string val;
+	StrMsg( string val ) : FutureMessage( uActor::Delete ), val( val ) {}
+};
+struct IntStrMsg : public uActor::FutureMessage< int > {
+	string val;
+	IntStrMsg( string val ) : FutureMessage( uActor::Delete ), val( val ) {}
+};
+
+_Actor Actor {
+	Allocation receive( uActor::Message &msg ) {
+		Case( IntMsg, msg ) {							// ask messages
+			osacquire( cout ) << "Actor " << msg_t->val << endl;
+			msg_t->delivery( 7 );						// insert value into future
+		} else Case( StrMsg, msg ) {
+			osacquire( cout ) << "Actor " << msg_t->val << endl;
+			msg_t->delivery( "XYZ" );					// insert value into future
+		} else Case( IntStrMsg, msg ) {
+			osacquire( cout ) << "Actor " << msg_t->val << endl;
+			msg_t->delivery( 12 );						// insert value into future
+		} else Case( StopMsg, msg ) {
+			return Delete;								// delete actor
+		} // Case
+		return Nodelete;								// reuse actor
+	}
+};
+
+void uMain::main() {
+	enum { Times = 5 };
+	Future_ISM< int > fi[Times];
+	Future_ISM< string > fs[Times];
+	Actor * actor = new Actor;
+
+	for ( int i = 0; i < Times; i += 1 ) {				// tell messages
+		*actor | *new IntMsg( 3 );						// ignore future
+		*actor | *new StrMsg( "ABC" );
+	}
+	for ( int i = 0; i < Times; i += 1 ) {				// ask messages
+		fi[i] = *actor || *new IntMsg( 4 );				// store future
+		fs[i] = *actor || *new StrMsg( "DEF" );
+	}
+	for ( int i = 0; i < Times; i += 1 ) {				// access future values
+		osacquire( cout ) << "futures " << fi[i]() << " " << fs[i]() << endl;
+	}
+	for ( int i = 0; i < Times; i += 1 ) {				// ask messages
+		fi[i] = *actor || *new IntStrMsg( "HIJ" );		// store future
+	}
+	for ( int i = 0; i < Times; i += 1 ) {				// access future values
+		osacquire( cout ) << "futures " << fi[i]() << endl;
+	}
+	*actor | uActor::stopMsg;							// terminate actor
+	uActor::stop();										// wait for all actors to terminate
+}
+%]
+\caption{Future Actor}
+\label{f:FutureActor}
 \end{figure}
 
 
@@ -4014,7 +4529,7 @@ normally, these steps are performed by a single task.
 However, it is reasonable for different tasks to be using %(cin%) and %(cout%) but not need implicit flushing.
 In this case, the best solution is to remove the tie between %(cin%) and %(cout%), e.g.:
 %[
-cin.tie( NULL );	// set tie partner to NULL
+cin.tie( nullptr );	// set tie partner to null
 %]
 eliminating the implicit flushing and the race condition (see examples in \VRef[Sections]{s:ClientUNIXDatagram} and \VRef[]{s:ClientINETStream}).
 
@@ -4052,7 +4567,7 @@ The operations available on a file object are listed in \VRef[Figure]{f:FileInte
 %[
 class uFile {
   public:
-    uFile();
+	uFile();
 	uFile( const char *name );
 	~uFile();
 
@@ -4063,10 +4578,10 @@ class uFile {
 		FileAccess( const char *name, int flags, int mode = 0644 );
 		~FileAccess();
 	
-		int read( char *buf, int len, uDuration *timeout = NULL );
-		int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-		_Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-		int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
+		int read( char *buf, int len, uDuration *timeout = nullptr );
+		int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+		_Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+		int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
 		void open( uFile &f, int flags, int mode = 0644 );
 		off_t lseek( off_t offset, int whence );
 		int fsync();
@@ -4084,7 +4599,7 @@ class uFile {
 		_Event WriteTimeout;
 	}; // FileAccess
 
-    const char *setName( char *name );
+	const char *setName( char *name );
 	const char *getName() const;
 	void status( struct stat &buf );
 
@@ -4196,10 +4711,10 @@ class uPipe {
 
 	class End : public uFileIO {
 	  public:
-		int read( char *buf, int len, uDuration *timeout = NULL );
-		int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-		_Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-		int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
+		int read( char *buf, int len, uDuration *timeout = nullptr );
+		int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+		_Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+		int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
 		int fd();
 
 		_Event Failure;
@@ -4384,20 +4899,20 @@ _Monitor uSocketClient {
 	int getsockname( struct sockaddr *name, socklen_t *len );
 	int getpeername( struct sockaddr *name, socklen_t *len );
 
-	int read( char *buf, int len, uDuration *timeout = NULL );
-	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	_Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	int send( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = NULL );
-	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	int recv( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
+	int read( char *buf, int len, uDuration *timeout = nullptr );
+	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	_Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	int send( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = nullptr );
+	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	int recv( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
 	int recvfrom( char *buf, int len, struct sockaddr *from, socklen_t *fromlen, int flags = 0,
-					uDuration *timeout = NULL );
-	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = NULL );
+					uDuration *timeout = nullptr );
+	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = nullptr );
 	int fd();
 
 	_Event Failure;
@@ -4444,7 +4959,7 @@ _Monitor uSocketClient {
 The first two constructors of %(uSocketClient%) are for use with the UNIX address family.
 The parameters for the constructors are as follows.
 The %(name%) parameter is the name of an existing UNIX stream that the client is connecting to.
-The %(name%) parameter can be %(NULL%) for type %(SOCK_DGRAM%), if there is no initial server address.
+The %(name%) parameter can be %(nullptr%) for type %(SOCK_DGRAM%), if there is no initial server address.
 The optional default %(type%) and %(protocol%) parameters are explained in the UNIX manual entry for %(socket%).
 Only types %(SOCK_STREAM%) and %(SOCK_DGRAM%) communication can be specified, and any protocol appropriate for the specified communication type (usually 0).
 The optional %(timeout%) parameter is a pointer to a maximum waiting time for completion of a connection for type %(SOCK_STREAM%) before aborting the operation by raising an exception (see \VRef{s:IOTimeout});
@@ -4526,20 +5041,20 @@ _Monitor uSocketServer {
 	int getsockname( struct sockaddr *name, socklen_t *len );
 	int getpeername( struct sockaddr *name, socklen_t *len );
 
-	int read( char *buf, int len, uDuration *timeout = NULL );
-	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	_Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	int send( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = NULL );
-	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	int recv( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
+	int read( char *buf, int len, uDuration *timeout = nullptr );
+	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	_Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	int send( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = nullptr );
+	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	int recv( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
 	int recvfrom( char *buf, int len, struct sockaddr *from, socklen_t *fromlen, int flags = 0,
-					uDuration *timeout = NULL );
-	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = NULL );
+					uDuration *timeout = nullptr );
+	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = nullptr );
 	int fd();
 
 	_Event Failure;
@@ -4648,11 +5163,11 @@ The operations provided by %(uSocketAccept%) are listed in \VRef[Figure]{f:uSock
 %[
 _Monitor uSocketAccept {
   public:
-	uSocketAccept( uSocketServer &s, struct sockaddr *adr = NULL, socklen_t *len = NULL );
-	uSocketAccept( uSocketServer &s, uDuration *timeout, struct sockaddr *adr = NULL, socklen_t *len = NULL );
-	uSocketAccept( uSocketServer &s, bool doAccept, struct sockaddr *adr = NULL, socklen_t *len = NULL );
-	uSocketAccept( uSocketServer &s, uDuration *timeout, bool doAccept, struct sockaddr *adr = NULL,
-					socklen_t *len = NULL );
+	uSocketAccept( uSocketServer &s, struct sockaddr *adr = nullptr, socklen_t *len = nullptr );
+	uSocketAccept( uSocketServer &s, uDuration *timeout, struct sockaddr *adr = nullptr, socklen_t *len = nullptr );
+	uSocketAccept( uSocketServer &s, bool doAccept, struct sockaddr *adr = nullptr, socklen_t *len = nullptr );
+	uSocketAccept( uSocketServer &s, uDuration *timeout, bool doAccept, struct sockaddr *adr = nullptr,
+					socklen_t *len = nullptr );
 	~uSocketAccept();
 
 	void accept();
@@ -4663,20 +5178,20 @@ _Monitor uSocketAccept {
 	_Mutex int getsockname( struct sockaddr *name, socklen_t *len );
 	_Mutex int getpeername( struct sockaddr *name, socklen_t *len );
 
-	int read( char *buf, int len, uDuration *timeout = NULL );
-	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	_Mutex int write( const char *buf, int len, uDuration *timeout = NULL );
-	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = NULL );
-	int send( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = NULL );
-	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	int recv( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
-	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = NULL );
+	int read( char *buf, int len, uDuration *timeout = nullptr );
+	int readv( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	_Mutex int write( const char *buf, int len, uDuration *timeout = nullptr );
+	int writev( const struct iovec *iov, int iovcnt, uDuration *timeout = nullptr );
+	int send( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen, int flags = 0, uDuration *timeout = nullptr );
+	int sendmsg( const struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	int recv( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
+	int recvfrom( char *buf, int len, int flags = 0, uDuration *timeout = nullptr );
 	int recvfrom( char *buf, int len, struct sockaddr *from, socklen_t *fromlen, int flags = 0,
-					uDuration *timeout = NULL );
-	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = NULL );
-	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = NULL );
+					uDuration *timeout = nullptr );
+	int recvmsg( struct msghdr *msg, int flags = 0, uDuration *timeout = nullptr );
+	ssize_t sendfile( FileAccess &file, off_t *off, size_t len, uDuration *timeout = nullptr );
 	int fd();
 
 	_Event Failure;
@@ -4919,7 +5434,7 @@ The member routine %(setMsg%) is an alternate way to associate a message with an
 
 The member routine %(message%) returns the string message associated with an exception.
 The member routine %(source%) returns the coroutine/task that raised the exception;
-if the exception has been raised locally, the value %(NULL%) is returned.
+if the exception has been raised locally, the value %(nullptr%) is returned.
 In some cases, the coroutine or task may be deleted when the exception is caught so this reference may be undefined.
 The member routine %(sourceName%) returns the name of the coroutine/task that raised the exception;
 if the exception has been raised locally, the value %("*unknown*"%) is returned.
@@ -6147,7 +6662,7 @@ The macro %(uRendezvousAcceptor%)\index{uRendezvousAcceptor@%(uRendezvousAccepto
 %[
 uBaseCoroutine *uRendezvousAcceptor();
 %]
-It returns %(NULL%) if the rendezvous is ended;
+It returns %(nullptr%) if the rendezvous is ended;
 otherwise it returns the address of the rendezvous partner.
 In addition, calling %(uRendezvousAcceptor%) has the side effect of cancelling the implicit resume of %(uMutexFailure::RendezvousFailure%) at the acceptor.
 This capability allows a mutex member to terminate with an exception without informing the acceptor.
@@ -7723,7 +8238,7 @@ only those related to the \uC kernel are discussed.
 The following program:
 %[
 void uMain::main() {
-	uThisCluster().select( -1, 0, NULL );
+	uThisCluster().select( -1, 0, nullptr );
 }
 %]
 generates this error:
@@ -7736,7 +8251,7 @@ Error occurred while executing task uMain (0xffbef008).
 The following program:
 %[
 void uMain::main() {
-	uThisCluster().select( -1, NULL, NULL, NULL, NULL );
+	uThisCluster().select( -1, nullptr, nullptr, nullptr, nullptr );
 }
 %]
 generates this error:
@@ -7779,7 +8294,7 @@ This situation can arise because of an incorrect pointer calculation, such as an
 The following program:
 %[
 void uMain::main() {
-	int *ip = NULL;			// set address to 0
+	int *ip = nullptr;			// set address to 0
 	*ip += 1;				// use the bad address
 }
 %]
@@ -7876,8 +8391,8 @@ class uCluster {
 
 	enum { ReadSelect = 1, WriteSelect = 2,  ExceptSelect = 4 };
 
-	int select( int fd, int rwe, timeval *timeout = NULL );
-	int select( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, timeval *timeout = NULL );
+	int select( int fd, int rwe, timeval *timeout = nullptr );
+	int select( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, timeval *timeout = nullptr );
 
 	const uBaseTaskSeq &getTasksOnCluster();
 	unsigned int getProcessors() const;
@@ -7923,13 +8438,13 @@ That is, all I/O performed on a cluster is managed by a \Index{poller task} for 
 In general, %(select%) is used only in esoteric situations, e.g., when \uC file objects are mixed with standard UNIX file objects on the same cluster.
 These members return the total number of file descriptors set in all file descriptor masks, and each routine has the following form:
 \begin{prefix}
-\item[%(select( int fd, int rwe, timeval *timeout = NULL )%)]
+\item[%(select( int fd, int rwe, timeval *timeout = nullptr )%)]
 -- this form is a shorthand select for a single file descriptor.
 The mask, %(rwe%), is composed of logically ``or''ing flags %(ReadSelect%), %(WriteSelect%), and %(ExceptSelect%).
 The timeout value points to a maximum delay value, specified as a %(timeval%), to wait for the I/O to complete.
 If the timeout pointer is null, the select blocks until the I/O operation completes or fails.
 This form is more efficient than the next forms with complete file descriptor sets, but handles only a single file.
-\item[%(select( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, timeval *timeout = NULL )%)]
+\item[%(select( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, timeval *timeout = nullptr )%)]
 -- this form examines the first %(nfds%) I/O file descriptors in the sets pointed to by %(rfd%), %(wfd%), and %(efd%), respectively, to see if any of their file descriptors are ready for reading, or writing, or have exceptional conditions pending.
 The timeout value points to a maximum delay value, specified as a %(timeval%), to wait for an I/O to complete.
 If the timeout pointer is null, the select blocks until one of the I/O operations completes or fails.
@@ -8680,7 +9195,7 @@ uTime t2( 818227413, 0 );			// 1995 Dec 6 05:23:33:000000000 (GMT)
 A UNIX %(timeval%) and %(timespec%) value can be used to initialize or assign to a %(uTime%) value, and a %(uTime%) value may be cast into a %(timeval%) or %(timespec%) value, e.g.:
 %[
 timeval t1;
-gettimeofday( &t1, NULL );	// current time (seconds / microseconds)
+gettimeofday( &t1, nullptr );	// current time (seconds / microseconds)
 uTime t2 = t1, t3;			// convert from timeval to uTime (initialization)
 timespec t4 = t2;			// convert from uTime to timespec (seconds / nanoseconds) (implicit cast)
 t3 = t1;					// convert from timeval to uTime (assignment)
@@ -8852,7 +9367,7 @@ _When( C1 ) _Else {
 
 Similarly, timeouts can be set for certain I/O operations that block waiting for an event to occur (see details in \VRef[Appendix]{s:ServerUNIXDatagram}).
 Only a duration is allowed as a timeout because a relationship between absolute time and I/O seems unlikely.
-A pointer to the duration value is used so it is possible to distinguish between no timeout value (NULL pointer) and a zero-timeout value.
+A pointer to the duration value is used so it is possible to distinguish between no timeout value (nullptr pointer) and a zero-timeout value.
 The former usually means to wait until the event occurs (i.e., no timeout), while the latter can be used to poll by trying the operation and returning immediately if the event has not occurred.
 The I/O operations that can set timeouts are %(read%), %(readv%), %(write%), %(writev%), %(send%), %(sendto%), %(sendmsg%), %(recv%), %(recvfrom%) and %(readmsg%).
 If the specified I/O operation has not completed when the delay expires, the I/O operation fails by throwing an exception.
@@ -9169,7 +9684,7 @@ To provide the facilities for implementing various priority-changing scheduling 
 It is up to the scheduler implementor or programmer to set the appropriate priority values, or to determine whether the base priority or the active priority is the priority utilized in scheduling tasks, if used at all.\footnote{\uC sets the base and the active priority of a task to a uniform default value, if no other priority is specified.}
 
 \begin{sloppypar}
-The member routine %(getInheritTask%) returns the task that this task inherited its current active priority from or NULL.
+The member routine %(getInheritTask%) returns the task that this task inherited its current active priority from or nullptr.
 The member routines %(getActivePriority%) and %(setActivePriority%) read and write a task's active priority, respectively.
 The member routines %(getBasePriority%) and %(setBasePriority%) read and write a task's base priority, respectively.
 \end{sloppypar}
@@ -9472,9 +9987,8 @@ linux-x86\_64 : Linux 2.4.x or greater, AMD 64
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
 \end{list}
-\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.5.0 or greater.
+\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.8.0 or greater.
 These compilers can be obtained free of charge.
-% \uC does not work with g++-4.3.0 on Solaris, due to a bug in the exception handling runtime.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)} flag.
 \Emph{\uC does NOT compile using other compilers or operating systems.}
 
@@ -9493,12 +10007,12 @@ $ sudo sh install.sh
 %#u++
 or from:
 \begin{quote}
-\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-6.1.0.sh}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/pub/uSystem/u++-6.1.0.sh}}
+\href{http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-7.0.0.sh}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/pub/uSystem/u++-7.0.0.sh}}
 \end{quote}
 Execute the following command to install:
 %#sh
 %[
-$ sudo sh u++-6.1.0.sh
+$ sudo sh u++-7.0.0.sh
 %]
 %$
 %#u++
@@ -9747,7 +10261,7 @@ Therefore, the semantics of %(realloc%) are augmented and some additional query 
 \begin{description}
 \item[%(realloc( ptr, size )%)] same semantics as before with the addition that zero fill and alignment properties are preserved if a new allocation is made.
 \item[%(malloc_alignment( ptr )%)] returns the alignment of the memory referenced by %(ptr%).
-If %(ptr%) is %(NULL%), the minimal alignment for any allocation is returned, e.g., multiple of 8.
+If %(ptr%) is %(nullptr%), the minimal alignment for any allocation is returned, e.g., multiple of 8.
 \item[%(malloc_zero_fill( ptr )%)] returns a boolean result indicating if memory referenced by %(ptr%) was allocated with zero fill (i.e., by %(calloc%)/%(cmemalign%)).
 \end{description}
 
@@ -9830,12 +10344,12 @@ template<typename T> class uStack {
 %(T%) must be a public descendant of %(uColable%).
 
 The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the stack has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the top node of the stack without removing it or %(NULL%) if the stack has no nodes.
+The member routine %(head%)\index{head@%(head%)} returns a pointer to the top node of the stack without removing it or %(nullptr%) if the stack has no nodes.
 The member routine %(top%)\index{top@%(top%)} is a synonym for %(head%).
 The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the top of the stack.
 The member routine %(add%)\index{add@%(add%)} is a synonym for %(addHead%).
 The member routine %(push%)\index{push@%(push%)} is a synonym for %(addHead%).
-The member routine %(drop%)\index{drop@%(drop%)} removes a node from the top of the stack and returns a pointer to it or %(NULL%) if the stack has no nodes.
+The member routine %(drop%)\index{drop@%(drop%)} removes a node from the top of the stack and returns a pointer to it or %(nullptr%) if the stack has no nodes.
 The member routine %(pop%)\index{pop@%(pop%)} is a synonym for %(drop%).
 
 
@@ -9869,7 +10383,7 @@ the association can be changed subsequently with member %(over%).
 The member routine %(over%)\index{over@%(over%)} resets the iterator to the top of the specified stack.
 The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the bottom (end) of the stack has not been reached, the argument is set to the address of the next node and %(true%) is returned;
-otherwise the argument is set to %(NULL%) and %(false%) is returned.
+otherwise the argument is set to %(nullptr%) and %(false%) is returned.
 
 \VRef[Figure]{f:DSLStack} illustrates creating and using a stack and stack iterator.
 
@@ -9942,15 +10456,15 @@ template<typename T> class uQueue {
 %(T%) must be a public descendant of %(uColable%).
 
 The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the queue has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the queue without removing it or %(NULL%) if the queue has no nodes.
+The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the queue without removing it or %(nullptr%) if the queue has no nodes.
 The member routine %(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the queue without removing it.
-The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(NULL%) if the specified node is the last node in the sequence.
+The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(nullptr%) if the specified node is the last node in the sequence.
 The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the queue.
 The member routine %(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the queue.
 The member routine %(add%)\index{add@%(add%)} is a synonym for %(addTail%).
-The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the queue and returns a pointer to it or %(NULL%) if the queue has no nodes.
+The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the queue and returns a pointer to it or %(nullptr%) if the queue has no nodes.
 The member routine %(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
-The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the queue and returns a pointer to it or %(NULL%) if the queue has no nodes.
+The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the queue and returns a pointer to it or %(nullptr%) if the queue has no nodes.
 The member routine %(remove%)\index{remove@%(remove%)} removes the specified node from the queue (any location).
 The member routine %(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the ``from'' list to the tail or end of the specified queue;
 the ``from'' list is empty after the transfer.
@@ -9986,7 +10500,7 @@ the association can be changed subsequently with member %(over%).
 The member routine %(over%)\index{over@%(over%)} resets the iterator to the head of the specified queue.
 The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the tail (end) of the queue has not been reached, the argument is set to the address of the next node and %(true%) is returned;
-otherwise the argument is set to %(NULL%) and %(false%) is returned.
+otherwise the argument is set to %(nullptr%) and %(false%) is returned.
 
 \VRef[Figure]{f:DSLQueue} illustrates creating and using a queue and queue iterator.
 
@@ -10066,18 +10580,18 @@ template<typename T> class uSequence {
 %(T%) must be a public descendant of %(uSeqable%).
 
 The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the sequence has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the sequence without removing it or %(NULL%) if the sequence has no nodes.
-The member routine %(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the sequence without removing it or %(NULL%) if the sequence has no nodes.
-The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(NULL%) if the specified node is the last node in the sequence.
-The member routine %(pred%)\index{pred@%(pred%)} returns a pointer to the predecessor node before the specified node (toward the head) or %(NULL%) if the specified node is the first node in the sequence.
-The member routine %(insertBef%)\index{insertBef@%(insertBef%)} adds a node before the specified node or at the end (tail) if %(bef%) is %(NULL%).
-The member routine %(insertAft%)\index{insertAft@%(insertAft%)} adds a node after the specified node or at the beginning (head) if %(aft%) is %(NULL%).
+The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the sequence without removing it or %(nullptr%) if the sequence has no nodes.
+The member routine %(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the sequence without removing it or %(nullptr%) if the sequence has no nodes.
+The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(nullptr%) if the specified node is the last node in the sequence.
+The member routine %(pred%)\index{pred@%(pred%)} returns a pointer to the predecessor node before the specified node (toward the head) or %(nullptr%) if the specified node is the first node in the sequence.
+The member routine %(insertBef%)\index{insertBef@%(insertBef%)} adds a node before the specified node or at the end (tail) if %(bef%) is %(nullptr%).
+The member routine %(insertAft%)\index{insertAft@%(insertAft%)} adds a node after the specified node or at the beginning (head) if %(aft%) is %(nullptr%).
 The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the sequence.
 The member routine %(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the sequence.
 The member routine %(add%)\index{add@%(add%)} is a synonym for %(addTail%).
-The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the sequence and returns a pointer to it or %(NULL%) if the sequence has no nodes.
+The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the sequence and returns a pointer to it or %(nullptr%) if the sequence has no nodes.
 The member routine %(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
-The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the sequence and returns a pointer to it or %(NULL%) if the sequence has no nodes.
+The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the sequence and returns a pointer to it or %(nullptr%) if the sequence has no nodes.
 The member routine %(remove%)\index{remove@%(remove%)} removes the specified node from the sequence (any location).
 The member routine %(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the ``from'' list to the tail or end of the specified sequence;
 the ``from'' list is empty after the transfer.
@@ -10130,7 +10644,7 @@ the association can be changed subsequently with member %(over%).
 The member routine %(over%)\index{over@%(over%)} resets the iterator to the head or tail of the specified sequence depending on which iterator is used.
 The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the head (front) or tail (end) of the sequence has not been reached depending on which iterator is used, the argument is set to the address of the next node and %(true%) is returned;
-otherwise the argument is set to %(NULL%) and %(false%) is returned.
+otherwise the argument is set to %(nullptr%) and %(false%) is returned.
 
 \VRef[Figure]{f:DSLSeq} illustrates creating and using a sequence and sequence iterator.
 

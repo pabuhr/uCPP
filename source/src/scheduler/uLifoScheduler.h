@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Jiongxiong Chen and Ashif S. Harji 2003
+// uC++ Version 7.0.0, Copyright (C) Jiongxiong Chen and Ashif S. Harji 2003
 //
 // uLifoScheduler.h --
 //

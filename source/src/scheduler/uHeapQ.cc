@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 //
 // uHeapQ.cc --
 //
 // Author           : Ashif S. Harji
 // Created On       : Fri Feb  4 10:57:13 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:29:32 2016
-// Update Count     : 55
+// Last Modified On : Sun Dec 25 10:11:37 2016
+// Update Count     : 56
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -65,7 +65,7 @@ uPriorityQ::uPriorityQ() : heap( &compare, &exchange ) {
     //num_priorities = 1; // first is always non-real-time tasks
     // objects[0].priority = 2147483647;  // use a large number, syn which addInitialize
     // uPriorityValue = -1;
-    // uInheritTask = NULL;
+    // uInheritTask = nullptr;
     // uQueueNum = -1;
     executeHooks = true;
     currPriority = -1;
@@ -84,7 +84,7 @@ uBaseTaskDL *uPriorityQ::head() const {
 	heap.getRoot( rqueue );
 	return rqueue.data->queue.head();
     } else {
-	return NULL;
+	return nullptr;
     } // if
 } // uPriorityQ::head
 
@@ -92,7 +92,7 @@ uBaseTaskDL *uPriorityQ::head() const {
 int uPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
     // Dynamic check to verify that the task being added to entry queue is compliant with PIHeap type.
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(node->task().uPIQ);
-    if ( PIHptr == NULL ) {
+    if ( PIHptr == nullptr ) {
 	uAbort("(uPriorityQ &)%p.add : Task %p has incorrect uPIQ type for mutex object.", this, &node->task());
     } //if
 
@@ -137,7 +137,7 @@ uBaseTaskDL *uPriorityQ::drop() {
 	} // if
 	return pnode;
     } else {
-	return NULL;
+	return nullptr;
     } // if
 } // uPriorityQ::drop
 
@@ -165,11 +165,11 @@ int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it co
     int uRelPrevLock = uLockAcquired;
 
     // if entry queue empty (called by owner) or no owner, then no inheritance
-    if ( empty() || owner == NULL /* || currPriority == -1 */ ) {
+    if ( empty() || owner == nullptr /* || currPriority == -1 */ ) {
 	return uRelPrevLock;
     } // if
 
-    uBaseTask &uCalling = head()->task();		// can't be NULL as not empty
+    uBaseTask &uCalling = head()->task();		// can't be null as not empty
 
     // does node need to be updated?
     if ( uCalling.getActivePriorityValue() < currPriority ) {
@@ -208,7 +208,7 @@ int uPriorityQ::afterEntry(uBaseTask *owner ) {	// use pointer to owner as it co
 void uPriorityQ::onAcquire(uBaseTask &owner ) {
     // Dynamic check to verify that the task acquiring the serial is compliant with PIHeap type.
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(owner.uPIQ);
-    if ( PIHptr == NULL ) {
+    if ( PIHptr == nullptr ) {
 	uAbort("(uPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
     } //if
 

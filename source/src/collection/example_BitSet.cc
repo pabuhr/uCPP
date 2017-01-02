@@ -1,51 +1,67 @@
-#include "uBitSet.h"
 #include <iostream>
+using namespace std;
+#include "uBitSet.h"
 
-#define NBITS 40
+#define NBITS 128
 
-template< int n > void printBitSet( uBitSet< n > set ) {
-    for( int i = 0; i < n; ++i ) {
-        if ( set.isSet( i ) ) {
-            std::cout << "T";
-        } else {
-            std::cout << "F";
-        } // if
+template< unsigned int n > void printBitSet( uBitSet< n > set ) {
+    for ( unsigned int i = 0; i < n; i += 1 ) {
+	if ( i % 8 == 0 && i != 0 ) cout << "_";
+        cout << (set.isSet( i ) ? "T" : "F");
     } // for
-    std::cout << std::endl;
+    cout << endl;
 }
 
-#define SANITY_CHECK(set) if ( !set.isSet( set.findFirstSet() ) ) abort()
+#define SANITY_CHECK(set) if ( !set.isSet( set.ffs() ) ) abort()
 
 int main() {
+    cout << ffs(0) << " " << ffs(3) << " " << ffs(4) << " " << ffs( 8 ) << endl;
+    uBitSet< NBITS > t;
+    t.clrAll();
+    printBitSet( t );
+    cout << "first set is " << t.ffs() << endl;
+    t.clrAll();
+    t.set( 0 ); t.set( 1 );
+    printBitSet( t );
+    cout << "first set is " << t.ffs() << endl;
+    t.clrAll();
+    t.set( 2 );
+    printBitSet( t );
+    cout << "first set is " << t.ffs() << endl;
+    t.clrAll();
+    t.set( 3 );
+    printBitSet( t );
+    cout << "first set is " << t.ffs() << endl;
+    
     uBitSet< NBITS > a, b;
     a.setAll();
-    std::cout << "a: ";
+    cout << "a: ";
     printBitSet( a );
-    std::cout << "first set is " << a.findFirstSet() << std::endl;
+    cout << "first set is " << a.ffs() << endl;
     a.clr( 0 );
     a.clr( 4 );
-    a.clr( NBITS - 1 );
+    a.clr( a.size() - 1 );
     a.clr( 31 );
-    a.clr( 32 );
-    std::cout << "a: ";
+    a.clr( a.size() / 2 );
+    cout << "a: ";
     printBitSet( a );
-    std::cout << "first set is " << a.findFirstSet() << std::endl;
-    
+    cout << "first set is " << a.ffs() << endl;
+
     b.clrAll();
-    std::cout << "b: ";
+    cout << "b: ";
     printBitSet( b );
-    std::cout << "first set is " << b.findFirstSet() << std::endl;
-    b.set( NBITS - 1 );
-    b.set( 32 );
-    std::cout << "b: ";
+    cout << "first set is " << b.ffs() << endl;
+    b.set( b.size() - 1 );
+    b.set( b.size() / 2 );
+    cout << "b: ";
     printBitSet( b );
-    std::cout << "first set is " << b.findFirstSet() << std::endl;
-    b.clr( 32 );
-    std::cout << "b: ";
+    cout << "first set is " << b.ffs() << endl;
+    b.clr( b.size() / 2 );
+    cout << "b: ";
     printBitSet( b );
-    std::cout << "first set is " << b.findFirstSet() << std::endl;
+    cout << "first set is " << b.ffs() << endl;
 }
 
 // Local Variables: //
-// compile-command: "g++ -g -I../library -I../kernel -DNDEBUG example_BitSet.cc" //
+// compile-command: "g++-4.9 -g -Wall -std=c++11 example_BitSet.cc" //
 // End: //

@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 2000
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 2000
 //
 // uDeadlineMonotonicStatic.cc --
 //
@@ -46,35 +46,35 @@ int uDeadlineMonotonicStatic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 
     uRealTimeBaseTask *rbtask1, *rbtask2;
     uPeriodicBaseTask *pbtask1, *pbtask2;
-    uSporadicBaseTask *sbtask1 = NULL, *sbtask2 = NULL;
+    uSporadicBaseTask *sbtask1 = nullptr, *sbtask2 = nullptr;
     int index1, index2;
 
     rbtask1 = dynamic_cast<uRealTimeBaseTask *>(&task1);
-    if ( rbtask1 == NULL ) {
+    if ( rbtask1 == nullptr ) {
 	index1 = 0;
-	pbtask1 = NULL;
-	sbtask1 = NULL;
+	pbtask1 = nullptr;
+	sbtask1 = nullptr;
     } else {
 	index1 = 1;
 
-	if ( ( pbtask1 = dynamic_cast<uPeriodicBaseTask *>(&task1) ) != NULL ) {
+	if ( ( pbtask1 = dynamic_cast<uPeriodicBaseTask *>(&task1) ) != nullptr ) {
 	    index1 = 2;
-	} else if ( ( sbtask1 = dynamic_cast<uSporadicBaseTask *>(&task1) ) != NULL ) {
+	} else if ( ( sbtask1 = dynamic_cast<uSporadicBaseTask *>(&task1) ) != nullptr ) {
 	    index1 = 3;
 	} // if
     } // if
 
     rbtask2 = dynamic_cast<uRealTimeBaseTask *>(&task2);
-    if ( rbtask2 == NULL ) {
+    if ( rbtask2 == nullptr ) {
 	index2 = 0;
-	pbtask2 = NULL;
-	sbtask2 = NULL;
+	pbtask2 = nullptr;
+	sbtask2 = nullptr;
     } else {
 	index2 = 1;
 
-	if ( ( pbtask2 = dynamic_cast<uPeriodicBaseTask *>(&task2) ) != NULL ) {
+	if ( ( pbtask2 = dynamic_cast<uPeriodicBaseTask *>(&task2) ) != nullptr ) {
 	    index2 = 2;
-	} else if ( ( sbtask2 = dynamic_cast<uSporadicBaseTask *>(&task2) ) != NULL ) {
+	} else if ( ( sbtask2 = dynamic_cast<uSporadicBaseTask *>(&task2) ) != nullptr ) {
 	    index2 = 3;
 	} // if
     } // if
@@ -89,17 +89,17 @@ int uDeadlineMonotonicStatic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 	} else {					// real-time tasks have equal deadlines => check their periods or frames
 	    uDuration period1, period2;
 
-	    if ( pbtask1 != NULL ) {			// periodic ?
+	    if ( pbtask1 != nullptr ) {			// periodic ?
 		period1 = pbtask1->getPeriod();
-	    } else if ( sbtask1  != NULL ) {		// sporadic ?
+	    } else if ( sbtask1  != nullptr ) {		// sporadic ?
 		period1 = sbtask1->getFrame();
 	    } else {
 		uAbort( "(uDeadlineMonotonicStatic *)%p.compare : internal error.", this );
 	    } // if
 
-	    if ( pbtask2 != NULL ) {			// periodic ?
+	    if ( pbtask2 != nullptr ) {			// periodic ?
 		period2 = pbtask2->getPeriod();
-	    } else if ( sbtask2  != NULL ) {		// sporadic ?
+	    } else if ( sbtask2  != nullptr ) {		// sporadic ?
 		period2 = sbtask2->getFrame();
 	    } else {
 		uAbort( "(uDeadlineMonotonicStatic *)%p.compare : internal error.", this );
@@ -147,7 +147,7 @@ void uDeadlineMonotonicStatic::addInitialize( uSequence<uBaseTaskDL> &taskList )
     uDebugPrt( "(uDeadlineMonotonicStatic &)%p.addInitialize: enter\n", this );
 #endif // __U_DEBUG_H__
     uSeqIter<uBaseTaskDL> iter;
-    uBaseTaskDL *ref = NULL, *prev = NULL, *node = NULL;
+    uBaseTaskDL *ref = nullptr, *prev = nullptr, *node = nullptr;
 
     // The cluster's list of tasks is maintained in sorted order. This algorithm relies on the kernel code adding new
     // tasks to the end of the cluster's list of tasks.  (Perhaps better to combine adding tasks to a cluster list with
@@ -155,7 +155,7 @@ void uDeadlineMonotonicStatic::addInitialize( uSequence<uBaseTaskDL> &taskList )
 
     uRealTimeBaseTask *rtb = dynamic_cast<uRealTimeBaseTask *>(&(taskList.tail()->task()));
 
-    if ( rtb == NULL ) {
+    if ( rtb == nullptr ) {
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uDeadlineMonotonicStatic &)%p.addInitialize: exit1\n", this );
 #endif // __U_DEBUG_H__
@@ -164,14 +164,14 @@ void uDeadlineMonotonicStatic::addInitialize( uSequence<uBaseTaskDL> &taskList )
 
     ref = taskList.dropTail();
 
-    if ( ref == NULL ) {				// necessary if addInitialize is called from removeInitialize
+    if ( ref == nullptr ) {				// necessary if addInitialize is called from removeInitialize
 #ifdef __U_DEBUG_H__
 	uDebugPrt( "(uDeadlineMonotonicStatic &)%p.addInitialize: exit2\n", this );
 #endif // __U_DEBUG_H__
 	return;
     } // exit
 
-    for ( iter.over(taskList), prev = NULL; iter >> node ; prev = node ) { // find place in the list to insert
+    for ( iter.over(taskList), prev = nullptr; iter >> node ; prev = node ) { // find place in the list to insert
 	if ( compare( ref->task(), node->task() ) < 0 ) break;
     } // for
     taskList.insertBef( ref, node );
@@ -191,17 +191,17 @@ void uDeadlineMonotonicStatic::addInitialize( uSequence<uBaseTaskDL> &taskList )
 
     uBaseTask &task = ref->task();
     uRealTimeBaseTask *rtask = dynamic_cast<uRealTimeBaseTask *>(&task);
-    if ( rtask != NULL ) {
+    if ( rtask != nullptr ) {
 	int pval;
 	int diff;
 	int firstIndex = 0;
 	int lastIndex = __U_MAX_NUMBER_PRIORITIES__;
 
-	if ( prev != NULL ) {
+	if ( prev != nullptr ) {
 	    firstIndex = getBasePriority( prev->task() );
 	} // if
 
-	if ( node != NULL ) {
+	if ( node != nullptr ) {
 	    lastIndex = getBasePriority( node->task());
 	} // if
 
@@ -223,14 +223,14 @@ void uDeadlineMonotonicStatic::addInitialize( uSequence<uBaseTaskDL> &taskList )
 
     for ( iter.over( taskList ); iter >> node; ) {
 	uRealTimeBaseTask *rtask1 = dynamic_cast<uRealTimeBaseTask *>(&node->task());
-	if ( rtask1 != NULL ) {
+	if ( rtask1 != nullptr ) {
 	    rtask1->setVersion( rtask1->getCluster(), verCount );
 	} // if
     } // for
 
 #ifdef __U_DEBUG_H__
 // 	uSeqIter<uBaseTaskDL> j;
-//	uBaseTaskDL *ptr = NULL;
+//	uBaseTaskDL *ptr = nullptr;
 //      for (j.over(taskList); j >> ptr; ) {
 //          fprintf(stderr, "%p Task with priority %d\n", &(ptr->task()), ptr->task().getActivePriority());
 //      }

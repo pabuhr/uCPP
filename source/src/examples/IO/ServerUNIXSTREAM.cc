@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // ServerUNIXSTREAM.cc -- Server for UNIX/stream socket test. Server accepts multiple connections from clients. Each
 //     client then communicates with an acceptor.  The acceptor reads the data from the client and writes it back.
@@ -8,8 +8,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:40:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 17:50:30 2011
-// Update Count     : 153
+// Last Modified On : Wed Dec 21 22:16:21 2016
+// Update Count     : 154
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSocket.h>

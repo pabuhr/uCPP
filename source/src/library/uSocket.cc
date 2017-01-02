@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSocket.cc -- 
 // 
@@ -96,7 +96,7 @@ in_addr uSocket::gethostbyname( const char *name ) {
 #if defined( __darwin__ ) || defined( __freebsd__ )
     struct addrinfo hints = { 0, AF_INET, 0, 0, 0, 0, 0, 0 };
     struct addrinfo *addr;
-    if ( getaddrinfo( name, NULL, &hints, &addr ) ) {
+    if ( getaddrinfo( name, nullptr, &hints, &addr ) ) {
 	// raise exception
     } // if
     memcpy( &host, addr->ai_addr, addr->ai_addrlen );
@@ -195,11 +195,11 @@ int uSocketIO::send( char *buf, int len, int flags, uDuration *timeout ) {
     sendClosure.wrapper();
     if ( slen == -1 && sendClosure.errno_ == U_EWOULDBLOCK ) {
 	if ( ! sendClosure.select( uCluster::WriteSelect, timeout ) ) {
-	    writeTimeout( buf, len, flags, NULL, 0, timeout, "send" );
+	    writeTimeout( buf, len, flags, nullptr, 0, timeout, "send" );
 	} // if
     } // if
     if ( slen == -1 ) {
-	writeFailure( sendClosure.errno_, buf, len, flags, NULL, 0, timeout, "send" );
+	writeFailure( sendClosure.errno_, buf, len, flags, nullptr, 0, timeout, "send" );
     } // if
 
     return slen;
@@ -224,11 +224,11 @@ int uSocketIO::sendto( char *buf, int len, struct sockaddr *to, socklen_t tolen,
     sendtoClosure.wrapper();
     if ( slen == -1 && sendtoClosure.errno_ == U_EWOULDBLOCK ) {
 	if ( ! sendtoClosure.select( uCluster::WriteSelect, timeout ) ) {
-	    writeTimeout( buf, len, flags, NULL, 0, timeout, "sendto" );
+	    writeTimeout( buf, len, flags, nullptr, 0, timeout, "sendto" );
 	} // if
     } // if
     if ( slen == -1 ) {
-	writeFailure( sendtoClosure.errno_, buf, len, flags, NULL, 0, timeout, "sendto" );
+	writeFailure( sendtoClosure.errno_, buf, len, flags, nullptr, 0, timeout, "sendto" );
     } // if
 
     return slen;
@@ -250,11 +250,11 @@ int uSocketIO::recv( char *buf, int len, int flags, uDuration *timeout ) {
     recvClosure.wrapper();
     if ( rlen == -1 && recvClosure.errno_ == U_EWOULDBLOCK ) {
 	if ( ! recvClosure.select( uCluster::ReadSelect, timeout ) ) {
-	    readTimeout( buf, len, flags, NULL, NULL, timeout, "recv" );
+	    readTimeout( buf, len, flags, nullptr, nullptr, timeout, "recv" );
 	} // if
     } // if
     if ( rlen == -1 ) {
-	readFailure( recvClosure.errno_, buf, len, flags, NULL, NULL, timeout, "recv" );
+	readFailure( recvClosure.errno_, buf, len, flags, nullptr, nullptr, timeout, "recv" );
     } // if
 
     return rlen;
@@ -308,11 +308,11 @@ int uSocketIO::recvmsg( struct msghdr *msg, int flags, uDuration *timeout ) {
     recvmsgClosure.wrapper();
     if ( rlen == -1 && recvmsgClosure.errno_ == U_EWOULDBLOCK ) {
 	if ( ! recvmsgClosure.select( uCluster::ReadSelect, timeout ) ) {
-	    readTimeout( (const char *)msg, 0, flags, NULL, NULL, timeout, "recvmsg" );
+	    readTimeout( (const char *)msg, 0, flags, nullptr, nullptr, timeout, "recvmsg" );
 	} // if
     } // if
     if ( rlen == -1 ) {
-	readFailure( recvmsgClosure.errno_, (const char *)msg, 0, flags, NULL, NULL, timeout, "recvmsg" );
+	readFailure( recvmsgClosure.errno_, (const char *)msg, 0, flags, nullptr, nullptr, timeout, "recvmsg" );
     } // if
 
     return rlen;
@@ -340,14 +340,14 @@ ssize_t uSocketIO::sendfile( uFile::FileAccess &file, off_t *off, size_t len, uD
 #endif // __U_STATISTICS__
 	    // solaris/freebsd returns -1/EWOULDBLOCK for a partial sendfile
 #if defined( __freebsd__ )
-	    ret = ::sendfile( in_fd, access.fd, off != NULL ? *off : 0, len, NULL, &wlen, 0 );
+	    ret = ::sendfile( in_fd, access.fd, off != nullptr ? *off : 0, len, nullptr, &wlen, 0 );
 	    if ( ret == -1 && errno == EINTR ) ret = 0;	// EINTR may return data
-	    if ( off != NULL ) *off += wlen;
+	    if ( off != nullptr ) *off += wlen;
 #elif defined( __solaris__ )
 	    struct sendfilevec sfv = { in_fd, 0, *off, len };
 	    ret = ::sendfilev( access.fd, &sfv, 1, (size_t *)&wlen );
 	    if ( ret != -1 ) wlen = ret;
-	    if ( off != NULL ) *off += wlen;
+	    if ( off != nullptr ) *off += wlen;
 #else
 	    //fprintf( stderr, "sfd:%d, ffd:%d, off:%ld, len:%d, wlen:%d, errno:%d\n", access.fd, in_fd, *off, len, wlen, errno );
 	    wlen = ret = ::sendfile( access.fd, in_fd, off, len );
@@ -495,28 +495,28 @@ void uSocketServer::createSocketServer3( unsigned short *port, int type, int pro
 void uSocketServer::readFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcpy( msg, "socket " ); strcat( msg, op ); strcat( msg, " fails" );
-    _Throw uSocketServer::ReadFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketServer::ReadFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketServer::readFailure
 
 
 void uSocketServer::readTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketServer::ReadTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketServer::ReadTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketServer::readTimeout
 
 
 void uSocketServer::writeFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcat( strcpy( msg, "socket " ), op ), " fails" );
-    _Throw uSocketServer::WriteFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketServer::WriteFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketServer::writeFailure
 
 
 void uSocketServer::writeTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketServer::WriteTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketServer::WriteTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketServer::writeTimeout
 
 
@@ -576,9 +576,9 @@ void uSocketAccept::createSocketAcceptor( uDuration *timeout, struct sockaddr *a
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::accept_syscalls, 1 );
 #endif // __U_STATISTICS__
-	    if ( len != NULL ) tmp = *len;		// save *len, as it may be set to 0 after each attempt
+	    if ( len != nullptr ) tmp = *len;		// save *len, as it may be set to 0 after each attempt
 	    fd = ::accept( access.fd, adr, len );
-	    if ( len != NULL && *len == 0 ) *len = tmp;	// reset *len after each attempt
+	    if ( len != nullptr && *len == 0 ) *len = tmp;	// reset *len after each attempt
 	    return fd;
 	} // action
 	Accept( uIOaccess &access, int &fd, struct sockaddr *adr, socklen_t *len ) : uIOClosure( access, fd ), adr( adr ), len( len ) {}
@@ -619,28 +619,28 @@ void uSocketAccept::createSocketAcceptor( uDuration *timeout, struct sockaddr *a
 void uSocketAccept::readFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcat( strcpy( msg, "socket " ), op ), " fails" );
-    _Throw uSocketAccept::ReadFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketAccept::ReadFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketAccept::readFailure
 
 
 void uSocketAccept::readTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketAccept::ReadTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketAccept::ReadTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketAccept::readTimeout
 
 
 void uSocketAccept::writeFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcat( strcpy( msg, "socket " ), op ), " fails" );
-    _Throw uSocketAccept::WriteFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketAccept::WriteFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketAccept::writeFailure
 
 
 void uSocketAccept::writeTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketAccept::WriteTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketAccept::WriteTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketAccept::writeTimeout
 
 
@@ -777,7 +777,7 @@ void uSocketClient::createSocketClient1( const char *name, uDuration *timeout, i
 	int retcode;
 
 	// Create temporary file for the client to communicate through.
-	tmpnm = tempnam( NULL, "uC++" );
+	tmpnm = tempnam( nullptr, "uC++" );
 	if ( strlen( tmpnm ) >= sizeof(((sockaddr_un *)saddr)->sun_path) ) {
 	    openFailure( ENAMETOOLONG, tmpnm, 0, uSocket::itoip( 0 ), timeout, AF_UNIX, type, protocol, "socket temporary name too long" );
 	} // if
@@ -826,28 +826,28 @@ void uSocketClient::createSocketClient2( unsigned short port, const char *name, 
 void uSocketClient::readFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcat( strcpy( msg, "socket " ), op ), " fails" );
-    _Throw uSocketClient::ReadFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketClient::ReadFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketClient::readFailure
 
 
 void uSocketClient::readTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketClient::ReadTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketClient::ReadTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketClient::readTimeout
 
 
 void uSocketClient::writeFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcat( strcpy( msg, "socket " ), op ), " fails" );
-    _Throw uSocketClient::WriteFailure( *this, errno_, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketClient::WriteFailure( *this, errno_, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketClient::writeFailure
 
 
 void uSocketClient::writeTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op ) {
     char msg[32];
     strcat( strcpy( msg, "timeout during socket " ), op );
-    _Throw uSocketClient::WriteTimeout( *this, buf, len, 0, NULL, 0, timeout, msg );
+    _Throw uSocketClient::WriteTimeout( *this, buf, len, 0, nullptr, 0, timeout, msg );
 } // uSocketClient::writeTimeout
 
 

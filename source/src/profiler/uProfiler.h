@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Robert Denda 1997
+// uC++ Version 7.0.0, Copyright (C) Robert Denda 1997
 // 
 // uProfiler.cc -- 
 // 
 // Author           : Robert Denda
 // Created On       : Tue Jul 16 16:45:16 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  2 15:41:27 2012
-// Update Count     : 716
+// Last Modified On : Thu Dec 29 13:22:18 2016
+// Update Count     : 720
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -94,12 +94,7 @@ _Task uProfiler {
     friend class UPP::uSerialMember;			// access: profilerInstance
     friend class UPP::uMachContext;			// access: profilerInstance
     friend class uBaseCoroutine;			// access: profilerInstance
-    friend class UPP::uCoroutineConstructor;		// access: profilerInstance
-    friend class UPP::uCoroutineDestructor;		// access: profilerInstance
     friend class uBaseTask;				// access: profilerInstance
-    friend class UPP::uTaskConstructor;			// access: profilerInstance
-    friend class UPP::uTaskDestructor;			// access: profilerInstance
-    friend class UPP::uTaskMain;			// access: profilerInstance
     friend class uCluster;				// access: profilerInstance
     friend class uProcessor;				// access: profilerInstance
     friend _Task uProcessorTask;			// access: profilerInstance

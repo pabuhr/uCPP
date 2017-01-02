@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // TaskAcceptBB.cc -- Generic bounded buffer using a task
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Sep 15 20:24:44 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 18:50:16 2005
-// Update Count     : 74
+// Last Modified On : Mon Dec 19 23:03:29 2016
+// Update Count     : 75
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 

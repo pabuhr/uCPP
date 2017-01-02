@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Jingge Fu 2015
+// uC++ Version 7.0.0, Copyright (C) Jingge Fu 2015
 //
 // uBaseSelector.h --
 //

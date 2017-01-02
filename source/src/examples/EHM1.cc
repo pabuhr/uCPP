@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1997
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1997
 // 
 // EHM1.cc -- testing exception handling mechanism
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 26 23:06:25 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 25 11:47:42 2010
-// Update Count     : 255
+// Last Modified On : Mon Dec 19 08:43:59 2016
+// Update Count     : 256
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 

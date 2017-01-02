@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard C. Bilson 2006
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard C. Bilson 2006
 // 
 // Future.h -- 
 // 
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 30 21:49:15 2016
-// Update Count     : 623
+// Last Modified On : Fri Nov 25 10:22:58 2016
+// Update Count     : 731
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -68,10 +68,10 @@ namespace UPP {
 
 	void check() {
 	    if ( cancelled() ) _Throw Cancellation();
-	    if ( cause != NULL ) cause->reraise();
+	    if ( cause != nullptr ) cause->reraise();
 	} // uBaseFuture::check
       public:
-	uBaseFuture() : cause( NULL ), available_( false ), cancelled_( false ) {}
+	uBaseFuture() : cause( nullptr ), available_( false ), cancelled_( false ) {}
 
 	_Nomutex bool available() { return available_; } // future result available ?
 	_Nomutex bool cancelled() { return cancelled_; } // future result cancelled ?
@@ -113,6 +113,10 @@ namespace UPP {
 	    return true;
 	} // uBaseFuture::exception
 
+	bool delivery( uBaseEvent *ex ) {		// make exception available in the future : exception and result mutual exclusive
+	    return exception( ex );
+	} // uBaseFuture::delivery
+
 	void reset() {					// mark future as empty (for reuse)
 #ifdef __U_DEBUG__
 	    if ( ! delay.empty() || ! selectClients.empty() ) {
@@ -121,7 +125,7 @@ namespace UPP {
 #endif // __U_DEBUG__
 	    available_ = cancelled_ = false;		// reset for next value
 	    delete cause;
-	    cause = NULL;
+	    cause = nullptr;
 	} // uBaseFuture::reset
     }; // uBaseFuture
 } // UPP
@@ -296,7 +300,7 @@ template<typename T> class Future_ISM {
 	using UPP::uBaseFuture<T>::delay;
 	using UPP::uBaseFuture<T>::cancelled;
 
-	Impl() : refCnt( 1 ), serverData( NULL ) {}
+	Impl() : refCnt( 1 ), serverData( nullptr ) {}
 	Impl( ServerData *serverData_ ) : refCnt( 1 ), serverData( serverData_ ) {}
 
 	~Impl() {
@@ -318,7 +322,7 @@ template<typename T> class Future_ISM {
 	  if ( available() ) return;			// already available, can't cancel
 	  if ( cancelled() ) return;			// only cancel once
 	    cancelled_ = true;
-	    if ( serverData != NULL ) serverData->cancel();
+	    if ( serverData != nullptr ) serverData->cancel();
 	    makeavailable();				// unblock waiting clients ?
 	} // Impl::cancel
     }; // Impl
@@ -385,6 +389,10 @@ template<typename T> class Future_ISM {
     bool exception( uBaseEvent *cause ) {		// make exception available in the future
 	return impl->exception( cause );
     } // Future_ISM::exception
+
+    bool delivery( uBaseEvent *cause ) {		// make result available in the future
+	return impl->exception( cause );
+    } // Future_ISM::delivery
 
     void reset() {					// mark future as empty (for reuse)
 	impl->reset();
@@ -469,10 +477,11 @@ class uWaitQueue_ISM {
     }; // DL
 
     uSequence< DL > q;
-
-    uWaitQueue_ISM( const uWaitQueue_ISM & );		// no copy
-    uWaitQueue_ISM &operator=( const uWaitQueue_ISM & ); // no assignment
   public:
+    uWaitQueue_ISM( const uWaitQueue_ISM & ) = delete;	// no copy
+    uWaitQueue_ISM( uWaitQueue_ISM && ) = delete;
+    uWaitQueue_ISM &operator=( const uWaitQueue_ISM & ) = delete; // no assignment
+
     uWaitQueue_ISM() {}
 
     template< typename Iterator > uWaitQueue_ISM( Iterator begin, Iterator end ) {
@@ -561,10 +570,11 @@ class uWaitQueue_ESM {
     }; // Helper
 
     uWaitQueue_ISM< Helper > q;
-
-    uWaitQueue_ESM( const uWaitQueue_ESM & );		// no copy
-    uWaitQueue_ESM &operator=( const uWaitQueue_ESM & ); // no assignment
   public:
+    uWaitQueue_ESM( const uWaitQueue_ESM & ) = delete;	// no copy
+    uWaitQueue_ESM( uWaitQueue_ESM && ) = delete;
+    uWaitQueue_ESM &operator=( const uWaitQueue_ESM & ) = delete; // no assignment
+
     uWaitQueue_ESM() {}
 
     template< typename Iterator > uWaitQueue_ESM( Iterator begin, Iterator end ) {
@@ -599,6 +609,7 @@ class uWaitQueue_ESM {
 
 
 class uExecutor {
+    friend class uActor;
   public:
     enum Cluster { Same, Sep };				// use same or separate cluster
   private:
@@ -606,13 +617,14 @@ class uExecutor {
     // deadlock.  If the executor is the monitor and the buffer is class, the thread calling the executor's destructor
     // (which is mutex) blocks when deleting the workers, preventing outstanding workers from calling remove to drain
     // the buffer.
-    template<typename ELEMTYPE> _Monitor Buffer {	// unbounded buffer
-	uQueue<ELEMTYPE> buf;				// unbounded list of work requests
+
+    template< typename ELEMTYPE > _Monitor Buffer {	// unbounded buffer
+	uQueue< ELEMTYPE > buf;				// unbounded list of work requests
 	uCondition delay;
       public:
 	void insert( ELEMTYPE *elem ) {
-	    buf.addTail( elem );
-	    delay.signal();
+	    buf.addTail( elem );			// insert element into buffer
+	    delay.signal();				// restart
 	} // Buffer::insert
 
 	ELEMTYPE *remove() {
@@ -629,52 +641,77 @@ class uExecutor {
 	virtual void doit() { assert( false ); };	// not abstract as used for sentinel
     }; // WRequest
 
-    template<typename F> struct VRequest : public WRequest { // client request, no return
+    template< typename F > struct VRequest : public WRequest { // client request, no return
 	F action;
 	void doit() { action(); }
 	VRequest( F action ) : action( action ) {}
     }; // VRequest
 
-    template<typename R, typename F> struct FRequest : public WRequest { // client request, return
+    template< typename R, typename F > struct FRequest : public WRequest { // client request, return
 	F action;
-	Future_ISM<R> result;
+	Future_ISM< R > result;
 	void doit() { result.delivery( action() ); }
 	FRequest( F action ) : action( action ) {}
     }; // FRequest
 
-    _Task Worker {
-	uExecutor &executor;
+    // Each worker has its own work buffer to reduce contention between client and server. Hence, work requests arrive
+    // and are distributed into buffers in a roughly round-robin order.
+    template< typename ELEMTYPE > _Task Worker {
+	Buffer< WRequest > &requests;
 
 	void main() {
 	    for ( ;; ) {
-		WRequest *request = executor.requests.remove();
+		WRequest *request = requests.remove();
 	      if ( request->stop() ) break;
 		request->doit();
 		delete request;
 	    } // for
 	} // Worker::main
       public:
-	Worker( uCluster &wc, uExecutor &executor ) : uBaseTask( wc ), executor( executor ) {}
+	Worker( uCluster &wc, Buffer< WRequest > &requests ) : uBaseTask( wc ), requests( requests ) {}
     }; // Worker
 
-    enum { DefaultWorkers = 16, DefaultProcessors = 2 };
+    enum { DefaultWorkers = 8, DefaultProcessors = 4 };
     const unsigned int nworkers, nprocessors;		// number of workers/processor tasks
     const Cluster clus;					// use same or separate cluster
-    Worker **workers;					// array of workers executing work requests
+    Worker< WRequest > **workers;			// array of workers executing work requests
     uProcessor **processors;				// array of virtual processors adding parallelism for workers
     uCluster *cluster;					// if workers execute on separate cluster
-    Buffer<WRequest> requests;				// list of work requests
+    Buffer< WRequest > *requests;			// list of work requests
+    unsigned int next = 0;				// demultiplexed across workers buffers
+
+    unsigned int tickets() {
+	//return uFetchAdd( next, 1 ) % nworkers;
+	return next++ % nworkers;			// no locking, interference randomizes
+    } // uExecutor::tickets
+
+    template< typename Func > void send( Func action, unsigned int ticket ) { // asynchronous call, no return value
+    	VRequest< Func > *node = new VRequest< Func >( action );
+    	requests[ticket].insert( node );
+    } // uExecutor::send
+
+    template< typename Func > auto sendrecv( Func action, unsigned int ticket ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
+	FRequest< decltype(action()), Func > *node = new FRequest< decltype(action()), Func >( action );
+	Future_ISM< decltype(action()) > result = node->result;	// race, copy before insert
+    	requests[ticket].insert( node );
+	return result;
+    } // uExecutor::sendrecv
   public:
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same ) : nworkers( nworkers ), nprocessors( nprocessors ), clus( clus ) {
-	cluster = clus == Sep ? new uCluster : &uThisCluster();
+    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset = -1, Cluster clus = Same ) : nworkers( nworkers ), nprocessors( nprocessors ), clus( clus ) {
+	cluster = clus == Sep ? new uCluster( "uExecutor" ) : &uThisCluster();
 	processors = new uProcessor *[ nprocessors ];
-	workers = new Worker *[ nworkers ];
+	requests = new Buffer< WRequest >[ nworkers ];
+	workers = new Worker< WRequest > *[ nworkers ];
 
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    processors[ i ] = new uProcessor( *cluster );
+	    if ( affOffset != -1 ) {
+		processors[ i ]->setAffinity( i + affOffset );
+	    } // if
 	} // for
+
 	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
-	    workers[ i ] = new Worker( *cluster, *this );
+	    workers[ i ] = new Worker< WRequest >( *cluster, requests[i] );
 	} // for
     } // uExecutor::uExecutor
 
@@ -689,7 +726,7 @@ class uExecutor {
 	WRequest sentinel[nworkers];
 	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
 	    sentinel[i].done = true;
-	    requests.insert( &sentinel[i] );		// force eventually termination
+	    requests[i].insert( &sentinel[i] );		// force eventually termination
 	} // for
 	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
 	    delete workers[ i ];
@@ -697,28 +734,20 @@ class uExecutor {
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    delete processors[ i ];
 	} // for
+
 	delete [] workers;
+	delete [] requests;
 	delete [] processors;
 	if ( clus == Sep ) delete cluster;
     } // uExecutor::~uExecutor
 
-    template <typename Func> void send( Func action ) { // asynchronous call, no return value
-    	VRequest<Func> *node = new VRequest<Func>( action );
-    	requests.insert( node );
+    template< typename Func > void send( Func action ) { // asynchronous call, no return value
+	send( action, tickets() );
     } // uExecutor::send
 
-    // template <typename Return, typename Func> void submit( Future_ISM<Return> &result, Func action ) { // asynchronous call, return value (future)
-    // 	FRequest<Return, Func> *node = new FRequest<Return, Func>( action );
-    // 	result = node->result;				// race, copy before insert
-    // 	requests.insert( node );
-    // } // uExecutor::submit
-
     // Future type is the return type of the action routine, so action is pseudo called to obtain its type in decltype.
-    template <typename Func> auto sendrecv( Func action ) -> Future_ISM<decltype(action())> { // asynchronous call, return value (future)
-	FRequest<decltype(action()), Func> *node = new FRequest<decltype(action()), Func>( action );
-	Future_ISM<decltype(action())> result = node->result;	// race, copy before insert
-	requests.insert( node );
-	return result;
+    template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
+	return sendrecv( action, tickets() );
     } // uExecutor::sendrecv
 }; // uExecutor
 

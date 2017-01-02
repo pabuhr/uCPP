@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Richard C. Bilson 2006
+// uC++ Version 7.0.0, Copyright (C) Richard C. Bilson 2006
 // 
 // uDefaultProcessors-OpenMP.cc -- 
 // 
 // Author           : Richard C. Bilson
 // Created On       : Tue Aug  8 16:53:43 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 12 01:31:11 2012
-// Update Count     : 5
+// Last Modified On : Tue Dec  6 22:47:22 2016
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,14 +41,14 @@ unsigned int uDefaultProcessors() {
 #if defined( __linux__ ) || defined( __freebsd__ )
     unsigned int nprocs = 0;
     char *value = getenv( "OMP_NUM_THREADS" );
-    if ( value != NULL ) {
+    if ( value != nullptr ) {
 	nprocs = atoi( value );
     } else {
 	nprocs = sysconf( _SC_NPROCESSORS_ONLN );
     } // if
-    return __U_DEFAULT_PROCESSORS__ > nprocs ? __U_DEFAULT_PROCESSORS__ : nprocs;
+    return __U_DEFAULT_USER_PROCESSORS__ > nprocs ? __U_DEFAULT_USER_PROCESSORS__ : nprocs;
 #else
-    return __U_DEFAULT_PROCESSORS__;
+    return __U_DEFAULT_USER_PROCESSORS__;
 #endif // __linux__
 } // uDefaultProcessors
 

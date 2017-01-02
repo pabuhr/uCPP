@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard Bilson 2003
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard Bilson 2003
 // 
 // AbortExit.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 19 10:33:58 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 26 01:35:34 2012
-// Update Count     : 16
+// Last Modified On : Sun Dec 18 23:48:38 2016
+// Update Count     : 18
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uSemaphore.h>
@@ -61,7 +74,7 @@ void uMain::main() {
       case PTHREAD_RETURN:
 	uRetCode = PTHREAD_RETURN;
 	pthread_t pt;
-	pthread_create( &pt, NULL, spinner, NULL );
+	pthread_create( &pt, nullptr, spinner, nullptr );
 	return;
       default:
 	uCluster cluster;

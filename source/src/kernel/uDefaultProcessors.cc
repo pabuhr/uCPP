@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Richard C. Bilson 2006
+// uC++ Version 7.0.0, Copyright (C) Richard C. Bilson 2006
 // 
 // uDefaultProcessors.cc -- 
 // 
 // Author           : Richard C. Bilson
 // Created On       : Tue Aug  8 16:53:43 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 19 22:40:34 2008
-// Update Count     : 3
+// Last Modified On : Tue Dec  6 22:45:27 2016
+// Update Count     : 4
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 
 
 unsigned int uDefaultProcessors() {
-    return __U_DEFAULT_PROCESSORS__;
+    return __U_DEFAULT_USER_PROCESSORS__;
 } // uDefaultProcessors
 
 

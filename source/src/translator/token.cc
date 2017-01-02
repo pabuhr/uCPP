@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // token.c --
 //
@@ -74,13 +74,13 @@ void token_t::operator delete( void *p ) {
 
 token_t::~token_t() {
     value = -1;
-    hash = NULL;
+    hash = nullptr;
 #if 0
     // There's problem here with copied references of this value, which means
     // the storage cannot be deleted. Needs fixing!
-    symbol = NULL;
+    symbol = nullptr;
 #endif
-    left = right = NULL;
+    left = right = nullptr;
 } // token_t::~token_t
 
 void token_t::add_token_after( token_t &before ) {
@@ -89,7 +89,7 @@ void token_t::add_token_after( token_t &before ) {
     aft = &before;
     fore = after;
     before.fore = this;
-    uassert( after != NULL );
+    uassert( after != nullptr );
     after->aft = this;
 } // token_t::add_token_after
 
@@ -98,14 +98,14 @@ void token_t::add_token_before( token_t &after ) {
     before = after.aft;
     aft = before;
     fore = &after;
-    uassert( before != NULL );
+    uassert( before != nullptr );
     before->fore = this;
     after.aft = this;
 } // token_t::add_toke_before
 
 void token_t::remove_token() {
-    uassert( fore != NULL );
-    uassert( aft != NULL );
+    uassert( fore != nullptr );
+    uassert( aft != nullptr );
     fore->aft = aft;
     aft->fore = fore;
 } // token_t::remove_token
@@ -115,7 +115,7 @@ void token_t::remove_token() {
 
 token_t *token_t::next_parse_token() {
     token_t *next = fore;
-    uassert( next != NULL );
+    uassert( next != nullptr );
     while ( next->value == '\n' || next->value == '\r' || next->value == '#' ) {
 	// this is an ugly hack
 	if ( next->value == '#' ) {
@@ -146,26 +146,26 @@ token_t *token_t::next_parse_token() {
 	} else {
 	    // SKULLDUGGERY: prevent backtracking from incrementing line number multiple times by marking the "left"
 	    // variable, which is not used for token "#".
-	    if ( next->left == NULL ) {
+	    if ( next->left == nullptr ) {
 		line += 1;
 		next->left = (token_t *)1;
 	    } // if
 	} // if
 	next = next->fore;
-	uassert( next != NULL );
+	uassert( next != nullptr );
     } // while
     return next;
 } // next_parse_token
 
 token_t *token_t::prev_parse_token() {
     token_t *prev = aft;
-    uassert( prev != NULL );
+    uassert( prev != nullptr );
     while ( prev->value == '\n' || prev->value == '\r' || prev->value == '#' ) {
 	prev = prev->aft;
-	uassert( prev != NULL );
+	uassert( prev != nullptr );
 	if ( prev->value == '#' ) {			// adjust line numbering during backup
 	    line -= 1;
-	    prev->left = NULL;
+	    prev->left = nullptr;
 	} // if
     } // while
     return prev;
@@ -182,8 +182,8 @@ token_list_t *token_list = &list__base;
 token_list_t::token_list_t() {
     head.fore = &tail;
     head.value = 0;
-    head.aft = NULL;
-    tail.fore = NULL;
+    head.aft = nullptr;
+    tail.fore = nullptr;
     tail.value = 0;
     tail.aft = &head;
 } // token_list_t::token_list_t

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Richard A. Stroobosscher 1994
 //
 // key.c --
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  5 23:23:10 2015
-// Update Count     : 120
+// Last Modified On : Thu Dec 22 22:02:12 2016
+// Update Count     : 121
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -26,7 +26,7 @@
 
 #include "key.h"
 
-#include <cstddef>					// NULL
+#include <cstddef>					// nullptr
 
 keyword_t key[] = {
     { "asm", ASM },
@@ -136,6 +136,7 @@ keyword_t key[] = {
     { "_Accept", ACCEPT },
     { "_AcceptReturn", ACCEPTRETURN },
     { "_AcceptWait", ACCEPTWAIT },
+    { "_Actor", ACTOR },
     { "_At", AT },
     { "_CatchResume", CATCHRESUME },
     { "_Coroutine", COROUTINE },
@@ -156,7 +157,7 @@ keyword_t key[] = {
     { "_Timeout", TIMEOUT },
     { "_When", WHEN },
     { "_With", WITH },
-    { NULL, 0 },
+    { nullptr, 0 },
 
     // C++11
 
@@ -168,11 +169,11 @@ keyword_t key[] = {
     { "decltype", DECLTYPE },				// C++11
     { "final", FINAL },					// C++11
     { "noexcept", NOEXCEPT },				// C++11
-    { "nullptr", NULLPTR },				// C++11
+    { "nullptr", nullptrPTR },				// C++11
     { "override", OVERRIDE },				// C++11
     { "static_assert", STATIC_ASSERT },			// C++11
     { "thread_local", THREAD_LOCAL },			// C++11
-    { NULL, 0 }
+    { nullptr, 0 }
 };
 
 // Local Variables: //

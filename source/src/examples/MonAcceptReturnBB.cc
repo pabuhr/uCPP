@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2004
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2004
 // 
 // MonAcceptReturnBB.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 20 22:44:44 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 30 08:59:32 2005
-// Update Count     : 17
+// Last Modified On : Mon Dec 19 22:18:15 2016
+// Update Count     : 18
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 

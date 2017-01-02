@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1997
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1997
 // 
 // uDefault.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 25 09:02:32 2016
-// Update Count     : 41
+// Last Modified On : Tue Dec  6 22:50:18 2016
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -71,11 +71,20 @@
 #define __U_DEFAULT_MAIN_STACK_SIZE__ 490000
 
 
-// Define the default number of processors created on the user cluster. May not be less than 1.
+// Define the default number of processors created on the user cluster. May be greater than 0.
 
-#define __U_DEFAULT_PROCESSORS__ 1
+#define __U_DEFAULT_USER_PROCESSORS__ 1
 
+// Define the default number of processors created in the actor executor. May be greater than 0.
 
+#define __U_DEFAULT_ACTOR_PROCESSORS__ 3
+
+// Define the default number of threads created in the actor executor. May be greater than 0.
+
+#define __U_DEFAULT_ACTOR_THREADS__ 8
+
+extern unsigned int uDefaultActorThreads();		// threads in actor executor
+extern unsigned int uDefaultActorProcessors();		// processors in actor executor
 extern unsigned int uDefaultHeapExpansion();		// heap expansion size (bytes)
 extern unsigned int uDefaultMmapStart();		// cross over point to use mmap rather than buckets
 extern unsigned int uDefaultStackSize();		// cluster coroutine/task stack size (bytes)

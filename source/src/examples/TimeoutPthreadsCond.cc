@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Ashif S. Harji 1997
+// uC++ Version 7.0.0, Copyright (C) Ashif S. Harji 1997
 // 
 // TimeoutPthreadsCond.cc -- 
 // 
 // Author           : Ashif S. Harji
 // Created On       : Thu Dec 11 10:17:16 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 23:03:15 2011
-// Update Count     : 216
+// Last Modified On : Mon Dec 19 23:04:19 2016
+// Update Count     : 218
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uBarrier.h>
@@ -95,21 +108,21 @@ void uMain::main(){
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
     pthread_t r1, r2;
 
-    pthread_mutex_init( &mutex, NULL );
-    pthread_cond_init( &waitc, NULL );
+    pthread_mutex_init( &mutex, nullptr );
+    pthread_cond_init( &waitc, nullptr );
 		
-    if ( pthread_create( &r1, NULL, r1main, NULL ) != 0 ) {
+    if ( pthread_create( &r1, nullptr, r1main, nullptr ) != 0 ) {
 	cout << "create thread r1 failure" << endl;
 	exit( EXIT_FAILURE );
     }
 
-    if ( pthread_create( &r2, NULL, r2main, NULL ) != 0 ) {
+    if ( pthread_create( &r2, nullptr, r2main, nullptr ) != 0 ) {
 	cout << "create thread r2 failure" << endl;
 	exit( EXIT_FAILURE );
     }
 
-    pthread_join( r1, NULL );
-    pthread_join( r2, NULL );
+    pthread_join( r1, nullptr );
+    pthread_join( r2, nullptr );
 } // uMain::main
 
 

@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2009
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2009
 // 
 // uRWLock.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Tue May  5 12:53:33 2009
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Sep  6 17:54:59 2016
-// Update Count     : 8
+// Last Modified On : Tue Sep 13 10:54:24 2016
+// Update Count     : 9
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -115,7 +115,7 @@ class uRWLock {
 		int lrcnt = rcnt;
 		unblock.split( waiting, n );
 		entry.release();			// put baton down
-//		for ( n = unblock.dropHead(); n != NULL; n = unblock.dropHead() ) {
+//		for ( n = unblock.dropHead(); n != nullptr; n = unblock.dropHead() ) {
 //		    cout << &uThisTask() << " " << n << " " << n->task().info << endl;
 //		    n->task().wake();			// and wake task
 //		} // for

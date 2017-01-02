@@ -1,6 +1,6 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uAbortExit.cc -- 
 // 
@@ -54,7 +54,7 @@ void exit( int retcode ) __THROW {			// interpose
 
 
 void abort() __THROW {					// interpose
-    uAbort( NULL );
+    uAbort( nullptr );
     // CONTROL NEVER REACHES HERE!
 } // uAbort
 
@@ -99,7 +99,7 @@ void uAbort( const char *fmt, ... ) {
     int len = snprintf( helpText, BufferSize, "uC++ Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
     uDebugWrite( STDERR_FILENO, helpText, len );
 
-    if ( fmt != NULL ) {
+    if ( fmt != nullptr ) {
 	// Display the relevant shut down information.
 
 	va_list args;

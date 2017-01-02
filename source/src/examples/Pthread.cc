@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 2002
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2002
 // 
 // PThread.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 11 23:09:01 2015
-// Update Count     : 188
+// Last Modified On : Mon Dec 19 22:28:52 2016
+// Update Count     : 190
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #if defined( __U_CPLUSPLUS__ )
@@ -47,9 +60,9 @@ template <class ELEMTYPE> class BoundedBuffer {
   public:
 	BoundedBuffer() {
 		front = back = count = 0;
-		pthread_mutex_init( &mutex, NULL );
-		pthread_cond_init( &Full, NULL );
-		pthread_cond_init( &Empty, NULL );
+		pthread_mutex_init( &mutex, nullptr );
+		pthread_cond_init( &Full, nullptr );
+		pthread_cond_init( &Empty, nullptr );
 	}
 
 	~BoundedBuffer() {
@@ -122,7 +135,7 @@ void *Worker2( void *arg ) {
     pthread_key_t key[PTHREAD_KEYS_MAX];
     unsigned long int i;
     for ( i = 0; i < 60; i += 1 ) {
-		if ( pthread_key_create( &key[i], NULL ) != 0 ) {
+		if ( pthread_key_create( &key[i], nullptr ) != 0 ) {
 			cout << "Create key" << endl;
 			exit( EXIT_FAILURE );
 		} // if
@@ -140,7 +153,7 @@ void *Worker2( void *arg ) {
 			exit( EXIT_FAILURE );
 		} // if
     } // for
-    pthread_exit( NULL );
+    pthread_exit( nullptr );
 	return (void *)0;
 } // Worker2
 
@@ -175,13 +188,13 @@ class RAII {
 void cancel_me() {
 	try {
 		RAII r;
-		pthread_cleanup_push( clean2, NULL );
+		pthread_cleanup_push( clean2, nullptr );
 		check += 1000;
-		pthread_cleanup_push( clean1, NULL );			
+		pthread_cleanup_push( clean1, nullptr );			
 		check *= 2;
-		pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL ); 
+		pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, nullptr ); 
 		pthread_testcancel();							// wait to be cancelled
-		pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, NULL );
+		pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, nullptr );
 		pthread_cleanup_pop( 0 );
 		check /= 2;
 		pthread_cleanup_pop( 0 );
@@ -196,12 +209,12 @@ void cancel_me() {
 
 void *cancellee( void *arg ) {
 	int i;
-	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, NULL );
-	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, NULL );	// guard against undefined cancellation points
+	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, nullptr );
+	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, nullptr );	// guard against undefined cancellation points
 	for ( ;; ) {
-		pthread_cleanup_push( clean2, NULL );
+		pthread_cleanup_push( clean2, nullptr );
 		check += 1000;
-		pthread_cleanup_push( clean1, NULL );
+		pthread_cleanup_push( clean1, nullptr );
 		check *= 2;
 		{
 			RAII rai;				
@@ -222,24 +235,24 @@ void *canceller( void *arg ) {
 	pthread_t cancellee = *(pthread_t *)arg;
 	cout << pthread_self() << " before cancel" << endl;
 	pthread_cancel( cancellee );
-	pthread_join( cancellee, NULL );
+	pthread_join( cancellee, nullptr );
 	cout << pthread_self() << " after cancel" << endl;
 	cout << "check value: " << check << endl;
 	if ( check != 1 ) {
 		cout << "not all destructors called" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-	return NULL;
+	return nullptr;
 } // canceller
 
 
 void maintestcancel() {
-	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, NULL );
-	pthread_cleanup_push( clean2, NULL );
+	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, nullptr );
+	pthread_cleanup_push( clean2, nullptr );
 	check += 1000;	
 	{
 		RAII rai;				
-		pthread_cleanup_push( clean1, NULL );			
+		pthread_cleanup_push( clean1, nullptr );			
 		check *= 2;
 		pthread_testcancel();							// check to be cancelled (not gonna happen)		
 		pthread_cleanup_pop( 1 );
@@ -278,13 +291,13 @@ int main() {
 	cout << "create/join and mutex/condition test" << endl << endl;
 
 	for ( int i = 0; i < NoOfCons; i += 1 ) {			// create consumers
-		if ( pthread_create( &cons[i], NULL, consumer, &buf ) != 0 ) {
+		if ( pthread_create( &cons[i], nullptr, consumer, &buf ) != 0 ) {
 			cout << "create thread failure, errno:" << errno << endl;
 			exit( EXIT_FAILURE );
 		} // if
 	} // for
 	for ( int i = 0; i < NoOfProds; i += 1 ) {			// 	create producers
-		if ( pthread_create( &prods[i], NULL, producer, &buf ) != 0 ) {
+		if ( pthread_create( &prods[i], nullptr, producer, &buf ) != 0 ) {
 			cout << "create thread failure" << endl;
 			exit( EXIT_FAILURE );
 		} // if
@@ -332,7 +345,7 @@ int main() {
 
 	pthread_t worker1, worker2;
 
-	if ( pthread_create( &worker1, &attr, Worker1, NULL ) != 0 ) {
+	if ( pthread_create( &worker1, &attr, Worker1, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
@@ -343,19 +356,19 @@ int main() {
 
 	cout << endl << endl << "thread specific data test" << endl << endl;
 
-    if ( pthread_create( &worker1, NULL, Worker2, NULL ) != 0 ) {
+    if ( pthread_create( &worker1, nullptr, Worker2, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_create( &worker2, NULL, Worker2, NULL ) != 0 ) {
+    if ( pthread_create( &worker2, nullptr, Worker2, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_join( worker1, NULL ) != 0 ) {
+    if ( pthread_join( worker1, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_join( worker2, NULL ) != 0 ) {
+    if ( pthread_join( worker2, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
@@ -381,24 +394,24 @@ int main() {
 #else
 	cout << endl << endl << "thread cancellation test" << endl << endl;
 
-    if ( pthread_create( &worker1, NULL, cancellee, NULL ) != 0 ) {
+    if ( pthread_create( &worker1, nullptr, cancellee, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 	cout << "cancellee " << worker1 << endl;
-    if ( pthread_create( &worker2, NULL, canceller, &worker1 ) != 0 ) {
+    if ( pthread_create( &worker2, nullptr, canceller, &worker1 ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 	// worker1 joined in canceller
-    if ( pthread_join( worker2, NULL ) != 0 ) {
+    if ( pthread_join( worker2, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 	
 	// now cancel yourself
 	
-	pthread_cleanup_push( bye, NULL );
+	pthread_cleanup_push( bye, nullptr );
 	pthread_cancel( pthread_self() );
 	pthread_testcancel();
 	pthread_cleanup_pop( 0 );

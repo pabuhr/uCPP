@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Russell Mok 1997
+// uC++ Version 7.0.0, Copyright (C) Russell Mok 1997
 // 
 // uEHM.cc -- 
 // 
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:21:05 2016
-// Update Count     : 727
+// Last Modified On : Sun Dec 25 10:27:09 2016
+// Update Count     : 728
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,10 +45,10 @@ void uEHM::terminate() {
     bool exception = ExName[0] != '\0';			// optimization
     bool resumption = ResName[0] != '\0';
     
-  if ( ! exception && ! resumption ) uAbort( NULL );	// direct call without exception propagation
+  if ( ! exception && ! resumption ) uAbort( nullptr );	// direct call without exception propagation
 
     uBaseEvent *curr = getCurrentException();		// optimization
-    bool msg = curr != NULL && curr->msg[0] != '\0';
+    bool msg = curr != nullptr && curr->msg[0] != '\0';
 
     uAbort( "%s%s%s%s%s%s%s%s",
 	    ( uThisCoroutine().unexpected ?
@@ -245,7 +245,7 @@ class uEHM::ResumeWorkHorseInit {
 	uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
 	coroutine.resumedObj = prevResumption;
 	if ( ! std::uncaught_exception() ) {		// update top, unless it's a forceful unwind
-	    coroutine.topResumedType = prevResumption ? &typeid(prevResumption) : NULL;
+	    coroutine.topResumedType = prevResumption ? &typeid(prevResumption) : nullptr;
 	} // if
 	coroutine.handlerStackVisualTop = prevVisualTop;
     } // uEHM::ResumeWorkHorseInit::~resumeWorkHorse
@@ -261,7 +261,7 @@ static void Check( uBaseCoroutine &target, const char *kind ) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress"
     // SKULLDUGGERY: simplify call with reference parameter then treat as pointer to check for overwritten memory.
-    if ( &target == NULL || &target == (uBaseCoroutine *)-1 || *((void **)&target) == NULL || *((void **)&target) == (void *)-1 ) {
+    if ( &target == nullptr || &target == (uBaseCoroutine *)-1 || *((void **)&target) == nullptr || *((void **)&target) == (void *)-1 ) {
 #pragma GCC diagnostic pop
 
 	uAbort( "Attempt by task %.256s (%p) to %s a nonlocal exception at target %p, but the target is invalid or has been deleted",
@@ -293,17 +293,17 @@ void uEHM::asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind 
 
     if ( raiseKind == uBaseEvent::ResumeRaise ) {
 	r = getCurrentResumption();
-	if ( r == NULL ) {
+	if ( r == nullptr ) {
 	    r = getCurrentException();
 	} // if
     } else {
 	r = getCurrentException();
-	if ( r == NULL ) {
+	if ( r == nullptr ) {
 	    r = getCurrentResumption();
 	} // if
     } // if
     
-    if ( r == NULL ) {					// => there is nothing to resume => terminate
+    if ( r == nullptr ) {					// => there is nothing to resume => terminate
 	terminateHandler();
     } else {
 	asyncToss( *r, target, raiseKind, true );
@@ -324,11 +324,11 @@ void uEHM::Throw( const uBaseEvent &event, void *const bound ) {
 
 void uEHM::ReThrow() {
     uBaseEvent *e = getCurrentException();		// optimization
-    if ( e == NULL ) {
+    if ( e == nullptr ) {
 	e = getCurrentResumption();
     } // if
 
-    if ( e != NULL ) {
+    if ( e != nullptr ) {
 	e->stackThrow();
     } // if
     throw;
@@ -347,11 +347,11 @@ void uEHM::Resume( const uBaseEvent &event, void *const bound ) {
 void uEHM::ReResume() {
     uBaseEvent *r = getCurrentResumption();		// optimization
 
-    if ( r == NULL ) {
+    if ( r == nullptr ) {
 	r = getCurrentException();
     } // if
 
-    if ( r == NULL ) {					// => there is nothing to resume => terminate
+    if ( r == nullptr ) {					// => there is nothing to resume => terminate
 	terminateHandler();
     } else {						// => there is something to resume
 	resumeWorkHorse( *r, true );	
@@ -381,7 +381,7 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
     AsyncEMsgBuffer &msgbuf = coroutine.asyncEBuf;	// optimization
     AsyncEMsg *asyncMsg = msgbuf.head();		// find first node in queue
 
-  if ( asyncMsg == NULL ) return 0;
+  if ( asyncMsg == nullptr ) return 0;
 
     if ( asyncMsg->hidden ) {
 	asyncMsg = msgbuf.nextVisible( asyncMsg );	// from there, find first visible node
@@ -391,7 +391,7 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
     // handle the event, and remove it from the queue through the automatic resource clean-up.
 
     int handled = 0;					// number of exceptions handled
-    while ( asyncMsg != NULL ) {
+    while ( asyncMsg != nullptr ) {
     	if ( deliverable_exception( asyncMsg->asyncEvent->getEventType() ) ) {
 	    RAIIdelete dummy( asyncMsg, msgbuf );	// ensure deletion of node even if exception raised
 
@@ -428,14 +428,14 @@ uBaseEvent *uEHM::getCurrentException() {
     // check if exception type derived from uBaseEvent (works for basic/POD types)
     if ( uEHM::match_exception_type( __cxxabiv1::__cxa_current_exception_type(), &typeid( uBaseEvent ) ) ) {
 	__cxxabiv1::__cxa_eh_globals *globals = __cxxabiv1::__cxa_get_globals();
-	if ( globals != NULL ) {
+	if ( globals != nullptr ) {
 	    __cxxabiv1::__cxa_exception *header = globals->caughtExceptions;
-	    if ( header != NULL ) {			// handling an exception and want to turn it into resumption
+	    if ( header != nullptr ) {			// handling an exception and want to turn it into resumption
 		return (uBaseEvent *)((char *)header + sizeof(__cxxabiv1::__cxa_exception));
 	    } // if
 	} // if
     } // if
-    return NULL;
+    return nullptr;
 } // uEHM::getCurrentException
 
 uBaseEvent *uEHM::getCurrentResumption() {
@@ -456,10 +456,10 @@ char *uEHM::getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char *s1, size
 	t = __cxxabiv1::__cxa_current_exception_type();
     } // if
 
-    if ( t != NULL ) {
+    if ( t != nullptr ) {
 	int status;
 	char *s2 = __cxxabiv1::__cxa_demangle( t->name(), 0, 0, &status );
-	strncpy( s1, s2 ? s2 : "*unknown*", n );	// TEMPORARY: older g++ may generate a NULL name for elementary types
+	strncpy( s1, s2 ? s2 : "*unknown*", n );	// TEMPORARY: older g++ may generate a null name for elementary types
 	free( s2 );
     } else {
 	s1[0] = '\0';
@@ -540,8 +540,8 @@ void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
 		       i, elem, elem->staticallyBoundObject, elem->EventType, bound );
 #endif // __U_DEBUG_H__
 	    // if (no binding OR binding match) AND (type match OR resume_any) => handler found
-	    if ( ( elem->getMatchBinding() == NULL || bound == elem->getMatchBinding() ) &&
-		 ( elem->getEventType() == NULL || match_exception_type( raisedtype, elem->getEventType() ) ) ) {
+	    if ( ( elem->getMatchBinding() == nullptr || bound == elem->getMatchBinding() ) &&
+		 ( elem->getEventType() == nullptr || match_exception_type( raisedtype, elem->getEventType() ) ) ) {
 #ifdef __U_DEBUG_H__
 		uDebugPrt( "uEHM::resumeWorkHorse match\n" );
 #endif // __U_DEBUG_H__
@@ -554,7 +554,7 @@ void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
     } // while
 
     // cannot find a handler, use the default handler
-    ResumeWorkHorseInit newStackVisualTop( NULL, (uBaseEvent &)event ); // record the current resumption
+    ResumeWorkHorseInit newStackVisualTop( nullptr, (uBaseEvent &)event ); // record the current resumption
     // default routine for event may change the event, so remove const used to allow both const and non-const events
     const_cast<uBaseEvent &>(event).defaultResume();	// default handler can change the exception
 } // uEHM::resumeWorkHorse

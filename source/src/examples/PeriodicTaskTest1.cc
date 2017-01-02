@@ -1,14 +1,27 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1996
+// uC++ Version 7.0.0, Copyright (C) Philipp E. Lim and Ashif S. Harji 1996
 // 
 // PeriodicTaskTest.cc -- 
 // 
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Tue Jul 23 14:48:37 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 18 11:08:55 2010
-// Update Count     : 139
+// Last Modified On : Mon Dec 19 22:27:37 2016
+// Update Count     : 140
+//
+// This  library is free  software; you  can redistribute  it and/or  modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software  Foundation; either  version 2.1 of  the License, or  (at your
+// option) any later version.
+// 
+// This library is distributed in the  hope that it will be useful, but WITHOUT
+// ANY  WARRANTY;  without even  the  implied  warranty  of MERCHANTABILITY  or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+// 
+// You should  have received a  copy of the  GNU Lesser General  Public License
+// along  with this library.
 // 
 
 #include <uRealTime.h>

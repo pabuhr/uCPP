@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Martin Karsten 1995
+// uC++ Version 7.0.0, Copyright (C) Martin Karsten 1995
 // 
 // uLocalDebugger.cc -- 
 // 
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 24 11:39:05 2015
-// Update Count     : 710
+// Last Modified On : Fri Dec  2 23:15:09 2016
+// Update Count     : 711
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,7 +54,7 @@ static const int max_no_of_breakpoints = SIZE_OF_BREAKPOINT_FIELD;
 
 bool uLocalDebugger::uGlobalDebuggerActive = false;
 bool uLocalDebugger::uLocalDebuggerActive = false;
-uLocalDebugger *uLocalDebugger::uLocalDebuggerInstance = NULL;
+uLocalDebugger *uLocalDebugger::uLocalDebuggerInstance = nullptr;
 bool uLocalDebugger::abort_confirmed = false;
 
 // KEEP CONSISTENT WITH THE CORRESPONDING FUNCTIONS IN uC++.h
@@ -548,7 +548,7 @@ void uLocalDebugger::unblockTask( uBaseTask *ul_thread, uDebuggerProtocolUnit &p
 	  if ( p->key == ul_thread ) break;
 	} // for
 
-	if ( p != NULL ) {									// found
+	if ( p != nullptr ) {									// found
 		p->pdu = pdu;									// copy result
 		pdu = pdu;										// copy result
 		p->wait.signal();								// wake thread
@@ -752,7 +752,7 @@ void uLocalDebugger::checkPoint() {
 	uDebugPrt( "%d (uLocalDebugger &)%p.checkPoint, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER );
 #endif // __U_DEBUG_H__
 
-  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || &U_THIS_TASK->bound != NULL ) return;
+  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || &U_THIS_TASK->bound != nullptr ) return;
 	checkPointMX();
 } // uLocalDebugger::checkPoint
 
@@ -772,7 +772,7 @@ void uLocalDebugger::createULThread() {
 	MinimalRegisterSet regs;
 	CREATE_MINIMAL_REGISTER_SET( regs );				// save caller information
 
-  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || &U_THIS_TASK->bound != NULL ) {
+  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || &U_THIS_TASK->bound != nullptr ) {
 		// save the regs here for attaching later on
 		int *registers = (int *)U_THIS_TASK->taskDebugMask;
 		registers[0] = regs.fp;
@@ -1000,7 +1000,7 @@ uLocalDebuggerBoot::uLocalDebuggerBoot() {
 		// If the magic environment variables exists, the global debugger is
 		// running and this application can connect to it through a socket.
 
-		if ( port != NULL && machine != NULL && name != NULL ) {
+		if ( port != nullptr && machine != nullptr && name != nullptr ) {
 			uLocalDebugger::uLocalDebuggerInstance = new uLocalDebugger( port, machine, name );
 		} // if
     } // if
@@ -1015,9 +1015,9 @@ uLocalDebuggerBoot::~uLocalDebuggerBoot() {
 #endif // __U_DEBUG_H__
     uCount -= 1;
     if ( uCount == 0 ) {
-		if ( uLocalDebugger::uLocalDebuggerInstance != NULL ) {
+		if ( uLocalDebugger::uLocalDebuggerInstance != nullptr ) {
 			delete uLocalDebugger::uLocalDebuggerInstance;
-			uLocalDebugger::uLocalDebuggerInstance = NULL; // no more calls to local debugger
+			uLocalDebugger::uLocalDebuggerInstance = nullptr; // no more calls to local debugger
 		} // if
     } // if
 } // uLocalDebuggerBoot::~uLocalDebuggerBoot

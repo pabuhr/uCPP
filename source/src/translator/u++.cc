@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*-
 //
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr and Nikita Borisov 1995
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Nikita Borisov 1995
 //
 // u++.cc --
 //
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul  7 09:11:46 2016
-// Update Count     : 919
+// Last Modified On : Sun Dec 25 10:31:35 2016
+// Update Count     : 925
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -335,7 +335,7 @@ int main( int argc, char *argv[] ) {
     if ( profile ) {					// read MVD configuration information needed for compilation and/or linking.
 	char *mvdpathname = getenv( "MVDPATH" );	// get MVDPATH environment variable
 
-	if ( mvdpathname == NULL ) {
+	if ( mvdpathname == nullptr ) {
 	    cerr << argv[0] << ": Warning environment variable MVDPATH not set. Profiling disabled." << endl;
 	    profile = false;
 	} else {
@@ -722,6 +722,11 @@ int main( int argc, char *argv[] ) {
 	nargs += 1;
     } // if
 
+    args[nargs] = "-Xlinker";				// used by backtrace
+    nargs += 1;
+    args[nargs] = "-export-dynamic";
+    nargs += 1;
+
     // execute the compilation command
 
     args[0] = compiler_path.c_str();			// set compiler command for exec
@@ -762,8 +767,7 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_FAILURE );
     } // if
 
-    // Add the uC++ definitions of vendor, cpu and os names to the compilation
-    // command.
+    // Add the uC++ definitions of vendor, cpu and os names to the compilation command.
 
     args[nargs] = ( *new string( string("-D__") + TVENDOR + "__" ) ).c_str();
     nargs += 1;
@@ -777,12 +781,12 @@ int main( int argc, char *argv[] ) {
 	nargs += 1;
     } // for
 
-    args[nargs] = NULL;					// terminate with NULL
+    args[nargs] = nullptr;				// terminate with null
 
 #ifdef __U_DEBUG_H__
     cerr << "nargs: " << nargs << endl;
     cerr << "args:" << endl;
-    for ( int i = 0; args[i] != NULL; i += 1 ) {
+    for ( int i = 0; args[i] != nullptr; i += 1 ) {
 	cerr << " \"" << args[i] << "\"" << endl;
     } // for
 #endif // __U_DEBUG_H__
@@ -794,7 +798,7 @@ int main( int argc, char *argv[] ) {
     if ( verbose ) {
 	if ( argc == 2 ) exit( EXIT_SUCCESS );		// if only the -v flag is specified, do not invoke g++
 
-	for ( int i = 0; args[i] != NULL; i += 1 ) {
+	for ( int i = 0; args[i] != nullptr; i += 1 ) {
 	    cerr << args[i] << " ";
 	} // for
 	cerr << endl;

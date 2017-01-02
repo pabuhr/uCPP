@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 6.1.0, Copyright (C) Peter A. Buhr 1994
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
 // uSignal.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  7 22:37:23 2016
-// Update Count     : 800
+// Last Modified On : Sun Nov  6 10:40:44 2016
+// Update Count     : 846
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,9 +39,66 @@
 #include <sys/types.h>
 #include <ucontext.h>
 
+#include <execinfo.h>					// backtrace, backtrace_symbols
+#include <cxxabi.h>					// __cxa_demangle
 
 namespace UPP {
     sigset_t uSigHandlerModule::block_mask;
+
+    static void uBacktrace( int start ) {		// skip first N stack frames
+	enum { Frames = 50 };
+	void * array[Frames];
+	int size = ::backtrace( array, Frames );
+	char ** messages = ::backtrace_symbols( array, size ); // does not demangle names
+	char helpText[256];
+	int len;
+
+	*index( messages[0], '(' ) = '\0';		// find executable name
+	len = snprintf( helpText, 256, "Stack trace for: %s\n", messages[0] );
+	uDebugWrite( STDERR_FILENO, helpText, len );
+
+	// skip last stack frame after uMain
+	for ( int i = start; i < size - 1 && messages != nullptr; i += 1 ) {
+	    char * mangled_name = nullptr, * offset_begin = nullptr, * offset_end = nullptr;
+	    for ( char *p = messages[i]; *p; ++p ) {	// find parantheses and +offset
+		if ( *p == '(' ) {
+		    mangled_name = p;
+		} else if ( *p == '+' ) {
+		    offset_begin = p;
+		} else if ( *p == ')' ) {
+		    offset_end = p;
+		    break;
+		} // if
+	    } // for
+
+	    // if line contains symbol, attempt to demangle
+	    int frameNo = i - start;
+	    if ( mangled_name && offset_begin && offset_end && mangled_name < offset_begin ) {
+		*mangled_name++ = '\0';			// delimit strings
+		*offset_begin++ = '\0';
+		*offset_end++ = '\0';
+
+		int status;
+		char * real_name = __cxxabiv1::__cxa_demangle( mangled_name, 0, 0, &status );
+		// bug in __cxa_demangle for single-character lower-case non-mangled names
+		if ( status == 0 ) {			// demangling successful ?
+		    len = snprintf( helpText, 256, "(%d) %s %s+%s%s\n",
+				    frameNo, messages[i], real_name, offset_begin, offset_end );
+		} else {				// otherwise, output mangled name
+		    len = snprintf( helpText, 256, "(%d) %s %s(/*unknown*/)+%s%s\n",
+				    frameNo, messages[i], mangled_name, offset_begin, offset_end );
+		} // if
+
+		free( real_name );
+	    } else {					// otherwise, print the whole line
+		len = snprintf( helpText, 256, "(%d) %s\n", frameNo, messages[i] );
+	    } // if
+	    uDebugWrite( STDERR_FILENO, helpText, len );
+	} // for
+
+	free( messages );
+    } // uBacktrace
+
 
     void uSigHandlerModule::signal( int sig, void (*handler)(__U_SIGPARMS__), int flags ) { // name clash with uSignal statement
 	struct sigaction act;
@@ -60,7 +117,7 @@ namespace UPP {
 
 	act.sa_flags = flags;
 
-	if ( sigaction( sig, &act, NULL ) == -1 ) {
+	if ( sigaction( sig, &act, nullptr ) == -1 ) {
 	    // THE KERNEL IS NOT STARTED SO CALL NO uC++ ROUTINES!
 	    char helpText[256];
 	    int len = snprintf( helpText, 256, " uSigHandlerModule::signal( sig:%d, handler:%p, flags:%d ), problem installing signal handler, error(%d) %s.\n",
@@ -243,11 +300,11 @@ namespace UPP {
 		sigaddset( &new_mask, SIGALRM );
 	    } // if
 	    sigaddset( &new_mask, SIGUSR1 );
-	    if ( sigprocmask( SIG_UNBLOCK, &new_mask, NULL ) == -1 ) {
+	    if ( sigprocmask( SIG_UNBLOCK, &new_mask, nullptr ) == -1 ) {
 		uAbort( "internal error, sigprocmask" );
 	    } // if
 	} else {
-	    if ( sigprocmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), NULL ) == -1 ) {
+	    if ( sigprocmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), nullptr ) == -1 ) {
 		uAbort( "internal error, sigprocmask" );
 	    } // if
 	} // if
@@ -266,11 +323,11 @@ namespace UPP {
 
 #if __U_LOCALDEBUGGER_H__
 	// Reset this field before task is started, to denote that this task is not blocked.
-	uThisTask().debugPCandSRR = NULL;
+	uThisTask().debugPCandSRR = nullptr;
 #endif // __U_LOCALDEBUGGER_H__
 
 	// Block all signals from arriving so values can be safely reset.
-	if ( sigprocmask( SIG_BLOCK, &block_mask, NULL ) == -1 ) {
+	if ( sigprocmask( SIG_BLOCK, &block_mask, nullptr ) == -1 ) {
 	    uAbort( "internal error, sigprocmask" );
 	} // if
 
@@ -291,7 +348,8 @@ namespace UPP {
 
 
     void uSigHandlerModule::sigSegvBusHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE );	// close down in progress and failed, shutdown immediately!
+      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
+	uBacktrace( 3 );				// skip first N stack frames
 	uAbort( "Attempt to address location %p.\n"
 		"Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
 		sfp->si_addr );
@@ -299,7 +357,7 @@ namespace UPP {
 
 
     void uSigHandlerModule::sigIllHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE );	// close down in progress and failed, shutdown immediately!
+      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
 	uAbort( "Attempt to execute code at location %p.\n"
 		"Possible cause is stack corruption.",
 		sfp->si_addr );
@@ -307,7 +365,7 @@ namespace UPP {
 
 
     void uSigHandlerModule::sigFpeHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE );	// close down in progress and failed, shutdown immediately!
+      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
 	const char *msg;
 	switch ( sfp->si_code ) {
 	  case FPE_INTDIV:
@@ -336,7 +394,7 @@ namespace UPP {
 	ss.ss_sp = stack;
 	ss.ss_size = SIGSTKSZ;
 	ss.ss_flags = 0;
-	if ( sigaltstack( &ss, NULL ) == -1 ) {
+	if ( sigaltstack( &ss, nullptr ) == -1 ) {
 	    uAbort( "uSigHandlerModule::uSigHandlerModule : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
 	} // if
 
