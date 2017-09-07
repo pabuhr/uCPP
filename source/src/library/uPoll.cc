@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:02:07 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 17 17:01:05 2007
-// Update Count     : 41
+// Last Modified On : Sat Jul  1 07:23:17 2017
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,9 +52,7 @@ void uPoll::setPollFlag( int fd ) {
 	    uStatus = NeverPoll;
 	} // if
     } // if
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uPoll &)%p.setPollFlag( %d ), uStatus:%d\n", this, fd, uStatus );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.setPollFlag( %d ), uStatus:%d\n", this, fd, uStatus ); )
 } // uPoll::setPollFlag
 
 
@@ -87,25 +85,21 @@ void uPoll::computeStatus( int fd ) {
 	flags = ::fstat( fd, &buf );
       if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
     } // for
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uPoll &)%p.computeStatus( %d ), flags:%d, st_mode:0x%x\n", this, fd, flags, buf.st_mode );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), flags:%d, st_mode:0x%x\n", this, fd, flags, buf.st_mode ); )
     if ( flags ) {
 	uStatus = NeverPoll;				// if the file cannot be stat'ed, never poll
-    } else if ( S_ISCHR(buf.st_mode) ) {
+    } else if ( S_ISCHR( buf.st_mode ) ) {
 	uStatus = PollOnDemand;				// if a tty, poll on demand
 #ifdef S_IFIFO
-    } else if ( S_ISFIFO(buf.st_mode) ) {
+    } else if ( S_ISFIFO( buf.st_mode ) ) {
 	uStatus = AlwaysPoll;				// if a pipe, always poll
 #endif
-    } else if ( S_ISSOCK(buf.st_mode) ) {
+    } else if ( S_ISSOCK( buf.st_mode ) ) {
 	uStatus = AlwaysPoll;				// if a socket, always poll
     } else {
 	uStatus = NeverPoll;				// otherwise, never
     } // if
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uPoll &)%p.computeStatus( %d ), uStatus:%d\n", this, fd, uStatus );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), uStatus:%d\n", this, fd, uStatus ); )
 } // uPoll::computeStatus
 
 

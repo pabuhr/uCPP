@@ -62,10 +62,10 @@ _Task mary {
     } // mary::main
 }; // mary
 
-void uMain::main() {
+int main() {
     fred f;
     mary m;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Sleep.cc" //

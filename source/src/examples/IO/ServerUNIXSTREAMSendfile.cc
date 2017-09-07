@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:45:06 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:16:27 2016
-// Update Count     : 28
+// Last Modified On : Mon Jan 23 16:19:23 2017
+// Update Count     : 29
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -109,7 +109,7 @@ void Acceptor::main() {
 	} // try
 } // Acceptor::main
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
 	switch ( argc ) {
 	  case 2:
 		break;

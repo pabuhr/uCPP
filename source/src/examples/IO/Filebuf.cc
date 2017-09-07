@@ -136,7 +136,7 @@ bool seek_test( std::filebuf &ibuf, std::filebuf &obuf, char *testFile, std::ios
 } // seek_test
 
     
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     const int ibufsizes[] = { 0, 1, 512 };
     const int obufsizes[] = { 0, 1, 512 };
     bool success = true;
@@ -158,12 +158,13 @@ void uMain::main() {
 	    } // for
 	} // for
     } // for
+
+    unlink( tempFile );
     if ( success ) {
 	std::cerr << "All tests succeeded.\n";
-	uRetCode = 0;
+	return 0;
     } else {
 	std::cerr << "Error: some tests failed.\n";
-	uRetCode = 1;
+	return 1;
     } // if
-    unlink( tempFile );
 } // main

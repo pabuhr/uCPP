@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Feb 28 13:36:42 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 13 22:26:57 2012
-// Update Count     : 3
+// Last Modified On : Fri Jul  7 15:25:03 2017
+// Update Count     : 18
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,6 +45,9 @@ uSwitch:
 
 	// Save volatile registers on the stack.
 
+	subq $8,%rsp
+	stmxcsr 0(%rsp)		// 4 bytes
+	fnstcw 4(%rsp)		// 2 bytes
 	pushq %r15
 	pushq %r14
 	pushq %r13
@@ -58,8 +61,8 @@ uSwitch:
 
 	// Load new context from the "to" area.
 
-	movq SP_OFFSET(%rsi),%rsp
 	movq FP_OFFSET(%rsi),%rbp
+	movq SP_OFFSET(%rsi),%rsp
 
 	// Load volatile registers from the stack.
 
@@ -68,6 +71,9 @@ uSwitch:
 	popq %r13
 	popq %r14
 	popq %r15
+	fldcw 4(%rsp)
+	ldmxcsr 0(%rsp)
+	addq $8,%rsp
 
 	// Return to thread.
 

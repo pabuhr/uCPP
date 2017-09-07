@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 12 16:56:19 2015
-// Update Count     : 142
+// Last Modified On : Thu Mar 23 21:08:59 2017
+// Update Count     : 144
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,6 +23,9 @@
 // You should  have received a  copy of the  GNU Lesser General  Public License
 // along  with this library.
 // 
+
+#ifndef __U_ATOMIC_H__
+#define __U_ATOMIC_H__
 
 #if defined( __ia64__ )
 #include <ia64intrin.h>
@@ -97,6 +100,9 @@ template< typename T > static inline bool uCompareAssign( volatile T &loc, T com
 template< typename T > static inline bool uCompareAssignValue( volatile T &loc, T &comp, T replacement ) {
     return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
+
+
+#endif // __U_ATOMIC_H__
 
 
 // Local Variables: //

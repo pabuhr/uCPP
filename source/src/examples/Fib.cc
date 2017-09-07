@@ -59,7 +59,7 @@ _Coroutine fibonacci {
     }; // next
 }; // fibonacci
 
-void uMain::main() {
+int main() {
     const int NoOfFibs = 10;
     fibonacci f1, f2;					// create two fibonacci generators
     int i;
@@ -69,7 +69,7 @@ void uMain::main() {
 	cout << f1.next() << " " << f2.next() << endl;
     } // for
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Fib.cc" //

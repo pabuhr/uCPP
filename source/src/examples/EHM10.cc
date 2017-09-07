@@ -86,7 +86,7 @@ void g( int &i ) {
 		_Resume R1(i);
 	}
 }
-void uMain::main() {
+int main() {
 	int i = 20;
 	f( i );
 }

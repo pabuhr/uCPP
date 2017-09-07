@@ -75,7 +75,7 @@ SRC::SRC( unsigned int MaxItems = 5 ) : MaxItems( MaxItems ) {
 } // SRC::SRC
 
 SRC::~SRC() {
-	if ( ! list.empty() ) uAbort( "problem 4" );
+	if ( ! list.empty() ) abort( "problem 4" );
 } // SRC::SRC
 
 unsigned int SRC::Max() {
@@ -103,7 +103,7 @@ void SRC::Resume() {
 } // SRC::Resume
 
 void SRC::Deallocate() {
-	if ( Taken <= 0 ) uAbort( "problem 2" );
+	if ( Taken <= 0 ) abort( "problem 2" );
 	Free += 1;
 	Taken -= 1;
 	assert( Free >= 0 && Taken <= MaxItems );
@@ -112,7 +112,7 @@ void SRC::Deallocate() {
 } // SRC::Deallocate
 
 void SRC::Allocate( unsigned int N = 1 ) {
-	if ( N > MaxItems ) uAbort( "problem 3" );
+	if ( N > MaxItems ) abort( "problem 3" );
 	osacquire( cout ) << &uThisTask() << " Allocate(" << N << "), enter, Free:" << Free << " Taken:" << Taken << " Waiting:" << list.empty() << endl;
 	if ( N > Free || Locked ) {							// insufficient resources or locked ?
 		Node n( N );									// storage on stack of blocked task => no dynamic allocation
@@ -151,12 +151,12 @@ _Task worker {
 }; // worker
 
 
-void uMain::main() {
+int main() {
 	{
 		worker workers[10];
 	} // wait for workers to complete
 	osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

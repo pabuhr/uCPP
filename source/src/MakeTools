@@ -5,7 +5,7 @@
 # because the include directory (inc) is being created, so these directories and special includes are turned off using
 # flag "-no-u++-include".
 
-CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/u++
+CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/${UPP}
 
 CCFLAGS = -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
 
@@ -22,9 +22,9 @@ endif
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
     # When -O2 is specified, compilers can generate additional warning messages.
-    CCFLAGS += -Wall -Wno-unused-label -g -O2 #
+    CCFLAGS += -Wextra -g -O2 #
 else
-    CCFLAGS += -Wall -Wno-unused-label -g -O2 #
+    CCFLAGS += -Wextra -g -O2 #
 endif
 
 ifeq (${TOS},solaris)

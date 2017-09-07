@@ -222,7 +222,7 @@ void DiskClient::main() {
 	osacquire( cout ) << "enter DiskClient main seeked to:" << req.track << endl;
 } // DiskClient::main
 
-void uMain::main() {
+int main() {
 	const int NoOfTests = 20;
 	DiskScheduler scheduler;							// start the disk scheduler
 	DiskClient *p;
@@ -233,7 +233,7 @@ void uMain::main() {
 	delete [] p;										// wait for clients to complete
 
 	cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

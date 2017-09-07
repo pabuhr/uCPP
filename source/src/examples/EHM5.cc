@@ -54,7 +54,7 @@ void foo() {
     _Throw fred( 666 );
 }
 
-void uMain::main() {
+int main() {
     mary m;
     john j;
     bob b;
@@ -67,10 +67,10 @@ void uMain::main() {
 		cout << "thrower: m " << f.k << endl;
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
-		uAbort( "wrong binding matched, should have been m" );
+		abort( "wrong binding matched, should have been m" );
     } catch ( fred f ) {
 		cout << "unbound " << f.k << endl;
-		uAbort( "binding did not match, execution should have never reached here" );
+		abort( "binding did not match, execution should have never reached here" );
     }
 
 //********* j ***********
@@ -79,12 +79,12 @@ void uMain::main() {
 		j.bar();
     } catch ( m.fred f ) {
 		cout << "thrower: m " << f.k << endl;
-		uAbort( "wrong binding matched, should have been j" );
+		abort( "wrong binding matched, should have been j" );
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
     } catch ( fred f ) {
 		cout << "unbound " << f.k << endl;
-		uAbort( "binding did not match, execution should have never reached here" );
+		abort( "binding did not match, execution should have never reached here" );
     }
     
 //********* unbound ***********    
@@ -93,10 +93,10 @@ void uMain::main() {
 		foo();
     } catch ( m.fred f ) {
 		cout << "thrower: m " << f.k << endl;
-		uAbort( "wrong binding matched, should have been unbound" );
+		abort( "wrong binding matched, should have been unbound" );
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
-		uAbort( "wrong binding matched, should have been unbound" );
+		abort( "wrong binding matched, should have been unbound" );
     } catch ( fred f ) {
 		cout << "unbound " << f.k << endl;
     }
@@ -107,10 +107,10 @@ void uMain::main() {
 		b.bar();
     } catch ( j.fred f ) {
 		cout << "thrower: j  " << f.k << endl;
-		uAbort( "wrong binding matched, should have been b" );
+		abort( "wrong binding matched, should have been b" );
     } catch ( m.fred f ) {
 		cout << "thrower: m  " << f.k << endl;
-		uAbort( "wrong binding matched, should have been b" );
+		abort( "wrong binding matched, should have been b" );
     } catch ( b.fred f ) {
 		cout << "thrower b " << f.k << endl;
     }
@@ -123,10 +123,10 @@ void uMain::main() {
 		b.bar();
     } catch ( mb.fred f ) {
 		cout << "thrower: mb  " << f.k << endl;
-		uAbort( "wrong binding matched, mb should have an address too high to match" );
+		abort( "wrong binding matched, mb should have an address too high to match" );
     } catch ( m.fred f ) {
 		cout << "thrower: m  " << f.k << endl;
-		uAbort( "wrong binding matched, should have been b" );
+		abort( "wrong binding matched, should have been b" );
     } catch ( b.fred f ) {
 		cout << "thrower b " << f.k << endl;
     }

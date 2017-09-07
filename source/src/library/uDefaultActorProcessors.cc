@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 17 11:11:53 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  6 22:43:59 2016
-// Update Count     : 6
+// Last Modified On : Mon Jul 10 22:02:30 2017
+// Update Count     : 8
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,8 @@
 
 
 unsigned int uDefaultActorProcessors() {
-    return __U_DEFAULT_ACTOR_PROCESSORS__;		// assume an existing processor so N+1
+    if ( uDefaultActorSepClus() ) return __U_DEFAULT_ACTOR_PROCESSORS__;
+    else return __U_DEFAULT_ACTOR_PROCESSORS__ - 1;	// assume an existing processor so N+1
 } // uDefaultActorProcessors
 
 

@@ -50,7 +50,7 @@ struct Functor2 {										// closure: allows arguments to work
 	Functor2( double val ) : val( val ) {}
 } functor2( 7.3 );
 
-void uMain::main() {
+int main() {
 	enum { NoOfRequests = 10 };
 	uExecutor executor;									// work-pool of threads and processors
 	Future_ISM<int> fi[NoOfRequests];

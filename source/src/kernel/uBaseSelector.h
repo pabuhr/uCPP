@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 27 10:59:58 2015
-// Update Count     : 438
+// Last Modified On : Thu Jan 12 11:51:19 2017
+// Update Count     : 441
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -237,7 +237,7 @@ namespace UPP {
 
 
     // Specialization for future expression, e.g., _Select( f1 || f2 )
-    template <> template < typename Left, typename Right >
+    template < typename Left, typename Right >
     class UnarySelector< BinarySelector< Left, Right > > {
 	BinarySelector< Left, Right > binary;
 	const bool WhenCondition;			// _When clause present

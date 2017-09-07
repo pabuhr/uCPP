@@ -46,7 +46,7 @@ _Monitor uSemaphore {
 #endif // __U_STATISTICS__
 #ifdef __U_DEBUG__
 	if ( count < 0 ) {
-	    uAbort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
+	    abort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
 	} // if
 #endif // __U_DEBUG__
     } // uSemaphore::uSemaphore
@@ -96,7 +96,7 @@ _Monitor uSemaphore {
     void V( int inc = 1 ) {				// signal a semaphore
 #ifdef __U_DEBUG__
 	if ( inc < 0 ) {
-	    uAbort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
+	    abort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
 	} // if
 #endif // __U_DEBUG__
 	count += inc;					// increment semaphore counter

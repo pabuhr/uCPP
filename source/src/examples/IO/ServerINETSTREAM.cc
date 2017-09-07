@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:40:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:15:41 2016
-// Update Count     : 191
+// Last Modified On : Mon Jan 23 14:39:20 2017
+// Update Count     : 192
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -95,14 +95,14 @@ void Acceptor::main() {
 		for ( ;; ) {
 			len = acceptor.read( buf, sizeof(buf) );	// read byte from client
 			// osacquire( cerr ) << "Server::acceptor read len:" << len << endl;
-		  if ( len == 0 ) uAbort( "server %d : EOF ecountered without EOD", getpid() );
+		  if ( len == 0 ) abort( "server %d : EOF ecountered without EOD", getpid() );
 			acceptor.write( buf, len );					// write byte back to client
 			// The EOD character can be piggy-backed onto the end of the message.
 		  if ( buf[len - 1] == EOD ) break;				// end of data ?
 		} // for
 		len = acceptor.read( buf, sizeof(buf) );		// read EOT from client
 		if ( len != 1 && buf[0] != EOT ) {
-			uAbort( "server %d : failed to read EOT", getpid() );
+			abort( "server %d : failed to read EOT", getpid() );
 		} // if
 		server.complete( this, false );					// terminate
 	} catch( uSocketAccept::OpenTimeout ) {
@@ -110,7 +110,7 @@ void Acceptor::main() {
 	} // try
 } // Acceptor::main
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
 	switch ( argc ) {
 	  case 1:
 		break;

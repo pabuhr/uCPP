@@ -96,7 +96,7 @@ _Mutex<uPriorityQ, uPriorityQ> _PeriodicTask<uPIHeap> TestTask {
     } // TestTask::TestTask
 }; // TestTask
 
-void uMain::main() {
+int main() {
     uDeadlineMonotonic1 rq;				// create real-time scheduler
     uRealTimeCluster rtCluster( rq );			// create real-time cluster with scheduler
     uProcessor *processor;
@@ -112,7 +112,7 @@ void uMain::main() {
     } // wait for t1, t2, t3 to finish
     delete processor;
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

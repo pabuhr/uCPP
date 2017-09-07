@@ -22,6 +22,8 @@ uPoll \
 uSocket \
 uDefaultActorProcessors \
 uDefaultActorThreads \
+uDefaultActorOffset \
+uDefaultActorSepClus \
 uActor \
 pthread \
 Unix \

@@ -77,7 +77,7 @@ _Coroutine merger {
 }; // merger
 
 
-void uMain::main() {
+int main() {
     const int MaxList1 = 10;
     const int MaxList2 = 11;
     const int MaxMergeList = MaxList1 + MaxList2;

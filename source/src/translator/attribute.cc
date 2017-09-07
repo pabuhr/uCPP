@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 17 16:46:30 2014
-// Update Count     : 53
+// Last Modified On : Sun Jan 22 18:32:23 2017
+// Update Count     : 57
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,7 +36,7 @@ attribute_t::attribute_t() {
     focus = nullptr;
     emptyparms = nestedqual = false;
     plate = nullptr;
-    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = nullptr;
+    startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::attribute_t
 
 attribute_t::~attribute_t() {
@@ -47,7 +47,7 @@ attribute_t::~attribute_t() {
     focus = nullptr;
     emptyparms = nestedqual = false;
     plate = nullptr;
-    startT = endT = startMRP = startCR = startI = startE = startM = endM = startP = endP = nullptr;
+    startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::~attribute_t
 
 // Local Variables: //

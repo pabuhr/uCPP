@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 13:36:44 2016
-// Update Count     : 5659
+// Last Modified On : Tue Sep  5 08:58:51 2017
+// Update Count     : 5750
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,6 +37,12 @@
 #define __U_CPLUSPLUS_H__
 
 #pragma __U_NOT_USER_CODE__
+
+#ifdef KNOT
+// remove select FD checking
+#undef _FORTIFY_SOURCE
+#define _FORTIFY_SOURCE 0
+#endif // KNOT
 
 #if defined( __U_MULTI__ )
 #   define __U_THREAD__ __thread
@@ -108,19 +114,6 @@
     #error uC++ : internal error, unsupported architecture
 #endif
 
-#include <assert.h>
-//#include <uDebug.h>
-
-#include <uAlign.h>
-#include <uStack.h>
-#include <uQueue.h>
-#include <uSequence.h>
-#include <uBitSet.h>
-#include <uDefault.h>
-
-#include "uKernelThreads.h"
-#include "uAtomic.h"
-
 #include <cstddef>					// ptrdiff_t
 #include <cstdlib>					// malloc, calloc, realloc, free
 #if defined( __linux__ )
@@ -135,18 +128,93 @@
 #include <sys/mman.h>					// mmap
 #include <ucontext.h>					// ucontext_t
 
-// C-heap allocation extensions
-extern "C" void *cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
-extern "C" size_t malloc_alignment( void *addr ) __THROW;
-extern "C" bool malloc_zero_fill( void *addr ) __THROW;
-extern "C" size_t malloc_usable_size( void *addr ) __THROW;
-extern "C" void malloc_stats() __THROW;
-extern "C" int malloc_stats_fd( int fd ) __THROW;
-
 #include <exception>
 #include <iosfwd>					// std::filebuf
 #include <pthread.h>					// PTHREAD_CANCEL_*
 #include <unwind-cxx.h>					// struct __cxa_eh_globals
+
+#include <assert.h>
+//#include <uDebug.h>
+
+
+//######################### InterposeSymbol #########################
+
+
+namespace UPP {
+    class RealRtn {
+	static void *interposeSymbol( const char *symbolName, const char *version = nullptr );
+      public:
+	static void startup();
+
+	static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
+	static __typeof__( ::abort ) *abort __attribute__(( noreturn ));
+	static __typeof__( ::pselect ) *pselect;
+	static __typeof__( std::set_terminate ) *set_terminate;
+	static __typeof__( std::set_unexpected ) *set_unexpected;
+#if defined( __linux__ ) || defined( __freebsd__ )
+	static __typeof__( ::dl_iterate_phdr ) *dl_iterate_phdr;
+#endif // __linux__ || __freebsd__
+	static __typeof__( ::pthread_create ) *pthread_create;
+//	static __typeof__( ::pthread_exit ) *pthread_exit;
+	static __typeof__( ::pthread_attr_init ) *pthread_attr_init;
+	static __typeof__( ::pthread_attr_setstack ) *pthread_attr_setstack;
+	static __typeof__( ::pthread_kill ) *pthread_kill;
+	static __typeof__( ::pthread_join ) *pthread_join;
+	static __typeof__( ::pthread_self ) *pthread_self;
+#if defined( __linux__ ) || defined( __freebsd__ )
+	static __typeof__( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
+	static __typeof__( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
+#endif // __linux__ || __freebsd__
+    }; // RealRtn
+} // UPP
+
+
+//######################### abort #########################
+
+
+// uAbort is deprecated
+extern void uAbort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn )) __attribute__(( deprecated( "uAbort is deprecated, use abort instead" ) ));
+extern void abort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn ));
+namespace std {
+    using ::abort;					// needed for replacing std::stream routines
+}
+
+
+//######################### start uC++ code #########################
+
+
+#ifdef __U_DEBUG__
+#define uDEBUG( stmt ) stmt
+#else
+#define uDEBUG( stmt )
+#endif // __U_DEBUG__
+
+#ifdef __U_DEBUG_H__
+#define uDEBUGPRT( stmt ) stmt
+#else
+#define uDEBUGPRT( stmt )
+#endif // __U_DEBUG_H__
+
+
+#include <uAlign.h>
+#include <uStack.h>
+#include <uQueue.h>
+#include <uSequence.h>
+#include <uBitSet.h>
+#include <uDefault.h>
+
+#include "uKernelThreads.h"
+#include "uAtomic.h"
+
+// C-heap allocation extensions
+extern "C" {
+    void *cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
+    size_t malloc_alignment( void *addr ) __THROW;
+    bool malloc_zero_fill( void *addr ) __THROW;
+    size_t malloc_usable_size( void *addr ) __THROW;
+    void malloc_stats() __THROW;
+    int malloc_stats_fd( int fd ) __THROW;
+} // extern "C"
 
 #if defined( __U_MULTI__ )
     typedef pthread_t uPid_t;
@@ -217,7 +285,7 @@ class uEventList;					// forward declaration
 _Task uPthreadable;					// forward declaration
 class HWCounters;					// forward declaration
 _Task uLocalDebugger;					// forward declaration
-class uIOClosure;					// forward declaration
+struct uIOClosure;					// forward declaration
 class uCondition;					// forward declaration
 class uTimeoutHndlr;					// forward declaration
 class uWakeupHndlr;					// forward declaration
@@ -257,8 +325,10 @@ class uProfileTaskSampler;
 class uProfileClusterSampler;
 class uProfileProcessorSampler;
 
-extern "C" void __cyg_profile_func_enter( void *pcCurrentFunction, void *pcCallingFunction );
-extern "C" void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallingFunction );
+extern "C" {
+    void __cyg_profile_func_enter( void *pcCurrentFunction, void *pcCallingFunction );
+    void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallingFunction );
+} // extern "C"
 
 #ifdef __U_PROFILER__
 #if defined( __solaris__ )
@@ -267,12 +337,6 @@ extern "C" void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallin
 #define __U_HW_OVFL_SIG__ SIGIO
 #endif // __solaris__
 #endif // __U_PROFILER__
-
-
-//######################### uAbort #########################
-
-
-extern void uAbort( const char *fmt = "", ... ) __attribute__(( format (printf, 1, 2), noreturn ));
 
 
 //######################### Signal Handling #########################
@@ -352,37 +416,6 @@ class uBaseTaskDL : public uSeqable {
 typedef uSequence<uBaseTaskDL> uBaseTaskSeq;
 
 
-//######################### InterposeSymbol #########################
-
-namespace UPP {
-    class RealRtn {
-	static void *interposeSymbol( const char *symbolName, const char *version = nullptr );
-      public:
-	static void startup();
-
-	static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
-	static __typeof__( ::abort ) *abort __attribute__(( noreturn ));
-	static __typeof__( ::pselect ) *pselect;
-	static __typeof__( std::set_terminate ) *set_terminate;
-	static __typeof__( std::set_unexpected ) *set_unexpected;
-#if defined( __linux__ ) || defined( __freebsd__ )
-	static __typeof__( ::dl_iterate_phdr ) *dl_iterate_phdr;
-#endif // __linux__ || __freebsd__
-	static __typeof__( ::pthread_create ) *pthread_create;
-//	static __typeof__( ::pthread_exit ) *pthread_exit;
-	static __typeof__( ::pthread_attr_init ) *pthread_attr_init;
-	static __typeof__( ::pthread_attr_setstack ) *pthread_attr_setstack;
-	static __typeof__( ::pthread_kill ) *pthread_kill;
-	static __typeof__( ::pthread_join ) *pthread_join;
-	static __typeof__( ::pthread_self ) *pthread_self;
-#if defined( __linux__ ) || defined( __freebsd__ )
-	static __typeof__( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
-	static __typeof__( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
-#endif // __linux__ || __freebsd__
-    }; // RealRtn
-} // UPP
-
-
 //######################### uKernelModule #########################
 
 
@@ -396,7 +429,7 @@ extern "C" {						// TEMPORARY: profiler allocating memory from the kernel issue
 
 
 class uKernelModule {
-    friend void uAbort( const char *fmt, ... );		// access: globalAbort, coreDumped
+    friend void abort( const char *fmt, ... );		// access: globalAbort, coreDumped
     friend void exit( int retcode ) __THROW;		// access: globalAbort
     friend class UPP::uSigHandlerModule;		// access: uKernelModuleBoot, globalAbort, coreDumped, rollForward
     friend class UPP::uMachContext;			// access: everything
@@ -472,7 +505,7 @@ class uKernelModule {
 	// incorrect. By updating these two shadow variables whenever the corresponding processor field is changed (and
 	// this occurs atomically in the kernel), the appropriate data structure (cluster or task) can be accessed with
 	// a single load instruction, which is atomic.
-	uCluster  *activeCluster;			// current active cluster for processor
+	uCluster *activeCluster;			// current active cluster for processor
 	uBaseTask *activeTask;				// current active task for processor
 
 	bool disableInt;				// task in kernel: no time slice interrupts
@@ -489,7 +522,8 @@ class uKernelModule {
 	// The thread pointer value needs to be accessible so that it can be properly restored on context switches.  On
 	// a non-tls system the thread pointer points directly at the kernel module, i.e. tp == This.  On a tls system
 	// the system places the kernel module, so tp != This.
-	unsigned long threadPointer;
+
+	// unsigned long threadPointer;
 
 	void disableInterrupts() volatile {
 	    THREAD_SETMEM( disableInt, true );
@@ -498,9 +532,7 @@ class uKernelModule {
 	} // uKernelModule::uKernelModuleData::disableInterrupts
 
 	void enableInterrupts() volatile {
-#ifdef __U_DEBUG__
-	    assert( disableInt && disableIntCnt > 0 );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( disableInt && disableIntCnt > 0 ); )
 
 	    disableIntCnt -= 1;				// decrement number of disablings
 	    if ( disableIntCnt == 0 ) {
@@ -509,29 +541,21 @@ class uKernelModule {
 		    rollForward();
 		} // if
 	    } // if
-#ifdef __U_DEBUG__
-	    assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); )
 	} // KernelModule::uKernelModuleData::enableInterrupts
 
 	void disableIntSpinLock() volatile {
-#ifdef __U_DEBUG__
-	    assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 
 	    THREAD_SETMEM( disableIntSpin, true );
 	    int old = THREAD_GETMEM( disableIntSpinCnt ); // processor independent increment
 	    THREAD_SETMEM( disableIntSpinCnt, old + 1 );
 
-#ifdef __U_DEBUG__
-	    assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 	} // uKernelModule::uKernelModuleData::disableIntSpinLock
 
 	void enableIntSpinLock() volatile {
-#ifdef __U_DEBUG__
-	    assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 	    disableIntSpinCnt -= 1;			// decrement number of disablings
 	    if ( disableIntSpinCnt == 0 ) {
@@ -542,24 +566,18 @@ class uKernelModule {
 		} // if
 	    } // if
 
-#ifdef __U_DEBUG__
-	    assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 	} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
 	void enableIntSpinLockNoRF() volatile {
-#ifdef __U_DEBUG__
-	    assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 	    disableIntSpinCnt -= 1;			// decrement number of disablings
 	    if ( disableIntSpinCnt == 0 ) {
 		disableIntSpin = false;			// enable interrupts
 	    } // if
 
-#ifdef __U_DEBUG__
-	    assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) );
-#endif // __U_DEBUG__
+	    uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 	} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
 	void ctor() volatile;				// POD constructor
@@ -720,11 +738,11 @@ class uLock {						// yielding spinlock
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::uLocks, 1 );
 #endif // __U_STATISTICS__
-#ifdef __U_DEBUG__
-	if ( val > 1 ) {
-	    uAbort( "Attempt to initialize uLock %p to %d that exceeds range 0-1.", this, val );
-	} // if
-#endif // __U_DEBUG__
+	uDEBUG(
+	    if ( val > 1 ) {
+		abort( "Attempt to initialize uLock %p to %d that exceeds range 0-1.", this, val );
+	    } // if
+	)
 	value = val;
     } // uLock::uLock
 
@@ -752,7 +770,7 @@ _Event uKernelFailure {					// general event for kernel failures, inherit implic
     uKernelFailure( const char *const msg = "" );
   public:
     virtual ~uKernelFailure();
-    virtual void defaultTerminate() const;
+    virtual void defaultTerminate() const override;
 }; // uKernelFailure
 
 
@@ -776,7 +794,7 @@ _Event uMutexFailure::EntryFailure : public uMutexFailure {
     EntryFailure( const UPP::uSerial *const serial, const char *const msg = "" );
     EntryFailure( const char *const msg = "" );
     virtual ~EntryFailure();
-    virtual void defaultTerminate() const;
+    virtual void defaultTerminate() const override;
 }; // uMutexFailure::EntryFailure
 
 
@@ -786,7 +804,7 @@ _Event uMutexFailure::RendezvousFailure : public uMutexFailure {
     RendezvousFailure( const UPP::uSerial *const serial, const char *const msg = "" );
     virtual ~RendezvousFailure();
     const uBaseCoroutine *caller() const;
-    virtual void defaultTerminate() const;
+    virtual void defaultTerminate() const override;
 }; // uMutexFailure::RendezvousFailure
 
 
@@ -811,6 +829,7 @@ class uSignalHandler : public uColable {
     uBaseTask *This;
     virtual ~uSignalHandler() {}
   public:
+    uBaseTask *getThis() { return This; }
     virtual void handler() = 0;
 }; // uSignalHandler
 
@@ -858,13 +877,11 @@ class uOwnerLock {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::uOwnerLocks, 1 );
 #endif // __U_STATISTICS__
-	owner_ = nullptr;					// no one owns the lock
+	owner_ = nullptr;				// no one owns the lock
 	count = 0;					// so count is zero
     } // uOwnerLock::uOwnerLock
 
-#ifdef __U_DEBUG__
-    ~uOwnerLock();
-#endif // __U_DEBUG__
+    uDEBUG( ~uOwnerLock(); )
 
     unsigned int times() const {
 	return count;
@@ -906,7 +923,7 @@ class uCondLock {
 
     uBaseSpinLock spinLock;				// must be first field for alignment
     uSequence<uBaseTaskDL> waiting;
-    void waitTimeout( uBaseTask &task, TimedWaitHandler &h ); // timeout
+    void waitTimeout( TimedWaitHandler &h );		// timeout
   public:
     uCondLock( const uCondLock & ) = delete;		// no copy
     uCondLock( uCondLock && ) = delete;
@@ -918,9 +935,7 @@ class uCondLock {
 #endif // __U_STATISTICS__
     } // uCondLock::uCondLock
 
-#ifdef __U_DEBUG__
-    ~uCondLock();
-#endif // __U_DEBUG__
+    uDEBUG( ~uCondLock(); )
 
     bool empty() const {
 	return waiting.empty();
@@ -929,8 +944,8 @@ class uCondLock {
     void wait( uOwnerLock &lock );
     bool wait( uOwnerLock &lock, uDuration duration );
     bool wait( uOwnerLock &lock, uTime time );
-    void signal();
-    void broadcast();
+    bool signal();
+    bool broadcast();
 
     void *operator new( size_t size ) {
 	return ::operator new( size );
@@ -963,7 +978,7 @@ namespace UPP {
 	int count;
 	uQueue<uBaseTaskDL> waiting;
 
-	void waitTimeout( uBaseTask &task, TimedWaitHandler &h );
+	void waitTimeout( TimedWaitHandler &h );
       public:
 	uSemaphore( const uSemaphore & ) = delete;	// no copy
 	uSemaphore( uSemaphore && ) = delete;
@@ -973,11 +988,11 @@ namespace UPP {
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::uSemaphores, 1 );
 #endif // __U_STATISTICS__
-#ifdef __U_DEBUG__
-	    if ( count < 0 ) {
-		uAbort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
-	    } // if
-#endif // __U_DEBUG__
+	    uDEBUG(
+		if ( count < 0 ) {
+		    abort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
+		} // if
+	    )
 	} // uSemaphore::uSemaphore
 
 	void P();					// wait on semaphore
@@ -1110,6 +1125,10 @@ namespace UPP {
 	};
 
 	static size_t pageSize;				// architecture pagesize
+#if defined( __i386__ ) || defined( __x86_64__ )
+	static uint16_t fncw;				// floating/MMX control registers
+	static uint32_t mxcsr;
+#endif // __i386__ || __x86_64__
 
 	unsigned int size;				// size of stack
 	void *storage;					// pointer to stack
@@ -1140,22 +1159,18 @@ namespace UPP {
 
 	void save() {
 	    // Any extra work that must occur on this side of a context switch is performed here.
-	    if ( __builtin_expect(!!(extras.allExtras), 0) ) { // unlikely
+	    if ( __builtin_expect( !!(extras.allExtras), 0 ) ) { // unlikely
 		extraSave();
 	    } // if
 
-#ifdef __U_DEBUG__
-	    verify();
-#endif // __U_DEBUG__
+	    uDEBUG( verify(); )
 	} // uMachContext::save
 
 	void restore() {
-#ifdef __U_DEBUG__
-	    verify();
-#endif // __U_DEBUG__
+	    uDEBUG( verify(); )
 
 	    // Any extra work that must occur on this side of a context switch is performed here.
-	    if ( __builtin_expect(!!(extras.allExtras), 0) ) { // unlikely
+	    if ( __builtin_expect( !!(extras.allExtras), 0 ) ) { // unlikely
 		extraRestore();
 	    } // if
 	} // uMachContext::restore
@@ -1180,11 +1195,11 @@ namespace UPP {
 
 	virtual ~uMachContext() {
 	    if ( ! userStack ) {
-#ifdef __U_DEBUG__
-		if ( ::mprotect( storage, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
-		    uAbort( "(uMachContext &)%p.~uMachContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
-		} // if
-#endif // __U_DEBUG__
+		uDEBUG(
+		    if ( ::mprotect( storage, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
+			abort( "(uMachContext &)%p.~uMachContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
+		    } // if
+		)
 		free( storage );
 	    } // if
 	} // uMachContext::~uMachContext
@@ -1360,7 +1375,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 	virtual ~UnhandledException();
 	const uBaseCoroutine &origSource() const;
 	const char *origName() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
 	void triggerCause();
     }; // uBaseCoroutine::UnhandledException
   protected:
@@ -1372,13 +1387,13 @@ class uBaseCoroutine : public UPP::uMachContext {
 	uBaseCoroutine &c = uThisCoroutine();		// optimization
 
 	if ( &c != this ) {				// not resuming self ?
-#ifdef __U_DEBUG__
-	    if ( ! notHalted ) {			// check if terminated
-		uAbort( "Attempt by coroutine %.256s (%p) to resume terminated coroutine %.256s (%p).\n"
-			"Possible cause is terminated coroutine's main routine has already returned.",
-			c.getName(), &c, getName(), this );
-	    } // if
-#endif // __U_DEBUG__
+	    uDEBUG(
+		if ( ! notHalted ) {			// check if terminated
+		    abort( "Attempt by coroutine %.256s (%p) to resume terminated coroutine %.256s (%p).\n"
+			   "Possible cause is terminated coroutine's main routine has already returned.",
+			   c.getName(), &c, getName(), this );
+		} // if
+	    )
 	    last = &c;					// set last resumer
 	} // if
 	corCxtSw();					// always done for performance testing
@@ -1388,18 +1403,18 @@ class uBaseCoroutine : public UPP::uMachContext {
 
     void suspend() {					// restarts the coroutine that most recently resumed this coroutine
 	uBaseCoroutine &c = uThisCoroutine();		// optimization
-#ifdef __U_DEBUG__
-	if ( c.last == nullptr ) {
-	    uAbort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
-		    "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
-		    c.getName(), this );
-	} // if
-	if ( ! c.last->notHalted ) {			// check if terminated
-	    uAbort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
-		    "Possible cause is terminated coroutine's main routine has already returned.",
-		    getName(), this, c.last->getName(), c.last );
-	} // if
-#endif // __U_DEBUG__
+	    uDEBUG(
+		if ( c.last == nullptr ) {
+		    abort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
+			   "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
+			   getName(), this );
+		} // if
+		if ( ! c.last->notHalted ) {		// check if terminated
+		    abort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
+			   "Possible cause is terminated coroutine's main routine has already returned.",
+			   getName(), this, c.last->getName(), c.last );
+		} // if
+	    )
 	c.last->corCxtSw();
 
 	_Enable <uBaseCoroutine::Failure>;		// implicit poll
@@ -1411,8 +1426,10 @@ class uBaseCoroutine : public UPP::uMachContext {
     } __attribute__(( unused )); // uCoroutineConstructor
 
     class uCoroutineDestructor {			// placed in the destructor of a coroutine
+#ifdef __U_PROFILER__
 	UPP::uAction f;
 	uBaseCoroutine &coroutine;
+#endif // __U_PROFILER__
       public:
 	uCoroutineDestructor( UPP::uAction f, uBaseCoroutine &coroutine );
 #ifdef __U_PROFILER__
@@ -1624,7 +1641,7 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 
 
 class uRepositionEntry {
-    uBaseTask &blocked, &calling;
+    uBaseTask &blocked;
     UPP::uSerial &bSerial, &cSerial;
   public:
     uRepositionEntry( uBaseTask &blocked, uBaseTask &calling );
@@ -1923,6 +1940,9 @@ class uBaseTask : public uBaseCoroutine {
 	} // for
     } // uBaseTask::yield
 
+    static void sleep( uDuration duration );
+    static void sleep( uTime time );
+
     static uCluster &migrate( uCluster &cluster );
 
     uCluster &getCluster() const {
@@ -1979,9 +1999,6 @@ class uBaseTask : public uBaseCoroutine {
     void uYieldNoPoll();
     void uYieldYield( unsigned int times );		// inserted by translator for -yield
     void uYieldInvoluntary();				// pre-allocates metric memory before yielding
-
-    void uSleep( uDuration duration );
-    void uSleep( uTime time );
 }; // uBaseTask
 
 
@@ -2239,10 +2256,11 @@ namespace UPP {
 
 
     class uSerialDestructor {				// placed in the destructor of a mutex class
-	uAction f;
-	uSerial *prevSerial;				// task's previous serial
+	uDEBUG(
+	    unsigned int nlevel;			// nesting level counter for accessed serial-objects
+	)
 	unsigned int mr;				// mutex recursion counter for multiple serial-object entry
-	unsigned int nlevel;				// nesting level counter for accessed serial-objects
+	uAction f;
       public:
 	uSerialDestructor( uAction f, uSerial &serial, uBasePrioritySeq &ml, int mp );
 	~uSerialDestructor();
@@ -2252,7 +2270,9 @@ namespace UPP {
     class uSerialMember {				// placed in the mutex member of a mutex class
 	uSerial *prevSerial;				// task's previous serial
 	unsigned int mr;				// mutex recursion counter for multiple serial-object entry
-	unsigned int nlevel;				// nesting level counter for accessed serial-objects
+	uDEBUG(
+	    unsigned int nlevel;			// nesting level counter for accessed serial-objects
+	)
 
 	// exception handling
 
@@ -2318,20 +2338,20 @@ class uCondition {
 	wait();						// wait on this condition
     } // uCondition::wait
 
-    void signal();					// signal condition
-    void signalBlock();					// signal condition
+    bool signal();					// signal condition
+    bool signalBlock();					// signal condition
 
     bool empty() const {				// test for tasks on a condition
 	return condQueue.empty();			// check if the condition queue is empty
     } // uCondition::empty
 
     uintptr_t front() const {				// return task information
-#ifdef __U_DEBUG__
-	if ( condQueue.empty() ) {			// condition queue must not be empty
-	    uAbort( "Attempt to access user data on an empty condition.\n"
-		    "Possible cause is not checking if the condition is empty before reading stored data." );
-	} // if
-#endif // __U_DEBUG__
+	uDEBUG(
+	    if ( condQueue.empty() ) {			// condition queue must not be empty
+		abort( "Attempt to access user data on an empty condition.\n"
+		       "Possible cause is not checking if the condition is empty before reading stored data." );
+	    } // if
+	)
 	return condQueue.head()->task().info;		// return condition information stored with blocked task
     } // uCondition::front
 
@@ -2345,7 +2365,7 @@ class uCondition {
       public:
 	virtual ~WaitingFailure();
 	const uCondition &conditionId() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uCondition::WaitingFailure 
 }; // uCondition
 
@@ -2385,10 +2405,10 @@ namespace UPP {
 	    } smfd;
 	}; // NBIOnode
 
-	struct uSelectTimeoutHndlr : public uSignalHandler { // real-time
+	class uSelectTimeoutHndlr : public uSignalHandler { // real-time
 	    NBIOnode &node;
 	    uCluster &cluster;
-
+	  public:
 	    uSelectTimeoutHndlr( uBaseTask &task, NBIOnode &node ) : node( node ), cluster( uThisCluster() ) {
 		This = &task;
 	    } // uSelectTimeoutHndlr::uSelectTimeoutHndlr
@@ -2501,14 +2521,7 @@ namespace UPP {
 
 
 inline void uBaseTask::uYieldNoPoll() {
-    assert( ! THREAD_GETMEM( disableIntSpin ) );
-//#ifdef __U_DEBUG__
-//    if ( this != &uThisTask() ) {
-//	uAbort( "Attempt to yield the execution of task %.256s (%p) by task %.256s (%p).\n"
-//		"A task may only yield itself.",
-//		getName(), this, uThisTask().getName(), &uThisTask() );
-//    } // if
-//#endif // __U_DEBUG__
+    uDEBUG( assert( ! THREAD_GETMEM( disableIntSpin ) ); )
     UPP::uProcessorKernel::schedule( this );		// find someone else to execute; wake on kernel stack
 } // uBaseTask::uYieldNoPoll
 
@@ -2704,7 +2717,7 @@ class uCluster {
     friend class uRealTimeBaseTask;			// access: taskReschedule
     friend class uPeriodicBaseTask;			// access: taskReschedule
     friend class uSporadicBaseTask;			// access: taskReschedule
-    friend class uIOClosure;				// access: select
+    friend struct uIOClosure;				// access: select
     friend class uRWLock;				// access: makeTaskReady
 
     // must be first field for alignment
@@ -2803,9 +2816,9 @@ class uCluster {
 
     const char *getName() const {
 	return
-#ifdef __U_DEBUG__
-	    ( name == nullptr || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
-#endif // __U_DEBUG__
+	    uDEBUG(
+		( name == nullptr || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
+	    )
 	    name;
     } // uCluster::getName
 
@@ -3013,7 +3026,7 @@ _Task uMain : public uPthreadable {
     friend _Task Pthread;				// access: cleanup_handlers
 
     int argc;
-    char **argv;
+    char **argv, **env;
 
     // A reference to a variable that holds the return code that the uMain task
     // returns to the OS.
@@ -3024,7 +3037,7 @@ _Task uMain : public uPthreadable {
 
     void main();
   public:
-    uMain( int argc, char *argv[], int &retcode );
+    uMain( int argc, char *argv[], char *env[], int &retcode );
     ~uMain();
 }; // uMain
 
@@ -3083,15 +3096,11 @@ namespace UPP {
 	    if ( count == 1 ) {
 		startup();
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uKernelBoot &)%p.uKernelBoot\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.uKernelBoot\n", this ); )
 	} // uKernelBoot::uKernelBoot
 
 	~uKernelBoot() {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uKernelBoot &)%p.~uKernelBoot\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.~uKernelBoot\n", this ); )
 	    if ( count == 1 ) {
 		finishup();
 	    } // if
@@ -3111,15 +3120,11 @@ namespace UPP {
 	    if ( count == 1 ) {
 		startup();
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uInitProcessorsBoot &)%p.uInitProcessorsBoot\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.uInitProcessorsBoot\n", this ); )
 	} // uInitProcessorsBoot::uInitProcessorsBoot
 
 	~uInitProcessorsBoot() {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uInitProcessorsBoot &)%p.~uInitProcessorsBoot\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.~uInitProcessorsBoot\n", this ); )
 	    if ( count == 1 ) {
 		finishup();
 	    } // if

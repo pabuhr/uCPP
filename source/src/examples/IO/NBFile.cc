@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 27 20:39:18 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:13:46 2016
-// Update Count     : 25
+// Last Modified On : Sat Jul  1 07:16:09 2017
+// Update Count     : 26
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,7 +37,7 @@ _Task Reader {
 	for ( ;; ) {
 	    cin >> tch;					// read number from stdin
 	    if ( tch != '\n' ) ch = tch;
-	  if ( cin.eof() ) break;
+	  if ( cin.fail() ) break;
 	} // for
     } // Reader::main
 }; // Reader
@@ -48,17 +48,19 @@ _Task Writer {
 	int i;
 
 	for ( i = 0;; i += 1 ) {
-	  if ( cin.eof() ) break;
-	    output.write( &ch, 1 );			// write number to stdout
+	  if ( cin.fail() ) break;
+	    if ( i % 500 == 0 ) {			// don't print too much
+		output.write( &ch, 1 );			// write number to stdout
+	    } // if
 	    yield( 1 );
 	} // for
     } // Writer::main
 }; // Writer
 
-void uMain::main() {
+int main() {
     Reader reader;
     Writer writer;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ NBFile.cc" //

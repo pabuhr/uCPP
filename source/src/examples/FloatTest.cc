@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 11 17:30:51 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:49:01 2016
-// Update Count     : 78
+// Last Modified On : Wed Mar 29 23:28:15 2017
+// Update Count     : 84
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,12 +37,12 @@ unsigned int uDefaultPreemption() {
 } // uDefaultPreemption
 
 
-const double Range = 10000.0;
+const double Range = 100000.0;
 
 
 _Task Tester {
     double result;
-    int TaskId;
+    const int TaskId;
 
     void main() {
 	register double d;	     
@@ -56,10 +56,10 @@ _Task Tester {
 	for ( d = TaskId * Range; d < (TaskId + 1) * Range; d += 1.0 ) {
 	    yield();
 	    if ( fabs( sqrt( pow( sin( d ), 2.0 ) + pow( cos( d ), 2.0 ) ) - 1.0 ) > X_EPS ) { // self-check 
-		uAbort( "invalid result during Tester[%d]:%6f", TaskId, d );
+		abort( "invalid result during Tester[%d]:%6f", TaskId, d );
 	    } // if
 	    if ( d < TaskId * Range || d >= (TaskId + 1) * Range ) { // self-check 
-		uAbort( "invalid result during Tester[%d]:%6f", TaskId, d );
+		abort( "invalid result during Tester[%d]:%6f", TaskId, d );
 	    } // if
 	} // for
 	result = d;
@@ -70,27 +70,28 @@ _Task Tester {
 }; // Tester
 
 
-void uMain::main() {
+int main() {
     const int numTesters = 10;
     Tester *testers[numTesters];
     int i;
     uFloatingPointContext context;			// save/restore floating point registers during a context switch
+    uProcessor p[3];
 
     for ( i = 0; i < numTesters; i += 1 ) {		// create tasks
 	testers[i] = new Tester(i);
-	yield();
+	uBaseTask::yield();
     } // for
 
     for ( i = 0; i < numTesters; i += 1 ) {		// recover results and delete tasks
 	double result = testers[i]->Result();
 	if ( result != (i + 1) * Range ) {		// check result
-	    uAbort( "invalid result in Tester[%d]:%6f", i, result );
+	    abort( "invalid result in Tester[%d]:%6f", i, result );
 	} // if
 	delete testers[i];
     } // for
 
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
     
 // Local Variables: //
 // compile-command: "u++ -O2 FloatTest.cc" //

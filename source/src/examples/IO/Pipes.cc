@@ -159,7 +159,7 @@ unsigned int uMainStackSize() {
 } // uMainStackSize
 
 
-void uMain::main() {
+int main() {
     unsigned int i;
 #ifdef __U_STATISTICS__
     UPP::Statistics::prtSigterm = true;
@@ -188,7 +188,7 @@ void uMain::main() {
 #ifdef __U_STATISTICS__
     UPP::Statistics::print();
 #endif // __U_STATISTICS__
-}  // uMain::main
+}  // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -Wall -multi -O2 -DFD_SETSIZE=65536 -D__U_STATISTICS__ Pipes.cc" //

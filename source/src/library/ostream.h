@@ -53,7 +53,7 @@ namespace std {
 #ifdef __U_DEBUG__
 	    filebuf *buf = dynamic_cast<filebuf *>( ios.rdbuf() );
 	    if ( buf == nullptr ) {
-		uAbort( "Attempt to acquire mutual exclusion for a non-concurrent stream." );
+		abort( "Attempt to acquire mutual exclusion for a non-concurrent stream." );
 	    } // if
 #else
 	    filebuf *buf = (filebuf *)ios.rdbuf();

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 08:08:18 2016
-// Update Count     : 401
+// Last Modified On : Mon Feb 20 10:11:09 2017
+// Update Count     : 406
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,6 +38,7 @@ extern void context();
 
 //#define __U_DEBUG_H__
 //#define __U_DEBUG_CONTEXT_H__
+#include "debug.h"
 
 lexical_t *top;						// pointer to current top table
 table_t *root;						// root table for global definitions
@@ -67,21 +68,19 @@ table_t::table_t( symbol_t *sym ) {
 
 
 table_t::~table_t() {
-#ifdef __U_DEBUG_H__
-    if ( symbol != nullptr ) {
-	cerr << "delete table for " << symbol->hash->text << " containing:" << endl;
-    } else {
-	cerr << "delete table for anonymous template containing:" << endl;
-    } // if
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	if ( symbol != nullptr ) {
+	    cerr << "delete table for " << symbol->hash->text << " containing:" << endl;
+	} else {
+	    cerr << "delete table for anonymous template containing:" << endl;
+	} // if
+    )
     for ( local_t *l = local; l != nullptr; ) {
 	local_t *curr = l;
 	l = l->link;
 	if ( ! curr->useing ) {			// ignore contents of using entry ?
 	    symbol_t *sym = curr->kind.sym;
-#ifdef __U_DEBUG_H__
-	    cerr << "\t" << sym->hash->text << endl;
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( cerr << "\t" << sym->hash->text << endl; )
 
 	    // remember the hash node pointed to by this symbol table is not in this symbol table any more
 
@@ -94,28 +93,26 @@ table_t::~table_t() {
 	delete curr;
     } // for
     local = nullptr;
-#ifdef __U_DEBUG_H__
+    uDEBUGPRT(
 #ifdef __U_DEBUG_CONTEXT_H__
-    context();
+	context();
 #endif // __U_DEBUG_CONTEXT_H__
-#endif // __U_DEBUG_H__
+    )
 } // table_t::~table_t
 
 
 void table_t::push_table() {
-#ifdef __U_DEBUG_H__
-    cerr << "PUSH FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
+    uDEBUGPRT(
+	cerr << "PUSH FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #ifdef __U_DEBUG_CONTEXT_H__
-    context();
+	context();
 #endif // __U_DEBUG_CONTEXT_H__
-#endif // __U_DEBUG_H__
+    )
     lexical_t *temp = new lexical_t( this );
     temp->link = top;
     top = temp;
     focus = this;
-#ifdef __U_DEBUG_H__
-    cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl; )
 } // table_t::push_table
 
 
@@ -212,18 +209,12 @@ void table_t::display_table( int blank ) {
 static symbol_t *search_list( hash_t *hash, local_t *locals ) {
     for ( local_t *list = locals; list != nullptr; list = list->link ) {
 	if ( list->tblsym ) {
-#ifdef __U_DEBUG_H__
-	    cerr << "\tbegin using table: " << list->kind.tbl->symbol->hash->text << endl;
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( cerr << "\tbegin using table: " << list->kind.tbl->symbol->hash->text << endl; )
 	    symbol_t *temp = search_list( hash, list->kind.tbl->local );
-#ifdef __U_DEBUG_H__
-	    cerr << "\tend using table: " << list->kind.tbl->symbol->hash->text << endl;
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( cerr << "\tend using table: " << list->kind.tbl->symbol->hash->text << endl; )
 	    if ( temp != nullptr ) return temp;
 	} else {
-#ifdef __U_DEBUG_H__
-	    cerr << "\t\t" << list->kind.sym->hash->text << endl;
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( cerr << "\t\t" << list->kind.sym->hash->text << endl; )
 	    if ( list->kind.sym->hash == hash ) return list->kind.sym;
 	} // if
     } // for
@@ -233,44 +224,40 @@ static symbol_t *search_list( hash_t *hash, local_t *locals ) {
 
 
 symbol_t *table_t::search_table( hash_t *hash ) {
-#ifdef __U_DEBUG_H__
-    cerr << "LOOKUP:" << hash->text << endl;
-    cerr << "SYMBOL TABLE:" << endl;
-    root->display_table( 0 );
+    uDEBUGPRT(
+	cerr << "LOOKUP:" << hash->text << endl;
+	cerr << "SYMBOL TABLE:" << endl;
+	root->display_table( 0 );
 #ifdef __U_DEBUG_CONTEXT_H__
-    context();
+	context();
 #endif // __U_DEBUG_CONTEXT_H__
-#endif // __U_DEBUG_H__
+    )
 
     // simple check determines if the hash is in any table
 
     if ( hash->InSymbolTable == 0 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "NOT FOUND:" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( 	cerr << "NOT FOUND:" << endl; )
 	return nullptr;
     } // if
 
     // otherwise search the ST tree
 
     symbol_t *st = search_table2( hash );
-#ifdef __U_DEBUG_H__
-    if ( st != nullptr ) {
-	table_t *parent = st->data->found;
-	cerr << "FOUND:" << hash->text << " in " << parent << " (" << (parent->symbol != nullptr ? parent->symbol->hash->text : parent == root ? "root" : "template/compound") << ")" << endl;
-//	cerr << "AFTER:" << endl;
-//	root->display_table( 0 );
-    } // if
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	if ( st != nullptr ) {
+	    table_t *parent = st->data->found;
+	    cerr << "FOUND:" << hash->text << " in " << parent << " (" << (parent->symbol != nullptr ? parent->symbol->hash->text : parent == root ? "root" : "template/compound") << ")" << endl;
+//	    cerr << "AFTER:" << endl;
+//	    root->display_table( 0 );
+	} // if
+    )
     return st;
 } // table_t::search_table
 
 
 static symbol_t *search_base( hash_t *hash, symbol_t *symbol ) { // recursively search the base class tree
     for ( std::list<symbol_t *>::iterator sym = symbol->data->base_list.begin(); sym != symbol->data->base_list.end(); sym++ ) {
-#ifdef __U_DEBUG_H__
-	cerr << "\t" << (*sym)->hash->text << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "\t" << (*sym)->hash->text << endl; )
 	if ( (*sym)->data->table != nullptr ) {
 	    // search local symbol table
 	    symbol_t *temp = search_list( hash, (*sym)->data->table->local );
@@ -286,30 +273,26 @@ static symbol_t *search_base( hash_t *hash, symbol_t *symbol ) { // recursively 
 
 
 symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST tree
-#ifdef __U_DEBUG_H__
-    if ( this == root ) {
-	cerr << "CURRENT: root" << endl;
-    } else {
-	if ( symbol != nullptr ) {
-	    cerr << "CURRENT:" << symbol->hash->text << endl;
+    uDEBUGPRT(
+	if ( this == root ) {
+	    cerr << "CURRENT: root" << endl;
+	} else {
+	    if ( symbol != nullptr ) {
+		cerr << "CURRENT:" << symbol->hash->text << endl;
+	    } // if
 	} // if
-    } // if
-#endif // __U_DEBUG_H__
+    )
 
     // first search the current block
 
-#ifdef __U_DEBUG_H__
-    cerr << "CURRENT BLOCK:" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "CURRENT BLOCK:" << endl; )
     symbol_t *temp = search_list( hash, local );
     if ( temp != nullptr ) return temp;
 
     // search derived chain
 
     if ( symbol != nullptr && ! symbol->data->base_list.empty() ) {
-#ifdef __U_DEBUG_H__
-	cerr << "DERIVED:" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "DERIVED:" << endl; )
 	symbol_t *temp = search_base( hash, symbol );
 	if ( temp != nullptr ) return temp;
     } // if
@@ -317,24 +300,18 @@ symbol_t *table_t::search_table2( hash_t *hash ) {	// recursively search the ST 
     // search the lexical chain
 
     if ( lexical != nullptr ) {
-#ifdef __U_DEBUG_H__
-	cerr << "NEXT LEXICAL:" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "NEXT LEXICAL:" << endl; )
 	return lexical->search_table2( hash );
     } // if
 
-#ifdef __U_DEBUG_H__
-    cerr << "NOT FOUND:" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "NOT FOUND:" << endl; )
     return nullptr;
 } // table_t::search_table2
 
 
 void table_t::insert_table( symbol_t *symbol ) {
     uassert( symbol != nullptr );
-#ifdef __U_DEBUG_H__
-    cerr << "LOCAL ADD SYMBOL:" << symbol->hash->text << " to " << this << " (" << (table_t::symbol != nullptr ? table_t::symbol->hash->text : this == root ? "root" : "template/compound" ) << ")" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "LOCAL ADD SYMBOL:" << symbol->hash->text << " to " << this << " (" << (table_t::symbol != nullptr ? table_t::symbol->hash->text : this == root ? "root" : "template/compound" ) << ")" << endl; )
 
     // link this symbol into the list of symbols associated with this table
 
@@ -352,28 +329,24 @@ void table_t::insert_table( symbol_t *symbol ) {
     // remember that the hash node pointed to by this symbol is in another symbol table
 
     symbol->hash->InSymbolTable += 1;
-#ifdef __U_DEBUG_H__
-    cerr << "SYMBOL TABLE:" << endl;
-    root->display_table( 0 );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(     cerr << "SYMBOL TABLE:" << endl;
+    root->display_table( 0 ); )
 } // table_t::insert_table
 
 
 table_t *pop_table() {
-#ifdef __U_DEBUG_H__
-    cerr << "POP FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
+    uDEBUGPRT(
+	cerr << "POP FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
 #ifdef __U_DEBUG_CONTEXT_H__
-    context();
+	context();
 #endif // __U_DEBUG_CONTEXT_H__
-#endif // __U_DEBUG_H__
+    )
     lexical_t *tempt = top;
     table_t *tempf = focus;
     top = top->link;
     focus = top->tbl;
     delete tempt;
-#ifdef __U_DEBUG_H__
-    cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "NEW FOCUS:" << ::focus << " (" << (::focus->symbol != nullptr ? ::focus->symbol->hash->text : (::focus == root) ? "root" : "template/compound") << ")" << endl; )
     return tempf;
 } // pop_table
 

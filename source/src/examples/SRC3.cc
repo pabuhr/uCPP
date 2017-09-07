@@ -77,7 +77,7 @@ void SRC::Resume() {
 } // SRC::Resume
 
 void SRC::Deallocate() {
-	if ( Taken <= 0 ) uAbort( "problem 2" );
+	if ( Taken <= 0 ) abort( "problem 2" );
 	Free += 1;
 	Taken -= 1;
 	assert( Free >= 0 && Taken <= MaxItems );
@@ -85,7 +85,7 @@ void SRC::Deallocate() {
 } // SRC::Deallocate
 
 void SRC::Allocate( unsigned int N = 1 ) {
-	if ( N > MaxItems ) uAbort( "problem 3" );
+	if ( N > MaxItems ) abort( "problem 3" );
 	osacquire( cout ) << &uThisTask() << " Allocate(" << N << "), enter, Free:" << Free << " Taken:" << Taken << endl;
 	while ( Locked || ! Free > 0 ) {
 		_When ( ! Locked ) _Accept( Hold ) {
@@ -120,12 +120,12 @@ _Task worker {
 }; // worker
 
 
-void uMain::main() {
+int main() {
 	{
 		worker workers[10];
 	} // wait for workers to complete
 	osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

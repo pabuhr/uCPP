@@ -87,11 +87,11 @@ _Task T2 {
     } // for
 }; // T2::main
 
-void uMain::main(){
+int main(){
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
     T1 r1;
     T2 r2;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ TimeoutCondLock.cc" //

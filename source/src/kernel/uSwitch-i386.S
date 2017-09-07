@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct  9 11:46:38 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 29 13:54:26 2011
-// Update Count     : 26
+// Last Modified On : Fri Jul  7 15:26:11 2017
+// Update Count     : 36
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,13 +43,16 @@
 .globl	uSwitch
 uSwitch:
 
-	// Copy the "from" context argument from the stack to register eax
-	// Return address is at 0(%esp), with parameters following
+	// Copy the "from" context argument from the stack to register eax Return
+	// address is at 0(%esp), with parameters following.
 	
 	movl 4(%esp),%eax
 
 	// Save volatile registers on the stack.
 
+	sub $8,%esp
+	stmxcsr 0(%esp)		// 4 bytes
+	fnstcw 4(%esp)		// 2 bytes
 	pushl %ebx
 	pushl %edi
 	pushl %esi
@@ -61,22 +64,25 @@ uSwitch:
 //	movl 4(%ebp),%ebx	// save previous eip for debugger
 //	movl %ebx,PC_OFFSET(%eax)
 
-	// Copy the "to" context argument from the stack to register eax
-	// Having pushed three words (= 12 bytes) on the stack, the
-	// argument is now at 8 + 12 = 20(%esp)
+	// Copy the "to" context argument from the stack to register eax. Having
+	// pushed 5 words (= 20 bytes) on the stack (see FakeStack), the argument
+	// is now at 8 + 20 = 28(%esp).
 
-	movl 20(%esp),%eax
+	movl 28(%esp),%eax
 
 	// Load new context from the "to" area.
 
-	movl SP_OFFSET(%eax),%esp
 	movl FP_OFFSET(%eax),%ebp
+	movl SP_OFFSET(%eax),%esp
 
 	// Load volatile registers from the stack.
 
 	popl %esi
 	popl %edi
 	popl %ebx
+	fldcw 4(%esp)
+	ldmxcsr 0(%esp)
+	add $8,%esp
 
 	// Return to thread.
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Dec 27 08:49:10 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:50:41 2016
-// Update Count     : 1
+// Last Modified On : Sun Jan 22 23:24:15 2017
+// Update Count     : 4
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -57,7 +57,7 @@ _Task Worker2 {
 }; // Worker2
 
 
-void uMain::main() {
+int main() {
     uProcessor p[3];
     int check;
 
@@ -625,9 +625,9 @@ void uMain::main() {
 	    //std::osacquire( std::cerr ) << "X " << i << endl;
 	    _Select( f[0] || (f[1] && f[2]) ) {
 		// keep workers and the enclosing loop in lock step
-		while ( ! f[0].available() ) yield();
-		while ( ! f[1].available() ) yield();
-		while ( ! f[2].available() ) yield();
+		while ( ! f[0].available() ) uBaseTask::yield();
+		while ( ! f[1].available() ) uBaseTask::yield();
+		while ( ! f[2].available() ) uBaseTask::yield();
 		f[0].reset();  f[1].reset();  f[2].reset();
 	    } // _Select
 	} // for
@@ -647,8 +647,8 @@ void uMain::main() {
 		assert( check );
 		check = false;
 		// keep workers and the enclosing loop in lock step
-		while ( ! f[1].available() ) yield();
-		while ( ! f[2].available() ) yield();
+		while ( ! f[1].available() ) uBaseTask::yield();
+		while ( ! f[2].available() ) uBaseTask::yield();
 		f[0].reset();  f[1].reset();  f[2].reset();
 	    } or _Select( f[1] ) {
 		assert( check );
@@ -656,8 +656,8 @@ void uMain::main() {
 		else {
 		    check = false;
 		    // keep workers and the enclosing loop in lock step
-		    while ( ! f[0].available() ) yield();
-		    while ( ! f[2].available() ) yield();
+		    while ( ! f[0].available() ) uBaseTask::yield();
+		    while ( ! f[2].available() ) uBaseTask::yield();
 		    f[0].reset();  f[1].reset();  f[2].reset();
 		} // if
 	    } and _Select( f[2] ) {
@@ -666,8 +666,8 @@ void uMain::main() {
 		else {
 		    check = false;
 		    // keep workers and the enclosing loop in lock step
-		    while ( ! f[0].available() ) yield();
-		    while ( ! f[1].available() ) yield();
+		    while ( ! f[0].available() ) uBaseTask::yield();
+		    while ( ! f[1].available() ) uBaseTask::yield();
 		    f[0].reset();  f[1].reset();  f[2].reset();
 		} // fi
 	    } // _Select
@@ -675,4 +675,4 @@ void uMain::main() {
     }
 
     cout << "successful completion" << endl;
-} // uMain::main
+} // main

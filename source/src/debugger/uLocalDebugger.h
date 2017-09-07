@@ -61,7 +61,7 @@ _Task uLocalDebugger {
 	friend class uLocalDebuggerBoot;					// access: uLocalDebuggerInstance
 	friend class uLocalDebuggerHandler;					// access: uLocalDebuggerInstance, breakpointHandler
 	friend _Task uLocalDebuggerReader;					// access: finish, performAtomicOperation, setConditionMask, resetConditionMask
-	friend void uAbort( const char *fmt, ... );			// access: uLocalDebuggerInstance, uLocalDebuggerActive, abortApplication
+	friend void abort( const char *fmt, ... );			// access: uLocalDebuggerInstance, uLocalDebuggerActive, abortApplication
 	friend _Task uProfiler;								// access: dispatcher
 	friend class uMachContext;							// uLocalDebuggerInstance, uLocalDebuggerActive, createULThread, destroyULThread
 

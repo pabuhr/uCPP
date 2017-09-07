@@ -131,7 +131,7 @@ _Mutex<uPriorityQ,uPriorityQ> _PeriodicTask<uPIHeap> Philosopher {
     } // Philosopher::Philosopher
 }; // Philosopher
 
-void uMain::main() {
+int main() {
     uDeadlineMonotonic1 rq ;				// create real-time scheduler
     uRealTimeCluster rtCluster( rq );			// create real-time cluster with scheduler
     uProcessor *processor;
@@ -148,7 +148,7 @@ void uMain::main() {
     }
     delete processor;
     osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ RealTimePhilosophers1.cc" //

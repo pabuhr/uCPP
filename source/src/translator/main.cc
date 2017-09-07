@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 14 09:41:17 2015
-// Update Count     : 164
+// Last Modified On : Mon Feb 20 09:00:44 2017
+// Update Count     : 166
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,6 +51,7 @@ using std::string;
 #include "parse.h"
 
 //#define __U_DEBUG_H__
+#include "debug.h"
 
 istream *yyin = &cin;
 ostream *yyout = &cout;
@@ -96,16 +97,12 @@ int main( int argc, char *argv[] ) {
     // assumed.  If more files are specified, an error results.
 
     for ( int i = 1; i < argc; i += 1 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	if ( argv[i][0] == '-' ) {
 	    string arg = string( argv[i] );
 	    if ( arg == "-D" ) {
 		i += 1;					// advance to next argument
-#ifdef __U_DEBUG_H__
-		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 		check( string( argv[i] ) );
 	    } else if ( arg.substr(0,2) == "-D" ) {
 		check( arg.substr(2) );
@@ -113,9 +110,7 @@ int main( int argc, char *argv[] ) {
 	} else {
 	    if ( infile == nullptr ) {
 		infile = argv[i];
-#ifdef __U_DEBUG_H__
-		cerr << "infile:" << infile << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "infile:" << infile << endl; )
 		yyin = new ifstream( infile );
 		if ( yyin->fail() ) {
 		    cerr << "uC++ Translator error: could not open file " << infile << " for reading." << endl;
@@ -123,9 +118,7 @@ int main( int argc, char *argv[] ) {
 		} // if
 	    } else if ( outfile == nullptr ) {
 		outfile = argv[i];
-#ifdef __U_DEBUG_H__
-		cerr << "outfile:" << outfile << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "outfile:" << outfile << endl; )
 		yyout = new ofstream( outfile );
 		if ( yyout->fail() ) {
 		    cerr << "uC++ Translator error: could not open file " << outfile << " for writing." << endl;
@@ -138,9 +131,7 @@ int main( int argc, char *argv[] ) {
 	} // if
     } // for
 
-#ifdef __U_DEBUG_H__
-    cerr << "flags yield:" << Yield << " verify:" << verify << " profile:" << profile << " std cpp11:" << stdcpp11 << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "flags yield:" << Yield << " verify:" << verify << " profile:" << profile << " std cpp11:" << stdcpp11 << endl; )
 
     *yyin >> std::resetiosflags( std::ios::skipws );	// turn off white space skipping during input
 

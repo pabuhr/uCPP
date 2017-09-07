@@ -38,7 +38,7 @@ _Task Worker {
     }
 };
 
-void uMain::main() {
+int main() {
     uProcessor *processor2 = nullptr;
     {
 	Worker tasks[2];
@@ -58,7 +58,7 @@ void uMain::main() {
     }
     cout << "here" << endl;
     delete processor2;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -g -multi Processor.cc" //

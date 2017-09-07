@@ -233,7 +233,7 @@ uFile::FileAccess::Failure::Failure( const FileAccess &fa, int errno_, const cha
 } // uFile::FileAccess::Failure::Failure
 
 void uFile::FileAccess::Failure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p( file:%p ), %.256s file \"%.256s\".",
+    abort( "(FileAccess &)%p( file:%p ), %.256s file \"%.256s\".",
 	    &fileAccess(), &file(), message(), getName() );
 } // uFile::FileAccess::Failure::defaultTerminate
 
@@ -242,7 +242,7 @@ uFile::FileAccess::OpenFailure::OpenFailure( FileAccess &fa, int errno_, int fla
 	uFile::FileAccess::Failure( fa, errno_, msg ), flags( flags ), mode( mode ) {}
 
 void uFile::FileAccess::OpenFailure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p.FileAccess( file:%p, flags:0x%x, mode:0x%x ), %.256s \"%.256s\".\nError(%d) : %s.",
+    abort( "(FileAccess &)%p.FileAccess( file:%p, flags:0x%x, mode:0x%x ), %.256s \"%.256s\".\nError(%d) : %s.",
 	    &fileAccess(), &file(), flags, mode, message(), getName(), errNo(), strerror( errNo() ) );
 } // uFile::OpenFailure::defaultTerminate
 
@@ -250,7 +250,7 @@ void uFile::FileAccess::OpenFailure::defaultTerminate() const {
 uFile::FileAccess::CloseFailure::CloseFailure( FileAccess &fa, int errno_, const char *const msg ) : uFile::FileAccess::Failure( fa, errno_, msg ) {}
 
 void uFile::FileAccess::CloseFailure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p.~FileAccess(), %.256s \"%.256s\".\nError(%d) : %s.",
+    abort( "(FileAccess &)%p.~FileAccess(), %.256s \"%.256s\".\nError(%d) : %s.",
 	    &fileAccess(), message(), getName(), errNo(), strerror( errNo() ) );
 } // uFile::CloseFailure::defaultTerminate
 
@@ -259,7 +259,7 @@ uFile::FileAccess::SeekFailure::SeekFailure( const FileAccess &fa, int errno_, c
 	uFile::FileAccess::Failure( fa, errno_, msg ), offset( offset ), whence( whence ) {}
 
 void uFile::FileAccess::SeekFailure::defaultTerminate() const {
-    uAbort( "(uFile &)%p.lseek( offset:%ld, whence:%d ), %.256s file \"%.256s\".\nError(%d) : %s.",
+    abort( "(uFile &)%p.lseek( offset:%ld, whence:%d ), %.256s file \"%.256s\".\nError(%d) : %s.",
 	    &file(), (long int)offset, whence, message(), getName(), errNo(), strerror( errNo() ) );
 } // uFile::FileAccess::SeekFailure::defaultTerminate
 
@@ -267,7 +267,7 @@ void uFile::FileAccess::SeekFailure::defaultTerminate() const {
 uFile::FileAccess::SyncFailure::SyncFailure( const FileAccess &fa, int errno_, const char *const msg ) : uFile::FileAccess::Failure( fa, errno_, msg ) {}
 
 void uFile::FileAccess::SyncFailure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p.fsync(), %.256s \"%.256s\".\nError(%d) : %s.",
+    abort( "(FileAccess &)%p.fsync(), %.256s \"%.256s\".\nError(%d) : %s.",
 	    &file(), message(), getName(), errNo(), strerror( errNo() ) );
 } // uFile::FileAccess::SyncFailure::defaultTerminate
 
@@ -283,7 +283,7 @@ uFile::FileAccess::ReadFailure::ReadFailure( const FileAccess &fa, int errno_, c
 	uFile::FileAccess::Failure( fa, errno_, msg ), buf( buf ), len( len ), timeout( timeout ) {}
 
 void uFile::FileAccess::ReadFailure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p.read( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(FileAccess &)%p.read( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &fileAccess(), buf, len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uFile::FileAccess::ReadFailure::defaultTerminate
 
@@ -295,7 +295,7 @@ uFile::FileAccess::WriteFailure::WriteFailure( const FileAccess &fa, int errno_,
 	uFile::FileAccess::Failure( fa, errno_, msg ), buf( buf ), len( len ), timeout( timeout ) {}
 
 void uFile::FileAccess::WriteFailure::defaultTerminate() const {
-    uAbort( "(FileAccess &)%p.write( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(FileAccess &)%p.write( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &fileAccess(), buf, len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uFile::FileAccess::WriteFailure::defaultTerminate
 
@@ -425,7 +425,7 @@ const uFile &uFile::Failure::file() const { return f; }
 const char *uFile::Failure::getName() const { return name; }
 
 void uFile::Failure::defaultTerminate() const {
-    uAbort( "(uFile &)%p, %.256s \"%.256s\".", &file(), message(), getName() );
+    abort( "(uFile &)%p, %.256s \"%.256s\".", &file(), message(), getName() );
 } // uFile::Failure::defaultTerminate
 
 
@@ -433,14 +433,14 @@ uFile::TerminateFailure::TerminateFailure( const uFile &f, int errno_, const int
 	uFile::Failure( f, errno_, msg ), accessCnt( accessCnt ) {}
 
 void uFile::TerminateFailure::defaultTerminate() const {
-    uAbort( "(uFile &)%p.~uFile(), %.256s, %d accessor(s) outstanding.", &file(), message(), accessCnt );
+    abort( "(uFile &)%p.~uFile(), %.256s, %d accessor(s) outstanding.", &file(), message(), accessCnt );
 } // uFile::TerminateFailure::defaultTerminate
 
 
 uFile::StatusFailure::StatusFailure( const uFile &f, int errno_, const struct stat &buf, const char *const msg ) : uFile::Failure( f, errno_, msg ), buf( buf ) {}
 
 void uFile::StatusFailure::defaultTerminate() const {
-    uAbort( "(uFile &)%p.status( buf:%p ), %.256s \"%.256s\".\nError(%d) : %s.",
+    abort( "(uFile &)%p.status( buf:%p ), %.256s \"%.256s\".\nError(%d) : %s.",
 	    &file(), &buf, message(), getName(), errNo(), strerror( errNo() ) );
 } // uFile::StatusFailure::defaultTerminate
 
@@ -492,7 +492,7 @@ uPipe::End::Failure::Failure( const End &end, int errno_, const char *const msg 
 } // uPipe::End::Failure::Failure
 
 void uPipe::End::Failure::defaultTerminate() const {
-    uAbort( "(uPipe::End &)%p(), pipe:%p %.256s.", &pipeend(), &pipeend().pipe, message() );
+    abort( "(uPipe::End &)%p(), pipe:%p %.256s.", &pipeend(), &pipeend().pipe, message() );
 } // uPipe::End::Failure::defaultTerminate
 
 
@@ -500,7 +500,7 @@ uPipe::End::ReadFailure::ReadFailure( const End &pe, int errno_, const char *buf
 	Failure( pe, errno_, msg ), buf( buf ), len( len ), timeout( timeout ) {}
 
 void uPipe::End::ReadFailure::defaultTerminate() const {
-    uAbort( "(uPipe::End &)%p.read( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uPipe::End &)%p.read( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &pipeend(), buf, len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uPipe::End::ReadFailure::defaultTerminate
 
@@ -512,7 +512,7 @@ uPipe::End::WriteFailure::WriteFailure( const End &pe, int errno_, const char *b
 	Failure( pe, errno_, msg ), buf( buf ), len( len ), timeout( timeout ) {}
 
 void uPipe::End::WriteFailure::defaultTerminate() const {
-    uAbort( "(uPipe::End &)%p.write( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uPipe::End &)%p.write( buf:%p, len:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &pipeend(), buf, len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uPipe::End::WriteFailure::defaultTerminate
 
@@ -554,21 +554,21 @@ void uPipe::End::writeTimeout( const char *buf, const int len, const uDuration *
 uPipe::Failure::Failure( const uPipe &pipe, int errno_, const char *const msg ) : uIOFailure( errno_, msg ), p( pipe ) {}
 
 void uPipe::Failure::defaultTerminate() const {
-    uAbort( "(uPipe &)%p, %.256s.", &pipe(), message() );
+    abort( "(uPipe &)%p, %.256s.", &pipe(), message() );
 } // uPipe::Failure::defaultTerminate
 
 
 uPipe::OpenFailure::OpenFailure( const uPipe &pipe, int errno_, const char *const msg ) : Failure( pipe, errno_, msg ) {}
 
 void uPipe::OpenFailure::defaultTerminate() const {
-    uAbort( "(uPipe &)%p.uPipe(), %.256s.\nError(%d) : %s.", &pipe(), message(), errNo(), strerror( errNo() ) );
+    abort( "(uPipe &)%p.uPipe(), %.256s.\nError(%d) : %s.", &pipe(), message(), errNo(), strerror( errNo() ) );
 } // uPipe::OpenFailure::defaultTerminate
 
 
 uPipe::CloseFailure::CloseFailure( const uPipe &pipe, int errno_, const char *const msg ) : Failure( pipe, errno_, msg ) {}
 
 void uPipe::CloseFailure::defaultTerminate() const {
-    uAbort( "(uPipe &)%p.~uPipe(), %.256s.\nError(%d) : %s.", &pipe(), message(), errNo(), strerror( errNo() ) );
+    abort( "(uPipe &)%p.~uPipe(), %.256s.\nError(%d) : %s.", &pipe(), message(), errNo(), strerror( errNo() ) );
 } // uPipe::CloseFailure::defaultTerminate
 
 

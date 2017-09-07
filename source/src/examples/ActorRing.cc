@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 11:56:45 2016
-// Update Count     : 14
+// Last Modified On : Thu Jan 26 08:43:49 2017
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -66,7 +66,7 @@ _Actor Passer {
     void close( Passer *partner ) { Passer::partner = partner; }
 }; // Passer
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     try {
 	switch ( argc ) {
 	  case 3:
@@ -96,7 +96,7 @@ void uMain::main() {
     
     *passers[0] | token;				// start cycling token
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -Wall -g -O2 -multi ActorRing.cc" //

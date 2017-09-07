@@ -89,7 +89,7 @@ _Task Boy {
 }; // Boy
 
 
-void uMain::main() {
+int main() {
 	const int NoOfGirls = 20;
 	const int NoOfBoys = 20;
 
@@ -104,7 +104,7 @@ void uMain::main() {
 	delete [] boys;
 
 	osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

@@ -85,7 +85,7 @@ _Task Worker {
 }; // Worker
 
 
-void uMain::main() {
+int main() {
 	enum { MaxTask = 50 };
 	ReadersWriter rw;
 	Worker *workers[MaxTask];
@@ -98,7 +98,7 @@ void uMain::main() {
 	} // for
 
 	osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

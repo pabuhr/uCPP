@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:33:51 2016
-// Update Count     : 9
+// Last Modified On : Thu Jan 26 08:44:04 2017
+// Update Count     : 10
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,7 +90,7 @@ _Actor Sieve {
     Sieve( const int Max ) : Max( Max ) {}
 }; // Sieve
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     int Max = 30;
 
     try {
@@ -110,7 +110,7 @@ void uMain::main() {
 
     new Sieve( Max );
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorSieve.cc" //

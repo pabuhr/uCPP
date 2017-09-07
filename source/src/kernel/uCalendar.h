@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Tue Dec 19 11:58:22 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 27 10:44:38 2015
-// Update Count     : 249
+// Last Modified On : Tue Aug 22 21:46:47 2017
+// Update Count     : 252
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -306,11 +306,11 @@ class uTime {
     // malloc. The malloc calls lead to recursion problems because uTime values are created from the sigalrm handler in
     // composing the next context switch event.
 
-    uTime( long int sec ) {
+    explicit uTime( long int sec ) {			// explicit => unambiguous with uDuration( long int sec )
 	tv = (long long int)sec * TIMEGRAN;
 #ifdef __U_DEBUG__
 	if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	    uAbort( uCreateFmt, 1970, 0, 0, 0, 0, sec, 0 );
+	    abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, 0 );
 	} // if
 #endif // __U_DEBUG__
     } // uTime::uTime
@@ -319,7 +319,7 @@ class uTime {
 	tv = (long long int)sec * TIMEGRAN + nsec;
 #ifdef __U_DEBUG__
 	if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	    uAbort( uCreateFmt, 1970, 0, 0, 0, 0, sec, nsec );
+	    abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, nsec );
 	} // if
 #endif // __U_DEBUG__
     } // uTime::uTime

@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:59:34 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:41:46 2012
-// Update Count     : 97
+// Last Modified On : Sun Feb 19 23:21:12 2017
+// Update Count     : 98
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -100,7 +100,7 @@ class uStaticPriorityQ : public uBasePrioritySeq {
     } // uStaticPriorityQ::remove
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uStaticPriorityQ::transfer, internal error, unsupported operation" );
+	abort( "uStaticPriorityQ::transfer, internal error, unsupported operation" );
     } // uStaticPriorityQ
 
     virtual void onAcquire( uBaseTask &oldOwner );
@@ -142,10 +142,8 @@ template<typename List, typename Node> class uStaticPriorityScheduleQ : public u
 #endif // __U_DEBUG__
 	objects[priority].add( node );
 	mask |= 1ul << priority;
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uStaticPriorityScheduleQ &)%p.add( %p ) task %.256s (%p) adding task %.256s (%p) with priority %d on cluster %p\n",
-		   this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), priority, &uThisCluster() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uStaticPriorityScheduleQ &)%p.add( %p ) task %.256s (%p) adding task %.256s (%p) with priority %d on cluster %p\n",
+			      this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), priority, &uThisCluster() ); )
     } // uStaticPriorityScheduleQ::add
 
     virtual Node *drop() {
@@ -156,10 +154,8 @@ template<typename List, typename Node> class uStaticPriorityScheduleQ : public u
 	    if ( objects[highestPriority].empty() ) {
 		mask &= ~ ( 1ul << highestPriority );
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uStaticPriorityScheduleQ &)%p.drop( %p ) task %.256s (%p) removing task %.256s (%p) with priority %d on cluster %p\n",
-		       this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), highestPriority, &uThisCluster() );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uStaticPriorityScheduleQ &)%p.drop( %p ) task %.256s (%p) removing task %.256s (%p) with priority %d on cluster %p\n",
+				  this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), highestPriority, &uThisCluster() ); )
 	    return node;
 	} else {
 	    return nullptr;
@@ -230,7 +226,7 @@ template<typename List, typename Node> class uStaticPriorityScheduleSeq : public
     } // uStaticPriorityScheduleSeq::remove
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uStaticPriorityScheduleSeq::transfer, internal error, unsupported operation" );
+	abort( "uStaticPriorityScheduleSeq::transfer, internal error, unsupported operation" );
     } // uStaticPriorityScheduleSeq
 }; // uStaticPriorityScheduleSeq
 

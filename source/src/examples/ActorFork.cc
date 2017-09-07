@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:05 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 11:24:56 2016
-// Update Count     : 8
+// Last Modified On : Wed Jul  5 08:49:25 2017
+// Update Count     : 21
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,35 +34,31 @@ using namespace std;
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
 
-unsigned int uDefaultActorThreads() { return 1; }
-unsigned int uDefaultActorProcessors() { return 0; }
-
-struct StartMsg : public uActor::Message {} startMsg;
+#define KERNELTHREADS 2
+unsigned int uDefaultActorThreads() { return KERNELTHREADS; }
+unsigned int uDefaultActorProcessors() { return KERNELTHREADS - 1; } // plus given processor
 
 int MaxLevel = 3;					// default value
-unsigned int createCnt = 0;				// count created actors
 
 _Actor Fork {
-    unsigned int currLevel;
-    uActor * left, * right;
+    unsigned int level;
 
-    Allocation receive( Message &msg ) {
+    Allocation receive( Message & msg ) {
 	Case( StartMsg, msg ) {
-	    PRT( osacquire( cout ) << this << " create currLevel " << currLevel << endl; )
-	    if ( currLevel < (unsigned int)MaxLevel ) {
-		*(left = new Fork( currLevel + 1 )) | startMsg;
-		*(right = new Fork( currLevel + 1 )) | startMsg;
+	    PRT( osacquire( cout ) << this << " level " << level << endl; )
+	    if ( level < (unsigned int)MaxLevel ) {
+		*(new Fork( level + 1 )) | uActor::startMsg; // left
+		*(new Fork( level + 1 )) | uActor::startMsg; // right
 	    } // if
 	} // Case
+
 	return Delete;
     } // Fork::receive
   public:
-    Fork( unsigned int currLevel ) : currLevel( currLevel ) {
-	uFetchAdd( createCnt, 1 );
-    } // Fork::Fork
+    Fork( unsigned int level ) : level( level ) {}
 }; // Fork
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     try {
 	switch ( argc ) {
 	  case 2:
@@ -81,10 +77,10 @@ void uMain::main() {
     PRT( cout << "MaxLevel " << MaxLevel << endl; )
     MaxLevel -= 1;					// decrement to handle created leaves
     Fork *root = new Fork( 0 );
-    *root | startMsg;
+    *root | uActor::startMsg;
     uActor::stop();
-    cout << createCnt << " actors created" << endl;
-} // uMain::main
+    cout << ((2 << MaxLevel) - 1) << " actors created" << endl;
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -Wall -g -O2 -multi ActorFork.cc" //

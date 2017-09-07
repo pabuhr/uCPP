@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  1 15:06:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:30:19 2016
-// Update Count     : 81
+// Last Modified On : Tue Aug 22 17:25:04 2017
+// Update Count     : 82
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,7 +37,7 @@ uRealTimeBaseTask::uRealTimeBaseTask( uCluster &cluster ) : uBaseTask( cluster )
 
 uRealTimeBaseTask::uRealTimeBaseTask( uTime firstActivateTask_, uTime endTime_, uDuration deadline_, uCluster &cluster ) : uBaseTask( cluster ) {
     if ( deadline_ < 0 ) {
-	uAbort( "Attempt to create real time task with deadline less than 0." );
+	abort( "Attempt to create real time task with deadline less than 0." );
     } // if
     firstActivateTime = firstActivateTask_;
     endTime = endTime_;
@@ -46,17 +46,17 @@ uRealTimeBaseTask::uRealTimeBaseTask( uTime firstActivateTask_, uTime endTime_, 
 
 uRealTimeBaseTask::uRealTimeBaseTask( uEvent firstActivateEvent_, uTime endTime_, uDuration deadline_, uCluster &cluster ) : uBaseTask( cluster ) {
     if ( deadline_ < 0 ) {
-	uAbort( "Attempt to create real time task with deadline less than 0." );
+	abort( "Attempt to create real time task with deadline less than 0." );
     } // if
     firstActivateEvent = firstActivateEvent_;
-    firstActivateTime = 0;
+    firstActivateTime = uTime( 0 );
     endTime = endTime_;
     deadline = deadline_;
 } // uRealTimeBaseTask::uRealTimeBaseTask
 
 uRealTimeBaseTask::uRealTimeBaseTask( uTime firstActivateTask_, uEvent firstActivateEvent_, uTime endTime_, uDuration deadline_, uCluster &cluster ) : uBaseTask( cluster ) {
     if ( deadline_ < 0 ) {
-	uAbort( "Attempt to create real time task with deadline less than 0." );
+	abort( "Attempt to create real time task with deadline less than 0." );
     } // if
     firstActivateTime = firstActivateTask_;
     firstActivateEvent = firstActivateEvent_;
@@ -77,7 +77,7 @@ uDuration uRealTimeBaseTask::getDeadline() const {
 uDuration uRealTimeBaseTask::setDeadline( uDuration deadline_ ) {
 #ifdef __U_DEBUG__
     if ( this != &uThisTask() ) {
-	uAbort( "Attempt to change the deadline of task %.256s (%p).\n"
+	abort( "Attempt to change the deadline of task %.256s (%p).\n"
 		"A task can only change its own deadline.\n",
 		getName(), this );
     } // if
@@ -158,7 +158,7 @@ uDuration uPeriodicBaseTask::getPeriod() const {
 uDuration uPeriodicBaseTask::setPeriod( uDuration period_ ) {
 #ifdef __U_DEBUG__
     if ( this != &uThisTask() ) {
-	uAbort( "Attempt to change the period of task %.256s (%p).\n"
+	abort( "Attempt to change the period of task %.256s (%p).\n"
 		"A task can only change its own period.\n",
 		getName(), this );
     } // if
@@ -203,7 +203,7 @@ uDuration uSporadicBaseTask::getFrame() const {
 uDuration uSporadicBaseTask::setFrame( uDuration frame_ ) {
 #ifdef __U_DEBUG__
     if ( this != &uThisTask() ) {
-	uAbort( "Attempt to change the frame of task %.256s (%p).\n"
+	abort( "Attempt to change the frame of task %.256s (%p).\n"
 		"A task can only change its own frame.\n",
 		getName(), this );
     } // if

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:28:52 2016
-// Update Count     : 190
+// Last Modified On : Sun Jan 22 22:32:16 2017
+// Update Count     : 191
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -267,13 +267,12 @@ void bye( void * ) {
 
 #if defined( __U_CPLUSPLUS__ )
 _Task JoinTester : public uPthreadable {
-  public:
 	void main() {
 		joinval = this;
 	} // JoinTester::main
 }; // JoinTester
 
-void uMain::main() {
+int main() {
 #else
 int main() {
 #endif // __U_CPLUSPLUS__
@@ -383,8 +382,8 @@ int main() {
 		JoinTester f;
 		void *res;
 		int retcode = pthread_join( f.pthreadId(), &res );
-		if ( retcode != 0 ) uAbort( "uPthreadable join test failed with return code %d", retcode );
-		if ( &f != res ) uAbort( "uPthreadable join test failed" );
+		if ( retcode != 0 ) abort( "uPthreadable join test failed with return code %d", retcode );
+		if ( &f != res ) abort( "uPthreadable join test failed" );
 	}
 #endif // __U_CPLUSPLUS__
 

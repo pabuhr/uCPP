@@ -39,10 +39,10 @@ _Task Reader {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
 	    rwlock.rdacquire();
 	    // if ( rwlock.wrcnt() != 0 )
-	    // 	uAbort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+	    // 	abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
 	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
 		// if ( rwlock.wrcnt() != 0 )
-		//     uAbort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+		//     abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
 	    rwlock.rdrelease();
 	} // for
     } // main
@@ -55,10 +55,10 @@ _Task Writer {
 	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
 	    rwlock.wracquire();
 	    // if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
-	    // 	uAbort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+	    // 	abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
 	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
 		// if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
-		//     uAbort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+		//     abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
 	    rwlock.wrrelease();
 	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
 	} // for
@@ -67,7 +67,7 @@ _Task Writer {
 }; // Writer
 
 
-void uMain::main() {
+int main() {
     enum { NoOfReaders = 6, NoOfWriters = 2 };
     uProcessor p[8];
     {
@@ -75,7 +75,7 @@ void uMain::main() {
 	Reader readers[NoOfReaders];
     }
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -multi -g RWLock.cc" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  6 22:50:18 2016
-// Update Count     : 43
+// Last Modified On : Tue Sep  5 13:51:28 2017
+// Update Count     : 58
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,7 +38,7 @@
 // Define the mmap crossover point during allocation. Allocations less than this amount are allocated from buckets;
 // values greater than or equal to this value are mmap from the operating system.
 
-#define __U_DEFAULT_MMAP_START__ (256 * 1024)
+#define __U_DEFAULT_MMAP_START__ (512 * 1024 + 1)
 
 
 // Define the default scheduling pre-emption time in milliseconds.  A scheduling pre-emption is attempted every default
@@ -68,7 +68,7 @@
 #endif
 
 // often large automatic arrays for setting up the program
-#define __U_DEFAULT_MAIN_STACK_SIZE__ 490000
+#define __U_DEFAULT_MAIN_STACK_SIZE__ 500000
 
 
 // Define the default number of processors created on the user cluster. May be greater than 0.
@@ -77,14 +77,20 @@
 
 // Define the default number of processors created in the actor executor. May be greater than 0.
 
-#define __U_DEFAULT_ACTOR_PROCESSORS__ 3
+#define __U_DEFAULT_ACTOR_PROCESSORS__ 2
 
 // Define the default number of threads created in the actor executor. May be greater than 0.
 
-#define __U_DEFAULT_ACTOR_THREADS__ 8
+#define __U_DEFAULT_ACTOR_THREADS__ 4
 
-extern unsigned int uDefaultActorThreads();		// threads in actor executor
-extern unsigned int uDefaultActorProcessors();		// processors in actor executor
+// Define affinity for actor executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
+
+#define __U_DEFAULT_ACTOR_OFFSET__ -1
+
+// Define if actor executor is created in a separate cluster
+
+#define __U_DEFAULT_ACTOR_SEPCLUS__ false
+
 extern unsigned int uDefaultHeapExpansion();		// heap expansion size (bytes)
 extern unsigned int uDefaultMmapStart();		// cross over point to use mmap rather than buckets
 extern unsigned int uDefaultStackSize();		// cluster coroutine/task stack size (bytes)
@@ -93,6 +99,12 @@ extern unsigned int uDefaultSpin();			// processor spin time for idle task (cont
 extern unsigned int uDefaultPreemption();		// processor scheduling pre-emption durations (milliseconds)
 extern unsigned int uDefaultProcessors();		// number of processors created on the user cluster
 extern unsigned int uDefaultBlockingIOProcessors();	// number of blocking I/O processors created on the blocking I/O cluster
+
+extern unsigned int uDefaultActorProcessors();		// kernel threads (processors) servicing executor thread-pool
+extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
+extern int uDefaultActorOffset();			// affinity and offset (-1 => no affinity, default)
+extern bool uDefaultActorSepClus();			// create processors on separate cluster
+
 extern void uStatistics();				// print user defined statistics on interrupt
 
 

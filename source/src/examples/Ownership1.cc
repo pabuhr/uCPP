@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Sun Jan  9 16:12:31 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:26:57 2016
-// Update Count     : 16
+// Last Modified On : Sun Jan 22 21:50:24 2017
+// Update Count     : 17
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -73,7 +73,7 @@ _Task Worker {
 }; // Worker
 
 
-// This test checks that creating tasks and processors not directly in uMain::main works correctly
+// This test checks that creating tasks and processors not directly in main works correctly
 _Monitor nonMainTest {
   public:
     void test() {
@@ -82,7 +82,7 @@ _Monitor nonMainTest {
     } // nonMainTest::test
 }; // nonMainTest
 
-void uMain::main() {
+int main() {
     nonMainTest m;
     osacquire( cout ) << "The first test should complete" << endl;
     m.test();
@@ -90,4 +90,4 @@ void uMain::main() {
     osacquire( cout ) << "The second test should fail" << endl;
     CM cm;
     T t( cm );
-} // uMain::main
+} // main

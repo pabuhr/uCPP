@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:32:19 2016
-// Update Count     : 6
+// Last Modified On : Thu Jan 26 08:42:02 2017
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,7 +87,7 @@ _Actor Generator {
     } // Fib::receive
 }; // Generator
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     try {
 	switch ( argc ) {
 	  case 2:
@@ -105,7 +105,7 @@ void uMain::main() {
 
     new Generator;
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorFib1.cc" //

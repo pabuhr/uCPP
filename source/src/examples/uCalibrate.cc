@@ -32,7 +32,7 @@ using std::endl;
 
 #define TIMES 5000000000LL				// cannot be larger or overflow occurs
 
-void uMain::main() {
+int main() {
     unsigned long long int StartTime, EndTime;
     
     StartTime = Time();
@@ -41,7 +41,7 @@ void uMain::main() {
     EndTime = Time();
 
     cout << "#define ITERATIONS_FOR_100USECS " << 100000LL * TIMES / ( EndTime - StartTime ) << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ uCalibrate.cc" //

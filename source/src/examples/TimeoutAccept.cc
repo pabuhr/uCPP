@@ -128,7 +128,7 @@ void T2::main(){
     } // for
 } // T2::main
 
-void uMain::main(){
+int main(){
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
     T1 r1;
     T2 s1( r1 );
@@ -137,4 +137,4 @@ void uMain::main(){
 
     r1.partner( s1 );
     r2.partner( s2 );
-} // uMain::main
+} // main

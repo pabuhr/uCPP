@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 13:51:41 2016
-// Update Count     : 499
+// Last Modified On : Tue Jan 31 09:10:14 2017
+// Update Count     : 506
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,8 +67,8 @@ class uBaseEvent {
     const void *getOriginalThrower() const { return staticallyBoundObject; }
     void reraise();
     virtual uBaseEvent *duplicate() const = 0;		// translator generated => object specific
-    virtual void defaultTerminate();
-    virtual void defaultResume();
+    virtual void defaultTerminate() const;
+    virtual void defaultResume() const;
 }; // uBaseEvent
 
 
@@ -107,13 +107,13 @@ class uEHM {
     static void asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind );
 
     static void Throw( const uBaseEvent &event, void *const bound = 0 ) __attribute__(( noreturn ));
-    static void Throw( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ThrowRaise ); }
-    static void Throw( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ThrowRaise ); } // asynchronous rethrow
+    //static void ThrowAt( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ThrowRaise ); }
+    //static void ThrowAt( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ThrowRaise ); } // asynchronous rethrow
     static void ReThrow() __attribute__(( noreturn ));	// synchronous rethrow
 
     static void Resume( const uBaseEvent &event, void *const bound = 0 );
-    static void Resume( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ResumeRaise ); }
-    static void Resume( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ResumeRaise ); } // asynchronous reresume
+    static void ResumeAt( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ResumeRaise ); }
+    static void ResumeAt( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ResumeRaise ); } // asynchronous reresume
     static void ReResume();
 
     static bool pollCheck();
@@ -134,8 +134,8 @@ class uEHM {
 class uEHM::AsyncEMsg : public uSeqable {
     friend class uEHM;
     friend class uEHM::AsyncEMsgBuffer;
-    friend void uEHM::Throw( const uBaseEvent &, uBaseCoroutine & );
-    friend void uEHM::Resume( const uBaseEvent &, uBaseCoroutine & );
+    //friend void uEHM::ThrowAt( const uBaseEvent &, uBaseCoroutine & );
+    friend void uEHM::ResumeAt( const uBaseEvent &, uBaseCoroutine & );
 
     bool hidden;
     uBaseEvent *asyncEvent;

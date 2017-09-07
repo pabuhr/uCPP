@@ -136,7 +136,7 @@ _Task SampleUser {
 	}; // SampleUser::SampleUser
 }; // SampleUser
 
-void uMain::main() {
+int main() {
 	const int NoOfUsers = 8;
 	Alarm alarm;
 	Clock clock( alarm );
@@ -150,7 +150,7 @@ void uMain::main() {
 	} // for
 
 	osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

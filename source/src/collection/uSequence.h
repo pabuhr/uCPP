@@ -84,21 +84,21 @@ template<typename T> class uSequence: public uCollection<T>, protected uSFriend 
     // Return a pointer to the element after *n, or 0 if there isn't one.
     T *succ( T *n ) const {				// pre: *n in *this
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uSequence &)%p.succ( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uSequence &)%p.succ( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	return (uNext( n ) == root) ? 0 : (T *)uNext( n );
     }							// post: n == tail() & succ(n) == 0 | n != tail() & *succ(n) in *this
     // Return a pointer to the element before *n, or 0 if there isn't one.
     T *pred( T *n ) const {				// pre: *n in *this
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uSequence &)%p.pred( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uSequence &)%p.pred( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	return (n == root) ? 0 : (T *)uBack( n );
     }							// post: n == head() & head(n) == 0 | n != head() & *pred(n) in *this
     // Insert *n into the sequence before *bef, or at the end if bef == 0.
     void insertBef( T *n, T *bef ) {			// pre: !n->listed() & *bef in *this
 #ifdef __U_DEBUG__
-	if ( n->listed() ) uAbort( "(uSequence &)%p.insertBef( %p, %p ) : Node is already on another list.", this, n, bef );
+	if ( n->listed() ) abort( "(uSequence &)%p.insertBef( %p, %p ) : Node is already on another list.", this, n, bef );
 #endif // __U_DEBUG__
 	if ( bef == root ) {				// must change root
 	    if ( root ) {
@@ -128,7 +128,7 @@ template<typename T> class uSequence: public uCollection<T>, protected uSFriend 
     // Insert *n into the sequence after *aft, or at the beginning if aft == 0.
     void insertAft( T *aft, T *n ) {			// pre: !n->listed() & *aft in *this
 #ifdef __U_DEBUG__
-	if ( n->listed() ) uAbort( "(uSequence &)%p.insertAft( %p, %p ) : Node is already on another list.", this, aft, n );
+	if ( n->listed() ) abort( "(uSequence &)%p.insertAft( %p, %p ) : Node is already on another list.", this, aft, n );
 #endif // __U_DEBUG__
 	if ( ! aft ) {					// must change root
 	    if ( root ) {
@@ -155,7 +155,7 @@ template<typename T> class uSequence: public uCollection<T>, protected uSFriend 
     }							// post: n->listed() & *n in *this & succ(n) == bef
     void remove( T *n ) {				// O(1)
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uSequence &)%p.remove( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uSequence &)%p.remove( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	if ( n == root ) {
 	    if ( uNext( root ) == root ) root = 0;
@@ -210,7 +210,7 @@ template<typename T> class uSequence: public uCollection<T>, protected uSFriend 
     // Node "n" must be in the "from" list.
     void split( uSequence<T> &from, T *n ) {
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uSequence &)%p.split( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uSequence &)%p.split( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	uSequence<T> to;
 	to.root = from.root;				// start of "to" list

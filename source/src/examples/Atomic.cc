@@ -50,7 +50,7 @@ _Task IncTester {
     } // IncTester::main
 }; // IncTester
 
-void uMain::main() {
+int main() {
     uProcessor p[ NPROCS - 1 ] __attribute__(( unused ));
     {
 	IncTester testers[ NTASKS ] __attribute__(( unused ));
@@ -60,4 +60,4 @@ void uMain::main() {
     } else {
 	cout << "error: expected values 0, 0 but got values " << locn1 << ", " << locn2 << endl;
     } // if
-} // uMain::main
+} // main

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 10 15:08:22 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:51:43 2016
-// Update Count     : 39
+// Last Modified On : Sat Jan 28 10:03:02 2017
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,15 +43,15 @@ _Task testerOL_AR {
 	    sharedLock1.acquire();
 	    checkID = &uThisTask();
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock1.acquire();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock1.release();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock1.release();
 	    yield(2);
 	} // for
@@ -64,15 +64,15 @@ _Task testerOL_TAR {
 	    while ( ! sharedLock1.tryacquire() ) yield();
 	    checkID = &uThisTask();
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
-	    if ( ! sharedLock1.tryacquire() ) uAbort( "interference" );
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    if ( ! sharedLock1.tryacquire() ) abort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock1.release();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock1.release();
 	    yield(2);
 	} // for
@@ -85,15 +85,15 @@ _Task testerAL_AR {
 	    sharedLock2.acquire();
 	    checkID = &uThisTask();
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock2.acquire();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock2.release();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock2.release();
 	    yield(2);
 	} // for
@@ -106,15 +106,15 @@ _Task testerAL_TAR {
 	    while ( ! sharedLock2.tryacquire() ) yield();
 	    checkID = &uThisTask();
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
-	    if ( ! sharedLock2.tryacquire() ) uAbort( "interference" );
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    if ( ! sharedLock2.tryacquire() ) abort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock2.release();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    yield();
-	    if ( checkID != &uThisTask() ) uAbort( "interference" );
+	    if ( checkID != &uThisTask() ) abort( "interference" );
 	    sharedLock2.release();
 	    yield(2);
 	} // for
@@ -274,7 +274,7 @@ _Task testerCL_B {
     testerCL_B( monitor &m ) : m(m) {}
 };
 
-void uMain::main() {
+int main() {
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
 #if 1
     {							// test uOwnerLock
@@ -283,9 +283,9 @@ void uMain::main() {
 
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
 	    sharedLock1.acquire();
-	    yield();
+	    uBaseTask::yield();
 	    sharedLock1.release();
-	    yield(2);
+	    uBaseTask::yield( 2 );
 	} // for
     }
     cout << "completion uOwnerLock test" << endl;
@@ -297,9 +297,9 @@ void uMain::main() {
 
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
 	    sharedLock2.acquire();
-	    yield();
+	    uBaseTask::yield();
 	    sharedLock2.release();
-	    yield(2);
+	    uBaseTask::yield( 2 );
 	} // for
     }
     cout << "completion uAdaptiveLock test" << endl;

@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  4 18:29:14 2016
-// Update Count     : 175
+// Last Modified On : Fri Jul  7 16:26:52 2017
+// Update Count     : 185
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,10 +34,12 @@ using std::string;
 #include <cstdlib>					// getenv, exit, mkstemp
 #include <unistd.h>					// execvp, fork, unlink
 #include <sys/wait.h>					// wait
-
+#if defined( __solaris__ )
+#include <signal.h>					// signal
+#endif // __solaris__
 
 //#define __U_DEBUG_H__
-
+#include "debug.h"
 
 string compiler_name( CCAPP );				// path/name of C compiler
 
@@ -58,26 +60,20 @@ void checkEnv( const char *args[], int &nargs ) {
     value = getenv( "__U_COMPILER__" );
     if ( value != nullptr ) {
 	compiler_name = value;
-#ifdef __U_DEBUG_H__
-	cerr << "env arg:\"" << compiler_name << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "env arg:\"" << compiler_name << "\"" << endl; )
     } // if
 
     value = getenv( "__U_GCC_MACHINE__" );
     if ( value != nullptr ) {
 	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
-#ifdef __U_DEBUG_H__
-	cerr << "env arg:\"" << args[nargs] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "env arg:\"" << args[nargs] << "\"" << endl; )
 	nargs += 1;
     } // if
 
     value = getenv( "__U_GCC_VERSION__" );
     if ( value != nullptr ) {
 	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
-#ifdef __U_DEBUG_H__
-	cerr << "env arg:\"" << args[nargs] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "env arg:\"" << args[nargs] << "\"" << endl; )
 	nargs += 1;
     } // if
 } // checkEnv
@@ -92,7 +88,7 @@ void rmtmpfile() {
 } // rmtmpfile
 
 
-void sigTermHandler( int signal ) {
+void sigTermHandler( int ) {
     if ( tmpfilefd != -1 ) {				// RACE, file created ?
 	rmtmpfile();					// remove
 	exit( EXIT_FAILURE );				// terminate 
@@ -122,22 +118,16 @@ void Stage1( const int argc, const char * const argv[] ) {
     signal( SIGINT,  sigTermHandler );
     signal( SIGTERM, sigTermHandler );
 
-#ifdef __U_DEBUG_H__
-    cerr << "Stage1" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "Stage1" << endl; )
 
     // process all the arguments
 
     checkEnv( args, nargs );				// arguments passed via environment variables
 
     for ( i = 1; i < argc; i += 1 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	arg = argv[i];
-#ifdef __U_DEBUG_H__
-	cerr << "arg:\"" << arg << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
 	if ( prefix( arg, "-" ) ) {
 	    // strip g++ flags that are inappropriate or cause duplicates in subsequent passes
 
@@ -169,9 +159,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    } else if ( arg == "-D" && prefix( argv[i + 1], D__U_GCC_BPREFIX__.substr(2) ) ) {
 		bprefix = string( argv[i + 1] ).substr( D__U_GCC_BPREFIX__.size() - 2 );
 		i += 1;					// and the argument
-#ifdef __DEBUG_H__
-		cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __DEBUG_H__
+		uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 
 	    // u++ flags controlling the u++-cpp step
 
@@ -194,43 +182,35 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    // all other flags
 
 	    } else if ( arg == "-o" ) {
-	        i += 1;
-	        o_name = argv[i];
+		i += 1;
+		o_name = argv[i];
 	    } else {
 		args[nargs] = argv[i];			// pass the flag along
 		nargs += 1;
 		// CPP flags with an argument
-		if ( arg == "-D" || arg == "-I" || arg == "-MF" || arg == "-MT" || arg == "-MQ" ||
+		if ( arg == "-D" || arg == "-U" || arg == "-I" || arg == "-MF" || arg == "-MT" || arg == "-MQ" ||
 		     arg == "-include" || arg == "-imacros" || arg == "-idirafter" || arg == "-iprefix" ||
 		     arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ) {
 		    i += 1;
 		    args[nargs] = argv[i];		// pass the argument along
 		    nargs += 1;
-#ifdef __U_DEBUG_H__
-		    cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 		} else if ( arg == "-MD" || arg == "-MMD" ) {
 		    args[nargs] = "-MF";		// insert before file
 		    nargs += 1;
 		    i += 1;
 		    args[nargs] = argv[i];		// pass the argument along
 		    nargs += 1;
-#ifdef __U_DEBUG_H__
-		    cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 		} // if
 	    } // if
 	} else {					// obtain input and possibly output files
 	    if ( cpp_in == nullptr ) {
 		cpp_in = argv[i];
-#ifdef __U_DEBUG_H__
-		cerr << "cpp_in:\"" << cpp_in << "\"" << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "cpp_in:\"" << cpp_in << "\"" << endl; )
 	    } else if ( cpp_out == nullptr ) {
 		cpp_out = argv[i];
-#ifdef __U_DEBUG_H__
-		cerr << "cpp_out:\"" << cpp_out << "\""<< endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "cpp_out:\"" << cpp_out << "\""<< endl; )
 	    } else {
 		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
@@ -238,15 +218,15 @@ void Stage1( const int argc, const char * const argv[] ) {
 	} // if
     } // for
 
-#ifdef __U_DEBUG_H__
-    cerr << "args:";
-    for ( i = 1; i < nargs; i += 1 ) {
-	cerr << " " << args[i];
-    } // for
-    if ( cpp_in != nullptr ) cerr << " " << cpp_in;
-    if ( cpp_out != nullptr ) cerr << " " << cpp_out;
-    cerr << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	cerr << "args:";
+	for ( i = 1; i < nargs; i += 1 ) {
+	    cerr << " " << args[i];
+	} // for
+	if ( cpp_in != nullptr ) cerr << " " << cpp_in;
+	if ( cpp_out != nullptr ) cerr << " " << cpp_out;
+	cerr << endl;
+    )
 
     if ( cpp_in == nullptr ) {
 	cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
@@ -260,7 +240,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	args[0] = compiler_name.c_str();
 	args[nargs] = cpp_in;
 	nargs += 1;
-	if ( o_name != nullptr ) {				// location for output
+	if ( o_name != nullptr ) {			// location for output
 	    args[nargs] = "-o";
 	    nargs += 1;
 	    args[nargs] = o_name;
@@ -268,13 +248,13 @@ void Stage1( const int argc, const char * const argv[] ) {
 	} // if
 	args[nargs] = nullptr;				// terminate argument list
 
-#ifdef __U_DEBUG_H__
-	cerr << "nargs: " << nargs << endl;
-	for ( i = 0; args[i] != nullptr; i += 1 ) {
-	    cerr << args[i] << " ";
-	} // for
-	cerr << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    cerr << "nargs: " << nargs << endl;
+	    for ( i = 0; args[i] != nullptr; i += 1 ) {
+		cerr << args[i] << " ";
+	    } // for
+	    cerr << endl;
+	)
 
 	execvp( args[0], (char *const *)args );		// should not return
 	perror( "uC++ Translator error: cpp level, execvp" );
@@ -289,9 +269,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	exit( EXIT_FAILURE );
     } // if
 
-#ifdef __U_DEBUG_H__
-    cerr << "tmpname:" << tmpname << " tmpfilefd:" << tmpfilefd << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "tmpname:" << tmpname << " tmpfilefd:" << tmpfilefd << endl; )
 
     // Run the C preprocessor and save the output in tmpfile.
 
@@ -309,13 +287,13 @@ void Stage1( const int argc, const char * const argv[] ) {
 	nargs += 1;
 	args[nargs] = nullptr;				// terminate argument list
 
-#ifdef __U_DEBUG_H__
-	cerr << "cpp nargs: " << nargs << endl;
-	for ( i = 0; args[i] != nullptr; i += 1 ) {
-	    cerr << args[i] << " ";
-	} // for
-	cerr << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    cerr << "cpp nargs: " << nargs << endl;
+	    for ( i = 0; args[i] != nullptr; i += 1 ) {
+		cerr << args[i] << " ";
+	    } // for
+	    cerr << endl;
+	)
 
 	execvp( args[0], (char *const *)args );		// should not return
 	perror( "uC++ Translator error: cpp level, execvp" );
@@ -324,9 +302,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
     wait( &code );					// wait for child to finish
 
-#ifdef __U_DEBUG_H__
-    cerr << "return code from cpp:" << WEXITSTATUS(code) << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "return code from cpp:" << WEXITSTATUS(code) << endl; )
 
     if ( WIFSIGNALED(code) != 0 ) {			// child failed ?
 	rmtmpfile();					// remove tmpname
@@ -354,15 +330,15 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    uargs[nuargs] = cpp_out;
 	    nuargs += 1;
 	} // if
-	uargs[nuargs] = nullptr;				// terminate argument list
+	uargs[nuargs] = nullptr;			// terminate argument list
 
-#ifdef __U_DEBUG_H__
-	cerr << "u++-cpp nuargs: " << o_name << " " << upp_flag << " " << nuargs << endl;
-	for ( i = 0; uargs[i] != nullptr; i += 1 ) {
-	    cerr << uargs[i] << " ";
-	} // for
-	cerr << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    cerr << "u++-cpp nuargs: " << o_name << " " << upp_flag << " " << nuargs << endl;
+	    for ( i = 0; uargs[i] != nullptr; i += 1 ) {
+		cerr << uargs[i] << " ";
+	    } // for
+	    cerr << endl;
+	)
 
 	execvp( uargs[0], (char * const *)uargs );	// should not return
 	perror( "uC++ Translator error: cpp level, execvp" );
@@ -371,9 +347,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
     wait( &code );					// wait for child to finish
 
-#ifdef __U_DEBUG_H__
-    cerr << "return code from u++-cpp:" << WEXITSTATUS(code) << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "return code from u++-cpp:" << WEXITSTATUS(code) << endl; )
 
     // Must unlink here because file must exist across execvp.
     rmtmpfile();					// remove tmpname
@@ -397,22 +371,16 @@ void Stage2( const int argc, const char * const * argv ) {
     const char *args[argc + 100];			// leave space for 100 additional u++ command line values
     int nargs = 1;					// number of arguments in args list; 0 => command name
 
-#ifdef __U_DEBUG_H__
-    cerr << "Stage2" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "Stage2" << endl; )
 
     // process all the arguments
 
     checkEnv( args, nargs );				// arguments passed via environment variables
 
     for ( i = 1; i < argc; i += 1 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	arg = argv[i];
-#ifdef __U_DEBUG_H__
-	cerr << "arg:\"" << arg << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
 	if ( prefix( arg, "-" ) ) {
 	    // strip inappropriate flags
 
@@ -424,9 +392,7 @@ void Stage2( const int argc, const char * const * argv ) {
 
 	    } else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" ) {
 		i += 1;
-#ifdef __U_DEBUG_H__
-		cerr << "arg:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "arg:\"" << argv[i] << "\"" << endl; )
 
 	    // all other flags
 
@@ -437,17 +403,13 @@ void Stage2( const int argc, const char * const * argv ) {
 		    i += 1;
 		    args[nargs] = argv[i];		// pass the argument along
 		    nargs += 1;
-#ifdef __U_DEBUG_H__
-		    cerr << "arg:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( cerr << "arg:\"" << argv[i] << "\"" << endl; )
 		} // if
 	    } // if
 	} else {					// obtain input and possibly output files
 	    if ( cpp_in == nullptr ) {
 		cpp_in = argv[i];
-#ifdef __U_DEBUG_H__
-		cerr << "cpp_in:\"" << cpp_in << "\"" << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "cpp_in:\"" << cpp_in << "\"" << endl; )
 	    } else {
 		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
@@ -455,29 +417,29 @@ void Stage2( const int argc, const char * const * argv ) {
 	} // if
     } // for
 
-#ifdef __U_DEBUG_H__
-    cerr << "args:";
-    for ( i = 1; i < nargs; i += 1 ) {
-	cerr << " " << args[i];
-    } // for
-    cerr << endl;
-    if ( cpp_in != nullptr ) cerr << " " << cpp_in;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	cerr << "args:";
+	for ( i = 1; i < nargs; i += 1 ) {
+	    cerr << " " << args[i];
+	} // for
+	cerr << endl;
+	if ( cpp_in != nullptr ) cerr << " " << cpp_in;
+    )
 
     args[0] = compiler_name.c_str();
     args[nargs] = "-S";					// only compile and put assembler output in specified file
     nargs += 1;
     args[nargs] = cpp_in;
     nargs += 1;
-    args[nargs] = nullptr;					// terminate argument list
+    args[nargs] = nullptr;				// terminate argument list
 
-#ifdef __U_DEBUG_H__
-    cerr << "stage2 nargs: " << nargs << endl;
-    for ( i = 0; args[i] != nullptr; i += 1 ) {
-	cerr << args[i] << " ";
-    } // for
-    cerr << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	cerr << "stage2 nargs: " << nargs << endl;
+	for ( i = 0; args[i] != nullptr; i += 1 ) {
+	    cerr << args[i] << " ";
+	} // for
+	cerr << endl;
+    )
 
     execvp( args[0], (char * const *)args );		// should not return
     perror( "uC++ Translator error: cpp level, execvp" );
@@ -485,12 +447,12 @@ void Stage2( const int argc, const char * const * argv ) {
 } // Stage2
 
 
-int main( const int argc, const char * const argv[], const char * const env[] ) {
-#ifdef __U_DEBUG_H__
-    for ( int i = 0; env[i] != nullptr; i += 1 ) {
-	cerr << env[i] << endl;
-    } // for
-#endif // __U_DEBUG_H__
+int main( const int argc, const char * const argv[] ) {
+    uDEBUGPRT(
+	for ( int i = 0; env[i] != nullptr; i += 1 ) {
+	    cerr << env[i] << endl;
+	} // for
+    )
 
     string arg = argv[1];
 

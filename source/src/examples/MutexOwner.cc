@@ -93,14 +93,14 @@ _Task jane {
     } // jane::main
 }; // jane
 
-void uMain::main() {
+int main() {
     fred f;
     f.mem();
 
     mary m;
     jane j1( m );
     jane j2( m );
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -multi -g MutexOwner.cc" //

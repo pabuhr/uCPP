@@ -64,7 +64,7 @@ _Mutex _Coroutine uBarrier {
     void reset( unsigned int total ) {
 #ifdef __U_DEBUG__
 	if ( Count != 0 ) {
-	    uAbort( "(uBarrier &)%p.reset( %d ) : Attempt to reset barrier total while tasks blocked on barrier.", this, total );
+	    abort( "(uBarrier &)%p.reset( %d ) : Attempt to reset barrier total while tasks blocked on barrier.", this, total );
 	} // if
 #endif // __U_DEBUG__
 	init( total );

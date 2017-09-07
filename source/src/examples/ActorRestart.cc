@@ -70,7 +70,7 @@ _Actor Restart {
     } // Restart::receive2
 }; // Restart
 
-void uMain::main() {
+int main() {
     enum { NoOfMsgs = 10 };
     Future_ISM< int > fi[NoOfMsgs];
     Restart *restart = new Restart;			// create actor
@@ -95,7 +95,7 @@ void uMain::main() {
 
     *restart | uActor::stopMsg;				// stop restart actor
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorRestart.cc" //

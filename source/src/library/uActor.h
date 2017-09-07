@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:31:54 2016
-// Update Count     : 316
+// Last Modified On : Sat Jul  1 08:36:44 2017
+// Update Count     : 330
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,7 +47,7 @@ class uActor {
 
     unsigned long int ticket_;				// executor-queue handle to provide FIFO message execution
   public:
-    enum Allocation { Nodelete, Delete };		// allocation actions
+    enum Allocation { Nodelete, Delete, Destroy };	// allocation actions
 
     struct Message {
 	Allocation allocation;				// allocation action
@@ -89,7 +89,9 @@ class uActor {
 
 	void operator()() {				// functor
 	    try {
-		if ( actor.process_( msg ) == Delete ) delete &actor; // call current message handler
+		Allocation ret = actor.process_( msg );	// call current message handler
+		if ( ret == Delete ) delete &actor;
+		else if ( ret == Destroy ) actor.~uActor();
 	    } catch ( uBaseEvent &ex ) {
 		Case( uActor::ReplyMsg, msg ) {		// unknown future message
 		    msg_t->delivery( ex.duplicate() );	// complain in future
@@ -97,7 +99,7 @@ class uActor {
 		    _Throw;				// fail to worker thread
 		} // Case
 	    } catch( ... ) {
-		uAbort( "C++ exceptions unsupported from throw in actor for future message" );
+		abort( "C++ exceptions unsupported from throw in actor for future message" );
 		// Case( uActor::ReplyMsg, msg ) {	// unknown future message
 		//     //msg_t->reply( std::current_exception() ); // complain in future
 		// } else {
@@ -105,13 +107,14 @@ class uActor {
 		// } // Case
 	    } _Finally {
 		if ( msg.allocation == Delete ) delete &msg;
+		else if ( msg.allocation == Destroy ) msg.~Message();
 	    } // try
 	} // Deliver_::operator()
     }; // Deliver_
 
     virtual Allocation process_( Message & msg ) = 0;	// type-safe access to subclass receivePtr
-    virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
   protected:
+    virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
     template< typename Func > void send_( Func action ) { uActor::executor_.send( action, ticket_ ); }
     virtual void preStart() { /* default empty */ };	// user supplied actor initialization
 
@@ -165,7 +168,8 @@ class uActor {
 	} // if
     } // uActor::stop
 
-    static struct StopMsg : public uActor::Message {} stopMsg; // for termination
+    static struct StartMsg : public uActor::Message {} startMsg; // start actor
+    static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
 
     // Error handling
 
@@ -183,14 +187,14 @@ template< typename Actor > class uActorType : public uActor {
   protected:
     typedef Allocation (Actor:: * Handler)( Message & msg ); // message handler type
   private:
-    Handler receivePtr_ = &uActor::receive;		// message handler pointer
+    Handler receivePtr_ = &uActorType<Actor>::receive;	// message handler pointer
 
     virtual Allocation process_( Message & msg ) override final {
 	return (((Actor *)this)->*receivePtr_)(msg);
     } // uActorType::process
 
     void restart_() {
-	receivePtr_ = &uActor::receive;			// restart message-handler pointer
+	receivePtr_ = &uActorType<Actor>::receive;	// restart message-handler pointer
 	preStart();					// rerun preStart
     } // uActorType::restart_
   protected:

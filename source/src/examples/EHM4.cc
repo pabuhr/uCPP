@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Tue Mar 26 23:01:30 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:20 2016
-// Update Count     : 148
+// Last Modified On : Sun Jan 22 21:49:16 2017
+// Update Count     : 149
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -94,7 +94,7 @@ void worker::main() {
 		//osacquire( cerr ) << "handler, exception id: " << e.ticket << endl;
 		assert( r.ticket < NTASK*((NTASK-1)*ROUNDS+1) ); // subscript error ?
 		array[r.ticket] += 1;
-		if ( array[r.ticket] > 1 ) uAbort( "same exception handled twice");
+		if ( array[r.ticket] > 1 ) abort( "same exception handled twice");
 		if ( round != 0 ) {								// only a subset of exceptions raise more
 			round -= 1;
 			if ( round % 2 == 0 ) {						// generate 1/2 of the exceptions
@@ -112,7 +112,7 @@ void worker::main() {
 } // worker::main
 
 
-void uMain::main () {
+int main() {
     uProcessor processors[4] __attribute__(( unused ));	// more than one processor
 
     for ( int i = 0; i < NTASK; i += 1 ) {
@@ -127,7 +127,7 @@ void uMain::main () {
 		total += handled[i];							// sum exceptions handled by each task
     } // for
 	osacquire( cout ) << "cnt:" << cnt.inc() << "  handled:" << total << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

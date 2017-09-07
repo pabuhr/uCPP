@@ -51,12 +51,12 @@ _Actor Hello {
     } // Hello::receive
 }; // Hello
 
-void uMain::main() {
+int main() {
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "你好" ) | uActor::stopMsg;
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorHello.cc" //

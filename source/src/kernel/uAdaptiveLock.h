@@ -108,7 +108,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	if ( ! waiting.empty() ) {
 	    uBaseTask *task = &(waiting.head()->task());    // waiting list could change as soon as spin lock released
 	    spin.release();
-	    uAbort( "Attempt to delete adaptive lock with task %.256s (%p) still on it.", task->getName(), task );
+	    abort( "Attempt to delete adaptive lock with task %.256s (%p) still on it.", task->getName(), task );
 	} // if
 	spin.release();
     } // uAdaptiveLock
@@ -210,7 +210,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	uBaseTask &task = uThisTask();
 	if ( owner_ != &uThisTask() ) {
 	    // there is no way to safely mention the actual owner in this error message
-	    uAbort( "Attempt by task %.256s (%p) to release adaptive lock %p, which it does not currently own.", task.getName(), &task, this );
+	    abort( "Attempt by task %.256s (%p) to release adaptive lock %p, which it does not currently own.", task.getName(), &task, this );
 	} // if
 #endif // __U_DEBUG__
 

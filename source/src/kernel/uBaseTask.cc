@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 12:18:27 2016
-// Update Count     : 303
+// Last Modified On : Wed Apr 19 21:59:07 2017
+// Update Count     : 310
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,11 +43,11 @@ using namespace UPP;
 
 
 void uBaseTask::createTask( uCluster &cluster ) {
-#ifdef __U_DEBUG__
-    currSerialOwner = this;
-    currSerialCount = 1;
-    currSerialLevel = 0;
-#endif // __U_DEBUG__
+    uDEBUG(
+	currSerialOwner = this;
+	currSerialCount = 1;
+	currSerialLevel = 0;
+    )
     state = Start;
     recursion = mutexRecursion = 0;
     currCluster = &cluster;				// remember the cluster task is created on
@@ -102,9 +102,9 @@ void uBaseTask::setState( uBaseTask::State s ) {
 
 
 uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBaseTask &task, uBasePIQ &piq, const char *n, bool profile ) : f( f ), serial( serial ), task( task ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uTaskConstructor &)%p.uTaskConstructor, f:%d, s:%p, t:%p, piq:%p, n:%s, profile:%d\n", this, f, &serial, &task, &piq, n, profile );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uTaskConstructor &)%p.uTaskConstructor, f:%d, s:%p, t:%p, piq:%p, n:%s, profile:%d\n",
+			  this, f, &serial, &task, &piq, n, profile ); )
+
     if ( f == uYes ) {
 	task.startHere( (void (*)( uMachContext & ))uMachContext::invokeTask );
 	task.name = n;
@@ -146,13 +146,13 @@ uBaseTask::uTaskConstructor::~uTaskConstructor() {
 
 uBaseTask::uTaskDestructor::~uTaskDestructor() {
     if ( f == uYes ) {
-#ifdef __U_DEBUG__
-	if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
-	    uAbort( "Attempt to delete task %.256s (%p) that is not halted.\n"
-		    "Possible cause is task blocked on a condition queue.",
-		    task.getName(), &task );
-	} // if
-#endif // __U_DEBUG__
+	uDEBUG(
+	    if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
+		abort( "Attempt to delete task %.256s (%p) that is not halted.\n"
+		       "Possible cause is task blocked on a condition queue.",
+		       task.getName(), &task );
+	    } // if
+	)
 
 	cleanup( task );
     } // if
@@ -226,13 +226,24 @@ uBaseTask::uBaseTask( uCluster &cluster ) : uBaseCoroutine( cluster.getStackSize
 } // uBaseTask::uBaseTask
 
 
+void uBaseTask::sleep( uTime time ) {
+  if ( time <= activeProcessorKernel->kernelClock.getTime() ) return;
+    uWakeupHndlr handler( uThisTask() );		// handler to wake up blocking task
+    uEventNode uRTEvent( uThisTask(), handler, time );	// event node for event list
+    uRTEvent.add( true );				// block until time expires
+} // uBaseTask::sleep
+
+
+void uBaseTask::sleep( uDuration duration ) {
+    sleep( activeProcessorKernel->kernelClock.getTime() + duration );
+} // uBaseTask::sleep
+
+
 uCluster &uBaseTask::migrate( uCluster &cluster ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uBaseTask &)%p.migrate, from cluster:%p to cluster:%p\n", &uThisTask(), &uThisCluster(), &cluster );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uBaseTask &)%p.migrate, from cluster:%p to cluster:%p\n", &uThisTask(), &uThisCluster(), &cluster ); )
 
     uBaseTask &task = uThisTask();			// optimization
-    assert( &task.bound == nullptr );
+    assert( (uProcessor *)(&task.bound) == nullptr );
 
     // A simple optimization: migrating to the same cluster that the task is currently executing on simply returns the
     // value of the current cluster.  Therefore, migrate does not always produce a context switch.
@@ -281,7 +292,7 @@ uCluster &uBaseTask::migrate( uCluster &cluster ) {
  	sigemptyset( &new_mask );
  	sigaddset( &new_mask, SIGALRM );
  	if ( sigprocmask( SIG_BLOCK, &new_mask, nullptr ) == -1 ) {
- 	    uAbort( "internal error, sigprocmask" );
+ 	    abort( "internal error, sigprocmask" );
  	} // if
     } // if
 #endif // __U_MULTI__ && __U_SWAPCONTEXT__
@@ -297,7 +308,7 @@ uCluster &uBaseTask::migrate( uCluster &cluster ) {
 	sigemptyset( &new_mask );
 	sigaddset( &new_mask, SIGALRM );
 	if ( sigprocmask( SIG_UNBLOCK, &new_mask, nullptr ) == -1 ) {
-	    uAbort( "internal error, sigprocmask" );
+	    abort( "internal error, sigprocmask" );
 	} // if
     } // if
 #endif // __U_MULTI__ && __U_SWAPCONTEXT__
@@ -325,13 +336,6 @@ void uBaseTask::uYieldYield( unsigned int times ) {	// inserted by translator fo
 
 void uBaseTask::uYieldInvoluntary() {
     assert( ! THREAD_GETMEM( disableIntSpin ) );
-//#ifdef __U_DEBUG__
-//    if ( this != &uThisTask() ) {
-//	uAbort( "Attempt to yield the execution of task %.256s (%p) by task %.256s (%p).\n"
-//		"A task may only yield itself.",
-//		getName(), this, uThisTask().getName(), &uThisTask() );
-//    } // if
-//#endif // __U_DEBUG__
 
 #ifdef __U_PROFILER__
     // Are the uC++ kernel memory allocation hooks active?
@@ -360,28 +364,6 @@ void uBaseTask::uYieldInvoluntary() {
     } // if
 #endif // __U_PROFILER__
 } // uBaseTask::uYieldInvoluntary
-
-
-void uBaseTask::uSleep( uTime time ) {
-#ifdef __U_DEBUG__
-    if ( this != &uThisTask() ) {
-	uAbort( "Attempt to put task %.256s (%p) to sleep by task %.256s (%p).\n"
-		"A task may only put itself to sleep.",
-		getName(), this, uThisTask().getName(), &uThisTask() );
-    } // if
-#endif // __U_DEBUG__
-
-  if ( time <= activeProcessorKernel->kernelClock.getTime() ) return;
-
-    uWakeupHndlr handler( *this );			// handler to wake up blocking task
-    uEventNode uRTEvent( *this, handler, time );	// event node for event list
-    uRTEvent.add( true );				// block until time expires
-} // uBaseTask::uSleep
-
-
-void uBaseTask::uSleep( uDuration duration ) {
-    uSleep( activeProcessorKernel->kernelClock.getTime() + duration );
-} // uBaseTask::uSleep
 
 
 #ifdef __U_PROFILER__

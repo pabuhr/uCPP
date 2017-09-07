@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Fri Oct 27 07:29:18 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:25:20 2016
-// Update Count     : 43
+// Last Modified On : Sun Feb 19 23:19:28 2017
+// Update Count     : 44
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -94,7 +94,7 @@ int uDeadlineMonotonic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 	    } else if ( sbtask1  != nullptr ) {		// sporadic ?
 		period1 = sbtask1->getFrame();
 	    } else {
-		uAbort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
+		abort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
 	    } // if
 
 	    if ( pbtask2 != nullptr ) {			// periodic ?
@@ -102,7 +102,7 @@ int uDeadlineMonotonic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 	    } else if ( sbtask2  != nullptr ) {		// sporadic ?
 		period2 = sbtask2->getFrame();
 	    } else {
-		uAbort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
+		abort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
 	    } // if
 
 	    temp = period1 - period2;
@@ -136,16 +136,14 @@ int uDeadlineMonotonic::compare( uBaseTask &task1, uBaseTask &task2 ) {
 	break;
 
       default:
-	uAbort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
+	abort( "(uDeadlineMonotonic *)%p.compare : internal error.", this );
 	break;
     } // switch
 } // uDeadlineMonotonic::compare
 
 
 void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: enter\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: enter\n", this ); )
     uSequence<uBaseTaskDL> List;
     uSeqIter<uBaseTaskDL> iter;
     int cnt = 0;
@@ -158,18 +156,14 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     uRealTimeBaseTask *rtb = dynamic_cast<uRealTimeBaseTask *>(&(taskList.tail()->task()));
 
     if ( rtb == nullptr ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit1\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit1\n", this ); )
 	return;
     } // exit
 
     ref = taskList.dropTail();
 
     if ( ref == nullptr ) {				// necessary if addInitialize is called from removeInitialize
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit2\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit2\n", this ); )
 	return;
     } // exit
 
@@ -182,9 +176,7 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     // visit recalculate otherwise, stop after putting task back into task list
 
     if ( verCount == (unsigned int)rtb->getVersion( uThisCluster() ) ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit3\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit3\n", this ); )
 	return;
     } // exit
 
@@ -210,7 +202,7 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     } // for
 
     if ( cnt > __U_MAX_NUMBER_PRIORITIES__ ) {
-	uAbort( "(uDeadlineMonotonic &)%p.addInitialize : Cannot schedule task as more priorities are needed than current limit of %d.",
+	abort( "(uDeadlineMonotonic &)%p.addInitialize : Cannot schedule task as more priorities are needed than current limit of %d.",
 		this, __U_MAX_NUMBER_PRIORITIES__ );
     } // if
 
@@ -221,7 +213,7 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 	add( List.dropHead() );
     } // while
 
-#ifdef __U_DEBUG_H__
+    uDEBUGPRT(
 // 	uSeqIter<uBaseTaskDL> j;
 //	uBaseTaskDL *ptr = nullptr;
 //      for (j.over(taskList); j >> ptr; ) {
@@ -229,7 +221,7 @@ void uDeadlineMonotonic::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 //      }
 //      fprintf(stderr, "Leaving uInitialize! \n");
 	uDebugPrt( "(uDeadlineMonotonic &)%p.addInitialize: exit4\n", this );
-#endif // __U_DEBUG_H__
+    )
 } // uDeadlineMonotonic::addInitialize
 
 

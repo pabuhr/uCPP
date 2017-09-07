@@ -73,7 +73,7 @@ _Actor Actor {
 
 	// error cases
 	} else Case( UnhandledMsg, msg ) {		// receiver complained
-	    uAbort( "sent unknown message to %p", msg.sender );
+	    abort( "sent unknown message to %p", msg.sender );
 	} else Case( uActor::ReplyMsg, msg ) {		// unknown future message
 	    _Throw uActor::Unhandled( msg_t );		// complain in future
 	    // msg_t->delivery( new uActor::Unhandled( msg_t ) ); // alternative
@@ -85,7 +85,7 @@ _Actor Actor {
     } // Actor::receive
 }; // Actor
 
-void uMain::main() {
+int main() {
     enum { Times = 5 };
     Future_ISM< int > fi[Times];
     Future_ISM< string > fs[Times];
@@ -120,7 +120,7 @@ void uMain::main() {
 
     *actor | uActor::stopMsg;				// terminate actor
     uActor::stop();					// wait for all actors to terminate
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorFuture.cc" //

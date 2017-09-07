@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  8 16:01:49 2016
-// Update Count     : 2107
+// Last Modified On : Tue Aug 22 17:23:32 2017
+// Update Count     : 2119
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,9 +87,7 @@ void uProcessorTask::main() {
 	getpid();
 #endif // __U_MULTI__
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorTask &)%p.main, starting pid:%lu\n", this, processor.pid );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, starting pid:%lu\n", this, processor.pid ); )
 
     processor.processorClock = &activeProcessorKernel->kernelClock;
 
@@ -116,20 +114,14 @@ void uProcessorTask::main() {
     for ( ;; ) {
 	assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
 	_Accept( ~uProcessorTask ) {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorTask &)%p.main, ~uProcessorTask\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, ~uProcessorTask\n", this ); )
 	    break;
 	} or _Accept( setPreemption ) {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorTask &)%p.main, setPreemption( %d )\n", this, preemption );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, setPreemption( %d )\n", this, preemption ); )
 	    processor.setContextSwitchEvent( preemption ); // use it to set the alarm for this processor
 	    processor.preemption = preemption;
 	} or _Accept( setCluster ) {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorTask &)%p.main, setCluster %p %p\n", this, &processor.getCluster(), cluster );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, setCluster %p %p\n", this, &processor.getCluster(), cluster ); )
 
 #if __U_LOCALDEBUGGER_H__
 	    if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
@@ -211,7 +203,7 @@ uProcessorTask::~uProcessorTask() {
       if ( code != EINTR ) break;			// timer interrupt ?
     } // for
     if ( code != 0 ) {
-	uAbort( "(uProcessor &)%p.~uProcessor() : internal error, wait failed for kernel thread %ld, error(%d) %s.",
+	abort( "(uProcessor &)%p.~uProcessor() : internal error, wait failed for kernel thread %ld, error(%d) %s.",
 		this, (long int)pid, code, strerror( code ) );
     } // if
 #endif // __U_MULTI__
@@ -223,102 +215,16 @@ uProcessorTask::~uProcessorTask() {
 
 void *uKernelModule::startThread( void *p ) {
 #if defined(__U_MULTI__)
-//     volatile uKernelModule::uKernelModuleData *km;
-
-// #if ( defined( __linux__ ) || defined( __freebsd__ ) ) && defined( __i386__ )
-//     /*
-// 		+------------------+
-// 		|                  |
-// 		|  struct pthread  |
-// 		|                  |
-// 		+------------------+ <== gs:0 (thread pointer)
-// 		|                  |
-// 		|       TLS        | <== uKernelModuleBoot in here somewhere
-// 		|                  |
-// 		+------------------+ <== must be aligned to tls_align
-// 		|                  |
-// 		| stack continues  |
-// 		.                  .
-// 		.                  .
-// 		.                  .
-//     */
-//     asm ("movl %%gs:0, %0\n\t"
-//          "leal _ZN13uKernelModule17uKernelModuleBootE@ntpoff(%0),%0" : "=r" (km) );
-//     km->ctor();
-// #elif ( defined( __linux__ ) || defined( __freebsd__ ) ) && defined( __x86_64__ )
-//     /*
-// 		+------------------+
-// 		|                  |
-// 		|       TLS        | <== uKernelModuleBoot in here somewhere
-// 		|                  |
-// 		+------------------+ <== fs:0 (thread pointer)
-// 		|                  |
-// 		|  struct pthread  |
-// 		|                  |
-// 		+------------------+
-// 		|                  |
-// 		| stack continues  |
-// 		.                  .
-// 		.                  .
-// 		.                  .
-//     */
-//     asm ("movq %%fs:0, %0\n\t"
-//          "leaq _ZN13uKernelModule17uKernelModuleBootE@tpoff(%0),%0" : "=r" (km) );
-//     km->ctor();
-
-// #elif defined( __linux__ ) && defined( __ia64__ )
-//     /*
-// 		+------------------+
-// 		|                  |
-// 		|       TLS        | <== uKernelModuleBoot in here somewhere
-// 		|                  |
-// 		+------------------+ <== must be aligned to tls_align
-// 		|     16 bytes     |
-// 		+------------------+ <== r13 (thread pointer)
-// 		|                  |
-// 		|  struct pthread  |
-// 		|                  |
-// 		+------------------+
-// 		|                  |
-// 		| stack continues  |
-// 		.                  .
-// 		.                  .
-// 		.                  .
-//     */
-//     // TEMPORARY: we should be able to say
-//     //    km = &uKernelModule::uKernelModuleBoot;
-//     // but a gcc bug (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=19450) prevents this;
-//     // hence the following:
-//     asm volatile ("addl %0 = @ltoff(@tprel(_ZN13uKernelModule17uKernelModuleBootE#)), gp;;\n"
-//                   "ld8 %0 = [%0];;\n"
-//                   "add %0 = %0, r13;;\n" : "=r" (km) );
-//     km->ctor();
-
-// #elif defined( __sparc__ )
-//     asm volatile ("sethi %%tle_hix22(_ZN13uKernelModule17uKernelModuleBootE),%0\n\t"
-// 		  "xor %0, %%tle_lox10(_ZN13uKernelModule17uKernelModuleBootE), %0\n\t"
-// 		  "add %%g7, %0, %0" : "=r" (km) );
-//     km->ctor();
-// #else
-//     // allocate a kernel module at the bottom of the thread's stack
-//     uKernelModule::uKernelModuleData theKernelModule;
-//     km = &theKernelModule;
-//     km->ctor();
-// #endif
-
     // Kernel thread just started so no concurrency, so safe to make direct call through TLS pointer.
     uKernelModuleBoot.ctor();
 
     // NO DEBUG PRINTS BEFORE THE THREAD REFERENCE IS SET IN CTOR.
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "startthread, child started\n" );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "startthread, child started\n" ); )
 
     uProcessor &processor = *(uProcessor *)p;
     uProcessorKernel *pk = &processor.processorKer;
 
-//    km->processorKernelStorage = pk;
     uKernelModuleBoot.processorKernelStorage = pk;
 
     // initialize thread members
@@ -330,16 +236,13 @@ void *uKernelModule::startThread( void *p ) {
     assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 1 );
 
     THREAD_GETMEM( This )->disableInterrupts();
+
     uMachContext::invokeCoroutine( *activeProcessorKernel );
 #endif // __U_MULTI__
 
-    // This line is never reached, but pthreads allows the start-thread function to return a value, and gcc warns
-    // otherwise.
-//    assert( false );
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uKernelModule &).startThread, exiting\n" );
-#endif // __U_DEBUG_H__
-    return 0;
+    uDEBUGPRT( uDebugPrt( "(uKernelModule &).startThread, exiting\n" ); )
+    // This line is never reached, but pthreads allows the thread function to return a value, and gcc warns otherwise.
+    return nullptr;
 } // uKernelModule::startThread
 
 
@@ -456,17 +359,17 @@ void uProcessorKernel::onBehalfOfUser() {
 	nextTask->wake();
 	break;
       default:
-	uAbort( "(uProcessorKernel &)%p.onBehalfOfUser : internal error, schedule kind:%d.", this, kind );
+	abort( "(uProcessorKernel &)%p.onBehalfOfUser : internal error, schedule kind:%d.", this, kind );
 	break;
     } // switch
 } // uProcessorKernel::onBehalfOfUser
 
 
 void uProcessorKernel::setTimer( uDuration dur ) {
-#ifdef __U_DEBUG_H__
-    char buffer[256];
-    uDebugPrtBuf( buffer, "uProcessorKernel::setTimer1, dur:%lld\n", dur.nanoseconds() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	char buffer[256];
+	uDebugPrtBuf( buffer, "uProcessorKernel::setTimer1, dur:%lld\n", dur.nanoseconds() );
+    )
 
   if ( dur <= 0 ) return;				// if duration is zero or negative, it has already past
 
@@ -487,11 +390,11 @@ void uProcessorKernel::setTimer( uDuration dur ) {
 
 
 void uProcessorKernel::setTimer( uTime time ) {
-    char buffer[256];
-    uDebugPrtBuf( buffer, "uProcessorKernel::setTimer2, time:%lld\n", time.nanoseconds() );
-#ifdef __U_DEBUG_H__
-#endif // __U_DEBUG_H__
-  if ( time <= 0 ) return;				// if time is zero or negative, it is invalid
+    uDEBUGPRT(
+	char buffer[256];
+	uDebugPrtBuf( buffer, "uProcessorKernel::setTimer2, time:%lld\n", time.nanoseconds() );
+    )
+  if ( time <= uTime( 0 ) ) return;			// if time is zero or negative, it is invalid
 
     // The time parameter is always in real-time (not virtual time)
 
@@ -516,10 +419,8 @@ void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cyc
     // Get next processor to execute.
 
     unsigned int uPrevPreemption = uThisProcessor().getPreemption(); // remember previous preemption value
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorKernel &)%p.nextProcessor, from processor %p on cluster %.256s (%p) with time slice %d\n",
-	       this, &uThisProcessor(), uThisProcessor().currCluster->getName(), uThisProcessor().currCluster, uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.nextProcessor, from processor %p on cluster %.256s (%p) with time slice %d\n",
+			  this, &uThisProcessor(), uThisProcessor().currCluster->getName(), uThisProcessor().currCluster, uThisProcessor().getPreemption() ); )
     do {						// ignore deleted processors
 	currProc = uKernelModule::globalProcessors->succ( currProc );
 	if ( currProc == nullptr ) {			// make list appear circular
@@ -536,10 +437,8 @@ void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cyc
     THREAD_SETMEM( activeProcessor, &(currProc->processor() ) );
     uCluster *currCluster = THREAD_GETMEM( activeProcessor )->currCluster;
     THREAD_SETMEM( activeCluster, currCluster );
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorKernel &)%p.nextProcessor, to processor %p on cluster %.256s (%p) with time slice %d\n",
-	       this, &uThisProcessor(), uThisProcessor().currCluster->getName(), uThisProcessor().currCluster, uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.nextProcessor, to processor %p on cluster %.256s (%p) with time slice %d\n",
+			  this, &uThisProcessor(), uThisProcessor().currCluster->getName(), uThisProcessor().currCluster, uThisProcessor().getPreemption() ); )
 
     // The time slice must be reset or some programs do not work.
 
@@ -551,9 +450,7 @@ void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cyc
 
 
 void uProcessorKernel::main() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorKernel &)%p.main, child is born\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, child is born\n", this ); )
 
 #if ! defined( __U_MULTI__ )
     // SKULLDUGGERY: The system processor in not on the global list until the processor task runs, so explicitly set the
@@ -585,7 +482,7 @@ void uProcessorKernel::main() {
 
 	spin += 1;
 
-	if ( ! processor->external.empty() ) {	// check processor specific ready queue
+	if ( ! processor->external.empty() ) {		// check processor specific ready queue
 	    // Only this processor removes from this ready queue so no other processor can remove this task after it has
 	    // been seen.
 
@@ -600,19 +497,19 @@ void uProcessorKernel::main() {
 	    void *SP = ((uContext_t *)readyTask->context)->SP;
 #   endif
 #endif // __U_DEBUG__
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
-		       this, readyTask->currCoroutine->name, readyTask->currCoroutine,
-		       readyTask->limit, SP, readyTask->base,
-		       processor->currCluster->getName(), processor->currCluster, &processor,
-		       THREAD_GETMEM( disableInt ),
-		       THREAD_GETMEM( disableIntCnt ),
-		       THREAD_GETMEM( disableIntSpin ),
-		       THREAD_GETMEM( disableIntSpinCnt ),
-		       THREAD_GETMEM( RFpending ),
-		       THREAD_GETMEM( RFinprogress )
-		);
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
+			   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
+			   readyTask->limit, SP, readyTask->base,
+			   processor->currCluster->getName(), processor->currCluster, &processor,
+			   THREAD_GETMEM( disableInt ),
+			   THREAD_GETMEM( disableIntCnt ),
+			   THREAD_GETMEM( disableIntSpin ),
+			   THREAD_GETMEM( disableIntSpinCnt ),
+			   THREAD_GETMEM( RFpending ),
+			   THREAD_GETMEM( RFinprogress )
+		    );
+	    )
 	    assert( readyTask->limit < SP && SP < readyTask->base );
 
 	    // SKULLDUGGERY: The processor task is part of the kernel, and therefore, must execute as uninterruptible
@@ -643,19 +540,19 @@ void uProcessorKernel::main() {
 	    readyTask->currCoroutine = this;		// manually reset current coroutine
 	    assert( limit <= stackPointer() && stackPointer() <= base ); // checks uProcessorKernel
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) aft: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
-		       this, readyTask->currCoroutine->name, readyTask->currCoroutine,
-		       readyTask->limit, readyTask->stackPointer(), readyTask->base,
-		       processor->currCluster->getName(), processor->currCluster, &processor,
-		       THREAD_GETMEM( disableInt ),
-		       THREAD_GETMEM( disableIntCnt ),
-		       THREAD_GETMEM( disableIntSpin ),
-		       THREAD_GETMEM( disableIntSpinCnt ),
-		       THREAD_GETMEM( RFpending ),
-		       THREAD_GETMEM( RFinprogress )
-		);
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) aft: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
+			   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
+			   readyTask->limit, readyTask->stackPointer(), readyTask->base,
+			   processor->currCluster->getName(), processor->currCluster, &processor,
+			   THREAD_GETMEM( disableInt ),
+			   THREAD_GETMEM( disableIntCnt ),
+			   THREAD_GETMEM( disableIntSpin ),
+			   THREAD_GETMEM( disableIntSpinCnt ),
+			   THREAD_GETMEM( RFpending ),
+			   THREAD_GETMEM( RFinprogress )
+		    );
+	    )
 
 	    spin = 0;					// set number of spins back to zero
 	    onBehalfOfUser();				// execute code on scheduler stack on behalf of user
@@ -666,10 +563,7 @@ void uProcessorKernel::main() {
 		// If control reaches here, the boot task must be the only task on the system-cluster ready-queue, and
 		// it must be restarted to finish the close down.
 #else
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "(uProcessorKernel &)%p.main termination, currProc:%p, uThisProcessor:%p\n",
-			   this, &(currProc->processor()), &processor );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main termination, currProc:%p, uThisProcessor:%p\n", this, &(currProc->processor()), &processor ); )
 		// In the uniprocessor case, only terminate the processor kernel when the processor task for the system
 		// processor is deleted; otherwise the program stops when the first processor is deleted.
 
@@ -696,19 +590,19 @@ void uProcessorKernel::main() {
 	    void *SP = ((uContext_t *)readyTask->currCoroutine->context)->SP;
 #   endif
 #endif // __U_DEBUG__
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
-		       this, readyTask->currCoroutine->name, readyTask->currCoroutine,
-		       readyTask->currCoroutine->limit, SP, readyTask->currCoroutine->base,
-		       processor->currCluster->getName(), processor->currCluster, &processor,
-		       THREAD_GETMEM( disableInt ),
-		       THREAD_GETMEM( disableIntCnt ),
-		       THREAD_GETMEM( disableIntSpin ),
-		       THREAD_GETMEM( disableIntSpinCnt ),
-		       THREAD_GETMEM( RFpending ),
-		       THREAD_GETMEM( RFinprogress )
-		);
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
+			   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
+			   readyTask->currCoroutine->limit, SP, readyTask->currCoroutine->base,
+			   processor->currCluster->getName(), processor->currCluster, &processor,
+			   THREAD_GETMEM( disableInt ),
+			   THREAD_GETMEM( disableIntCnt ),
+			   THREAD_GETMEM( disableIntSpin ),
+			   THREAD_GETMEM( disableIntSpinCnt ),
+			   THREAD_GETMEM( RFpending ),
+			   THREAD_GETMEM( RFinprogress )
+		    );
+	    )
 	    assert( readyTask == (uBaseTask *)uKernelModule::bootTask ? true : readyTask->currCoroutine->limit < SP && SP < readyTask->currCoroutine->base );
 	    assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
 
@@ -733,19 +627,19 @@ void uProcessorKernel::main() {
 	    THREAD_SETMEM( activeTask, processor->procTask );
 	    assert( limit <= stackPointer() && stackPointer() <= base ); // checks uProcessorKernel
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) aft: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
-		       this, readyTask->currCoroutine->name, readyTask->currCoroutine,
-		       readyTask->currCoroutine->limit, readyTask->currCoroutine->stackPointer(), readyTask->currCoroutine->base,
-		       processor->currCluster->getName(), processor->currCluster, &processor,
-		       THREAD_GETMEM( disableInt ),
-		       THREAD_GETMEM( disableIntCnt ),
-		       THREAD_GETMEM( disableIntSpin ),
-		       THREAD_GETMEM( disableIntSpinCnt ),
-		       THREAD_GETMEM( RFpending ),
-		       THREAD_GETMEM( RFinprogress )
-		);
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) aft: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
+			   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
+			   readyTask->currCoroutine->limit, readyTask->currCoroutine->stackPointer(), readyTask->currCoroutine->base,
+			   processor->currCluster->getName(), processor->currCluster, &processor,
+			   THREAD_GETMEM( disableInt ),
+			   THREAD_GETMEM( disableIntCnt ),
+			   THREAD_GETMEM( disableIntSpin ),
+			   THREAD_GETMEM( disableIntSpinCnt ),
+			   THREAD_GETMEM( RFpending ),
+			   THREAD_GETMEM( RFinprogress )
+		    );
+	    )
 
 #ifdef __U_MULTI__
 	    spin = 0;					// set number of spins back to zero
@@ -802,21 +696,20 @@ void uProcessorKernel::main() {
 	// has occurred unless there are pending I/O tasks. If there are pending I/O tasks, the I/O poller task pauses
 	// the UNIX process at the "select".
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uProcessorKernel &)%p.main, cycleStart:%p, currProc:%.256s (%p), spin:%d, readyTask:%p, IOPoller:%p\n",
-		  this, cycleStart, currProc->processor().currCluster->getName(), currProc, spin, readyTask, IOPoller );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(	uDebugPrt( "(uProcessorKernel &)%p.main, cycleStart:%p, currProc:%.256s (%p), spin:%d, readyTask:%p, IOPoller:%p\n",
+				   this, cycleStart, currProc->processor().currCluster->getName(), currProc, spin, readyTask, IOPoller ); )
 
 	if ( cycleStart == currProc && spin != 0 ) {
 #if __U_LOCALDEBUGGER_H__
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uProcessorKernel &)%p.main, uLocalDebuggerInstance:%p, IOPoller: %.256s (%p), dispatcher:%p, debugger_blocked_tasks:%d, uPendingIO.head:%p, uPendingIO.tail:%p\n",
-		       this, uLocalDebugger::uLocalDebuggerInstance,
-		       IOPoller != nullptr ? IOPoller->getName() : "no I/O poller task", IOPoller,
-		       uLocalDebugger::uLocalDebuggerInstance != nullptr ? uLocalDebugger::uLocalDebuggerInstance->dispatcher : nullptr,
-		       uLocalDebugger::uLocalDebuggerInstance != nullptr ? uLocalDebugger::uLocalDebuggerInstance->debugger_blocked_tasks : 0,
-		       uCluster::NBIO->uPendingIO.head(), uCluster::NBIO->uPendingIO.tail() );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugPrt( "(uProcessorKernel &)%p.main, uLocalDebuggerInstance:%p, IOPoller: %.256s (%p), dispatcher:%p, debugger_blocked_tasks:%d, uPendingIO.head:%p, uPendingIO.tail:%p\n",
+			   this, uLocalDebugger::uLocalDebuggerInstance,
+			   IOPoller != nullptr ? IOPoller->getName() : "no I/O poller task", IOPoller,
+			   uLocalDebugger::uLocalDebuggerInstance != nullptr ? uLocalDebugger::uLocalDebuggerInstance->dispatcher : nullptr,
+			   uLocalDebugger::uLocalDebuggerInstance != nullptr ? uLocalDebugger::uLocalDebuggerInstance->debugger_blocked_tasks : 0,
+			   uCluster::NBIO->uPendingIO.head(), uCluster::NBIO->uPendingIO.tail()
+		    );
+	    )
 #endif // __U_LOCALDEBUGGER_H__
 	    if ( IOPoller != nullptr			// I/O poller task ?
 #if __U_LOCALDEBUGGER_H__
@@ -828,15 +721,11 @@ void uProcessorKernel::main() {
 		    )
 #endif // __U_LOCALDEBUGGER_H__
 		) {
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "(uProcessorKernel &)%p.main, poller blocking\n", this );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, poller blocking\n", this ); )
 
 		okToSelect = true;			// tell poller it is ok to call UNIX select, reset in uPollIO
 	    } else if ( processor->events->userEventPresent() ) { // tasks sleeping, except system task  ?
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "(uProcessorKernel &)%p.main, sleeping with pending events\n", this );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, sleeping with pending events\n", this ); )
 		if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
 		    uKernelModule::rollForward( true );
 		} else {
@@ -858,7 +747,7 @@ void uProcessorKernel::main() {
 			uDebugPrt2( "\t\t %.256s (%p)\n", task->getName(), task );
 		    } // for
 		} // for
-		uAbort( "No ready or pending tasks.\n"
+		abort( "No ready or pending tasks.\n"
 			"Possible cause is tasks are in a synchronization or mutual exclusion deadlock." );
 	    } // if
 	} // if
@@ -875,9 +764,7 @@ void uProcessorKernel::main() {
 
     // ACCESS NO KERNEL DATA STRUCTURES AFTER THIS POINT BECAUSE THEY MAY NO LONGER EXIST.
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorKernel &)%p.main, exiting\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, exiting\n", this ); )
 
     // If available, wake another processor on this cluster, as this one is terminating.
     uThisCluster().makeProcessorActive();
@@ -897,9 +784,7 @@ uProcessorKernel::uProcessorKernel() : uBaseCoroutine( PTHREAD_STACK_MIN > __U_D
 } // uProcessorKernel::uProcessorKernel
 
 uProcessorKernel::~uProcessorKernel() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessorKernel &)%p.~uProcessorKernel, exiting\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.~uProcessorKernel, exiting\n", this ); )
 } // uProcessorKernel::~uProcessorKernel
 
 
@@ -907,9 +792,7 @@ uProcessorKernel::~uProcessorKernel() {
 
 
 void uProcessor::createProcessor( uCluster &cluster, bool detached, int ms, int spin ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessor &)%p.createProcessor, on cluster %.256s (%p)\n", this, cluster.getName(), &cluster );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessor &)%p.createProcessor, on cluster %.256s (%p)\n", this, cluster.getName(), &cluster ); )
 
 #ifdef __U_DEBUG__
 #if __U_LOCALDEBUGGER_H__
@@ -950,14 +833,14 @@ void uProcessor::createProcessor( uCluster &cluster, bool detached, int ms, int 
 #if defined( __U_AFFINITY__ ) && defined( __solaris__ )
     int cpus = sysconf( _SC_NPROCESSORS_CONF );		// number of processors
     if ( cpus == -1 ) {
-	uAbort( "(uProcessor &)%p.createProcessor() : internal error, sysconf failure, error(%d) %s.", this, errno, strerror( errno ) );
+	abort( "(uProcessor &)%p.createProcessor() : internal error, sysconf failure, error(%d) %s.", this, errno, strerror( errno ) );
     } // if
     assert( cpus > 0 );
     for ( int i = 0; i < cpus; i += 1 ) {
 	int cpu = p_online( i, P_STATUS );
 	if ( cpu == -1 ) {
 	    if ( errno == EINVAL ) continue;		// processor numbers not necessarily contiguous
-	    uAbort( "(uProcessor &)%p.createProcessor() : internal error, p_online failure, error(%d) %s.", this, errno, strerror( errno ) );
+	    abort( "(uProcessor &)%p.createProcessor() : internal error, p_online failure, error(%d) %s.", this, errno, strerror( errno ) );
 	} // if
 	if ( cpu == P_ONLINE || cpu == P_NOINTR ) {	// accumulate set of processors able to execute LWPs
 	    cpuId.set( i );
@@ -1031,9 +914,7 @@ uProcessor::uProcessor( uCluster &clus, bool detached, unsigned int ms, unsigned
 
 
 uProcessor::~uProcessor() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uProcessor &)%p.~uProcessor\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uProcessor &)%p.~uProcessor\n", this ); )
 
     delete procTask;
 
@@ -1094,29 +975,29 @@ void uProcessor::fork( uProcessor *processor ) {
 #endif // __U_HW_OVFL_SIG__
 #endif // __U_PROFILER__
 	if ( sigprocmask( SIG_BLOCK, &new_mask, &old_mask ) == -1 ) {
-	    uAbort( "internal error, sigprocmask" );
+	    abort( "internal error, sigprocmask" );
 	} // if
 	assert( ! sigismember( &old_mask, SIGALRM ) );
     } // if
 
     ret = RealRtn::pthread_attr_init( &attr );
     if ( ret ) {
-	uAbort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_init failed, error(%d) %s.", this, ret, strerror( ret ) );
+	abort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_init failed, error(%d) %s.", this, ret, strerror( ret ) );
     } // if
     assert( processor->processorKer.size >= PTHREAD_STACK_MIN );
     ret = RealRtn::pthread_attr_setstack( &attr, processor->processorKer.limit, processor->processorKer.size );
     if ( ret ) {
-	uAbort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_setstack failed, error(%d) %s.", this, ret, strerror( ret ) );
+	abort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_setstack failed, error(%d) %s.", this, ret, strerror( ret ) );
     } // if
     ret = RealRtn::pthread_create( &processor->pid, &attr, uKernelModule::startThread, processor );
     if ( ret ) {
-	uAbort( "(uProcessorKernel &)%p.fork() : internal error, pthread_create failed, error(%d) %s.", this, ret, strerror( ret ) );
+	abort( "(uProcessorKernel &)%p.fork() : internal error, pthread_create failed, error(%d) %s.", this, ret, strerror( ret ) );
     } // if
 
     // Toggle back previous signal mask of system processor.
     if ( &uThisCluster() == uKernelModule::systemCluster ) {
 	if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
-	    uAbort( "internal error, sigprocmask" );
+	    abort( "internal error, sigprocmask" );
 	} // if
     } // if
 
@@ -1143,9 +1024,9 @@ void uProcessor::setContextSwitchEvent( uDuration duration ) {
 	contextEvent->alarm = activeProcessorKernel->kernelClock.getTime() + duration;
 	contextEvent->period = duration;
 	contextEvent->add();
-    } else if ( duration == 0 && contextEvent->alarm != 0 ) { // zero duration and current CS is nonzero ?
+    } else if ( duration == 0 && contextEvent->alarm != uTime( 0 ) ) { // zero duration and current CS is nonzero ?
 	contextEvent->remove();
-	contextEvent->alarm = 0;
+	contextEvent->alarm = uTime( 0 );
 	contextEvent->period = 0;
     } else {
 	// => no preemption, and event not added to event list.
@@ -1208,7 +1089,7 @@ void uProcessor::setAffinity( const cpu_set_t &mask ) {
     int posn = cpuId.ffs();
     cpuId.clr( posn );					// clear first 1 bit
     if ( cpuId.ffs() != CPU_SETSIZE ) {			// check if another 1 bit
-	uAbort( "(uProcessor &)%p.setAffinity() : cpu set restricted to one cpu.", this );
+	abort( "(uProcessor &)%p.setAffinity() : cpu set restricted to one cpu.", this );
     } // if
     cpuId.set( posn );					// reset 1 bit
     if ( processor_bind(
@@ -1221,7 +1102,7 @@ void uProcessor::setAffinity( const cpu_set_t &mask ) {
 #else
     #error uC++ : internal error, unsupported architecture
 #endif // __U_AFFINITY__
-	uAbort( "(uProcessor &)%p.setAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
+	abort( "(uProcessor &)%p.setAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
     } // if
 } // uProcessor::setAffinity
 
@@ -1246,7 +1127,7 @@ void uProcessor::getAffinity( cpu_set_t &mask ) {
     if ( cpuset_getaffinity( CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(cpuset_t), &mask ) != 0 ) {
 #endif
 #endif // __U_MULTI__
-	uAbort( "(uProcessor &)%p.getAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
+	abort( "(uProcessor &)%p.getAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
     } // if
 #elif defined( __solaris__ )
     mask = cpuId;

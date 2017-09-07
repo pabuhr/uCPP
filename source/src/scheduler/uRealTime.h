@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Fri Jul 19 16:34:59 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  2 15:47:59 2012
-// Update Count     : 135
+// Last Modified On : Sun Feb 19 23:20:17 2017
+// Update Count     : 136
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,10 +86,8 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 #endif // __U_DEBUG__
 	objects[priority].add( node );
 	mask |= 1ul << priority;
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uPriorityScheduleQueue &)%p.add( %p ) task %.256s (%p) adding   task %.256s (%p) with priority %d on cluster %p\n",
-		   this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), priority, &uThisCluster() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uPriorityScheduleQueue &)%p.add( %p ) task %.256s (%p) adding   task %.256s (%p) with priority %d on cluster %p\n",
+			      this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), priority, &uThisCluster() ); )
     } // uPriorityScheduleQueue::add
 
     virtual Node *drop() {
@@ -100,10 +98,8 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 	    if ( objects[highestPriority].empty() ) {
 		mask &= ~ ( 1ul << highestPriority );
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uPriorityScheduleQueue &)%p.drop( %p ) task %.256s (%p) removing task %.256s (%p) with priority %d on cluster %s (%p)\n",
-		       this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), highestPriority, uThisCluster().getName(), &uThisCluster() );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uPriorityScheduleQueue &)%p.drop( %p ) task %.256s (%p) removing task %.256s (%p) with priority %d on cluster %s (%p)\n",
+				  this, node, uThisTask().getName(), &uThisTask(), node->task().getName(), &node->task(), highestPriority, uThisCluster().getName(), &uThisCluster() ); )
 	    return node;
 	} else {
 	    return nullptr;
@@ -111,7 +107,7 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
     } // uPriorityScheduleQueue::drop
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uPriorityScheduleQueue::transfer, internal error, unsupported operation" );
+	abort( "uPriorityScheduleQueue::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQueue::transfer
 
     virtual bool checkPriority( Node &, Node & ) {
@@ -203,7 +199,7 @@ class uPrioritySeq : public uBasePrioritySeq {
     } // uPrioritySeq::remove
 
     void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uPrioritySeq::transfer, internal error, unsupported operation" );
+	abort( "uPrioritySeq::transfer, internal error, unsupported operation" );
     } // uPrioritySeq::transfer
 
     void onAcquire( uBaseTask &owner ) {
@@ -249,7 +245,7 @@ template<typename List, typename Node> class uPriorityScheduleSeq : public uPrio
     } // uPriorityScheduleSeq::remove
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uPriorityScheduleSeq::transfer, internal error, unsupported operation" );
+	abort( "uPriorityScheduleSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleSeq::transfer
 }; // uPriorityScheduleSeq
 

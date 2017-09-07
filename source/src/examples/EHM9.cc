@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  7 12:15:30 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:46 2016
-// Update Count     : 36
+// Last Modified On : Sun Jan 22 21:49:40 2017
+// Update Count     : 37
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,7 @@ _Event R2 {};
 // Checks marking of handlers is performed correctly during propagation.
 // Marking prevents recursive resumption.
 
-void uMain::main () {
+int main() {
 	try {
 		try {
 			try {
@@ -57,7 +57,7 @@ void uMain::main () {
 		osacquire( cout ) << "exit  H1" << endl;
 	} // try
 	osacquire( cout ) << "finished" << endl;
-} // uMain::main
+} // main
 
 
 // Local Variables: //

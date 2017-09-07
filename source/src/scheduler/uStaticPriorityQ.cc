@@ -132,7 +132,7 @@ int uStaticPriorityQ::add( uBaseTaskDL *node, uBaseTask *owner ) {
     uStaticPIQ *PIQptr = dynamic_cast<uStaticPIQ *>(node->task().uPIQ);
     if ( PIQptr == nullptr ) {
     //return uLockAcquired; // TEMPORARY
-	uAbort("(uStaticPriorityQ &)%p.add : Task %p has incorrect uPIQ type for mutex object.", this, &node->task());
+	abort("(uStaticPriorityQ &)%p.add : Task %p has incorrect uPIQ type for mutex object.", this, &node->task());
     } //if
 
     // check if your priority needs to be updated
@@ -163,7 +163,7 @@ void uStaticPriorityQ::onAcquire( uBaseTask &owner ) {
     // Dynamic check to verify that the task acquiring the serial is compliant with PIHeap type.
     uStaticPIQ *PIQptr = dynamic_cast<uStaticPIQ *>(owner.uPIQ);
     if ( PIQptr == nullptr ) {
-	uAbort("(uStaticPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
+	abort("(uStaticPriorityQ &)%p.onAcquire : Task %p has incorrect uPIQ type for mutex object.", this, &owner);
     } //if
 
     // check if mutex owner's priority needs to be updated

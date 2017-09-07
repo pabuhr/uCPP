@@ -56,14 +56,14 @@ class uCoProcessorCxt2 : public uContext {
 }; // uCoProcessorCxt2
 
 
-void uMain::main() {
+int main() {
     uCoProcessorCxt1 cpCxt11, cpCxt12;
     uCoProcessorCxt2 cpCxt21, cpCxt22;
 
     for ( int i = 0; i < 5; i += 1 ) {
 	yield();
     } // for
-} // uMain::main
+} // main
     
 // Local Variables: //
 // compile-command: "u++ -O uContext.cc" //

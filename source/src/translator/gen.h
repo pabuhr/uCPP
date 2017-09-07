@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:36:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 22:05:49 2016
-// Update Count     : 79
+// Last Modified On : Fri Jul  7 16:33:10 2017
+// Update Count     : 81
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,7 +44,7 @@ void gen_with( token_t *before, token_t *after );
 void gen_wait_suffix( token_t *before );
 void gen_base_clause( token_t *before, symbol_t *symbol );
 void gen_member_prefix( token_t *before, symbol_t *symbol );
-void gen_member_suffix( token_t *before, symbol_t *symbol );
+void gen_member_suffix( token_t *before );
 void gen_main_prefix( token_t *before, symbol_t *symbol );
 void gen_main_suffix( token_t *before, symbol_t *symbol );
 void gen_initializer( token_t *before, symbol_t *symbol, char prefix, bool after );
@@ -57,7 +57,7 @@ void gen_destructor_prefix( token_t *before, symbol_t *symbol );
 void gen_destructor_suffix( token_t *before, symbol_t *symbol );
 void gen_destructor( token_t *before, symbol_t *symbol );
 void gen_class_prefix( token_t *before, symbol_t *symbol );
-void gen_class_suffix( token_t *before, symbol_t *symbol );
+void gen_class_suffix( symbol_t *symbol );
 void gen_access( token_t *before, int access );
 void gen_PIQ( token_t *before, symbol_t *symbol );
 void gen_mutex( token_t *before, symbol_t *symbol );

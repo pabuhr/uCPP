@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:30:09 2016
-// Update Count     : 1224
+// Last Modified On : Wed Sep  6 16:55:02 2017
+// Update Count     : 1288
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -133,14 +133,14 @@ namespace UPP {
 #endif // __U_STATISTICS__
 
     inline void uHeapManager::noMemory() {
-	uAbort( "Heap memory exhausted at %zu bytes.\n"
+	abort( "Heap memory exhausted at %zu bytes.\n"
 		"Possible cause is very large memory allocation and/or large amount of unfreed storage allocated by the program or system/library routines.",
 		((char *)(sbrk( 0 )) - (char *)(uHeapManager::heapManagerInstance->heapBegin)) );
     } // uHeapManager::noMemory
 
     inline void uHeapManager::checkAlign( size_t alignment ) {
 	if ( alignment < sizeof(void *) || ! uPow2( alignment ) ) {
-	    uAbort( "Alignment %zu for memory allocation is less than sizeof(void *) and/or not a power of 2.", alignment );
+	    abort( "Alignment %zu for memory allocation is less than sizeof(void *) and/or not a power of 2.", alignment );
 	} // if
     } // uHeapManager::checkAlign
 
@@ -161,50 +161,61 @@ namespace UPP {
 	return false;
     } // uHeapManager::setMmapStart
 
+    static void checkHeader( bool check, const char *name, void *addr ) {
+	if ( UNLIKELY( check ) ) {			// bad address ?
+	    abort( "Attempt to %s storage %p with address outside the heap.\n"
+		   "Possible cause is duplicate free on same block or overwriting of memory.",
+		   name, addr );
+	} // if
+    } // checkHeader
+
     inline bool uHeapManager::headers( const char *name, void *addr, Storage::Header *&header, FreeHeader *&freeElem, size_t &size, size_t &alignment ) {
 	header = (Storage::Header *)( (char *)addr - sizeof(Storage::Header) );
+#ifdef __U_DEBUG__
+	checkHeader( addr < heapBegin || header < heapBegin, name, addr ); // bad low address ?
+#endif // __U_DEBUG__
+	// header may be safe to dereference
+	if ( UNLIKELY( heapEnd < addr ) ) {		// mmapped ?
+	    size = header->kind.real.blockSize & -3;
+	    return true;
+	} // if
+#ifdef __U_DEBUG__
+	checkHeader( heapEnd < header, name, addr );	// bad high address ?
+#endif // __U_DEBUG__
 	if ( UNLIKELY( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
 	    size_t offset = header->kind.fake.offset;
 	    alignment = header->kind.fake.alignment & -2; // remove flag from value
-#ifdef __U_DEBUG__
-	    checkAlign( alignment );			// check alignment
-#endif // __U_DEBUG__
 	    header = (Storage::Header *)((char *)header - offset);
-	} // if
-	if ( UNLIKELY( addr < heapBegin || heapEnd < addr ) ) {	// mmapped ?
-	    size = header->kind.real.blockSize & -3;
-	    return true;
-	} else {
-	    freeElem = (FreeHeader *)((size_t)header->kind.real.home & -3);
 #ifdef __U_DEBUG__
-	    if ( freeElem < &freeLists[0] || &freeLists[NoBucketSizes] <= freeElem ) {
-		uAbort( "Attempt to %s storage %p with corrupted header.\n"
-			"Possible cause is duplicate free on same block or overwriting of header information.",
-			name, addr );
-	    } // if
+	    checkHeader( header < heapBegin || heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
+	    checkAlign( alignment );			// bad alignment ?
 #endif // __U_DEBUG__
-	    size = freeElem->blockSize;
-	    return false;
 	} // if
+	freeElem = (FreeHeader *)((size_t)header->kind.real.home & -3);
+#ifdef __U_DEBUG__
+	if ( freeElem < &freeLists[0] || &freeLists[NoBucketSizes] <= freeElem ) {
+	    abort( "Attempt to %s storage %p with corrupted header.\n"
+		   "Possible cause is duplicate free on same block or overwriting of header information.",
+		   name, addr );
+	} // if
+#endif // __U_DEBUG__
+	size = freeElem->blockSize;
+	return false;
     } // uHeapManager::headers
 
 
     inline void *uHeapManager::extend( size_t size ) {
 	extlock.acquire();
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
-		   this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
+			      this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) ); )
 	ptrdiff_t rem = heapRemaining - size;
 	if ( rem < 0 ) {
 	    // If the size requested is bigger than the current remaining storage, increase the size of the heap.
 
 	    size_t increase = uCeiling( size > heapExpand ? size : heapExpand, uAlign() );
 	    if ( sbrk( increase ) == (void *)-1 ) {
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "0x%zx = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
-			   nullptr, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "0x%zx = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
+				      nullptr, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) ); )
 		extlock.release();
 		errno = ENOMEM;
 		return nullptr;
@@ -223,19 +234,15 @@ namespace UPP {
 	Storage *block = (Storage *)heapEnd;
 	heapRemaining = rem;
 	heapEnd = (char *)heapEnd + size;
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
-		   block, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
+			      block, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) ); )
 	extlock.release();
 	return block;
     } // uHeapManager::extend
 
 
     inline void *uHeapManager::doMalloc( size_t size ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size ); )
 
 	Storage *block;
 
@@ -243,7 +250,44 @@ namespace UPP {
 	// along with the block and is a multiple of the alignment size.
 
 	size_t tsize = size + sizeof(Storage::Header);
-	if ( tsize >= mmapStart ) {			// large size => mmap
+	if ( LIKELY( tsize < mmapStart ) ) {		// small size => sbrk
+	    FreeHeader *freeElem =
+#ifdef FASTLOOKUP
+		tsize < LookupSizes ? &freeLists[lookup[tsize]] :
+#endif // FASTLOOKUP
+		std::lower_bound( freeLists, freeLists + maxBucketsUsed, tsize ); // binary search
+	    assert( freeElem <= &freeLists[maxBucketsUsed] ); // subscripting error ?
+	    assert( tsize <= freeElem->blockSize );	// search failure ?
+	    tsize = freeElem->blockSize;		// total space needed for request
+
+	    uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc, size after lookup:%zu\n", this, tsize ); )
+    
+	    // Spin until the lock is acquired for this particular size of block.
+
+#if defined( SPINLOCK )
+	    freeElem->lock.acquire();
+	    block = freeElem->freeList;			// remove node from stack
+#else
+	    block = freeElem->freeList.pop();
+#endif // SPINLOCK
+	    if ( UNLIKELY( block == nullptr ) ) {	// no free block ?
+#if defined( SPINLOCK )
+		freeElem->lock.release();
+#endif // SPINLOCK
+		// Freelist for that size was empty, so carve it out of the heap if there's enough left, or get some more
+		// and then carve it off.
+
+		block = (Storage *)extend( tsize );	// mutual exclusion on call
+		if ( UNLIKELY( block == nullptr ) ) return nullptr;
+#if defined( SPINLOCK )
+	    } else {
+		freeElem->freeList = block->header.kind.real.next;
+		freeElem->lock.release();
+#endif // SPINLOCK
+	    } // if
+
+	    block->header.kind.real.home = freeElem;	// pointer back to free list of apropriate size
+	} else {					// large size => mmap
 	    tsize = uCeiling( tsize, pageSize );	// must be multiple of page size
 #ifdef __U_STATISTICS__
 	    uFetchAdd( mmap_calls, 1 );
@@ -258,47 +302,13 @@ namespace UPP {
 	    block = (Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, mmapFlags, mmapFd, 0 );
 	    if ( block == MAP_FAILED ) {
 		// Do not call strerror( errno ) as it may call malloc.
-		uAbort( "(uHeapManager &)0x%p.doMalloc() : internal error, mmap failure, size:%zu error:%d.", this, tsize, errno );
+		abort( "(uHeapManager &)0x%p.doMalloc() : internal error, mmap failure, size:%zu error:%d.", this, tsize, errno );
 	    } // if
 #ifdef __U_DEBUG__
 	    // Set new memory to garbage so subsequent uninitialized usages might fail.
 	    memset( block, '\377', tsize );
 #endif // __U_DEBUG__
 	    block->header.kind.real.blockSize = tsize;	// storage size for munmap
-	} else {
-	    FreeHeader key;
-	    key.blockSize = tsize;			// fake element for search
-	    FreeHeader *freeElem =
-#ifdef FASTLOOKUP
-		tsize < LookupSizes ? &freeLists[lookup[tsize]] :
-#endif // FASTLOOKUP
-		std::lower_bound( freeLists, freeLists + maxBucketsUsed, key ); // binary search
-	    assert( freeElem <= &freeLists[maxBucketsUsed] ); // subscripting error ?
-	    assert( tsize <= freeElem->blockSize );	// search failure ?
-	    tsize = freeElem->blockSize;		// total space needed for request
-
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uHeapManager &)%p.doMalloc, size after lookup:%zu\n", this, tsize );
-#endif // __U_DEBUG_H__
-    
-	    // Spin until the lock is acquired for this particular size of block.
-
-	    freeElem->lock.acquire();
-	    if ( LIKELY( freeElem->freeList != nullptr ) ) {
-		block = freeElem->freeList;		// remove node from stack
-		freeElem->freeList = block->header.kind.real.next;
-		freeElem->lock.release();
-	    } else {
-		freeElem->lock.release();
-
-		// Freelist for that size was empty, so carve it out of the heap if there's enough left, or get some more
-		// and then carve it off.
-
-		block = (Storage *)extend( tsize );	// mutual exclusion on call
-		if ( UNLIKELY( block == nullptr ) ) return nullptr;
-	    } // if
-
-	    block->header.kind.real.home = freeElem;	// pointer back to free list of apropriate size
 	} // if
 
 	void *area = &(block->data);			// adjust off header to user bytes
@@ -315,21 +325,17 @@ namespace UPP {
 	} // if
 #endif // __U_DEBUG__
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = (uHeapManager &)%p.doMalloc\n", area, this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = (uHeapManager &)%p.doMalloc\n", area, this ); )
 	return area;
     } // uHeapManager::doMalloc
 
 
     inline void uHeapManager::doFree( void *addr ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.doFree( %p )\n", this, addr );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p )\n", this, addr ); )
 
 #ifdef __U_DEBUG__
 	if ( uHeapManager::heapManagerInstance == nullptr ) {
-	    uAbort( "uHeapManager::doFree( %p ) : internal error, called before heap is initialized.", addr );
+	    abort( "uHeapManager::doFree( %p ) : internal error, called before heap is initialized.", addr );
 	} // if
 #endif // __U_DEBUG__
 
@@ -344,7 +350,7 @@ namespace UPP {
 #endif // __U_STATISTICS__
 	    if ( munmap( header, size ) == -1 ) {
 #ifdef __U_DEBUG__
-		uAbort( "Attempt to deallocate storage %p not allocated or with corrupt header.\n"
+		abort( "Attempt to deallocate storage %p not allocated or with corrupt header.\n"
 			"Possible cause is invalid pointer.",
 			addr );
 #endif // __U_DEBUG__
@@ -358,24 +364,23 @@ namespace UPP {
 
 #ifdef __U_DEBUG__
 	    // Set free memory to garbage so subsequent usages might fail.
-	    memset( header, '\377', freeElem->blockSize );
+	    memset( ((Storage *)header)->data, '\377', freeElem->blockSize - sizeof( Storage::Header ) );
 #endif // __U_DEBUG__
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeElem:%p\n", this, addr, &header, &freeElem );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeElem:%p\n", this, addr, &header, &freeElem ); )
 
-	    freeElem->lock.acquire();			// acquire spin lock
 #ifdef __U_STATISTICS__
 	    free_storage += size;
 #endif // __U_STATISTICS__
+#if defined( SPINLOCK )
+	    freeElem->lock.acquire();			// acquire spin lock
 	    header->kind.real.next = freeElem->freeList; // push on stack
 	    freeElem->freeList = (Storage *)header;
 	    freeElem->lock.release();			// release spin lock
-
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uHeapManager &)%p.doFree( %p ) returning free block in list 0x%zx\n", this, addr, size );
-#endif // __U_DEBUG_H__
+#else	    
+	    freeElem->freeList.push( *(Storage *)header );
+#endif // SPINLOCK
+	    uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) returning free block in list 0x%zx\n", this, addr, size ); )
 	} // if
 
 #ifdef __U_DEBUG__
@@ -401,7 +406,11 @@ namespace UPP {
 #ifdef __U_STATISTICS__
 	    unsigned int N = 0;
 #endif // __U_STATISTICS__
+#if defined( SPINLOCK )
 	    for ( Storage *p = freeLists[i].freeList; p != nullptr; p = p->header.kind.real.next ) {
+#else
+	    for ( Storage *p = freeLists[i].freeList.top(); p != nullptr; p = p->header.kind.real.next.top ) {
+#endif // SPINLOCK
 		total += size;
 #ifdef __U_STATISTICS__
 		N += 1;
@@ -421,9 +430,7 @@ namespace UPP {
 
 
     uHeapManager::uHeapManager() {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.uHeap()\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.uHeap()\n", this ); )
 	pageSize = sysconf( _SC_PAGESIZE );
     
 	for ( unsigned int i = 0; i < NoBucketSizes; i += 1 ) { // initialize the free lists
@@ -439,7 +446,7 @@ namespace UPP {
 #endif // FASTLOOKUP
 
 	if ( setMmapStart( uDefaultMmapStart() ) ) {
-	    uAbort( "uHeapManager::uHeapManager : internal error, mmap start initialization failure." );
+	    abort( "uHeapManager::uHeapManager : internal error, mmap start initialization failure." );
 	} // if
 	heapExpand = uDefaultHeapExpansion();
 
@@ -447,9 +454,7 @@ namespace UPP {
 	sbrk( (char *)uCeiling( (long unsigned int)end, uAlign() ) - end ); // move start of heap to multiple of alignment
 	heapBegin = heapEnd = sbrk( 0 );		// get new start point
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uHeapManager &)%p.uHeap() heapBegin:%p, heapEnd:%p\n", this, heapBegin, heapEnd );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.uHeap() heapBegin:%p, heapEnd:%p\n", this, heapBegin, heapEnd ); )
     } // uHeapManager::uHeapManager
 
 
@@ -474,9 +479,7 @@ namespace UPP {
 
 
     void uHeapManager::boot() {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "uHeapManager::boot() enter\n" );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "uHeapManager::boot() enter\n" ); )
 	if ( ! uKernelModule::kernelModuleInitialized ) {
 	    uKernelModule::startup();
 	} // if
@@ -484,7 +487,7 @@ namespace UPP {
 #ifdef __U_DEBUG__
 	if ( uHeapBoot ) {				// check for recursion during system boot
 	    // DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
-	    uAbort( "uHeapManager::boot() : internal error, recursively invoked during system boot." );
+	    abort( "uHeapManager::boot() : internal error, recursively invoked during system boot." );
 	} // if
 	uHeapBoot = true;
 #endif // __U_DEBUG__
@@ -493,9 +496,7 @@ namespace UPP {
 
 	std::set_new_handler( noMemory );		// don't throw exception as the default
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "uHeapManager::boot() exit\n" );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "uHeapManager::boot() exit\n" ); )
     } // uHeapManager::boot
 
 
@@ -569,9 +570,7 @@ extern "C" {
 	    PROFILEMALLOCENTRY( header ) = (*uProfiler::uProfiler_registerMemoryAllocate)( uProfiler::profilerInstance, area, size, header->kind.real.blockSize & -3 );
 	} // if
 #endif // __U_PROFILER__
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = malloc( %zu )\n", area, size );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = malloc( %zu )\n", area, size ); )
 	return area;
     } // malloc
 
@@ -594,9 +593,7 @@ extern "C" {
 #endif // __U_DEBUG__
 	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = calloc( %zu, %zu )\n", area, noOfElems, elemSize );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = calloc( %zu, %zu )\n", area, noOfElems, elemSize ); )
 	return area;
     } // calloc
 
@@ -619,9 +616,7 @@ extern "C" {
 #endif // __U_DEBUG__
 	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = cmemalign( %zu, %zu, %zu )\n", area, alignment, noOfElems, elemSize );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = cmemalign( %zu, %zu, %zu )\n", area, alignment, noOfElems, elemSize ); )
 	return area;
     } // cmemalign
 
@@ -672,9 +667,7 @@ extern "C" {
 	} // if
 	memcpy( area, addr, usize );			// copy bytes
 	free( addr );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = realloc( %p, %zu )\n", area, addr, size );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = realloc( %p, %zu )\n", area, addr, size ); )
 	return area;
     } // realloc
 
@@ -726,9 +719,7 @@ extern "C" {
 	} // if
 #endif // __U_PROFILER__
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = memalign( %zu, %zu )\n", user, alignment, size );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = memalign( %zu, %zu )\n", user, alignment, size ); )
 	return user;
     } // memalign
 
@@ -768,10 +759,8 @@ extern "C" {
 	} // exit
 
 	UPP::uHeapManager::heapManagerInstance->doFree( addr );
-#ifdef __U_DEBUG_H__
 	// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
-	uDebugPrt( "free( %p )\n", addr );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "free( %p )\n", addr ); )
     } // free
 
 
@@ -783,7 +772,7 @@ extern "C" {
 	} else {
 	    return uAlign();				// minimum alignment
 	} // if
-    } // malloc_usable_size
+    } // malloc_alignment
 
 
 //     bool malloc_zero_fill( void *addr ) __THROW {

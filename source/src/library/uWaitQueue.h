@@ -153,7 +153,7 @@ class uWaitQueue_ISM {
     } // uWaitQueue_ISM::remove
 
     Selectee drop() {
-	if ( q.empty() ) uAbort( "uWaitQueue_ISM: attempt to drop from an empty queue" );
+	if ( q.empty() ) abort( "uWaitQueue_ISM: attempt to drop from an empty queue" );
 
 	DropClient client;
 	DL *t = 0;

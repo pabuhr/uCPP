@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct 14 10:52:27 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:13:08 2016
-// Update Count     : 30
+// Last Modified On : Mon Jan 23 17:11:51 2017
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -79,7 +79,7 @@ _Task Writer {
 	} // Writer::Writer
 }; // Writer
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
 	switch ( argc ) {
 	  case 2:
 		break;
@@ -94,9 +94,9 @@ void uMain::main() {
 		Writer wr( client );							// emit worker to read from input and write to server
 	}
 	if ( wcnt != rcnt ) {
-		uAbort( "Error: client not all data transfered, wcnt:%d rcnt:%d", wcnt, rcnt );
+		abort( "Error: client not all data transfered, wcnt:%d rcnt:%d", wcnt, rcnt );
 	} // if
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

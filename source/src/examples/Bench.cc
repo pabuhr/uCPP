@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 15 22:03:16 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:49:22 2016
-// Update Count     : 445
+// Last Modified On : Mon Apr 17 09:36:50 2017
+// Update Count     : 481
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,6 +23,7 @@
 // You should  have received a  copy of the  GNU Lesser General  Public License
 // along  with this library.
 // 
+
 
 #include <iostream>
 using std::cerr;
@@ -242,7 +243,7 @@ _Monitor Monitor {
 	    condB.wait();
 	} // for
 	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N ) / 2;
+	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
     } // Monitor::sigwaiterA
 
     void sigwaiterB( int N ) {
@@ -278,7 +279,8 @@ _Task MonitorAcceptor {
 	while ( m.here == 0 ) yield();			// wait until acceptor is in monitor
 
 	for ( int i = 1; i <= N; i += 1 ) {
-	    rv = m.caller( 1 );
+	    rv = m.caller( 1 );				// nonblocking call (i.e., no context switch) as call accepted
+	    yield();					// now force context switch to acceptor to accept next call
 	} // for
     } // MonitorAcceptor::main
   public:
@@ -425,7 +427,8 @@ void CoroutineMonitorAcceptor::main() {
     while ( cm.here == 0 ) yield();
     
     for ( int i = 1; i <= N; i += 1 ) {
-	rv = cm.caller( 1 );
+	rv = cm.caller( 1 ); 				// nonblocking call (i.e., no context switch) as call accepted
+	yield();					// now force context switch to acceptor to accept next call
     } // for
 } // CoroutineMonitorAcceptor::main
 
@@ -468,7 +471,7 @@ _Mutex _Coroutine CoroutineMonitorB {
 	    condB.wait();
 	} // for
 	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N ) / 2;
+	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
     }; // CoroutineMonitorB::main
   public:
     void sigwaiterA( int N ) {
@@ -577,7 +580,8 @@ _Task TaskAcceptor {
 	volatile int rv __attribute__(( unused ));
 
 	for ( int i = 1; i <= N; i += 1 ) {
-	    rv = partner.caller( 1 );
+	    rv = partner.caller( 1 );			// nonblocking call (i.e., no context switch) as call accepted
+	    yield();					// now force context switch to acceptor to accept next call
 	} // for
     } // TaskAcceptor::main
   public:
@@ -614,7 +618,7 @@ _Task TaskSignallerPartner {
 	    condB.wait();
 	} // for
 	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N ) / 2;
+	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
     } // TaskSignallerPartner::main
 }; // TaskSignallerPartner
 
@@ -647,7 +651,7 @@ _Task ContextSwitch {
 	    uYieldNoPoll();
 	} // for
 	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t\t\t " << ( EndTime - StartTime ) / N;
     } // ContextSwitch::main
   public:
     ContextSwitch( int N ) {
@@ -659,14 +663,43 @@ _Task ContextSwitch {
 // benchmark driver
 //=======================================
 
-void uMain::main() {
+// uC++ has 4 modes:
+// 
+// 1. uniprocessor, where user threads are executed by a single kernel thread and time slicing provides
+//    nondeterminism. Useful for teaching, testing, and embedded systems on a single processor, but no parallelism.
+// 
+// 2. multiprocessor, where user threads are executed by multiple kernel threads and time-slicing provides extra
+//    nondeterminism. Provides full concurrency model and parallelism.
+// 
+// 3. debug, where uC++ inserts LOTS of runtime checks for errors. Useful for teaching and debugging.
+// 
+// 4. nodebug, where almost all the runtime checking are removed. Useful for high-performance production code.
+// 
+// The benchmark runs these combination: uniprocessor/debug, uniprocessor/nodebug, multiprocessor/debug, and
+// multiprocessor/nodebug. Some debug results are significantly higher than nodebug because a guard page is inserted at
+// the end of the user-thread stack and the memory allocator scrubs memory after each allocation, both of which are
+// expensive.  The multiprocessor timings are higher than their uniprocessor counterparts because of the extra
+// synchronization code necessary on multiprocessor machines.
+// 
+// uC++ has 5 kinds of objects: class, coroutine, monitor, coroutine/monitor, task.  Class is a regular C++ class, and
+// provides a control measurement because all the other object-kinds are built on top of a class. Coroutine is a class
+// with a stack. Monitor is a class with mutual exclusion. Cormonitor is a coroutine with mutual exclusion. Task is a
+// cormonitor with a thread. There is a line in the benchmark for each kind of object, plus the cost of a context-switch
+// cycle from a thread to itself at the end.
+// 
+// The first two columns show the cost to create an object on the stack and in the heap. The next two columns are the
+// cost of a blocking cycle, which involves two (direct) or four context switches (indirect through runtime-kernel). The
+// last two columns are the cost to call an object member passing in 16 bytes of arguments and returning a 4 byte
+// results.
+
+int main() {
 #if defined( __U_AFFINITY__ )
     // Prevent moving onto cold CPUs during benchmark.
     cpu_set_t mask;
     uThisProcessor().getAffinity( mask );		// get allowable CPU set
-    unsigned int cpu;
-    for ( cpu = 0;; cpu += 1 ) {			// look for first available CPU
-      if ( cpu == CPU_SETSIZE ) uAbort( "could not find available CPU to set affinity" );
+    int cpu;
+    for ( cpu = CPU_SETSIZE;; cpu -= 1 ) {		// look for first available CPU
+      if ( cpu == -1 ) abort( "could not find available CPU to set affinity" );
       if ( CPU_ISSET( cpu, &mask ) ) break;
     } // for
     uThisProcessor().setAffinity( cpu );		// execute benchmark on this CPU
@@ -679,50 +712,45 @@ void uMain::main() {
 	1000000;
 #endif // __U_DEBUG__
 
-    osacquire( cerr ) << "\t\tcreate\tcreate\t16i/4o\t16i/4o\tresume/\tsignal/" << endl;
+    osacquire( cerr ) << "\t\tcreate\tcreate\tresume/\tsignal/\t16i/4o\t16i/4o" << endl;
     osacquire( cerr ) << "(nsecs)";
-    osacquire( cerr ) << "\t\tdelete/\tdelete/\tbytes\tbytes\tsuspend\twait" << endl;
-    osacquire( cerr ) << "\t\tblock\tdynamic\tdirect\taccept\tcycle\tcycle" << endl;
+    osacquire( cerr ) << "\t\tdelete/\tdelete/\tsuspend\twait\tbytes\tbytes" << endl;
+    osacquire( cerr ) << "\t\tstack\theap\t2-cycle\t4-cycle\tcall\taccept" << endl;
 
     osacquire( cerr ) << "class\t";
     BlockClassCreateDelete( NoOfTimes );
     DynamicClassCreateDelete( NoOfTimes );
+    osacquire( cerr ) << "\t N/A\t N/A";
     ClassBidirectional( NoOfTimes );
-    osacquire( cerr ) << "\t N/A\t N/A\t N/A";
-    osacquire( cerr ) << "\t" << endl;
+    osacquire( cerr ) << "\t N/A" << endl;
 
     osacquire( cerr ) << "coroutine";
     BlockCoroutineCreateDelete( NoOfTimes );
     DynamicCoroutineCreateDelete( NoOfTimes );
-    CoroutineBidirectional( NoOfTimes );
-    osacquire( cerr ) << "\t N/A";
     {
 	CoroutineResume resumer( NoOfTimes );
 	resumer.resumer();
     }
     osacquire( cerr ) << "\t N/A";
-    osacquire( cerr ) << "\t" << endl;
+    CoroutineBidirectional( NoOfTimes );
+    osacquire( cerr ) << "\t N/A" << endl;
 
     osacquire( cerr ) << "monitor\t";
     BlockMonitorCreateDelete( NoOfTimes );
     DynamicMonitorCreateDelete( NoOfTimes );
-    MonitorBidirectional( NoOfTimes );
-    {
-	MonitorAcceptor m( NoOfTimes );
-    }
     osacquire( cerr ) << "\t N/A";
     {
 	MonitorSignaller m( NoOfTimes );
     }
-    osacquire( cerr ) << "\t" << endl;
+    MonitorBidirectional( NoOfTimes );
+    {
+	MonitorAcceptor m( NoOfTimes );
+    }
+    osacquire( cerr ) << endl;
 
     osacquire( cerr ) << "cormonitor";
     BlockCoroutineMonitorCreateDelete( NoOfTimes );
     DynamicCoroutineMonitorCreateDelete( NoOfTimes );
-    CoroutineMonitorBidirectional( NoOfTimes );
-    {
-	CoroutineMonitorAcceptor cm( NoOfTimes );
-    }
     {
 	CoroutineMonitorResume resumer( NoOfTimes );
 	resumer.resumer();
@@ -730,27 +758,31 @@ void uMain::main() {
     {
 	CoroutineMonitorSignaller cm( NoOfTimes );
     }
-    osacquire( cerr ) << "\t" << endl;
+    CoroutineMonitorBidirectional( NoOfTimes );
+    {
+	CoroutineMonitorAcceptor cm( NoOfTimes );
+    }
+    osacquire( cerr ) << endl;
 
     osacquire( cerr ) << "task\t";
     BlockTaskCreateDelete( NoOfTimes );
     DynamicTaskCreateDelete( NoOfTimes );
     osacquire( cerr ) << "\t N/A";
     {
-	TaskAcceptor t( NoOfTimes );
+	TaskSignaller t( NoOfTimes );
     }
     osacquire( cerr ) << "\t N/A";
     {
-	TaskSignaller t( NoOfTimes );
+	TaskAcceptor t( NoOfTimes );
     }
-    osacquire( cerr ) << "\t" << endl;
+    osacquire( cerr ) << endl;
 
     osacquire( cerr ) << "cxt sw\t";
     {
 	ContextSwitch dummy( NoOfTimes );		// context switch
     }
     osacquire( cerr ) << "\t" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -O2 -nodebug Bench.cc" //

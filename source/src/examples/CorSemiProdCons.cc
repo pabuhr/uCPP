@@ -83,12 +83,12 @@ _Coroutine Prod {
     } // Prod::start
 }; // Prod
 
-void uMain::main() {
+int main() {
     Cons cons;						// create consumer
     Prod prod( cons );					// create producer
 
     prod.start( 5 );					// start producer
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ CorSemiProdCons.cc" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:44:56 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:13:30 2016
-// Update Count     : 45
+// Last Modified On : Mon Jan 23 13:43:14 2017
+// Update Count     : 46
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ _Task Copier {
 	} // Copier::Copier
 }; // Copier
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
 	switch ( argc ) {
 	  case 2:
 		break;
@@ -63,7 +63,7 @@ void uMain::main() {
 	{
 		Copier c1( input ), c2( input );
 	}
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

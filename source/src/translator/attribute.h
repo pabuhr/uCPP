@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  6 23:26:13 2016
-// Update Count     : 58
+// Last Modified On : Sun Jan 22 18:40:03 2017
+// Update Count     : 65
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -96,9 +96,9 @@ struct attribute_t {
     table_t *focus;					// current focus at time template is found
     table_t *plate;					// template attributes
 
-    token_t *startT;					// start of template
-    token_t *endT;					// end of template
-    token_t *startMRP;					// start of member routine prototype
+    token_t *startT, *endT;				// start/end of template
+    token_t *startRet, *endRet;				// start/end of routine return-type
+    token_t *startParms, *endParms;			// start/end of routine parameter list
     token_t *startCR;					// start of class/routine implementation (not forward)
     token_t *startI;					// start of identifier
     token_t *startE;					// start of entry list type

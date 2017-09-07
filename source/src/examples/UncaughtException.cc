@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:14:42 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:04:37 2016
-// Update Count     : 2
+// Last Modified On : Sat Jan 28 10:05:14 2017
+// Update Count     : 5
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,10 +34,10 @@ _Task T1 {
 	    try {
 		throw 1;
 	    } catch( int ) {
-	    }
-	}
-    }
-};
+	    } // try
+	} // for
+    } // T1::main
+}; // T1
 
 _Task T2 {
     void main() {
@@ -45,13 +45,13 @@ _Task T2 {
 	    _Accept( ~T2 ) break;
 	    assert( ! std::uncaught_exception() );
 	    yield();
-	}
-    }
-};
+	} // for
+    } // T2::main
+}; // T2
 
-void uMain::main() {
+int main() {
     T1 t1;
     T2 t2;
-    uThisTask().uSleep( uDuration( 5 ) );
+    sleep( 5 );
     cout << "Successful completion" << endl;
-}
+} // main

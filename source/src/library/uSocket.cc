@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:06:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 14 13:32:37 2014
-// Update Count     : 1054
+// Last Modified On : Wed Sep  6 09:16:08 2017
+// Update Count     : 1087
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -147,7 +147,7 @@ uSocket::IPConvertFailure::IPConvertFailure( const char *kind, const char *text 
 } // uSocket::IPConvertFailure::IPConvertFailure
 
 void uSocket::IPConvertFailure::defaultTerminate() const {
-    uAbort( "uSocket::IPConvertFailure : %s from %s \"%s\" to ip value.", message(), kind, text );
+    abort( "uSocket::IPConvertFailure : %s from %s \"%s\" to ip value.", message(), kind, text );
 } // uSocket::IPConvertFailure::defaultTerminate
 
 
@@ -156,7 +156,7 @@ uSocket::Failure::Failure( const uSocket &socket, int errno_, const char *const 
 const uSocket &uSocket::Failure::socket() const { return socket_; }
 
 void uSocket::Failure::defaultTerminate() const {
-    uAbort( "(uSocket &)%p, %.256s.", &socket(), message() );
+    abort( "(uSocket &)%p, %.256s.", &socket(), message() );
 } // uSocket::Failure::defaultTerminate
 
 
@@ -164,7 +164,7 @@ uSocket::OpenFailure::OpenFailure( const uSocket &socket, int errno_, const int 
 	uSocket::Failure( socket, errno_, msg ), domain( domain ), type( type ), protocol( protocol ) {}
 
 void uSocket::OpenFailure::defaultTerminate() const {
-    uAbort( "(uSocket &)%p.uSocket( domain:%d, type:%d, protocol:%d ), %.256s.\nError(%d) : %s.",
+    abort( "(uSocket &)%p.uSocket( domain:%d, type:%d, protocol:%d ), %.256s.\nError(%d) : %s.",
 	    &socket(), domain, type, protocol, message(), errNo(), strerror( errNo() ) );
 } // uSocket::OpenFailure::defaultTerminate
 
@@ -172,7 +172,7 @@ void uSocket::OpenFailure::defaultTerminate() const {
 uSocket::CloseFailure::CloseFailure( const uSocket &socket, int errno_, const char *const msg ) : uSocket::Failure( socket, errno_, msg ) {}
 
 void uSocket::CloseFailure::defaultTerminate() const {
-    uAbort( "(uSocket &)%p.~uSocket(), %.256s %d.\nError(%d) : %s.",
+    abort( "(uSocket &)%p.~uSocket(), %.256s %d.\nError(%d) : %s.",
 	    &socket(), message(), socket().access.fd, errNo(), strerror( errNo() ) );
 } // uSocket::CloseFailure::defaultTerminate
 
@@ -407,9 +407,7 @@ ssize_t uSocketIO::sendfile( uFile::FileAccess &file, off_t *off, size_t len, uD
 void uSocketServer::createSocketServer1( const char *name, int type, int protocol, int backlog ) {
     int retcode;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketServer &)%p.createSocketServer1 attempting binding to name:%s\n", this, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketServer &)%p.createSocketServer1 attempting binding to name:%s\n", this, name ); )
 
     if ( strlen( name ) >= sizeof(((sockaddr_un *)saddr)->sun_path) ) {
         openFailure( ENAMETOOLONG, name, 0, uSocket::itoip( 0 ), AF_UNIX, type, protocol, backlog, "socket name too long" );
@@ -440,9 +438,7 @@ void uSocketServer::createSocketServer1( const char *name, int type, int protoco
 
     acceptorCnt = 0;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketServer &)%p.createSocketServer1 binding to name:%s\n", this, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketServer &)%p.createSocketServer1 binding to name:%s\n", this, name ); )
 } // uSockeServer::createSocketServer1
 
 
@@ -451,9 +447,7 @@ void uSocketServer::createSocketServer2( unsigned short port, int type, int prot
 
     baddrlen = saddrlen = sizeof(sockaddr_in);
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketServer &)%p.createSocketServer2 attempting binding to port:%d, ip:0x%08x\n", this, port, ((inetAddr *)saddr)->sin_addr.s_addr );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketServer &)%p.createSocketServer2 attempting binding to port:%d, ip:0x%08x\n", this, port, ((inetAddr *)saddr)->sin_addr.s_addr ); )
 
     for ( ;; ) {
 	retcode = ::bind( socket.access.fd, saddr, saddrlen );
@@ -475,9 +469,7 @@ void uSocketServer::createSocketServer2( unsigned short port, int type, int prot
 
     acceptorCnt = 0;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketServer &)%p.createSocketServer2 binding to port:%d, ip:0x%08x\n", this, port, ((inetAddr *)saddr)->sin_addr.s_addr );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketServer &)%p.createSocketServer2 binding to port:%d, ip:0x%08x\n", this, port, ((inetAddr *)saddr)->sin_addr.s_addr ); )
 } // uSocketServer::createSocketServer2
 
 
@@ -485,9 +477,7 @@ void uSocketServer::createSocketServer3( unsigned short *port, int type, int pro
     createSocketServer2( 0, type, protocol, backlog );	// 0 port number => select an used port
 
     getsockname( saddr, &saddrlen );			// insert unsed port number into address ("bind" does not do it)
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketServer &)%p.createSocketServer3 binding to port:%d\n", this, ntohs( ((sockaddr_in *)saddr)->sin_port ) );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketServer &)%p.createSocketServer3 binding to port:%d\n", this, ntohs( ((sockaddr_in *)saddr)->sin_port ) ); )
     *port = ntohs( ((sockaddr_in *)saddr)->sin_port );
 } // uSocketServer::createSocketServer3
 
@@ -586,9 +576,7 @@ void uSocketAccept::createSocketAcceptor( uDuration *timeout, struct sockaddr *a
 
     baddrlen = saddrlen = socketserver.saddrlen;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketAccept &)%p.uSocketAccept before accept\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketAccept &)%p.uSocketAccept before accept\n", this ); )
 
     acceptClosure.wrapper();
     if ( access.fd == -1 && acceptClosure.errno_ == U_EWOULDBLOCK ) {
@@ -603,9 +591,7 @@ void uSocketAccept::createSocketAcceptor( uDuration *timeout, struct sockaddr *a
 	openFailure( acceptClosure.errno_, timeout, adr, len );
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketAccept &)%p.uSocketAccept after accept fd:%d\n", this, access.fd );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketAccept &)%p.uSocketAccept after accept fd:%d\n", this, access.fd ); )
 
     // On some UNIX systems the file descriptor created by accept inherits the non-blocking characteristic from the base
     // socket; on other system this does not seem to occur, so explicitly set the file descriptor to non-blocking.
@@ -693,9 +679,7 @@ void uSocketAccept::openTimeout( const uDuration *timeout, const struct sockaddr
 
 
 void uSocketAccept::close() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketAccept &)%p.close, enter fd:%d\n", this, access.fd );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketAccept &)%p.close, enter fd:%d\n", this, access.fd ); )
 
   if ( ! openAccept ) return;				// closed?
 
@@ -712,9 +696,7 @@ void uSocketAccept::close() {
 	if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, "unable to close socket acceptor" );
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketAccept &)%p.close, exit fd:%d\n", this, access.fd );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketAccept &)%p.close, exit fd:%d\n", this, access.fd ); )
 } // uSocketAccept::close
 
 
@@ -758,9 +740,7 @@ void uSocketClient::connectionOriented( const char *name, unsigned short port, c
 
 
 void uSocketClient::createSocketClient1( const char *name, uDuration *timeout, int type, int protocol ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketClient &)%p.createSocketClient1 attempting connection to name:%s\n", this, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketClient &)%p.createSocketClient1 attempting connection to name:%s\n", this, name ); )
 
     if ( strlen( name ) >= sizeof(((sockaddr_un *)saddr)->sun_path) ) {
 	openFailure( ENAMETOOLONG, name, 0, uSocket::itoip( 0 ), timeout, AF_UNIX, type, protocol, "socket name too long" );
@@ -776,14 +756,24 @@ void uSocketClient::createSocketClient1( const char *name, uDuration *timeout, i
     } else {
 	int retcode;
 
-	// Create temporary file for the client to communicate through.
-	tmpnm = tempnam( nullptr, "uC++" );
-	if ( strlen( tmpnm ) >= sizeof(((sockaddr_un *)saddr)->sun_path) ) {
-	    openFailure( ENAMETOOLONG, tmpnm, 0, uSocket::itoip( 0 ), timeout, AF_UNIX, type, protocol, "socket temporary name too long" );
-	} // if
+	// Cannot atomically create a temporary pipe. Therefore, atomically create a directory and put the pipe in the
+	// unique directory. 8-(
+
+	// Create temporary directory and pipe for the client to communicate through.
+	#define DIRNAME P_tmpdir "/uC++XXXXXX"
+	#define PIPENAME "/uC++Pipe"
+	#define TMPNAME DIRNAME PIPENAME
+	static_assert( sizeof(TMPNAME) <= sizeof(((sockaddr_un *)saddr)->sun_path), "" ); // verify name fits
+
+	tmpnm = new char[sizeof(TMPNAME)];		// enough storage for full name
+	strcpy( tmpnm, DIRNAME );			// copy in directory name
+	if ( mkdtemp( tmpnm ) == nullptr ) {		// make unique directory
+	    openFailure( errno, tmpnm, 0, uSocket::itoip( 0 ), timeout, AF_UNIX, type, protocol, "mkdtemp failed to create socket temporary directory" );
+	} // 
+	strcpy( tmpnm + sizeof(DIRNAME) - 1, PIPENAME ); // add pipe name to directory name
 
 	((sockaddr_un *)saddr)->sun_family = AF_UNIX;
-	strcpy( ((sockaddr_un *)saddr)->sun_path, tmpnm );
+	strcpy( ((sockaddr_un *)saddr)->sun_path, tmpnm ); // path to pipe
 	saddrlen = SUN_LEN( (sockaddr_un *)saddr );
 
 	for ( ;; ) {
@@ -800,16 +790,12 @@ void uSocketClient::createSocketClient1( const char *name, uDuration *timeout, i
 	baddrlen = sizeof(sockaddr_un);
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketClient &)%p.createSocketClient1 connection to name:%s\n", this, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketClient &)%p.createSocketClient1 connection to name:%s\n", this, name ); )
 } // uSocketClient::createSocketClient1
 
 
 void uSocketClient::createSocketClient2( unsigned short port, const char *name, uDuration *timeout, int type, int protocol ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketClient &)%p.createSocketClient2 attempting connection to port:%d, name:%s\n", this, port, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketClient &)%p.createSocketClient2 attempting connection to port:%d, name:%s\n", this, port, name ); )
 
     baddrlen = saddrlen = sizeof(sockaddr_in);
 
@@ -817,9 +803,7 @@ void uSocketClient::createSocketClient2( unsigned short port, const char *name, 
 	connectionOriented( name, port, AF_INET, timeout, type, protocol );
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uSocketClient &)%p.createSocketClient2 connection to port:%d, name:%s\n", this, port, name );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uSocketClient &)%p.createSocketClient2 connection to port:%d, name:%s\n", this, port, name ); )
 } // uSocketClient::createSocketClient2
 
 
@@ -899,15 +883,23 @@ void uSocketClient::openTimeout( const char *const name, const unsigned short po
 } // uSocketClient::openTimeout
 
 
+void uSocketClient::closeTempFile( const char * msg ) {
+    delete tmpnm;
+    delete saddr;
+    if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, msg );
+} // uSocketClient::closeTempFile
+
+
 uSocketClient::~uSocketClient() {
     if ( saddr->sa_family == AF_UNIX && socket.type == SOCK_DGRAM ) {
-	// Remove temporary file created for communication.
-	int retcode = unlink( tmpnm );
-	delete tmpnm;
-	if ( retcode == -1 ) {
-	    delete saddr;
-	    if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, "unlink failed for temporary pipe" );
+	if ( unlink( tmpnm ) == -1 ) {			// remove temporary communication pipe
+	    closeTempFile( "unlink failed for temporary pipe" );
 	} // if
+	tmpnm[sizeof(DIRNAME) - 1] = '\0';		// remove pipe name => just directory name
+	if ( rmdir( tmpnm ) == -1 ) {			// remove temporary unique directory
+	    closeTempFile( "rmdir failed for temporary pipe" );
+	} // if
+	delete tmpnm;
     } // if
     delete saddr;
 } // uSocketClient::~uSocketClient
@@ -928,7 +920,7 @@ int uSocketServer::Failure::fileDescriptor() const {
 } // uSocketServer::Failure::fileDescriptor
 
 void uSocketServer::Failure::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p, %.256s.\nError(%d) : %s.",
+    abort( "(uSocketServer &)%p, %.256s.\nError(%d) : %s.",
 	    &server(), message(), errNo(), strerror( errNo() ) );
 } // uSocketServer::Failure::defaultTerminate
 
@@ -942,10 +934,10 @@ const char *uSocketServer::OpenFailure::name() const { return name_; }
 
 void uSocketServer::OpenFailure::defaultTerminate() const {
     if ( domain == AF_UNIX ) {
-	uAbort( "(uSocketServer &)%p.uSocketServer( name:\"%s\", cluster:%p, domain:%d, type:%d, protocol:%d, backlog:%d ) : %.256s.\nError(%d) : %s.",
+	abort( "(uSocketServer &)%p.uSocketServer( name:\"%s\", cluster:%p, domain:%d, type:%d, protocol:%d, backlog:%d ) : %.256s.\nError(%d) : %s.",
 		&server(), name(), &uThisCluster(), domain, type, protocol, backlog, message(), errNo(), strerror( errNo() ) );
     } else { // AF_INET
-	uAbort( "(uSocketServer &)%p.uSocketServer( port:%d, ip:0x%08x, cluster:%p, domain:%d, type:%d, protocol:%d, backlog:%d ) : %.256s.\nError(%d) : %s.",
+	abort( "(uSocketServer &)%p.uSocketServer( port:%d, ip:0x%08x, cluster:%p, domain:%d, type:%d, protocol:%d, backlog:%d ) : %.256s.\nError(%d) : %s.",
 		&server(), port, ip.s_addr, &uThisCluster(), domain, type, protocol, backlog, message(), errNo(), strerror( errNo() ) );
     } // if
 } // uSocketServer::OpenFailure::defaultTerminate
@@ -956,7 +948,7 @@ uSocketServer::CloseFailure::CloseFailure( const uSocketServer &server, int errn
 } // uSocketServer::CloseFailure::CloseFailure
 
 void uSocketServer::CloseFailure::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.~uSocketServer(), %.256s, %d acceptor(s) outstanding.",
+    abort( "(uSocketServer &)%p.~uSocketServer(), %.256s, %d acceptor(s) outstanding.",
 	    &server(), message(), acceptorCnt );
 } // uSocketServer::CloseFailure::defaultTerminate
 
@@ -966,7 +958,7 @@ uSocketServer::ReadFailure::ReadFailure( const uSocketServer &sa, int errno_, co
 } // uSocketServer::ReadFailure::ReadFailure
 
 void uSocketServer::ReadFailure::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketServer &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &server(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketServer::ReadFailure::defaultTerminate
 
@@ -976,7 +968,7 @@ uSocketServer::ReadTimeout::ReadTimeout( const uSocketServer &sa, const char *bu
 } // uSocketServer::ReadTimeout::ReadTimeout
 
 void uSocketServer::ReadTimeout::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketServer &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &server(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketServer::ReadTimeout::defaultTerminate
 
@@ -986,7 +978,7 @@ uSocketServer::WriteFailure::WriteFailure( const uSocketServer &sa, int errno_, 
 } // uSocketServer::WriteFailure::WriteFailure
 
 void uSocketServer::WriteFailure::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketServer &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &server(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketServer::WriteFailure::defaultTerminate
 
@@ -996,7 +988,7 @@ uSocketServer::WriteTimeout::WriteTimeout( const uSocketServer &sa, const char *
 } // uSocketServer::WriteTimeout::WriteTimeout
 
 void uSocketServer::WriteTimeout::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketServer &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &server(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketServer::WriteTimeout::defaultTerminate
 
@@ -1006,7 +998,7 @@ uSocketServer::SendfileFailure::SendfileFailure( const uSocketServer &sa, int er
 } // uSocketServer::SendfileFailure::SendfileFailure
 
 void uSocketServer::SendfileFailure::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketServer &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &server(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketServer::SendfileFailure::defaultTerminate
 
@@ -1016,7 +1008,7 @@ uSocketServer::SendfileTimeout::SendfileTimeout( const uSocketServer &sa, const 
 } // uSocketServer::SendfileTimeout::SendfileTimeout
 
 void uSocketServer::SendfileTimeout::defaultTerminate() const {
-    uAbort( "(uSocketServer &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketServer &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
 	    &server(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor() );
 } // uSocketServer::SendfileTimeout::defaultTerminate
 
@@ -1040,7 +1032,7 @@ int uSocketAccept::Failure::fileDescriptor() const {
 } // uSocketAccept::Failure::fileDescriptor
 
 void uSocketAccept::Failure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p( server:%p ), %.256s.", &acceptor(), &server(), message() );
+    abort( "(uSocketAccept &)%p( server:%p ), %.256s.", &acceptor(), &server(), message() );
 } // uSocketAccept::Failure::defaultTerminate
 
 
@@ -1048,7 +1040,7 @@ uSocketAccept::OpenFailure::OpenFailure( const uSocketAccept &acceptor, int errn
 	uSocketAccept::Failure( acceptor, errno_, msg ), timeout( timeout ), adr( adr ), len( len ) {}
 
 void uSocketAccept::OpenFailure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.uSocketAccept( server:%p, timeout:%p, adr:%p, len:%p ), %.256s, error(%d) : %s",
+    abort( "(uSocketAccept &)%p.uSocketAccept( server:%p, timeout:%p, adr:%p, len:%p ), %.256s, error(%d) : %s",
 	    &acceptor(), &server(), timeout, adr, len, message(), errNo(), strerror( errNo() ) );
 } // uSocketAccept::OpenFailure::defaultTerminate
 
@@ -1057,7 +1049,7 @@ uSocketAccept::OpenTimeout::OpenTimeout( const uSocketAccept &acceptor, const cl
 	uSocketAccept::OpenFailure( acceptor, ETIMEDOUT, timeout, adr, len, msg ) {}
 
 void uSocketAccept::OpenTimeout::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.uSocketAccept( server:%p, timeout:%p, adr:%p, len:%p ), %.256s",
+    abort( "(uSocketAccept &)%p.uSocketAccept( server:%p, timeout:%p, adr:%p, len:%p ), %.256s",
 	    &acceptor(), &server(), timeout, adr, len, message() );
 } // uSocketAccept::OpenTimeout::defaultTerminate
 
@@ -1066,7 +1058,7 @@ uSocketAccept::CloseFailure::CloseFailure( const uSocketAccept &acceptor, int er
 	uSocketAccept::Failure( acceptor, errno_, msg ) {}
 
 void uSocketAccept::CloseFailure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.~uSocketAccept(), %.256s.\nError(%d) : %s.",
+    abort( "(uSocketAccept &)%p.~uSocketAccept(), %.256s.\nError(%d) : %s.",
 	    &acceptor(), message(), errNo(), strerror( errNo() ) );
 } // uSocketAccept::CloseFailure::defaultTerminate
 
@@ -1076,7 +1068,7 @@ uSocketAccept::ReadFailure::ReadFailure( const uSocketAccept &sa, int errno_, co
 } // uSocketAccept::ReadFailure::ReadFailure
 
 void uSocketAccept::ReadFailure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketAccept &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &acceptor(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketAccept::ReadFailure::defaultTerminate
 
@@ -1086,7 +1078,7 @@ uSocketAccept::ReadTimeout::ReadTimeout( const uSocketAccept &sa, const char *bu
 } // uSocketAccept::ReadTimeout::ReadTimeout
 
 void uSocketAccept::ReadTimeout::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketAccept &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &acceptor(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketAccept::ReadTimeout::defaultTerminate
 
@@ -1096,7 +1088,7 @@ uSocketAccept::WriteFailure::WriteFailure( const uSocketAccept &sa, int errno_, 
 } // uSocketAccept::WriteFailure::WriteFailure
 
 void uSocketAccept::WriteFailure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketAccept &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &acceptor(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketAccept::WriteFailure::defaultTerminate
 
@@ -1106,7 +1098,7 @@ uSocketAccept::WriteTimeout::WriteTimeout( const uSocketAccept &sa, const char *
 } // uSocketAccept::WriteTimeout::WriteTimeout
 
 void uSocketAccept::WriteTimeout::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketAccept &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &acceptor(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketAccept::WriteTimeout::defaultTerminate
 
@@ -1116,7 +1108,7 @@ uSocketAccept::SendfileFailure::SendfileFailure( const uSocketAccept &sa, int er
 } // uSocketAccept::SendfileFailure::SendfileFailure
 
 void uSocketAccept::SendfileFailure::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketAccept &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &acceptor(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketAccept::SendfileFailure::defaultTerminate
 
@@ -1126,7 +1118,7 @@ uSocketAccept::SendfileTimeout::SendfileTimeout( const uSocketAccept &sa, const 
 } // uSocketAccept::SendfileTimeout::SendfileTimeout
 
 void uSocketAccept::SendfileTimeout::defaultTerminate() const {
-    uAbort( "(uSocketAccept &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketAccept &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
 	    &acceptor(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor() );
 } // uSocketAccept::SendfileTimeout::defaultTerminate
 
@@ -1146,7 +1138,7 @@ int uSocketClient::Failure::fileDescriptor() const {
 } // uSocketClient::Failure::fileDescriptor
 
 void uSocketClient::Failure::defaultTerminate() const {
-	uAbort( "(uSocketClient &)%p, %.256s.",
+	abort( "(uSocketClient &)%p, %.256s.",
 		&client(), message() );
 } // uSocketClient::Failure::defaultTerminate
 
@@ -1160,10 +1152,10 @@ const char *uSocketClient::OpenFailure::name() const { return name_; }
 
 void uSocketClient::OpenFailure::defaultTerminate() const {
     if ( domain == AF_UNIX ) {
-	uAbort( "(uSocketClient &)%p.uSocketClient( name:\"%s\", cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.\nError(%d) : %s.",
+	abort( "(uSocketClient &)%p.uSocketClient( name:\"%s\", cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.\nError(%d) : %s.",
 		&client(), name(), &uThisCluster(), timeout, domain, type, protocol, message(), errNo(), strerror( errNo() ) );
     } else { // AF_INET
-	uAbort( "(uSocketClient &)%p.uSocketClient( port:%d, ip:0x%08x, cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.\nError(%d) : %s.",
+	abort( "(uSocketClient &)%p.uSocketClient( port:%d, ip:0x%08x, cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.\nError(%d) : %s.",
 		&client(), port, ip.s_addr, &uThisCluster(), timeout, domain, type, protocol, message(), errNo(), strerror( errNo() ) );
     } // if
 } // uSocketClient::OpenFailure::defaultTerminate
@@ -1175,10 +1167,10 @@ uSocketClient::OpenTimeout::OpenTimeout( const uSocketClient &client, const char
 
 void uSocketClient::OpenTimeout::defaultTerminate() const {
     if ( domain == AF_UNIX ) {
-	uAbort( "(uSocketClient &)%p.uSocketClient( name:\"%s\", cluster:%p, domain:%d, type:%d, protocol:%d ) : %.256s.",
+	abort( "(uSocketClient &)%p.uSocketClient( name:\"%s\", cluster:%p, domain:%d, type:%d, protocol:%d ) : %.256s.",
 		&client(), name(), &uThisCluster(), domain, type, protocol, message() );
     } else { // AF_INET
-	uAbort( "(uSocketClient &)%p.uSocketClient( port:%d, name:\"%s\", cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.",
+	abort( "(uSocketClient &)%p.uSocketClient( port:%d, name:\"%s\", cluster:%p, timeout:%p, domain:%d, type:%d, protocol:%d ) : %.256s.",
 		&client(), port, name(), &uThisCluster(), timeout, domain, type, protocol, message() );
     } // if
 } // uSocketClient::OpenTimeout::defaultTerminate
@@ -1188,7 +1180,7 @@ uSocketClient::CloseFailure::CloseFailure( const uSocketClient &client, int errn
 	uSocketClient::Failure( client, errno_, msg ) {}
 
 void uSocketClient::CloseFailure::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.~uSocketClient(), %.256s.\nError(%d) : %s.",
+    abort( "(uSocketClient &)%p.~uSocketClient(), %.256s.\nError(%d) : %s.",
 	    &client(), message(), errNo(), strerror( errNo() ) );
 } // uSocketClient::CloseFailure::defaultTerminate
 
@@ -1198,7 +1190,7 @@ uSocketClient::ReadFailure::ReadFailure( const uSocketClient &sa, int errno_, co
 } // uSocketClient::ReadFailure::ReadFailure
 
 void uSocketClient::ReadFailure::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketClient &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &client(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketClient::ReadFailure::defaultTerminate
 
@@ -1208,7 +1200,7 @@ uSocketClient::ReadTimeout::ReadTimeout( const uSocketClient &sa, const char *bu
 } // uSocketClient::ReadTimeout::ReadTimeout
 
 void uSocketClient::ReadTimeout::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketClient &)%p.read/recv/recvfrom( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &client(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketClient::ReadTimeout::defaultTerminate
 
@@ -1218,7 +1210,7 @@ uSocketClient::WriteFailure::WriteFailure( const uSocketClient &sa, int errno_, 
 } // uSocketClient::WriteFailure::WriteFailure
 
 void uSocketClient::WriteFailure::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketClient &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &client(), buf, len, flags, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketClient::WriteFailure::defaultTerminate
 
@@ -1228,7 +1220,7 @@ uSocketClient::WriteTimeout::WriteTimeout( const uSocketClient &sa, const char *
 } // uSocketClient::WriteTimeout::WriteTimeout
 
 void uSocketClient::WriteTimeout::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketClient &)%p.write/send/sendto( buf:%p, len:%d, flags:%d, timeout:%p ) : %.256s for file descriptor %d.",
 	    &client(), buf, len, flags, timeout, message(), fileDescriptor() );
 } // uSocketClient::WriteTimeout::defaultTerminate
 
@@ -1238,7 +1230,7 @@ uSocketClient::SendfileFailure::SendfileFailure( const uSocketClient &sa, int er
 } // uSocketClient::SendfileFailure::SendfileFailure
 
 void uSocketClient::SendfileFailure::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
+    abort( "(uSocketClient &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.\nError(%d) : %s.",
 	    &client(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor(), errNo(), strerror( errNo() ) );
 } // uSocketClient::SendfileFailure::defaultTerminate
 
@@ -1248,7 +1240,7 @@ uSocketClient::SendfileTimeout::SendfileTimeout( const uSocketClient &sa, const 
 } // uSocketClient::SendfileTimeout::SendfileTimeout
 
 void uSocketClient::SendfileTimeout::defaultTerminate() const {
-    uAbort( "(uSocketClient &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
+    abort( "(uSocketClient &)%p.sendfile( in_fd:%d, off:%ld, len:%lu, timeout:%p ) : %.256s for file descriptor %d.",
 	    &client(), in_fd, (long int)off, (unsigned long int)len, timeout, message(), fileDescriptor() );
 } // uSocketClient::SendfileTimeout::defaultTerminate
 

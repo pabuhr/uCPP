@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 11 12:46:07 2015
-// Update Count     : 612
+// Last Modified On : Sat Feb 18 18:48:50 2017
+// Update Count     : 616
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,9 +43,8 @@ using namespace UPP;
 
 
 void uCluster::wakeProcessor( uPid_t pid ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uCluster::wakeProcessor: waking processor %lu\n", (unsigned long)pid );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uCluster::wakeProcessor: waking processor %lu\n", (unsigned long)pid ); )
+
 #ifdef __U_STATISTICS__
     uFetchAdd( UPP::Statistics::wake_processor, 1 );
 #endif // __U_STATISTICS__
@@ -66,7 +65,7 @@ void uCluster::wakeProcessor( uPid_t pid ) {
 #if defined( __freebsd__ )
       if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
     } // if
-    if ( retcode == -1 ) uAbort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
+    if ( retcode == -1 ) abort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
     THREAD_GETMEM( This )->enableInterrupts();
 #endif // __freebsd__
 #else // UNIPROCESSOR
@@ -88,9 +87,7 @@ void uCluster::processorPause() {
 
     if ( ! readyQueueEmpty() || ! uThisProcessor().external.empty() ) {
 	readyIdleTaskLock.release();
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uCluster &)%p.processorPause, found work\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, found work\n", this ); )
     } else {
 	// Block any SIGALRM/SIGUSR1 signals from arriving.
 	sigset_t new_mask, old_mask;
@@ -99,25 +96,22 @@ void uCluster::processorPause() {
 	sigaddset( &new_mask, SIGALRM );
 	sigaddset( &new_mask, SIGUSR1 );
 	if ( sigprocmask( SIG_BLOCK, &new_mask, &old_mask ) == -1 ) {
-	    uAbort( "internal error, sigprocmask" );
+	    abort( "internal error, sigprocmask" );
 	} // if
 
 	if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
 	    readyIdleTaskLock.release();
 
 	    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // restored old signal mask over new one
-		uAbort( "internal error, sigprocmask" );
+		abort( "internal error, sigprocmask" );
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uCluster &)%p.processorPause, found roll forward %d %d %d\n", this, THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( disableIntSpin ) );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, found roll forward %d %d %d\n",
+				  this, THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( disableIntSpin ) ); )
 	} else {
 	    makeProcessorIdle( uThisProcessor() );
 	    readyIdleTaskLock.release();
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uCluster &)%p.processorPause, before sigpause\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, before sigpause\n", this ); )
 
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::kernel_thread_pause, 1 );
@@ -126,12 +120,10 @@ void uCluster::processorPause() {
 	    sigsuspend( &old_mask );			// install old signal mask over new one and wait for signal to arrive
 
 	    if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // new mask restored so install old signal mask over new one
-		uAbort( "internal error, sigprocmask" );
+		abort( "internal error, sigprocmask" );
 	    } // if
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uCluster &)%p.processorPause, after sigpause\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, after sigpause\n", this ); )
 
 	    makeProcessorActive( uThisProcessor() );
 	} // if
@@ -141,9 +133,7 @@ void uCluster::processorPause() {
 	uThisProcessor().setContextSwitchEvent( uThisProcessor().getPreemption() ); // reset processor preemption time
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.processorPause, reset timeslice:%d\n", this, uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, reset timeslice:%d\n", this, uThisProcessor().getPreemption() ); )
 
     // rollForward is called by uProcessorKernel::main explicitly during spinning or implicitly by enableInterrupts on
     // the backside of the next scheduled task.
@@ -160,9 +150,7 @@ void uCluster::makeProcessorIdle( uProcessor &processor ) {
 
 
 void uCluster::makeProcessorActive( uProcessor &processor ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.makeProcessorActive(1)\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeProcessorActive(1)\n", this ); )
     if ( processor.idle() ) {				// processor on idle queue ?
 	readyIdleTaskLock.acquire();
 	if ( processor.idle() ) {			// double check
@@ -175,9 +163,7 @@ void uCluster::makeProcessorActive( uProcessor &processor ) {
 
 
 void uCluster::makeProcessorActive() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.makeProcessorActive(2)\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeProcessorActive(2)\n", this ); )
     readyIdleTaskLock.acquire();
     if ( ! readyQueue->empty() && ! idleProcessors.empty() ) {
 	uPid_t pid = idleProcessors.dropHead()->processor().pid;
@@ -192,11 +178,9 @@ void uCluster::makeProcessorActive() {
 
 void uCluster::makeTaskReady( uBaseTask &readyTask ) {
     readyIdleTaskLock.acquire();
-    if ( &readyTask.bound != nullptr ) {			// task bound to a specific processor ?
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uCluster &)%p.makeTaskReady(1): task %.256s (%p) makes task %.256s (%p) ready\n",
-		  this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask );
-#endif // __U_DEBUG_H__
+    if ( (uProcessor *)(&readyTask.bound) != nullptr ) { // task bound to a specific processor ?
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(1): task %.256s (%p) makes task %.256s (%p) ready\n",
+			  this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask ); )
 	uProcessor *p = &readyTask.bound;		// optimization
 	p->external.addTail( &(readyTask.readyRef) );	// add task to end of special ready queue
 #ifdef __U_MULTI__
@@ -213,10 +197,8 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 	readyIdleTaskLock.release();
 #endif // __U_MULTI__
     } else {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) makes task %.256s (%p) ready\n",
-		   this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) makes task %.256s (%p) ready\n",
+			      this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask ); )
 	readyQueue->add( &(readyTask.readyRef) );	// add task to end of cluster ready queue
 #ifdef __U_MULTI__
 	// Wake up an idle processor if the ready task is migrating to another cluster with idle processors or if the
@@ -242,10 +224,8 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 void uCluster::makeTaskReady( uBaseTaskSeq &newTasks, unsigned int n ) {
     readyIdleTaskLock.acquire();
     // cannot be bound task as all tasks come from RW lock
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) tasks ready\n",
-	       this, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) tasks ready\n",
+			  this, uThisTask().getName(), &uThisTask() ); )
 
     readyQueue->transfer( newTasks, n );		// add task(s) to end of cluster ready queue
 
@@ -301,7 +281,7 @@ uBaseTask &uCluster::readyQueueTryRemove() {
 void uCluster::taskAdd( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
     tasksOnCluster.addTail( &(task.clusterRef) );
-    if ( &task.bound == nullptr ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    if ( (uProcessor *)(&task.bound) == nullptr ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskAdd
 
@@ -309,7 +289,7 @@ void uCluster::taskAdd( uBaseTask &task ) {
 void uCluster::taskRemove( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
     tasksOnCluster.remove( &(task.clusterRef) );
-    if ( &task.bound == nullptr ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    if ( (uProcessor *)(&task.bound) == nullptr ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskRemove
 
@@ -357,7 +337,7 @@ void uCluster::processorPoke() {
 #if defined( __freebsd__ )
 	    if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
 	} // if
-	if ( retcode == -1 ) uAbort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
+	if ( retcode == -1 ) abort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
 	THREAD_GETMEM( This )->enableInterrupts();
 #endif // __freebsd__
     } // if
@@ -367,9 +347,7 @@ void uCluster::processorPoke() {
 
 
 void uCluster::createCluster( unsigned int stackSize, const char *name ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.createCluster\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.createCluster\n", this ); )
 
 #ifdef __U_DEBUG__
 #if __U_LOCALDEBUGGER_H__
@@ -439,9 +417,7 @@ uCluster::uCluster( uBaseSchedule<uBaseTaskDL> &ReadyQueue, const char *name ) :
 
 
 uCluster::~uCluster() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.~uCluster\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.~uCluster\n", this ); )
 
 #ifdef __U_PROFILER__
     if ( uProfiler::uProfiler_deregisterCluster ) {
@@ -461,7 +437,7 @@ uCluster::~uCluster() {
 	} else {
 	    // Must check for processors before tasks because each processor has a processor task, and hence, there is
 	    // always a task on the cluster.
-	    uAbort( "Attempt to delete cluster %.256s (%p) with processor %p still on it.\n"
+	    abort( "Attempt to delete cluster %.256s (%p) with processor %p still on it.\n"
 		    "Possible cause is the processor has not been deleted.",
 		    getName(), this, &(pr->processor()) );
 #endif // __U_DEBUG__
@@ -472,7 +448,7 @@ uCluster::~uCluster() {
     uBaseTaskDL *tr;
     tr = tasksOnCluster.head();
     if ( tr != nullptr ) {
-	uAbort( "Attempt to delete cluster %.256s (%p) with task %.256s (%p) still on it.\n"
+	abort( "Attempt to delete cluster %.256s (%p) with task %.256s (%p) still on it.\n"
 		"Possible cause is the task has not been deleted.",
 		getName(), this, tr->task().getName(), &(tr->task()) );
     } // if
@@ -493,9 +469,7 @@ uCluster::~uCluster() {
 
 
 void uCluster::taskResetPriority( uBaseTask &owner, uBaseTask &calling ) { // TEMPORARY
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.taskResetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.taskResetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster ); )
     readyIdleTaskLock.acquire();
     if ( &uThisCluster() == owner.currCluster ) {
 	if ( readyQueue->checkPriority( owner.readyRef, calling.readyRef ) ) {
@@ -507,9 +481,7 @@ void uCluster::taskResetPriority( uBaseTask &owner, uBaseTask &calling ) { // TE
 
 
 void uCluster::taskSetPriority( uBaseTask &owner, uBaseTask &calling ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCluster &)%p.taskSetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCluster &)%p.taskSetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster ); )
     readyIdleTaskLock.acquire();
     readyQueue->resetPriority( owner.readyRef, calling.readyRef );
     readyIdleTaskLock.release();

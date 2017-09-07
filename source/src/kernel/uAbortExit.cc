@@ -2,13 +2,13 @@
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
-// uAbortExit.cc -- 
+// abortExit.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 12 23:12:38 2016
-// Update Count     : 558
+// Last Modified On : Sat Apr 29 10:24:16 2017
+// Update Count     : 564
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,17 +54,24 @@ void exit( int retcode ) __THROW {			// interpose
 
 
 void abort() __THROW {					// interpose
-    uAbort( nullptr );
+    abort( nullptr );
     // CONTROL NEVER REACHES HERE!
-} // uAbort
+} // abort
 
 
 // Only one processor should call abort and succeed.  Once a processor calls abort, all other processors quietly exit
 // while the aborting processor cleans up the system and possibly dumps core.
 
-void uAbort( const char *fmt, ... ) {
+void uAbort( const char *fmt, ... ) {			// deprecated
+    va_list args;
+    va_start( args, fmt );
+    abort( fmt, args );
+    va_end( args );
+} // uAbort
+
+void abort( const char *fmt, ... ) {
 #if defined( __U_MULTI__ )
-    // uAbort cannot be recursively entered by the same or different processors because all signal handlers return when
+    // abort cannot be recursively entered by the same or different processors because all signal handlers return when
     // the globalAbort flag is true.
     uKernelModule::globalAbortLock->acquire();
     if ( uKernelModule::globalAbort ) {			// not first task to abort ?
@@ -139,7 +146,7 @@ void uAbort( const char *fmt, ... ) {
 
     _exit( EXIT_FAILURE );
     // CONTROL NEVER REACHES HERE!
-} // uAbort
+} // abort
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr  5 08:08:27 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:04:06 2016
-// Update Count     : 80
+// Last Modified On : Mon Jan 23 13:42:13 2017
+// Update Count     : 81
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,7 +44,7 @@ _Task TestTask {
     void main() {
 	if ( priority == 0 ) {				// high priority
 	    for ( unsigned int i = 0; i < Times; i += 1 ) {
-		sleep( 1 );
+		sleep( uDuration( 1 ) );
 		flag = true;
 	    } // for
 	} else {					// low priority
@@ -82,7 +82,7 @@ _Task TestTask {
     } // TestTask::TestTask
 }; // TestTask
 
-void uMain::main() {
+int main() {
     volatile bool flag1 = false, flag2 = false;
     uPriorityScheduleSeq<uBaseTaskSeq, uBaseTaskDL> rq;
     uRealTimeCluster rtCluster( rq );			// create real-time cluster with scheduler
@@ -96,7 +96,7 @@ void uMain::main() {
     delete processor1;
     delete processor2;
     cerr << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ TimeoutPoke.cc" //

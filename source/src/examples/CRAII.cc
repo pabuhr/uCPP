@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 23 21:42:16 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:49:36 2016
-// Update Count     : 52
+// Last Modified On : Sun Jan 22 23:28:35 2017
+// Update Count     : 54
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -117,11 +117,6 @@ _Task Cancelee {
     static unsigned int idno;
     unsigned int id;
     SRAII ol;
-  public:
-    Cancelee() : id( idno ), ol( id ) {
-	if ( id == 0 ) setCancelState( CancelDisabled ); // task 0 never enables cancellation
-	idno += 1;
-    } // Cancelee::Cancelee
     
     void main() {
 	for ( unsigned int i = 0; i < 100000; i+= 1 ) {
@@ -130,6 +125,11 @@ _Task Cancelee {
 	} // for
 	flags[id] = ! flags[id];
     } // Cancelee::main
+  public:
+    Cancelee() : id( idno ), ol( id ) {
+	if ( id == 0 ) setCancelState( CancelDisabled ); // task 0 never enables cancellation
+	idno += 1;
+    } // Cancelee::Cancelee
     
     void rec() {
 	yield();					// check for stack overflow
@@ -151,7 +151,7 @@ _Task Cancelee {
 unsigned int Cancelee::idno = 0;
 
 
-void uMain::main() {
+int main() {
     uProcessor processors[3] __attribute__(( unused ));
     srand( getpid() );
 
@@ -160,12 +160,12 @@ void uMain::main() {
 	C c;
 	c.mem();
     }
-    if ( check != 0 ) uAbort( "not all destructors called" );
+    if ( check != 0 ) abort( "not all destructors called" );
 
     // Task cancellation test
     {
 	Cancelee ca[NoInTest];
-	yield();
+	uBaseTask::yield();
 	ca[0].cancel();					// special check for complete _Disable
         for ( unsigned int i = 1; i < NoInTest; i += 1 ) {
 	    if ( rand() % 2 != 0 ) {
@@ -175,8 +175,8 @@ void uMain::main() {
 	} // for
     }
     for ( unsigned int i = 0; i < NoInTest; i += 1 ) {
-	if ( checkarray[i] != 0 || ! flags[i] ) uAbort( "unsuccessful task cancellation" );
+	if ( checkarray[i] != 0 || ! flags[i] ) abort( "unsuccessful task cancellation" );
     } // for
 
     cout << "successful completion" << endl;
-} // uMain::main
+} // main

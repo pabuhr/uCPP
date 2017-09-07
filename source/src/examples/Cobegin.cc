@@ -39,7 +39,7 @@ void loop( int N ) {
     } // if
 } // loop
 
-void uMain::main() {
+int main() {
 
     // COBEGIN
     
@@ -92,7 +92,7 @@ void uMain::main() {
     auto tf = START( f, 3, 5.2 ); // f( 3, 5.2 )
     std::cout << "m2" << std::endl;			// concurrent
     std::cout << WAIT( tf ) << std::endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -std=c++1y -O2 -nodebug Cobegin.cc" //

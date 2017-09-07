@@ -10,7 +10,7 @@ include ${PACKAGE}/CONFIG
 
 SRCDIR = ${PACKAGE}/src/examples
 
-CXX = ${INSTALLBINDIR}/u++
+CXX = ${INSTALLBINDIR}/${UPP}
 
 ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
     CXXFLAGS += -m${WORDSIZE}
@@ -18,7 +18,7 @@ endif
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
-    CXXFLAGS += -O2 -Wall -Wno-unused-label #
+    CXXFLAGS += -O2 -Wextra #
 else
     CXXFLAGS += -O2 #
 endif
@@ -70,7 +70,7 @@ abortexit :
 		echo "return code is $$? should be 1" ; \
 		sleep 1 ; \
 		$$pscmd | grep a.out ; \
-		echo "************************** 2 uAbort **************************" ; \
+		echo "************************** 2 abort **************************" ; \
 		./a.out 2 ; \
 		echo "return code is $$?" ; \
 		sleep 1 ; \
@@ -90,7 +90,7 @@ abortexit :
 		echo "return code is $$?" ; \
 		sleep 1 ; \
 		$$pscmd | grep a.out ; \
-		echo "************************** 6 Return from uMain::main **************************" ; \
+		echo "************************** 6 Return from main **************************" ; \
 		./a.out 6 ; \
 		echo "return code is $$? should be 6" ; \
 		sleep 1 ; \
@@ -138,7 +138,7 @@ features :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 Futures Executor ; do \
+	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
@@ -164,7 +164,7 @@ actor :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in ActorInherit ActorFib1 ActorFib2 ActorFork ActorFuture ActorHello ActorPingPong ActorRestart ActorRing ActorSieve ; do \
+	for filename in ActorHello ActorFib1 ActorFib2 ActorFork ActorFork2 ActorChameneos ActorInherit ActorFuture ActorPingPong ActorRestart ActorRing ActorSieve ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
@@ -237,7 +237,7 @@ realtime :
 	for filename in PeriodicTaskTest PeriodicTaskTest1 PeriodicTaskTestStatic RealTimePhilosophers RealTimePhilosophers1 RealTimePhilosophersStatic Disinherit Disinherit1 DisinheritStatic Disinherit1Static ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
-			time -p ./a.out ; \
+			/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out ; \
 		done ; \
 	done ; \
 	rm -f ./a.out ;
@@ -251,11 +251,11 @@ multiprocessor :
 	./a.out > uCalibrate.h ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 		${CXX} ${CXXFLAGS} $${ccflags} Sim.cc ; \
-		time -p ./a.out  1 100 500000 ; \
-		time -p ./a.out  2 100 500000 ; \
-		time -p ./a.out  4 100 500000 ; \
-		time -p ./a.out  8 100 500000 ; \
-		time -p ./a.out 16 100 500000 ; \
+		/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out  1 100 500000 ; \
+		/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out  2 100 500000 ; \
+		/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out  4 100 500000 ; \
+		/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out  8 100 500000 ; \
+		/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out 16 100 500000 ; \
 	done ; \
 	rm -f ./a.out ;
 

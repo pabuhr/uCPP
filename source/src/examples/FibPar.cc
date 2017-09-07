@@ -76,7 +76,7 @@ _Task Worker {
     } // Worker::Worker
 }; // Worker
 
-void uMain::main() {
+int main() {
     const int NoOfWorkers = 10;
     fibonacci f1, f2;					// create fibonacci generator
 
@@ -87,7 +87,7 @@ void uMain::main() {
     delete [] workers;
 
     osacquire( cout ) << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ FibPar.cc" //

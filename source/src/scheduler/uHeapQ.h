@@ -65,7 +65,7 @@ class uPriorityQ : public uBasePrioritySeq {
     virtual void remove( uBaseTaskDL *node );
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uPriorityQ::transfer, internal error, unsupported operation" );
+	abort( "uPriorityQ::transfer, internal error, unsupported operation" );
     } // uPriorityQ::transfer
 
     virtual void onAcquire(uBaseTask &uOwner );
@@ -232,7 +232,7 @@ template<typename List, typename Node> class uPriorityScheduleQSeq : public uPri
     } // uPriorityScheduleQSeq::remove
 
     virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
-	uAbort( "uPriorityScheduleQSeq::transfer, internal error, unsupported operation" );
+	abort( "uPriorityScheduleQSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQSeq::transfer
 }; // uPriorityScheduleQSeq
 

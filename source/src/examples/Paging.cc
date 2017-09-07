@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 11 17:03:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:27:25 2016
-// Update Count     : 13
+// Last Modified On : Sat Jan 28 10:04:01 2017
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -225,7 +225,7 @@ _Coroutine Pager {
     } // Pager::faults
 }; // Pager
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     switch ( argc ) {					// deal with input and output file parameters
       case 3:
 	outfile = new ofstream( argv[2] );
@@ -296,7 +296,7 @@ void uMain::main() {
     *outfile << "successful completion" << endl;
     if ( infile != &cin ) delete infile;		// close files
     if ( outfile != &cout ) delete outfile;
-} // uMain::main
+} // main
 			 
 // Local Variables: //
 // compile-command: "u++ Paging.cc" //

@@ -100,11 +100,11 @@ _Task T {
     } // T::main
 }; // T
 
-void uMain::main() {
+int main() {
     CM cm;
     M m( cm );
     C c( m );
     T &t = *new T( c, "T" );
     cm.mem2();
     cout << "Here5" << endl;
-} // uMain::main
+} // main

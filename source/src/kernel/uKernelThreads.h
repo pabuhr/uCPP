@@ -7,8 +7,8 @@
 // Author           : Richard Bilson and Ashif Harji
 // Created On       : Wed Jul 16 16:44:10 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct  6 22:25:23 2016
-// Update Count     : 49
+// Last Modified On : Sun Mar 12 20:44:11 2017
+// Update Count     : 58
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,6 +44,11 @@
 #if defined( __linux__ ) || defined( __freebsd__ )
 
 #if defined( __i386__ )
+
+#define THREAD_GETMEM( member ) uKernelModule::uKernelModuleBoot.member
+#define THREAD_SETMEM( member, value ) uKernelModule::uKernelModuleBoot.member = value;
+
+#if 0
 #include <cstddef>					// size_t
 
 /* Read member of the thread descriptor directly.  */
@@ -101,9 +106,14 @@
 			    "i" (offsetof (uKernelModule::uKernelModuleData,	\
 					   member) + 4));			\
 })
+#endif // 0
 
 #elif defined( __x86_64__ )
 
+#define THREAD_GETMEM( member ) uKernelModule::uKernelModuleBoot.member
+#define THREAD_SETMEM( member, value ) uKernelModule::uKernelModuleBoot.member = value;
+
+#if 0
 /* Read member of the thread descriptor directly.  */
 #define THREAD_GETMEM(member) \
 ({										\
@@ -153,6 +163,7 @@
 			    "i" (offsetof (uKernelModule::uKernelModuleData,	\
 					   member)));				\
 })
+#endif // 0
 
 #elif defined( __ia64__ )
 
@@ -316,6 +327,10 @@
 
 #if defined( __sparc__ )
 
+#define THREAD_GETMEM( member ) uKernelModule::uKernelModuleBoot.member
+#define THREAD_SETMEM( member, value ) uKernelModule::uKernelModuleBoot.member = value;
+
+#if 0
 // This assembler directive is necessary so the assembler knows a global register is in use.
 // http://developers.sun.com/solaris/articles/sparcv9abi.html
 //register unsigned long sparc_tp __asm__( "%g7" );
@@ -392,7 +407,7 @@ __asm__( ".register %g7,#ignore" );
 					   member))				\
 			  : "%g1" );						\
 })
-
+#endif // 0
 
 #else
 

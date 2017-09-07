@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:45:30 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  2 15:40:17 2012
-// Update Count     : 42
+// Last Modified On : Sat Feb 18 21:58:02 2017
+// Update Count     : 48
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,6 @@
 #define __U_BUFFER_SIZE__ 512
 
 namespace std {
-
     template< typename char_t, typename traits >
     class basic_filebuf : public basic_streambuf<char_t, traits> {
 	template<typename streamtype> friend class basic_acquire;
@@ -110,7 +109,7 @@ namespace std {
 	} else if ( mode & (int)ios_base::in ) {
 	    m = O_RDONLY;
 	} else {
-	    uAbort( "IosToUnixMode( %d ) : Invalid I/O mode.", mode );
+	    abort( "IosToUnixMode( %d ) : Invalid I/O mode.", mode );
 	} // if
 
 	if ( (mode & ios_base::trunc) || mode == ios_base::out ) {
@@ -144,7 +143,7 @@ namespace std {
 	} else if ( strcmp( mode, "a+" ) == 0 ) {
 	    m = O_RDWR | O_APPEND | O_CREAT;
 	} else {
-	    uAbort( "char_tarToUnixMode( %s ) : Invalid I/O mode (r,w,r+,a+,w+).", mode );
+	    abort( "char_tarToUnixMode( %s ) : Invalid I/O mode (r,w,r+,a+,w+).", mode );
 	} // if
 
 	return m;
@@ -273,10 +272,8 @@ namespace std {
 	    c = sgetc();				// get the next character from the buffer
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "c:%c = underflow(), rbytes:%d, eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, bufsize:%d\n",
-		   c, rbytes, eback(), gptr(), egptr(), pbase(), pptr(), epptr(), bufsize );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "c:%c = underflow(), rbytes:%d, eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, bufsize:%d\n",
+			      c, rbytes, eback(), gptr(), egptr(), pbase(), pptr(), epptr(), bufsize ); )
 
 	return c;
     } // basic_filebuf<char_t, traits>::underflow
@@ -297,9 +294,7 @@ namespace std {
 	streamsize len = pptr() - pbase(), wbytes;
 	char_type *pos;
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "overflow( %c ), eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, len:%d\n", c, eback(), gptr(), egptr(), pbase(), pptr(), epptr(), pptr() - pbase() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "overflow( %c ), eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, len:%d\n", c, eback(), gptr(), egptr(), pbase(), pptr(), epptr(), pptr() - pbase() ); )
 
 	if ( c != traits::eof() ) {			// character passed ?
 	    *pptr() = c;
@@ -329,9 +324,7 @@ namespace std {
 	} // if
 	setg( bufptr, bufptr, bufptr );			// reset input buffer pointers
 	setp( bufptr, bufptr + bufsize - 1 );		// reset output buffer pointers
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "setbuf(), eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, len:%ld\n", eback(), gptr(), egptr(), pbase(), pptr(), epptr(), (long int)(pptr() - pbase()) );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "setbuf(), eback:%p, gptr:%p, egptr:%p, pbase:%p, pptr:%p, epptr:%p, len:%ld\n", eback(), gptr(), egptr(), pbase(), pptr(), epptr(), (long int)(pptr() - pbase()) ); )
 	return this;
     } // basic_filebuf<char_t, traits>::setbuf
 
@@ -356,9 +349,7 @@ namespace std {
 	    pos = ufileacc->lseek( off, SEEK_END );
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%lld = seekoff( %lld, %d, %d )\n", (long long)pos, (long long)off, dir, which );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%lld = seekoff( %lld, %d, %d )\n", (long long)pos, (long long)off, dir, which ); )
 
 	setg( bufptr, bufptr, bufptr );			// reset input buffer pointers
 	setp( bufptr, bufptr + bufsize - 1 );		// reset output buffer pointers

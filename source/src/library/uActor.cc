@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:41:44 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:32:00 2016
-// Update Count     : 22
+// Last Modified On : Mon Jul 10 15:07:27 2017
+// Update Count     : 31
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,10 +29,11 @@
 #include <uActor.h>
 
 
-uExecutor uActor::executor_( uDefaultActorThreads(), uDefaultActorProcessors() ); // executor for all actors
+uExecutor uActor::executor_( uDefaultActorThreads(), uDefaultActorProcessors(), uDefaultActorOffset(), uDefaultActorSepClus() ); // executor for all actors
 uSemaphore uActor::wait_( 0 );				// uMain::main waits for all actors to be destroyed
 unsigned long int uActor::alive_ = 0;			// number of actor objects in system
-uActor::StopMsg uActor::stopMsg;			// for termination
+uActor::StartMsg uActor::startMsg;			// start actor
+uActor::StopMsg uActor::stopMsg;			// terminate actor
 uActor::UnhandledMsg uActor::unhandledMsg;		// tell error
 
 

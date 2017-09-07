@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov  6 10:40:44 2016
-// Update Count     : 846
+// Last Modified On : Mon Mar 13 07:59:19 2017
+// Update Count     : 850
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,12 +39,15 @@
 #include <sys/types.h>
 #include <ucontext.h>
 
+#if defined( __linux__ )
 #include <execinfo.h>					// backtrace, backtrace_symbols
 #include <cxxabi.h>					// __cxa_demangle
+#endif // __linux__
 
 namespace UPP {
     sigset_t uSigHandlerModule::block_mask;
 
+#if defined( __linux__ )
     static void uBacktrace( int start ) {		// skip first N stack frames
 	enum { Frames = 50 };
 	void * array[Frames];
@@ -98,6 +101,7 @@ namespace UPP {
 
 	free( messages );
     } // uBacktrace
+#endif // __linux__
 
 
     void uSigHandlerModule::signal( int sig, void (*handler)(__U_SIGPARMS__), int flags ) { // name clash with uSignal statement
@@ -163,11 +167,11 @@ namespace UPP {
 	// the result of some action on the part of the user attempting to terminate the application.  It must be caught
 	// here so that all processes in the application may be terminated.
 
-#ifdef __U_DEBUG_H__
-	char buffer[256];
-	uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
-		      uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    char buffer[256];
+	    uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
+			  uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
+	)
 
 #ifdef __U_STATISTICS__
 	if ( Statistics::prtSigterm ) Statistics::print();
@@ -176,10 +180,11 @@ namespace UPP {
 
       if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
 
-	uAbort( "Application interrupted by a termination signal." );
+	abort( "Application interrupted by a termination signal." );
     } // uSigHandlerModule::sigTermHandler
 
 
+#if 0
     static inline
 #if defined( __linux__ )
 
@@ -225,6 +230,7 @@ namespace UPP {
 	#error uC++ : internal error, unsupported architecture
 #endif // operating systems
     } // uSigHandlerModule::getSP
+#endif // 0
 
 
     void uSigHandlerModule::sigAlrmHandler( __U_SIGPARMS__ ) {
@@ -233,11 +239,11 @@ namespace UPP {
 	// to a thread.  This handler attempts to yield the currently executing thread so that another thread may be
 	// scheduled by this processor.
 
-#ifdef __U_DEBUG_H__
-	char buffer[512];
-	uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-			sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    char buffer[512];
+	    uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
+			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+	)
 
 #ifdef __U_STATISTICS__
 	if ( sig == SIGUSR1 ) {
@@ -245,7 +251,7 @@ namespace UPP {
 	} else if ( sig == SIGALRM ) {
 	    uFetchAdd( UPP::Statistics::signal_alarm, 1 );
 	} else {
-	    uAbort( "UNKNOWN ALARM SIGNAL\n" );
+	    abort( "UNKNOWN ALARM SIGNAL\n" );
 	} // if
 #endif // __U_STATISTICS__
 
@@ -265,10 +271,9 @@ namespace UPP {
       if ( THREAD_GETMEM( RFinprogress ) ||		// roll forward in progress ?
 	   THREAD_GETMEM( disableInt ) ||		// inside kernel ?
 	   THREAD_GETMEM( disableIntSpin ) ) {		// spinlock acquired ?
-#ifdef __U_DEBUG_H__
-	    uDebugPrtBuf( buffer, "sigAlrmHandler1, signal:%d\n", sig );
-	    errno = terrno;				// reset errno and continue
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrtBuf( buffer, "sigAlrmHandler1, signal:%d\n", sig ); )
+	    errno = terrno;				// reset errno and continue )
+
 	    THREAD_SETMEM( RFpending, true );		// indicate roll forward is required
 	    return;
 	} // if
@@ -301,17 +306,16 @@ namespace UPP {
 	    } // if
 	    sigaddset( &new_mask, SIGUSR1 );
 	    if ( sigprocmask( SIG_UNBLOCK, &new_mask, nullptr ) == -1 ) {
-		uAbort( "internal error, sigprocmask" );
+		abort( "internal error, sigprocmask" );
 	    } // if
 	} else {
 	    if ( sigprocmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), nullptr ) == -1 ) {
-		uAbort( "internal error, sigprocmask" );
+		abort( "internal error, sigprocmask" );
 	    } // if
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrtBuf( buffer, "sigAlrmHandler2, signal:%d\n", sig );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrtBuf( buffer, "sigAlrmHandler2, signal:%d\n", sig ); )
+
 
 #if __U_LOCALDEBUGGER_H__
 	// The current PC is stored, so that it can be looked up by the local debugger to check if the task was time
@@ -328,7 +332,7 @@ namespace UPP {
 
 	// Block all signals from arriving so values can be safely reset.
 	if ( sigprocmask( SIG_BLOCK, &block_mask, nullptr ) == -1 ) {
-	    uAbort( "internal error, sigprocmask" );
+	    abort( "internal error, sigprocmask" );
 	} // if
 
 #if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
@@ -339,18 +343,21 @@ namespace UPP {
 #   endif
 #endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
-#ifdef __U_DEBUG_H__
-	uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-			sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
+			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+	)
+
 	errno = terrno;					// reset errno and continue
     } // uSigHandlerModule::sigAlrmHandler
 
 
     void uSigHandlerModule::sigSegvBusHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
+#if defined( __linux__ )
 	uBacktrace( 3 );				// skip first N stack frames
-	uAbort( "Attempt to address location %p.\n"
+#endif // __linux__
+	abort( "Attempt to address location %p.\n"
 		"Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
 		sfp->si_addr );
     } // uSigHandlerModule::sigSegvBusHandler
@@ -358,7 +365,7 @@ namespace UPP {
 
     void uSigHandlerModule::sigIllHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-	uAbort( "Attempt to execute code at location %p.\n"
+	abort( "Attempt to execute code at location %p.\n"
 		"Possible cause is stack corruption.",
 		sfp->si_addr );
     } // uSigHandlerModule::sigIllHandler
@@ -376,7 +383,7 @@ namespace UPP {
 	  case FPE_FLTINV: msg = "invalid operation"; break;
 	  default: msg = "unknown";
 	} // switch
-	uAbort( "Floating point error.\n"
+	abort( "Floating point error.\n"
 		"Cause is %s.", msg );
     } // uSigHandlerModule::sigFpeHandler
 
@@ -388,14 +395,13 @@ namespace UPP {
 	// and generates a segment fault, the signal cannot be delivered on the sentinel page.
 	static char stack[SIGSTKSZ] __attribute__(( aligned (16) ));
 	static stack_t ss;
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + SIGSTKSZ );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + SIGSTKSZ ); )
+
 	ss.ss_sp = stack;
 	ss.ss_size = SIGSTKSZ;
 	ss.ss_flags = 0;
 	if ( sigaltstack( &ss, nullptr ) == -1 ) {
-	    uAbort( "uSigHandlerModule::uSigHandlerModule : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
+	    abort( "uSigHandlerModule::uSigHandlerModule : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
 	} // if
 
 	// Associate handlers with the set of signals that this application is interested in.  These handlers are

@@ -94,7 +94,7 @@ int BinarySort::output() {
 	return out;
 } // BinarySort::output
 
-void uMain::main() {
+int main() {
 	const int NoOfValues = 40;
 	BinarySort bs;
 	int value;
@@ -120,7 +120,7 @@ void uMain::main() {
 		cout << value << " ";							// print values
 	} // for
 	cout << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

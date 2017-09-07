@@ -2,13 +2,13 @@
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
-// uHeap.h -- 
+// uHeapLmmm.h -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun May 17 13:25:45 2015
-// Update Count     : 264
+// Last Modified On : Tue Apr 18 20:49:25 2017
+// Update Count     : 343
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,19 +31,28 @@
 
 #define FASTLOOKUP
 
+#define SPINLOCK 0
+#define LOCKFREE 1
+#define BUCKETLOCK SPINLOCK
+#if BUCKETLOCK == LOCKFREE
+#include <uStackLF.h>
+#endif // LOCKFREE
 
-extern "C" void *malloc( size_t size ) __THROW;
-extern "C" void *calloc( size_t noOfElems, size_t elemSize ) __THROW;
-extern "C" void *realloc( void *addr, size_t size ) __THROW;
-extern "C" void *memalign( size_t alignment, size_t size ) __THROW;
-extern "C" void *valloc( size_t size ) __THROW;
-extern "C" void free( void *addr ) __THROW;
-extern "C" size_t malloc_alignment( void *addr ) __THROW;
-extern "C" bool malloc_zero_fill( void *addr ) __THROW;
-extern "C" size_t malloc_usable_size( void *addr ) __THROW;
-extern "C" void malloc_stats() __THROW;
-extern "C" int malloc_stats_fd( int fd ) __THROW;
-extern "C" int mallopt( int param_number, int value ) __THROW;
+
+extern "C" {
+    void *malloc( size_t size ) __THROW;
+    void *calloc( size_t noOfElems, size_t elemSize ) __THROW;
+    void *realloc( void *addr, size_t size ) __THROW;
+    void *memalign( size_t alignment, size_t size ) __THROW;
+    void *valloc( size_t size ) __THROW;
+    void free( void *addr ) __THROW;
+    size_t malloc_alignment( void *addr ) __THROW;
+    bool malloc_zero_fill( void *addr ) __THROW;
+    size_t malloc_usable_size( void *addr ) __THROW;
+    void malloc_stats() __THROW;
+    int malloc_stats_fd( int fd ) __THROW;
+    int mallopt( int param_number, int value ) __THROW;
+} // extern "C"
 
 
 namespace UPP {
@@ -59,62 +68,73 @@ namespace UPP {
 	friend void *::valloc( size_t size ) __THROW;	// access: pageSize
 	friend void ::free( void *addr ) __THROW;	// access: doFree
 	friend int ::mallopt( int param_number, int value ) __THROW; // access: heapManagerInstance, setHeapExpand, setMmapStart
-	friend size_t ::malloc_alignment( void *addr ) __THROW; // access: Header, FreeHeader
 	friend bool ::malloc_zero_fill( void *addr ) __THROW; // access: Storage
-	friend size_t ::malloc_usable_size( void *addr ) __THROW; // access: Header, FreeHeader
+	// paraenthesis required for typedef
+	friend size_t (::malloc_alignment)( void *addr ) __THROW; // access: Header, FreeHeader
+	friend size_t (::malloc_usable_size)( void *addr ) __THROW; // access: Header, FreeHeader
 	friend void ::malloc_stats() __THROW;
 	friend int ::malloc_stats_fd( int fd ) __THROW;
 	friend class uHeapControl;			// access: heapManagerInstance, boot
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 	friend void UPP::Statistics::print();
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 
-	struct FreeHeader;				// forward declaration
+	class Storage;					// forward declaration
+	struct FreeHeader;
 
 	struct Storage {
 	    struct Header {				// header
 		union Kind {
 		    struct RealHeader {
-#if __U_WORDSIZE__ == 32
-#ifdef __U_PROFILER__
-			// Used by uProfiler to find matching allocation data-structure for a deallocation.
-			size_t *profileMallocEntry;
-#define			PROFILEMALLOCENTRY( header ) ( header->kind.real.profileMallocEntry )
-#else
-			uint32_t padding;		// unused
-#endif // __U_PROFILER__
-#endif // __U_WORDSIZE__ == 32
 			union {
-			    FreeHeader *home;		// allocated block points back to home locations
-			    size_t blockSize;		// size for munmap
-			    Storage *next;		// freed block points next freed block of same size
+			    struct {			// 32-bit word => 64-bit header, 64-bit word => 128-bit header
+				#if __U_WORDSIZE__ == 32
+				uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
+				#endif // __U_WORDSIZE__ == 32
+				union {
+				    FreeHeader *home;	// allocated block points back to home locations (must overlay alignment)
+				    size_t blockSize;	// size for munmap (must overlay alignment)
+				    #if BUCKLOCK == SPINLOCK
+				    Storage *next;	// freed block points next freed block of same size
+				    #endif // SPINLOCK
+				};
+			    };
+			    #if BUCKLOCK == LOCKFREE
+			    Stack<Storage>::Link next;	// freed block points next freed block of same size (double-wide)
+			    #endif // LOCKFREE
 			};
 		    } real;
 		    struct FakeHeader {
-			uint32_t offset, alignment;
+			uint32_t offset, alignment;	// low-order bits of home/blockSize used for tricks
 		    } fake;
 		} kind;
-#if __U_WORDSIZE__ == 64 && defined( __U_PROFILER__ )
+		#if defined( __U_PROFILER__ )
 		// Used by uProfiler to find matching allocation data-structure for a deallocation.
 		size_t *profileMallocEntry;
-#define		PROFILEMALLOCENTRY( header ) ( header->profileMallocEntry )
-#endif // __U_WORDSIZE__ == 64 && defined( __U_PROFILER__ )
+		#define PROFILEMALLOCENTRY( header ) ( header->profileMallocEntry )
+		#endif // __U_PROFILER__
 	    } header; // Header
 	    char data[0];				// storage
 	}; // Storage
 
 	struct FreeHeader {
+	    #if BUCKLOCK == SPINLOCK
 	    uSpinLock lock;				// must be first field for alignment
-	    size_t blockSize;				// size of allocations on this list
 	    Storage *freeList;
+	    #elif BUCKLOCK == LOCKFREE
+	    StackLF<Storage> freeList;
+	    #else
+		#error undefined lock type for bucket lock
+	    #endif // SPINLOCK
+	    size_t blockSize;				// size of allocations on this list
 
-	    bool operator<( const FreeHeader &a2 ) const { return blockSize < a2.blockSize; }
+	    bool operator<( const size_t bsize ) const { return blockSize < bsize; }
 	}; // FreeHeader
 
 	enum { NoBucketSizes = 97,			// number of buckets sizes
-#ifdef FASTLOOKUP
-	       LookupSizes = 65536,			// number of fast lookup sizs
-#endif // FASTLOOKUP
+	       #ifdef FASTLOOKUP
+	       LookupSizes = 65536,			// number of fast lookup sizes
+	       #endif // FASTLOOKUP
 	};
 
 	static uHeapManager *heapManagerInstance;	// pointer to heap manager object
@@ -123,15 +143,15 @@ namespace UPP {
 	static size_t mmapStart;			// cross over point for mmap
 	static unsigned int maxBucketsUsed;		// maximum number of buckets in use
 	static unsigned int bucketSizes[NoBucketSizes];	// different bucket sizes
-#ifdef FASTLOOKUP
+	#ifdef FASTLOOKUP
 	static unsigned char lookup[LookupSizes];	// O(1) lookup for small sizes
-#endif // FASTLOOKUP
+	#endif // FASTLOOKUP
 	static int mmapFd;				// fake or actual fd for anonymous file
-#ifdef __U_DEBUG__
+	#ifdef __U_DEBUG__
 	static unsigned long int allocfree;		// running total of allocations minus frees
-#endif // __U_DEBUG__
+	#endif // __U_DEBUG__
 
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 	// Heap statistics
 	static unsigned long long int mmap_storage;
 	static unsigned int mmap_calls;
@@ -153,7 +173,7 @@ namespace UPP {
 	static unsigned int realloc_calls;
 	static int statfd;
 	static void print();
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 
 	// The next variables are statically allocated => zero filled.
 

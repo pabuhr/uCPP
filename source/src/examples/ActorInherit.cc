@@ -50,13 +50,13 @@ _Actor D : public B {
     D( int i ) : B( i ) {}
 }; // D
 
-void uMain::main() {
+int main() {
     B *b = new B;
     D *d = new D;
     *b | uActor::stopMsg;
     *d | uActor::stopMsg;
     uActor::stop();
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -O2 -multi ActorInherit.cc" //

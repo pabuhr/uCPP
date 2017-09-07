@@ -32,7 +32,7 @@ Gene~M. Amdahl.
 Gregory~R. Andrews, Ronald~A. Olsson, Michael Coffin, Irving Elshoff, Kelvin
   Nilsen, Titus Purdin, and Gregg Townsend.
 \newblock An Overview of the {SR} Language and Implementation.
-\newblock {\em ACM Transactions on Programming Languages and Systems},
+\newblock {\em Transactions on Programming Languages and Systems},
   10(1):51--86, January 1988.
 
 \bibitem[BD92]{Buhr92c}
@@ -201,7 +201,7 @@ N.~Gehani and K.~Ramamritham.
 \bibitem[Hal85]{multilisp}
 Robert~H. Halstead, Jr.
 \newblock Multilisp: A Language for Concurrent Symbolic Programming.
-\newblock {\em ACM Transactions on Programming Languages and Systems},
+\newblock {\em Transactions on Programming Languages and Systems},
   7(4):501--538, October 1985.
 
 \bibitem[HBS73]{Hewitt73}

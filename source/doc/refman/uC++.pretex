@@ -7,13 +7,14 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Dec 27 09:00:36 2016
-%% Update Count     : 7252
+%% Last Modified On : Wed Sep  6 16:46:43 2017
+%% Update Count     : 7356
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
 \usepackage{fullpage,times,lgrind,epic,eepic,comment}
 \usepackage[usenames]{color}
+\usepackage{subfig}
 \usepackage{latexsym}				% \Box
 \usepackage{mathptmx}				% better math font with "times"
 \usepackage[dvips]{graphics}
@@ -340,37 +341,7 @@ Approaches taken by distributed shared-memory systems may provide the necessary 
 \label{s:CompileTimeStructureuCProgram}
 
 A \uC program is constructed exactly like a normal \CC program with one exception:
-the main (starting) routine is a member of an initial task called %(uMain%)\index{uMain@%(uMain%)}\index{initial task!uMain@%(uMain%)}, which has the following structure (\VRef{s:Task} details the task construct):
-%[
-_Task uMain {
-  private:
-	int argc;				// number of arguments on the shell command line
-	char **argv;			// pointers to tokens on the shell command line
-	int &uRetCode;			// return value to the shell
-	void main();			// user provides body for this routine
-  public:
-	uMain( int argc, char *argv[] ) : argc(argc), argv(argv) {}
-};
-%]
-\index{uMain@%(uMain%)!argc@%(argc%)}%
-\index{uMain@%(uMain%)!argv@%(argv%)}%
-\index{uMain@%(uMain%)!uRetCode@%(uRetCode%)}%
-A \uC program must define the body for the %(main%)\index{uMain::main@%(uMain::main%)} member routine of this initial task, e.g.:
-%[
-... // normal C++ declarations and routines
-void uMain::main() {		// body for initial task uMain
-	...
-	switch( argc ) {		// use argc from uMain
-	  case 2:
-		no = atoi(argv[1]);	// use argv from uMain
-	...
-	uRetCode = 0;			// use uRetCode from uMain
-}
-%]
-\uC supplies the free routine %(main%)\index{main@%(main%)} to initialize the \uC runtime environment and creates the task %(uMain%), of which routine %(uMain::main%) is a member.
-Member %(uMain::main%) has available, as local variables, the same two arguments that are passed to the free routine %(main%): %(argc%)\index{argc@%(argc%)}, and %(argv%)\index{argv@%(argv%)}.
-To return a value back to the shell, set the variable %(uRetCode%)\index{uRetCode@%(uRetCode%)} and return from %(uMain::main%);
-%(uRetCode%) is initialized to zero.
+the main (starting) routine is called by a \uC task so all \uC task operations are usable in %(main%)\index{main@%(main%)}, e.g., %(uThisTask()%) (see~\VRef{s:TaskInheritedMembers}).
 
 
 \section{\texorpdfstring{\uC Runtime Structure}{uC++ Runtime Structure}}
@@ -409,7 +380,7 @@ When a \uC program begins execution, it creates two clusters: a system cluster a
 The \Index{system cluster} contains a processor that does not execute user tasks.
 Instead, the system cluster handles system-related operations, such as catching errors that occur on the user clusters, printing appropriate error information, and shutting down \uC.
 A \Index{user cluster} is created to contain the user tasks;
-the first task created in the user cluster is %(uMain%), which begins executing the member routine %(uMain::main%).
+a \Index{staring task} is created in the user cluster, called %(main%)\index{main@%(main%)} with type %(uMain%)\index{uMain@%(uMain%)}, which calls routine %(main%)\index{main@%(main%)}.
 Having all tasks execute on the one cluster often maximizes utilization of processors, which minimizes runtime.
 However, because of limitations of the underlying operating system or because of special hardware requirements, it is sometimes necessary to have more than one cluster.
 Partitioning into clusters must be used with care as it has the potential to inhibit parallelism when used indiscriminately.
@@ -597,19 +568,7 @@ is available during preprocessing if the %(-verify%) compilation option is speci
 \index{__U_MULTI__@%(__U_MULTI__%)}\index{preprocessor variables!__U_MULTI__@%(__U_MULTI__%)}
 is available during preprocessing if the %(-multi%) compilation option is specified.
 \end{prefix}
-
 These preprocessor variables allow conditional compilation of programs that must work differently in these situations.
-For example, to allow a normal C/\CC program to be compiled using \uC, the following is necessary:
-%[
-#ifdef __U_CPLUSPLUS__
-void uMain::main() {
-#else
-int main( int argc, char *argv[] ) {
-#endif
-	// body of main routine
-}
-%]
-which conditionally includes the correct definition for %(main%) if the program is compiled using %(u++%). 
 
 
 \section{Labelled Break / Continue}
@@ -766,7 +725,7 @@ The general form of the coroutine type is the following:
 %]
 \index{_Coroutine@%(_Coroutine%)}\index{keyword, additions!_Coroutine@%(_Coroutine%)}%
 \index{_Nomutex@%(_Nomutex%)}\index{keyword, additions!_Nomutex@%(_Nomutex%)}%
-The coroutine type has one distinguished member, named %(main%);
+The coroutine type has one distinguished member, named %(main%)\index{main@%(main%)};
 this distinguished member is called the \newterm{coroutine main}.
 Instead of allowing direct interaction with %(main%), its visibility is normally %(private%) or %(protected%);
 therefore, a coroutine can only be activated indirectly by one of the coroutine's member routines.
@@ -821,7 +780,7 @@ C *cp;					// pointer to a C coroutine
 delete cp; // cp's instance is deallocated
 %]
 When a coroutine is created, the appropriate coroutine constructor and any base-class constructors are executed in the normal order.
-The coroutine's execution-state is created and the starting point (\Index{activation point}) is initialized to the coroutine's %(main%) routine visible by the inheritance scope rules from the coroutine type;
+The coroutine's execution-state is created and the starting point (\Index{activation point}) is initialized to the coroutine's %(main%)\index{main@%(main%)} routine visible by the inheritance scope rules from the coroutine type;
 however, the %(main%) routine does not start execution until the coroutine is activated by one of its member routines, which includes constructors.
 The location of a coroutine's variables---in the coroutine's data area or in member routine %(main%)---depends on whether the variables must be accessed by member routines other than %(main%).
 Once %(main%) is activated, it executes until it activates another coroutine or terminates.
@@ -881,7 +840,7 @@ _Coroutine uBaseCoroutine {
 %[
 	const char *setName( const char *name );	// coroutine info
 	const char *getName() const;
-    enum State { Start, Inactive, Active, Halt };
+	enum State { Start, Inactive, Active, Halt };
 	State getState() const;
 	uBaseCoroutine &starter() const;
 	uBaseCoroutine &resumer() const;
@@ -1041,7 +1000,7 @@ cout << "coroutine:" << &uThisCoroutine() << endl;  // notice the ampersand (&)
 \enlargethispage{15pt}
 Control flow among coroutines is specified by the protected members %(resume%)\index{resume@%(resume%)} and %(suspend%)\index{suspend@%(suspend%)}.
 A call to %(resume%) may appear in any member of the coroutine, but normally it is used only in the public members.
-A call to %(suspend%) may appear in any member of the coroutine, but normally it is used only in the coroutine main or non-public members called directly or indirectly from the coroutine main.
+A call to %(suspend%) may appear in any member of the coroutine, but normally it is used only in the \Index{coroutine main} or non-public members called directly or indirectly from the coroutine main.
 Members %(resume%) and %(suspend%) are composed of two parts.
 The first part inactivates the coroutine that calls the member and the second part reactivates another coroutine;
 the difference is which coroutine is reactivated.
@@ -1056,7 +1015,7 @@ printing %(this%) in the other coroutine's member always prints the \emph{called
 Hence, there is a difference between who is executing and where execution is occurring.
 
 \VRef[Figure]{f:SemiProdCons} shows a semi-coroutine producer and consumer coroutine, and a driver routine.
-Notice the explicit call from %(Prod%)'s %(main%) routine to %(delivery%) and then the return back when %(delivery%) completes.
+Notice the explicit call from %(Prod%)'s %(main%)\index{main@%(main%)} routine to %(delivery%) and then the return back when %(delivery%) completes.
 %(delivery%) always activates its coroutine, which subsequently activates %(delivery%).
 % \VRef[Appendix]{s:CoroutineBinaryInsertionSort} shows a complex binary-insertion sort implemented as a semi-coroutine.
 
@@ -1129,7 +1088,7 @@ _Coroutine Prod {
 	}
 }; // Prod
 
-void uMain::main() {
+int main() {
 	Cons cons;			// create consumer
 	Prod prod(cons);	// create producer
 	prod.start(5);		// start producer
@@ -1231,7 +1190,7 @@ _Coroutine Prod {
 		resume();
 	}
 }; // Prod
-void uMain::main() {
+int main() {
 	Prod prod;
 	Cons cons( prod );
 	prod.start( 5, cons );
@@ -1262,7 +1221,7 @@ A \Index{mutex type} consists of a set of variables and a set of \Index{mutex me
 \Emph{A mutex type has at least one mutex member.}
 Objects instantiated from mutex types have the property that mutex members are executed with mutual exclusion;
 that is, only one task at a time can be executing in the mutex members.
-Similar to an execution state, a mutex object is either \Index{active}\index{monitor!active} or \Index{inactive}\index{monitor!inactive}, depending on whether or not a task is executing a mutex member (versus a task executing the coroutine main).
+Similar to an execution state, a mutex object is either \Index{active}\index{monitor!active} or \Index{inactive}\index{monitor!inactive}, depending on whether or not a task is executing a mutex member (versus a task executing the \Index{coroutine main}).
 Mutual exclusion is enforced by \newterm{locking}\index{mutex-type state!locked} the mutex object when execution of a mutex member begins and \newterm{unlocking}\index{mutex-type state!unlocked} it when the active task voluntarily gives up control of the mutex object by waiting in or exiting from the monitor.
 If another task invokes a mutex member while a mutex object is locked, the task is blocked until the mutex object becomes unlocked.
 \Emph{An active task may call other mutex members either directly from within the mutex type or indirectly by calling another object, which subsequently calls back into the mutex object.}
@@ -1592,8 +1551,8 @@ class uCondition {
   public:
 	void wait();					// wait on condition
 	void wait( uintptr_t info );	// wait on condition with information
-	void signal();					// signal condition
-	void signalBlock();				// signal condition
+	bool signal();					// signal condition
+	bool signalBlock();				// signal condition
 	bool empty() const;
 	uintptr_t front() const;
 
@@ -1668,7 +1627,9 @@ DiskNotIdle.signalBlock();
 the effect is to remove one task from the specified condition variable and make it the active task, and push the signaller onto the \Index{acceptor/signalled stack}\index{stack!acceptor/signalled}.
 The signalled task continues execution and the signaller is scheduled by the internal scheduler when the mutex object is next unlocked.
 This semantics is \emph{like} the %(_Accept%) statement, which always blocks the acceptor.
-For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing.
+For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing, and returns %(false%);
+otherwise, %(true%) is returned indicating a signalled task.
+
 
 \begin{annotation}
 The %(_Accept%), %(wait%), %(signal%) and %(signalBlock%) can be executed by any routine of a mutex type.
@@ -1878,7 +1839,7 @@ Three macros are provided for implicit thread creation and destruction.
 Macro %(COBEGIN%)\index{COBEGIN@%(COBEGIN%)}/%(COEND%)\index{COEND@%(COEND%)} starts $N$ thread, one to execute each nested %(BEGIN%)\index{BEGIN@%(BEGIN%)}/%(END%)\index{END@%(END%)} statement.
 %[
 #include <uCobegin.h>
-void uMain::main() {
+int main() {
 	int i;
 	void p1( int i ) {...}   void p2( int i ) {...}   void p3( int i ) {...}
 	COBEGIN					// thread created for each statement in block
@@ -1910,7 +1871,7 @@ Macros %(START%)\index{START@%(START%)}/%(WAIT%)\index{WAIT@%(WAIT%)}, starts a 
 %[
 #include <uCobegin.h>
 void p( int i ) {...}   int f( int i ) {...}
-void uMain::main() {
+int main() {
 	auto tp = START( p, 5 ); // thread starts in p(5)
 	s1		// continue execution, do not wait for p
 	auto tf = START( f, 8 ); // thread starts in f(8)
@@ -1925,7 +1886,7 @@ void uMain::main() {
 Macro %(COFOR%)\index{COFOR@%(COFOR%)}%(( index, start, end, body )%) starts %(end - start%) threads, and each loop number is identified by %(index%) in the loop body.
 %[
 #include <uCobegin.h>
-void uMain::main() {
+int main() {
 	const int rows = 10, cols = 10;
 	int matrix[rows][cols], subtotals[rows], total = 0;
 	// read matrix
@@ -1962,7 +1923,7 @@ _Task \(\nterminal{task-name}\) {
 };
 %]
 \index{_Task@%(_Task%)}\index{keyword, additions!_Task@%(_Task%)}%
-The task type has one distinguished member, named %(main%), in which the new thread starts execution;
+The task type has one distinguished member, named %(main%)\index{main@%(main%)}, in which the new thread starts execution;
 this distinguished member is called the \newterm{task main}.
 Instead of allowing direct interaction with %(main%), its visibility is normally %(private%) or %(protected%).
 The decision to make the task main %(private%) or %(protected%) depends solely on whether derived classes can reuse the task main or must supply their own.
@@ -2044,6 +2005,10 @@ _Task uBaseTask : public uBaseCoroutine {	// inherits from coroutine base type
 	uBaseTask( uCluster &cluster, void *storage, unsigned int storageSize );
 
 	static void yield( unsigned int times = 1 );
+
+	static void sleep( uDuration duration );
+	static void sleep( uTime time );
+
 	static uCluster &migrate( uCluster &cluster );
 
 	uCluster &getCluster() const;
@@ -2057,6 +2022,7 @@ _Task uBaseTask : public uBaseCoroutine {	// inherits from coroutine base type
 };
 %]
 \index{uBaseTask@%(uBaseTask%)!yield@%(yield%)}%
+\index{uBaseTask@%(uBaseTask%)!sleep@%(sleep%)}%
 \index{uBaseTask@%(uBaseTask%)!migrate@%(migrate%)}%
 \index{uBaseTask@%(uBaseTask%)!getCluster@%(getCluster%)}%
 \index{uBaseTask@%(uBaseTask%)!getCoroutine@%(getCoroutine%)}%
@@ -2125,6 +2091,10 @@ pre-emptive scheduling\index{pre-emptive!scheduling} and/or multiple processors 
 When the %(-yield%)\index{-yield@%(-yield%) option}\index{yield!compilation option}\index{compilation option!-yield@%(-yield%)} option is used, calls to %(yield( rand() % 3 )%) are automatically inserted at the beginning of each member routine.
 \end{annotation}
 
+The member routine %(sleep%)\index{sleep@%(sleep%)} blocks the task for the specified duration or until the specified time.
+%(sleep%) is a static member-routine that always sleeps the calling thread;
+use %(uBaseTask::sleep(...)%) for a call outside of a task type.
+
 The member routine %(migrate%)\index{migrate@%(migrate%)} allows a task to move itself from one cluster to another so that it can access resources dedicated to that cluster's processor(s), e.g.:
 %[
 \(\nterminal{from-cluster-reference}\) = migrate( \(\nterminal{to-cluster-reference}\) )
@@ -2188,7 +2158,7 @@ In general, a library approach involves defining an abstract class, %(Task%), wh
 New task types are created by inheritance from %(Task%), and tasks are instances of these types.
 
 On this approach, thread creation must be arranged so that the task body does not start execution until all of the task's initialization code has finished.
-One approach requires the task body (the code that appears in a \uC task's %(main%)) to be placed at the end of the new class's constructor, with code to start a new thread in %(Task::Task()%).
+One approach requires the task body (the code that appears in a \uC task's %(main%))\index{main@%(main%)} to be placed at the end of the new class's constructor, with code to start a new thread in %(Task::Task()%).
 One thread then continues normally, returning from %(Task::Task()%) to complete execution of the constructors, while the other thread returns directly to the point where the task was declared.
 This forking of control is accomplished in the library approach by having one thread ``diddle'' with the stack\index{stack!diddling} to find the return address of the constructor called at the declaration.
 However, this scheme prevents further inheritance;
@@ -2312,7 +2282,7 @@ _Task Tderived1				: protected cbase {};	// heterogeneous protected inheritance
 _Task Tderived2				: public Mbase {};		// heterogeneous public inheritance
 %]
 For example, a coroutine monitor can inherit from a class, a monitor, or a coroutine because the coroutine monitor has the elementary execution properties of each of these kinds of type:
-The only exception to this rule is between a task and coroutine because the logical use of %(main%) is completely different between these kinds of type.
+The only exception to this rule is between a task and coroutine because the logical use of %(main%)\index{main@%(main%)} is completely different between these kinds of type.
 It seems unlikely that a task could inherit the %(main%) routine from a coroutine and have the coroutine's %(main%) perform any reasonable action with respect to the task's thread and mutex members.
 
 Heterogeneous inheritance is useful for generating concurrent types from existing non-concurrent types, e.g., to define a mutex queue by deriving from a simple queue, or for use with container classes requiring additional link fields.
@@ -2350,7 +2320,7 @@ _Task Tderived				: public Mbase, protected cbase {};
 Some of the reasons for this restriction are technical and some relate to the coding styles of the different kinds of type.
 Multiple inheritance is conceivable for the mutex property, but technically it is difficult to ensure a single root object to manage the mutual exclusion.
 Multiple inheritance of the execution-state property is technically difficult for the same reason, i.e., to ensure a single root object.
-As well, there is the problem of selecting the correct %(main%) to execute on the execution state, e.g., if the most derived class does not specify a %(main%) member, there could be multiple %(main%) members to choose from in the hierarchy.
+As well, there is the problem of selecting the correct %(main%)\index{main@%(main%)} to execute on the execution state, e.g., if the most derived class does not specify a %(main%) member, there could be multiple %(main%) members to choose from in the hierarchy.
 Multiple inheritance of the thread property is technically difficult because only one thread must be started regardless of the complexity of the hierarchy.
 In general, multiple inheritance is not as useful a mechanism as it initially seemed~\cite{Cargill90}.
 
@@ -2544,8 +2514,8 @@ class uCondLock {
 	void wait( uOwnerLock &lock );
 	bool wait( uOwnerLock &lock, uDuration duration );
 	bool wait( uOwnerLock &lock, uTime time );
-	void signal();
-	void broadcast();
+	bool signal();
+	bool broadcast();
 };
 uCondLock x, y, *z;
 z = new uCondLock;
@@ -2567,6 +2537,8 @@ The %(signal%) routine checks if there is a waiting task, and if so, unblocks a 
 waiting tasks are released in FIFO order.
 The %(signal%) routine can be safely called without acquiring any owner lock associated with tasks waiting on the condition.
 The %(broadcast%) routine is the same as the %(signal%) routine, except all waiting tasks are unblocked.
+For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing, and returns %(false%);
+otherwise, %(true%) is returned indicating a signalled task(s).
 
 It is \emph{not} meaningful to read or to assign to a lock variable, or copy a lock variable (e.g., pass it as a value parameter).
 
@@ -2623,8 +2595,8 @@ It can be replaced by subclassing from %(uBarrier%) to provide a specific action
 This capability is often used to reset a computation before releasing the tasks from the barrier to start the next computation.
 The default code for %(last%) is to resume the coroutine main.
 
-The coroutine main is usually replaced by subclassing to supply the code to be executed before and after tasks synchronize.
-The general form for a barrier %(main%) routine is:
+The \Index{coroutine main} is usually replaced by subclassing to supply the code to be executed before and after tasks synchronize.
+The general form for a barrier %(main%)\index{main@%(main%)} routine is:
 %[
 void main() {
 	for ( ;; ) {
@@ -2898,7 +2870,7 @@ All programs use the \Index{fixed-point registers}, while only some use the \Ind
 Because there is a significant execution cost in saving and restoring the floating-point registers, they are not saved automatically.
 If a coroutine or task performs floating-point operations, saving the floating-point registers must become part of the context-switching action for the execution state of that coroutine or task.
 
-To save and restore the float-point registers on a context switch, declare a single instance of the predefined type %(uFloatingPointContext%)\index{uFloatingPointContext@%(uFloatingPointContext%)} in the scope of the floating-point computations, such as the beginning of the coroutine's or task's %(main%) member, e.g.:
+To save and restore the float-point registers on a context switch, declare a single instance of the predefined type %(uFloatingPointContext%)\index{uFloatingPointContext@%(uFloatingPointContext%)} in the scope of the floating-point computations, such as the beginning of the coroutine's or task's %(main%)\index{main@%(main%)} member, e.g.:
 %[
 _Coroutine C {
 	void main() {
@@ -3110,7 +3082,7 @@ As with %(operator()%), if the server returns an exception, that exception is th
 \item[%(cancel%)]
 \begin{sloppypar}
 -- attempts to cancel the asynchronous call associated with the future.
-All clients waiting for the result are unblocked, and an exception of type %(Future_ESM::Cancellation%) is thrown at any client attempting to access the result.
+All clients waiting for the result are unblocked, and an exception of type %(uCancellation%) is thrown at any client attempting to access the result.
 Depending on the server, this operation may also have the effect of preventing the requested computation from starting, or it may interrupt the computation in progress.
 \end{sloppypar}
 \end{prefix}
@@ -3178,7 +3150,6 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 	T operator()();							// access result, possibly having to wait
 	_Nomutex operator T();					// cheap access of result after waiting
 
-	_Event Cancellation {};					// raised if future cancelled
 	_Nomutex bool cancelled();				// future result cancelled ?
 	void cancel();							// cancel future result
 
@@ -3193,7 +3164,6 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 \index{Future_ESM@%(Future_ESM%)!available@%(available%)}%
 \index{Future_ESM@%(Future_ESM%)!operator()()@%(operator()()%)}%
 \index{Future_ESM@%(Future_ESM%)!operator T()@%(operator T()%)}%
-\index{Future_ESM@%(Future_ESM%)!Cancellation@%(Cancellation%)}%
 \index{Future_ESM@%(Future_ESM%)!cancelled@%(cancelled%)}%
 \index{Future_ESM@%(Future_ESM%)!cancel@%(cancel%)}%
 \index{Future_ESM@%(Future_ESM%)!delivery@%(delivery%)}%
@@ -3258,7 +3228,6 @@ template<typename T> class Future_ISM {
 	T operator()();							// access result, possibly having to wait
 	operator T();							// cheap access of result after waiting
 
-	_Event Cancellation {};					// raised if future cancelled
 	bool cancelled();						// future result cancelled ?
 	void cancel();							// cancel future result
 
@@ -3273,7 +3242,6 @@ template<typename T> class Future_ISM {
 \index{Future_ISM@%(Future_ISM%)!available@%(available%)}%
 \index{Future_ISM@%(Future_ISM%)!operator()()@%(operator()()%)}%
 \index{Future_ISM@%(Future_ISM%)!operator T()@%(operator T()%)}%
-\index{Future_ISM@%(Future_ISM%)!Cancellation@%(Cancellation%)}%
 \index{Future_ISM@%(Future_ISM%)!cancelled@%(cancelled%)}%
 \index{Future_ISM@%(Future_ISM%)!cancel@%(cancel%)}%
 \index{Future_ISM@%(Future_ISM%)!equals@%(equals%)}%
@@ -3764,15 +3732,16 @@ Each worker thread has its own work queue and arriving work requests are demulti
 No work sharing or stealing is performed among the work queues.
 %[
 class uExecutor {
-    enum { DefaultWorkers = 16, DefaultProcessors = 4 };
+	enum { DefaultWorkers = 8, DefaultProcessors = 4 };
   public:
-    enum Cluster { Same, Sep };				// use same or separate cluster
-    uExecutor();
-    uExecutor( Cluster clus );
-    uExecutor( unsigned int nworkers, Cluster clus = Same );
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset = -1, Cluster clus = Same );
-    template< typename Func > void send( Func action );
-    template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
+	enum Cluster { Same, Sep };				// use same or separate cluster
+	uExecutor();
+	uExecutor( Cluster clus );
+	uExecutor( unsigned int nworkers, Cluster clus = Same );
+	uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same );
+	uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, Cluster clus = Same );
+	template< typename Func > void send( Func action );
+	template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
 };
 %]
 \index{uExecutor@%(uExecutor%)!send@%(send%)}%
@@ -3786,11 +3755,13 @@ The constructor routines have the following form:
 -- creates an executor containing %(DefaultWorkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \item[%(uExecutor( unsigned int nworkers, Cluster clus = Same )%)]
 -- creates an executor containing %(nworkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset = -1, Cluster clus = Same )%)]
+\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same )%)]
+-- creates an executor containing %(nworkers%) worker threads and queues, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, Cluster clus = Same )%)]
 -- creates an executor containing %(nworkers%) worker threads and queues, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 If %(affOffset%) is positive, the %(nprocessors%) processors are locked (affinity) on the CPUs starting at the specified starting value;
 e.g., for %(nprocessors%) of 4 and %(affOffset%) of 16, the processors are locked on CPUS 16, 17, 18, 19.
-Otherwise, the processors are run on an CPUs selected by the operating system.
+Otherwise, the processors are run on any CPUs selected by the operating system.
 \end{sloppypar}
 \end{prefix}
 
@@ -3827,7 +3798,7 @@ struct Functor2 {										// closure: allows arguments to work
 	Functor2( double val ) : val( val ) {}
 } functor2( 7.3 );
 
-void uMain::main() {
+int main() {
 	enum { NoOfRequests = 10 };
 	uExecutor executor;									// work-pool of threads and processors
 	Future_ISM<int> fi[NoOfRequests];
@@ -3984,7 +3955,8 @@ class uActor {
 
 	// Administration
 	void restart();										// reset actor to initial state
-	static struct StopMsg : public uActor::Message {} stopMsg; // for termination
+    static struct StartMsg : public uActor::Message {} startMsg; // start actor
+    static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
 	static bool stop( uDuration duration = 0 );			// wait for all actors to terminate or timeout
 
 	// Error handling
@@ -4005,6 +3977,7 @@ class uActor {
 \index{uActor@%(uActor%)!tell@%(tell%)}%
 \index{uActor@%(uActor%)!ask@%(ask%)}%
 \index{uActor@%(uActor%)!restart@%(restart%)}%
+\index{uActor@%(uActor%)!startMsg@%(startMsg%)}%
 \index{uActor@%(uActor%)!stopMsg@%(stopMsg%)}%
 \index{uActor@%(uActor%)!StopMsg@%(StopMsg%)}%
 \index{uActor@%(uActor%)!stop@%(stop%)}%
@@ -4070,6 +4043,7 @@ Initially, messages are delivered to member %(receive%) but are redirected to %(
 A similar redirection occurs in member %(receive2%).
 
 The member %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleting and creating a new actor.
+The predefined message %(uActor::startMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StartMsg%)\index{StartMsg@%(StartMsg%)} is the \emph{suggested} way to start an actor.
 The predefined message %(uActor::stopMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StopMsg%)\index{StopMsg@%(StopdMsg%)} is the \emph{suggested} way to stop an actor.
 %(uActor::stop%) is called to wait for all actors in the system to terminate;
 therefore, actors must be created prior to calling %(uActor::stop%) or the program ends immediately.
@@ -4085,7 +4059,7 @@ Allocation receive( Message &msg ) {
 		...
 	// error cases
 	} else Case( \(\BF{\)UnhandledMsg\(}\), msg ) {		// receiver complain
-		uAbort( "sent unknown message to %p", msg.sender );
+		abort( "sent unknown message to %p", msg.sender );
 	} else {											// unknown message
 		*msg.sender | \(\BF{\)uActor::unhandledMsg\(}\);\(}\Tab{56}{\)// sender complain
 	}		
@@ -4111,14 +4085,22 @@ Instead of returning an %(unhandledMsg%) to the sender, it is possible to inform
 One approach is to explicitly deliver an exception (%(MyEvent%)) into the future;
 the other approach is to raise an exception, which is caught by the worker thread executing the actor and the worker thread implicitly duplicates the exception into the %(FutureMessage%).
 
-Finally, there are three routines that control the actor system.
-The following routines control the actor executor by adjusting its thread pool.
+Finally, the following routines control the actor executor by adjusting its thread pool.
 %[
-extern unsigned int uDefaultActorThreads();				// user threads servicing executor thread-pool
-extern unsigned int uDefaultActorProcessors();			// kernel threads servicing executor thread-pool
+extern unsigned int uDefaultActorProcessors();	// kernel threads (processors) servicing executor thread-pool
+extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
+extern int uDefaultActorOffset();				// affinity offset (-1 => no affinity, default)
+extern bool uDefaultActorSepClus();				// create processors on separate cluster
 %]
-These routines set the number of threads and processors created by the actor executor (see \VRef{s:Executors}).
-Currently, the defaults are 8 threads and 3 processors (assuming an existing processor makes 4) and the actor executor runs in the user cluster.
+\index{uDefaultActorProcessors@%(uDefaultActorProcessors%)}%
+\index{uDefaultActorThreads@%(uDefaultActorThreads%)}%
+\index{uDefaultActorOffset@%(uDefaultActorOffset%)}%
+\index{uDefaultActorSepClus@%(uDefaultActorSepClus%)}%
+Routine %(uDefaultActorProcessors%) returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
+Routine %(uDefaultActorThreads%) returns the number of threads per processor on the actor executor.
+Currently, the defaults are 2 processors and 4 threads and the actor executor runs in the user cluster.
+Routine %(uDefaultActorOffset%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
+Routine %(uDefaultActorSepClus%) returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
 
 Actors may inherit from other actors\index{actor!inheritance}:
 %[
@@ -4172,7 +4154,7 @@ _Actor Hello {
 		return Nodelete;								// reuse actor
 	}
 };
-void uMain::main() {
+int main() {
 	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
 	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
 	uActor::stop();										// wait for all actors to end
@@ -4188,7 +4170,7 @@ The %(receive%) routine discriminates the kind of message and then examines the 
 Once in a discrimination clause, the variable %(msg_t%) is used to access the string in the message.
 For a %(StrMsg%), the actor continues to exist by returning %(Nodelete%);
 for a %(StopMsg%), the actor terminates by returning %(Delete%).
-The %(main%) member creates two actors and passes each actor three messages, two string messages and a stop message.
+The %(main%)\index{main@%(main%)} member creates two actors and passes each actor three messages, two string messages and a stop message.
 Then the %(main%) program waits for all actors to end.
 
 \VRef[Figure]{f:FibonacciActor} shows two actors computing Fibonacci numbers, the left actor manages the three states of the Fibonacci algorithm using the flag variable %(state%), and the right actor uses %(become%) to change the receive target for each of the three states.
@@ -4196,15 +4178,11 @@ The actors accept a %(NextMsg%) to compute the next Fibonacci number and a %(Sto
 The %(NextMsg%) contains the sending actor, so the Fibonacci actor returns the new Fibonacci number back to the sender.
 
 \begin{figure}
-\centering
-\LGindent=0pt
-\begin{tabular}{@{}l@{}}
 %[
 struct NextMsg : public uActor::Message {} nextMsg;
 struct FibMsg : public uActor::Message { long long int fib; } fibMsg;
 %]
-\\
-\begin{tabular}{@{}l|l@{}}
+\subfloat[margin=-10pt][explicit state]{
 %[
 _Actor Fib {
 	long long int fn1, fn2;
@@ -4235,8 +4213,21 @@ _Actor Fib {
 		return Nodelete;
 	}
 };
+
+
+
+
+
+
+
+
 %]
-&
+}% subfloat
+\quad
+\vrule
+\quad
+\LGindent=0pt
+\subfloat[implicit state]{
 %[
 _Actor Fib{
 	long long int fn1, fn2;
@@ -4276,9 +4267,8 @@ _Actor Fib{
 	}
 };
 %]
-\end{tabular}
-\end{tabular}
-\caption{Fibonacci Actor: explicit and implicit state}
+}% subfloat
+\caption{Fibonacci Actor}
 \label{f:FibonacciActor}
 \end{figure}
 
@@ -4326,7 +4316,7 @@ _Actor Actor {
 	}
 };
 
-void uMain::main() {
+int main() {
 	enum { Times = 5 };
 	Future_ISM< int > fi[Times];
 	Future_ISM< string > fs[Times];
@@ -5409,8 +5399,8 @@ class uBaseEvent {
 	RaiseKind getRaiseKind();
 	void reraise() const;
 	virtual uBaseEvent *duplicate() const;
-	virtual void defaultTerminate();
-	virtual void defaultResume();
+	virtual void defaultTerminate() const;
+	virtual void defaultResume() const;
 };
 %]
 \index{uBaseEvent@%(uBaseEvent%)!RaiseKind@%(RaiseKind%)}%
@@ -5445,7 +5435,7 @@ The member routine %(duplicate%) returns a copy of the raised exception, which c
 the copy is allocated on the heap, so it is the responsibility of the caller to delete the exception.
 
 The member routine %(defaultTerminate%) is implicitly called if an exception is thrown but not handled;
-the default action is to call %(uAbort%) to terminate the program with the supplied message.
+the default action is to call %(abort%) to terminate the program with the supplied message.
 The member routine %(defaultResume%) is implicitly called if an exception is resumed but not handled;
 the \Index{default action} is to throw the exception, which begins the search for a termination handler from the point of the initial resume.
 In both cases, a user-defined default action may be implemented by overriding the appropriate virtual member.
@@ -5528,10 +5518,10 @@ The faulting execution polls at certain points to check for pending nonlocal-exc
 when nonlocal exceptions are present, the oldest matching exception is propagated (FIFO service) as if it had been raised locally at the point of the poll.
 Nonlocal exceptions among coroutines are possible because each coroutine has its own execution-state (stack).
 For example, in \VRef[Figure]{f:NonlocalPropagation} coroutine %(C%) is started in its constructor so it can enable nonlocal exceptions and suspend after initialization.
-%(uMain%) then raises a nonlocal exception %E%) at coroutine %(c%).
+%(main%)\index{main@%(main%)} then raises a nonlocal exception %E%) at coroutine %(c%).
 Since coroutine control-flow is sequential, the exception type %(E%) is not propagated immediately.
 In fact, the exception can only be propagated the next time coroutine %(c%) becomes active.
-Hence, %(uMain%) must make a call to %(c.mem%) so %(mem%) resumes %(c%), and the pending exception propagates from the %(suspend%) and is caught by the handler for %(E%).
+Hence, %(main%) must make a call to %(c.mem%) so %(mem%) resumes %(c%), and the pending exception propagates from the %(suspend%) and is caught by the handler for %(E%).
 If multiple nonlocal-exceptions are raised at a coroutine, the exceptions are delivered serially but only when the coroutine becomes active.
 Note, \Emph{\Index{nonlocal exception}s\index{exception!nonlocal} are initially turned off for a coroutine}, so handlers can be set up \emph{before} any nonlocal exception can be propagated.
 Propagation of nonlocal exceptions is turned on via the %(_Enable%)\index{_Enable@{%(_Enable%)}} statement (see \VRef{s:EnablingDisablingPropagation}).
@@ -5551,7 +5541,7 @@ _Coroutine C {
 	C() { resume(); }	// prime loop
 	void mem() { resume(); }
 };
-void uMain::main() {
+int main() {
 	C c;
 	_Resume E() _At c;	// exception pending
 	c.mem();			// trigger exception
@@ -5582,7 +5572,7 @@ Upon entry of a %(_Enable%) block, exceptions of the specified types can be prop
 Similarly, upon entry to a %(_Disable%) block, exceptions of the specified types become disabled, even if the exception types were previously enabled.
 Upon exiting a %(_Enable%) or %(_Disable%) block, the propagation of exceptions of the specified types are restored to their state prior to entering the block.
 
-Initially, \Emph{nonlocal propagation is disabled for all exception types in a coroutine or task}, so handlers can be set up before any nonlocal exceptions can be propagated, resulting in the following \uC idiom in a coroutine or task main:
+Initially, \Emph{nonlocal propagation is disabled for all exception types in a coroutine or task}, so handlers can be set up before any nonlocal exceptions can be propagated, resulting in the following \uC idiom in a coroutine or \Index{task main}:
 %[
 void main() {
 	// initialization, nonlocal exceptions disabled
@@ -5606,7 +5596,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item after a task unblocks if it blocked on an %(_Accept%) statement,
 \item after a task unblocks if it blocked when acquiring a %(uLock%),
 \item after a task unblocks if it blocked when trying to perform I/O,
-\item the first time a coroutine/task's %(main%) routine is executed,
+\item the first time a coroutine/task's %(main%)\index{main@%(main%)} routine is executed,
 \item after %(uBaseCoroutine::suspend%)/%(uBaseCoroutine::resume%) return.
 \end{list}
 If this level of polling is insufficient, explicit polling is possible by calling:
@@ -5709,7 +5699,7 @@ _Event E {
 void f() {
 	_Throw E( 3 );
 }
-void uMain::main() {
+int main() {
 	try {
 		f();
 	} catch( E e ) {
@@ -6390,7 +6380,7 @@ Nevertheless, the net complexity is reduced using exceptions compared to other a
 
 Typical use of terminating propagation is for graceful termination of an operation, coroutine, task or program.
 Termination is graceful if it triggers a sequence of cleanup actions in the execution context.
-Examples of abrupt (or non-graceful) termination include the %(uAbort%) routine (%(abort%) in %(C%)) and the %(kill -9%) command in UNIX.
+Examples of abrupt (or non-graceful) termination include the %(abort%) routine (%(abort%) in %(C%)) and the %(kill -9%) command in UNIX.
 Graceful termination is more important in a concurrent environment because one execution can terminate while others continue.
 The terminating operation must be given a chance to release any shared resources it has acquired (the cleanup action) in order to maintain the integrity of the execution environment.
 For example, \Index{deadlock} is potentially a rare condition and a thrown exception can force graceful termination of an operation, consequently leading to the release of some shared resources and breaking of the deadlock.
@@ -6433,6 +6423,8 @@ uBaseEvent
 			uBaseCoroutine::UnhandledException
 		uPthreadable::Failure
 			uPthreadable::CreationFailure
+	uFutureFailure
+		uCancellation
 	uIOFailure
 		uFile::Failure
 			uFile::TerminateFailure
@@ -6479,7 +6471,6 @@ uBaseEvent
 					uSocketClient::WriteTimeout
 				uSocketClient::SendfileFailure
 					uSocketClient::SendfileTimeout
-	uBaseFuture<T>::Cancellation
 %]
 \index{uBaseEvent@%(uBaseEvent%)!uKernelFailure@%(uKernelFailure%)}%
 \index{uKernelFailure@%(uKernelFailure%)!uMutexFailure@%(uMutexFailure%)}%
@@ -6582,7 +6573,9 @@ uBaseEvent
 \index{SendfileFailure@%(SendfileFailure%)}%
 \index{uSocketClient@%(uSocketClient%)!SendfileTimeout@%(SendfileTimeout%)}%
 \index{SendfileTimeout@%(SendfileTimeout%)}%
-\index{uBaseEvent@%(uBaseEvent%)!Cancellation@%(Cancellation%)}%
+\index{uBaseEvent@%(uBaseEvent%)!uFutureFailure@%(uFutureFailure%)}%
+\index{uFutureFailure@%(uFutureFailure%)!uCancellation@%(uCancellation%)}%
+\index{uCancellation@%(uCancellation%)}%
 \caption{\uC Predefined Exception-Type Hierarchy}
 \label{f:uCPredefinedExceptionTypeHierarchy}
 \end{figure}
@@ -6610,7 +6603,7 @@ _Coroutine C {
   public:
 	void mem() { resume(); }
 };
-void uMain::main() {
+int main() {
 	C c;
 	try {
 		c.mem();
@@ -6620,7 +6613,7 @@ void uMain::main() {
 }
 %]
 the call to %(c.mem%) resumes coroutine %(c%), and then inside %(c.main%) an exception is raised that is not handled locally by %(c%).
-When the exception of type %(E%) reaches the top of %(c%)'s stack without finding an appropriate handler, coroutine %(c%) is terminated and the nonlocal exception of type %(uBaseCoroutine::UnhandledException%) is implicitly raised at %(c%)'s last resumer, %(uMain%), rather than %(c%)'s starter.
+When the exception of type %(E%) reaches the top of %(c%)'s stack without finding an appropriate handler, coroutine %(c%) is terminated and the nonlocal exception of type %(uBaseCoroutine::UnhandledException%) is implicitly raised at %(c%)'s last resumer, the \Index{starting-coroutine} %(main%)\index{main@%(main%)} that called routine %(main%)\index{main@%(main%)}, rather than %(c%)'s starter.
 (This action replaces the normal call to %(defaultTerminate%)/%(defaultResume%) (see \VRef{s:ExceptionsInheritedMembers}) because the exception has been caught and transformed.)
 This behaviour reflects the fact that the last resumer is most capable of understanding and reacting to a failure of the operation it just invoked.
 Furthermore, the last resumer (coroutine or task) is guaranteed to be restartable because it became inactive when it did the last resume.
@@ -6633,7 +6626,7 @@ When handling a %(uBaseCoroutine::UnhandledException%), a resumer can trigger th
 For example, in:
 %[
 ... \(\emph{as above}\) ...
-void uMain::main() {
+int main() {
 	C c;
 	try {
 		c.mem();			// first call fails
@@ -6643,7 +6636,7 @@ void uMain::main() {
 }
 %]
 the call to %(c.mem%) indirectly %(_Resume%)s a nonlocal exception of type %(uBaseCoroutine::UnhandledException%), because %(c.main%) does not handle exceptions of type %(E%).
-%(uMain::main%) has no resumption handler for %(uBaseCoroutine::UnhandledException%);
+%(main%)\index{main@%(main%)} has no resumption handler for %(uBaseCoroutine::UnhandledException%);
 hence, its default handler %(_Throw%)s the exception (see \VRef{s:ExceptionsInheritedMembers}), which is caught. 
 The handler triggers a copy of the initial exception of type %(E%), which is raised in exactly the same way as the raise in the resumed coroutine (i.e., matching %(_Throw%) or %(_Resume%)).
 In this way, the resumer coroutine can use all exception matching mechanisms provided by \uC to identify the initial exception.
@@ -6671,11 +6664,26 @@ This capability allows a mutex member to terminate with an exception without inf
 \chapter{Cancellation}
 \label{s:Cancellation}
 
-\newterm[cancellation]{Cancellation} is a mechanism to safely terminate the execution of a coroutine or task.
+\newterm{Cancellation} is a mechanism to safely terminate the execution of a coroutine or task.
 Any coroutine/task may cancel itself or another coroutine/task by calling %(uBaseCoroutine::cancel()%) (see \VRef{s:CoroutineInheritedMembers}).
 \Emph{The deletion of a non-terminated coroutine (see \VPageref{p:AutoUnwindCoroutine}) implicitly forces its cancellation.}
 Cancelling a coroutine/task does not result in immediate cancellation of the object;
 cancellation only begins when the coroutine/task encounters a \newterm{cancellation checkpoint}, such as %(asyncpoll()%)\index{uBaseCoroutine@%(uBaseCoroutine%)!asyncpoll@%(asyncpoll%)} or %(uBaseTask::yield()%)\index{yield@%(yield%)} (see \VPageref{p:ListPollingPoints} for a complete list), which starts the cancellation for the cancelled object.
+The following self-cancellation illustrates the need to explicitly trigger cancellation.
+%[
+_Coroutine C {
+	void main() {
+		\(\BF{\)cancel();\(}\)							// self-cancellation
+		\(\BF{\)asyncpoll();\(}\)						// force cancellation
+		// control does not reach here
+	}
+  public:
+	void mem() {
+		resume();
+		// control returned here after cancellation
+	}
+};
+%]
 Note, all cancellation points are polling points for asynchronous exceptions and vice-versa.
 The more frequently cancellation checkpoints are encountered, the timelier the cancellation starts.
 There is no provision to ``uncancel'' a coroutine/task once it is cancelled.
@@ -6710,7 +6718,7 @@ catch (...) {
 %]
 The resulting program behaviour is undefined, and such constructs must be avoided if cancellation is to be used.
 Again, routine %(uBaseCoroutine::cancelInProgress%) (see \VRef{s:CoroutineInheritedMembers}) can be used to check for this situation, so the throw can be conditional.
-Alternatively, ensuring a coroutine's %(main%) routine terminates prevents implicit cancellation.
+Alternatively, ensuring a coroutine's %(main%)\index{main@%(main%)} routine terminates prevents implicit cancellation.
 
 
 \section{Using Cancellation}
@@ -6718,12 +6726,12 @@ Alternatively, ensuring a coroutine's %(main%) routine terminates prevents impli
 Cancellation is used in situations where the work of a task is not required any more and its resources should be freed.
 \VRef[Figure]{f:CancellationExample} shows a generic example in which a solution space is divided into sub-domains and worker tasks are dispatched to search their respective sub-domain for a suitable solution.
 For this particular problem class, any specific solution is sufficient.
-In the program, after %(uMain%) creates the tasks, it waits for a solution to be found by any of the %(Worker%) tasks.
-If a %(Worker%) task finds a solution, it stores it in the %(Result%) monitor and restarts %(uMain%) (if appropriate).
+In the program, after %(main%)\index{main@%(main%)} creates the tasks, it waits for a solution to be found by any of the %(Worker%) tasks.
+If a %(Worker%) task finds a solution, it stores it in the %(Result%) monitor and restarts %(main%) (if appropriate).
 Since a solution has been found, the other worker solutions are not required and allowing these workers to proceed is a waste of resources.
-Hence, %(uMain%) marks them all for cancellation and uses the result.
-After the result has been processed, %(uMain%) deletes the worker tasks, which allows for execution overlap of result processing with the worker tasks detecting, starting, and finishing cancellation.
-Alternatively, %(uMain%) can delete the workers right away, with the consequence that it may have to wait for the worker tasks to finish cancellation before processing the result.
+Hence, %(main%) marks them all for cancellation and uses the result.
+After the result has been processed, %(main%) deletes the worker tasks, which allows for execution overlap of result processing with the worker tasks detecting, starting, and finishing cancellation.
+Alternatively, %(main%) can delete the workers right away, with the consequence that it may have to wait for the worker tasks to finish cancellation before processing the result.
 
 \begin{figure}
 %[
@@ -6741,7 +6749,7 @@ _Monitor Result {
 	}
 	void finish( int r ) {
 		res = r;								// store result
-		c.signal();								// wake up uMain
+		c.signal();								// wake up task main
 	}
 };
 
@@ -6757,7 +6765,7 @@ _Task Worker {
 	}
 };
 
-void uMain::main () {
+int main() {
 	Worker *w[NumOfWorkers];
 	Result r;
 	for ( int i = 0; i < NumOfWorkers; i += 1 ) {
@@ -6837,39 +6845,6 @@ These static warnings/errors are generated by the \uC translator not by the unde
 These warnings/errors are specific to usage problems with the \uC concurrency extensions.
 The following examples show different situations, the message generated and an explanation of the message.
 While not all warning/error situations are enumerated, the list covers the common one present in most \uC programs.
-
-The following program:
-%[
-_Task T {
-  public:
-	void mem() {}
-  private:
-	void main() {
-	  fini:
-		for ( int i = 0; i < 10; i += 1 ) {
-			_Accept( mem ) {
-				break fini;
-			} _Else;
-		}
-	}
-};
-%]
-generates these warnings when using the %(-Wall%) compiler flag (actually generated by the \CC compiler not \uC):
-\begin{quote}
-\BGfont
-test.cc:17: warning: label `\_U\_C\_fini' defined but not used
-\newline
-test.cc:11: warning: label `\_U\_L000001' defined but not used
-\newline
-test.cc:8: warning: label `fini' defined but not used
-\end{quote}
-These warning messages appear due to the way \uC generates code.
-Labels are generated in a number of places but are not always used depending on what happens later in the code.
-It is too difficult to detect all these cases and remove the labels that are unnecessary.
-All of these kinds of warnings can be suppressed by adding the extra flag:
-%[
--Wall -Wno-unused-label
-%]
 
 The following program:
 %[
@@ -7114,14 +7089,14 @@ To use assertions in a \uC program, include the file:
 \label{s:Termination}
 
 A \uC program can be terminated due to a failure using the UNIX routine %(abort%)\index{abort@%(abort%)}, which stops all thread execution and generates a core file for subsequent debugging (assuming the shell limits allow a core file to written).
-To terminate a program, generate a core file, \emph{and} print an error message, use the \uC free routine %(uAbort%):
+To terminate a program, generate a core file, \emph{and} print an error message, use the \uC free routine %(abort%):
 %[
-void uAbort( char *format = "", ... )
+void abort( const char * format, ... )
 %]
-\index{uAbort@%(uAbort%)}%
+\index{abort@%(abort%)}%
 %(format%) is a string containing text to be printed and %(printf%)\index{printf@%(printf%)} style format codes describing how to print the following variable number of arguments.
 The number of elements in the variable argument list must match with the number of format codes, as for %(printf%).
-In addition to printing the user specified message, which normally describes the error, routine %(uAbort%) prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call.
+In addition to printing the user specified message, which normally describes the error, routine %(abort%) prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call.
 
 A \uC program can be terminated using the UNIX routine %(exit%)\index{exit@%(exit%)}, which stops all thread execution and returns a status code to the invoking shell:
 %[
@@ -7129,17 +7104,6 @@ void exit( int status );
 %]
 Note, when %(exit%) is used to terminate a program, all global destructors are still executed.
 Any tasks, clusters, or processors not deleted by this point \Emph{are not flagged with an error}, unlike normal program termination.
-
-\begin{annotation}
-Because routine %(exit%) eliminates some error checking, it should not be used to end %(uMain::main%) to pass back a return code to the shell, e.g.:
-%[
-void uMain::main() {
-	...
-	exit( EXIT_SUCCESS );
-}
-%]
-Use the variable %(uRetCode%) from %(uMain::main%) instead (see \VRef{s:CompileTimeStructureuCProgram}).
-\end{annotation}
 
 
 \subsection{Messages}
@@ -7163,16 +7127,16 @@ The following program:
 void f() throw() { // throw no exceptions
 	throw 1;
 }
-void uMain::main() {
+int main() {
 	f();
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:20242) Exception propagated through a function whose exception-specification does not permit exceptions of that type.
-Type of last active exception: int
-Error occurred while executing task uMain (0xffbef828).
+uC++ Runtime error (UNIX pid:14720) Exception propagated through a function whose exception-specification does not permit exceptions of that type.
+Type of last active termination: int
+Error occurred while executing task main (0x7ffeae2bace0).
 \end{quote}
 because routine %(f%) defines it raises no exceptions and then an exception is raised from within it.
 
@@ -7185,7 +7149,7 @@ _Coroutine C {
   public:
 	void mem() { resume(); }
 };
-void uMain::main() {
+int main() {
 	C c;
 	c.mem();				// first call fails
 }
@@ -7193,11 +7157,11 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23979) (uBaseCoroutine \&)0xffbef008 : Unhandled exception in coroutine uMain raised non-locally from resumed coroutine C (0x82970), which was terminated due to an unhandled exception of type E.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:11770) (uBaseCoroutine \&)0x7ffdc489c080 : Unhandled exception in coroutine main raised non-locally from resumed coroutine C (0x1034fb0), which was terminated due to an unhandled thrown exception of type E.
+Error occurred while executing task main (0x7ffdc489c080).
 \end{quote}
 because the call to %(c.mem%) resumes coroutine %(c%) and then coroutine %(c%) throws an exception it does not handle.
-As a result, when the top of %(c%)'s stack is reached, an exception of type %(uBaseCoroutine::UnhandledException%)\index{UnhandledException@%(UnhandledException%)} is raised at %(uMain%), since it last resumed %(c%).
+As a result, when the top of %(c%)'s stack is reached, an exception of type %(uBaseCoroutine::UnhandledException%)\index{UnhandledException@%(UnhandledException%)} is raised at the \Index{starting-task} %(main%)\index{main@%(main%)}, since it last resumed %(c%).
 A more complex version of this situation occurs when there is a resume chain and no coroutine along the chain handles the exception.
 The following program:
 %[
@@ -7216,7 +7180,7 @@ _Coroutine C1 {
   public:
 	void mem() { resume(); }
 };
-void uMain::main() {
+int main() {
 	C1 c1;
 	c1.mem();				// first call fails
 }
@@ -7224,41 +7188,40 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24080) (uBaseCoroutine \&)0xffbef008 : Unhandled exception in coroutine uMain raised non-locally from coroutine C1 (0x82ec0), which was terminated due to a series of unhandled exceptions -- originally an unhandled exception of type E inside coroutine C2 (0x8acc0).
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:24224) (uBaseCoroutine \&)0x7fffef980760 : Unhandled exception in coroutine main raised non-locally from coroutine C1 (0x27affb0), which was terminated due to a series of unhandled exceptions -- originally an unhandled thrown exception of type E inside coroutine C2 (0x27f0810).
+Error occurred while executing task main (0x7fffef980760).
 \end{quote}
 because the call to %(c1.mem%) resumes coroutine %(c1%), which creates coroutine %(c2%) and call to %(c2.mem%) to resume it, and then coroutine %(c2%) throws an exception it does not handle.
-As a result, when the top of %(c2%)'s stack is reached, an exception of type %(uBaseCoroutine::UnhandledException%)\index{UnhandledException@%(UnhandledException%)} is raised at %(uMain%), since it last resumed %(c%).
+As a result, when the top of %(c2%)'s stack is reached, an exception of type %(uBaseCoroutine::UnhandledException%)\index{UnhandledException@%(UnhandledException%)} is raised at the \Index{starting-task} %(main%)\index{main@%(main%)}, since it last resumed %(c%).
 
 The following program:
 %[
-void uMain::main() {
+int main() {
 	throw 1;
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:13901) Propagation failed to find a matching handler.
+uC++ Runtime error (UNIX pid:6819) Propagation failed to find a matching handler.
 Possible cause is a missing try block with appropriate catch clause for specified or derived exception type,
 or throwing an exception from within a destructor while propagating an exception.
-Type of last active exception: int
-Error occurred while executing task uMain (0xffbef000).
+Type of last active termination: int
+Error occurred while executing task main (0x7ffdabdb98d0).
 \end{quote}
-because no %(try%) statement with an appropriate %(catch%) clause is in effect for task %(uMain%) so propagation fails to locate a matching handler.
+because no %(try%) statement with an appropriate %(catch%) clause is in effect for the \Index{starting-task} %(main%)\index{main@%(main%)} so propagation fails to locate a matching handler.
 
 The following program:
 %[
-void uMain::main() {
+int main() {
 	throw;		// rethrow
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:13291) Attempt to rethrow/reresume but no active exception.
-Possible cause is a rethrow/reresume not directly or indirectly performed from a catch clause.
-Error occurred while executing task uMain (0xffbef000).
+uC++ Runtime error (UNIX pid:21148) terminate called without an active exception
+Error occurred while executing task main (0x7fff819a0720).
 \end{quote}
 because a rethrow must occur in a context with an active (already raised) exception so that exception can be raised again.
 
@@ -7268,7 +7231,7 @@ _Monitor M {
   public:
 	void mem() {}
 };
-void uMain::main() {
+int main() {
 	M *m = new M;
 	delete m;				// delete storage
 	m->mem();				// make call to mutex member
@@ -7277,11 +7240,11 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:4258) (uSerial \&)0x670c00 : Entry failure while executing mutex destructor: mutex object has been destroyed.
-Error occurred while executing task uMain (0xffbef000).
+uC++ Runtime error (UNIX pid:12109) (uSerial \&)0x1fa9af8 : Entry failure while executing mutex destructor: mutex object has been destroyed.
+Error occurred while executing task main (0x7ffd36532540).
 \end{quote}
-because task %(uMain%) deletes the monitor %(m%) and then calls the member routine %(mem%) through the deleted pointer.
-As a result, task %(uMain%) finds the mutex object has been destroyed.
+because the %(main%)\index{main@%(main%)} routine deletes the monitor %(m%) and then calls the member routine %(mem%) through the deleted pointer.
+As a result, the \Index{starting-task} %(main%)\index{main@%(main%)} finds the mutex object has been destroyed.
 
 The following program:
 %[
@@ -7293,7 +7256,7 @@ _Task T1 {
 	void main() {
 		_Accept( mem );		// let T2 in so it can wait
 		w.signal();			// put T2 on acceptor/signalled stack
-		_Accept( ~T1 );		// uMain is calling the destructor
+		_Accept( ~T1 );		// main routine is calling the destructor
 	}
 };
 %]
@@ -7306,7 +7269,7 @@ _Task T2 {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T1 *t1 = new T1;
 	T2 *t2 = new T2( *t1 );
 	delete t1;				// delete in same order as creation
@@ -7316,11 +7279,11 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23337) (uSerial \&)0x84470 : Entry failure while executing mutex destructor: task uMain (0xffbef008) found blocked on acceptor/signalled stack.
-Error occurred while executing task T2 (0x8d550).
+uC++ Runtime error (UNIX pid:3678) (uSerial \&)0x2631cf8 : Entry failure while executing mutex destructor: task main (0x7ffcba9bd0e0) found blocked on acceptor/signalled stack.
+Error occurred while executing task T2 (0x2671e08).
 \end{quote}
 because task %(t2%) is allowed to wait on condition variable %(w%) in %(t1.mem%), and then task %(t1%) signals condition %(w%), which moves task %(t2%) to the acceptor/signalled stack, and accepts its destructor.
-As a result, when task %(uMain%) attempts to delete task %(t1%), it finds task %(t2%) still blocked on the acceptor/signalled stack.
+As a result, when the \Index{starting-task} %(main%)\index{main@%(main%)} attempts to delete task %(t1%), it finds task %(t2%) still blocked on the acceptor/signalled stack.
 Similarly, the following program:
 %[
 _Task T1 {
@@ -7340,7 +7303,7 @@ _Task T2 {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T1 *t1 = new T1;
 	T2 *t2 = new T2( *t1 );
 	delete t1;
@@ -7350,11 +7313,11 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23425) (uSerial \&)0x84230 : Entry failure while executing mutex destructor: task uMain (0xffbef008) found blocked on entry queue.
-Error occurred while executing task T2 (0x8d310).
+uC++ Runtime error (UNIX pid:15587) (uSerial \&)0x2595cf8 : Entry failure while executing mutex destructor: task main (0x7ffcbbd644e0) found blocked on entry queue.
+Error occurred while executing task T2 (0x25d5e08).
 \end{quote}
 because task %(t2%) happens to block on the call to %(t1.mem%), and then task %(t1%) accepts its destructor.
-As a result, when task %(uMain%) attempts to delete task %(t1%), it finds task %(t2%) still blocked on the entry queue of %(t1%).
+As a result, when the \Index{starting-task} %(main%)\index{main@%(main%)} attempts to delete task %(t1%), it finds task %(t2%) still blocked on the entry queue of %(t1%).
 
 The following program:
 %[
@@ -7375,7 +7338,7 @@ _Task T {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T t( uThisTask() );
 	try {
 		t.mem();
@@ -7386,11 +7349,11 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23512) (uSerial \&)0x83120 : Rendezvous failure in accepted call from task uMain (0xffbef008) to mutex member of task T (0x82ff0).
-Error occurred while executing task T (0x82ff0).
+uC++ Runtime error (UNIX pid:27411) (uSerial \&)0x22cbff0 : Rendezvous failure in accepted call from task main (0x7ffdac373900) to mutex member of task T (0x22cbd80).
+Error occurred while executing task T (0x22cbd80).
 \end{quote}
-because in the call to %(t.mem%) from task %(uMain%), the rendezvous terminates abnormally by raising an exception of type %(E%).
-As a result, %(uMain%) implicitly resumes an exception of type %(uMutexFailure::RendezvousFailure%)\index{uSerial@%(uSerial%)!RendezvousFailure@%(RendezvousFailure%)}\index{RendezvousFailure@%(RendezvousFailure%)} concurrently at task %(t%) so it knows the call did not complete and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
+because in the call to %(t.mem%) from the %(main%)\index{main@%(main%)} routine, the rendezvous terminates abnormally by raising an exception of type %(E%).
+As a result, the \Index{starting-task} %(main%)\index{main@%(main%)} implicitly resumes an exception of type %(uMutexFailure::RendezvousFailure%)\index{uSerial@%(uSerial%)!RendezvousFailure@%(RendezvousFailure%)}\index{RendezvousFailure@%(RendezvousFailure%)} concurrently at task %(t%) so it knows the call did not complete and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
 If the call %(uRendezvousAcceptor()%) is uncommented, an exception of type %(uMutexFailure::RendezvousFailure%) is not resumed at task %(t%), and task %(t%) restarts as if the rendezvous completed.
 A more complex version of this situation occurs when a blocked call is aborted, i.e., before the call even begins.
 The following program:
@@ -7410,7 +7373,7 @@ _Task T {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T t( uThisTask() );
 	try {
 		_Enable {
@@ -7423,12 +7386,12 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23656) (uSerial \&)0x83260 : Rendezvous failure in accepted call from task uMain (0xffbef008) to mutex member of task T (0x83130).
-Error occurred while executing task T (0x83130).
+uC++ Runtime error (UNIX pid:8347) (uSerial \&)0xa6bff0 : Rendezvous failure in accepted call from task main (0x7ffc27a57790) to mutex member of task T (0xa6bd80).
+Error occurred while executing task T (0xa6bd80).
 \end{quote}
-because the blocked call to %(t.mem%) from task %(uMain%) is interrupted by the \Index{concurrent exception}\index{exception!concurrent} of type %(E%).
-When the blocked call from %(uMain%) is accepted, %(uMain%) immediately detects the concurrent exception and does not start the call.
-As a result, %(uMain%) implicitly resumes an exception of type %(uMutexFailure::RendezvousFailure%)\index{uSerial@%(uSerial%)!RendezvousFailure@%(RendezvousFailure%)}\index{RendezvousFailure@%(RendezvousFailure%)} concurrently at task %(t%) so it knows the call did not occur and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
+because the blocked call to %(t.mem%) from the %(main%)\index{main@%(main%)} routine is interrupted by the \Index{concurrent exception}\index{exception!concurrent} of type %(E%).
+When the blocked call from the \Index{starting-task} %(main%)\index{main@%(main%)} is accepted, the starting-task %(main%) immediately detects the concurrent exception and does not start the call.
+As a result, the starting-task %(main%) implicitly resumes an exception of type %(uMutexFailure::RendezvousFailure%)\index{uSerial@%(uSerial%)!RendezvousFailure@%(RendezvousFailure%)}\index{RendezvousFailure@%(RendezvousFailure%)} concurrently at task %(t%) so it knows the call did not occur and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
 
 The following program:
 %[
@@ -7449,7 +7412,7 @@ _Task T2 {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T1 *t1 = new T1;
 	T2 *t2 = new T2( *t1 );
 	delete t1;
@@ -7459,18 +7422,18 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23856) (uCondition \&)0x84410 : Waiting failure as task uMain (0xffbef008) found blocked task T2 (0x8d470) on condition variable during deletion.
-Error occurred while executing task T2 (0x8d470).
+uC++ Runtime error (UNIX pid:18211) (uCondition \&)0x2742da8 : Waiting failure as task main (0x7ffc1067f990) found blocked task T2 (0x2782e08) on condition variable during deletion.
+Error occurred while executing task T2 (0x2782e08).
 \end{quote}
-because the call to %(t1.mem%) blocks task %(t2%) on condition queue %(w%) and then task %(t1%) implicitly accepts its destructor when its %(main%) terminates.
-As a result, when task %(uMain%) attempts to delete task %(t1%), it finds task %(t2%) still blocked on the condition queue.
+because the call to %(t1.mem%) blocks task %(t2%) on condition queue %(w%) and then task %(t1%) implicitly accepts its destructor when its %(main%)\index{main@%(main%)} terminates.
+As a result, when the \Index{starting-task} %(main%)\index{main@%(main%)} attempts to delete task %(t1%), it finds task %(t2%) still blocked on the condition queue.
 
 
 \subsubsection{Coroutine}
 \index{errors!coroutine}
 
 Neither resuming to nor suspending from a terminated coroutines is allowed;
-a coroutine is terminated when its %(main%) routine returns.
+a coroutine is terminated when its %(main%)\index{main@%(main%)} routine returns.
 The following program:
 %[
 _Coroutine C {
@@ -7478,7 +7441,7 @@ _Coroutine C {
   public:
 	void mem() { resume(); }
 };
-void uMain::main() {
+int main() {
 	C c;
 	c.mem();				// first  call works
 	c.mem();				// second call fails
@@ -7487,12 +7450,12 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24169) Attempt by coroutine uMain (0xffbef008) to resume terminated coroutine C (0x823a0).
+uC++ Runtime error (UNIX pid:14490) Attempt by coroutine main (0x7ffe4dd9f820) to resume terminated coroutine C (0x10c3fb0).
 Possible cause is terminated coroutine's main routine has already returned.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffe4dd9f820).
 \end{quote}
 because the first call to %(c.mem%) resumes coroutine %(c%) and then coroutine %(c%) terminates.
-As a result, when %(uMain%) attempts the second call to %(c.mem%), it finds coroutine %(c%) terminated.
+As a result, when the %(main%) routine attempts the second call to %(c.mem%), it finds coroutine %(c%) terminated.
 A similar situation can be constructed using %(suspend%), but is significantly more complex to generate, hence it is not discussed in detail.
 
 Member %(suspend%) resumes the last resumer, and therefore, there must be a resume before a suspend can execute (see \VRef{s:CoroutineControlCommunication}).
@@ -7505,7 +7468,7 @@ _Coroutine C {
 		suspend();			// suspend before any resume
 	}
 };
-void uMain::main() {
+int main() {
 	C c;
 	c.mem();
 }
@@ -7513,12 +7476,12 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24258) Attempt to suspend coroutine C (0x82390) that has never been resumed.
+uC++ Runtime error (UNIX pid:484) Attempt to suspend coroutine C (0xd0bfb0) that has never been resumed.
 Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7fffacf28f90).
 \end{quote}
-because the call to %(C::mem%) executes a suspend before the coroutine's %(main%) member is started, and hence, there is no resumer to reactivate.
-In general, member %(suspend%) is only called within the coroutine main or non-public members called directly or indirectly from the coroutine main, not in public members called by other coroutines.
+because the call to %(C::mem%) executes a suspend before the coroutine's %(main%)\index{main@%(main%)} member is started, and hence, there is no resumer to reactivate.
+In general, member %(suspend%) is only called within the \Index{coroutine main} or non-public members called directly or indirectly from the coroutine main, not in public members called by other coroutines.
 
 Two tasks cannot simultaneously execute the same coroutine;
 only one task can use the coroutine's execution at a time.
@@ -7543,7 +7506,7 @@ _Task T {
   public:
 	T( C &c ) : c( c ) {}
 };
-void uMain::main() {
+int main() {
 	C c;
 	T t1( c ), t2( c );
 }
@@ -7551,9 +7514,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24393) Attempt by task T (0x82ea0) to resume coroutine C (0x831e0) currently being executed by task T (0x83040).
+uC++ Runtime error (UNIX pid:26853) Attempt by task T (0x135ada0) to resume coroutine C (0x135a990) currently being executed by task T (0x135aa90).
 Possible cause is two tasks attempting simultaneous execution of the same coroutine.
-Error occurred while executing task T (0x82ea0).
+Error occurred while executing task T (0x135ada0).
 \end{quote}
 because %(t1%)'s thread first calls routine %(C::mem%) and then resumes coroutine %(c%), where it yields the processor.
 %(t2%)'s threads now calls routine %(C::mem%) and attempts to resume coroutine %(c%) but %(t1%) is currently using %(c%)'s execution-state (stack).
@@ -7579,20 +7542,20 @@ _Task T {
   public:
 	T( CM &cm ) : cm( cm ) {}
 };
-void uMain::main() {
+int main() {
 	CM cm;
 	T t1( cm ), t2( cm );
 }
 %]
 
+\begin{comment}
 When a coroutine (or task) is created, there must be sufficient memory to allocate its execution state.
 The following program:
 %[
 unsigned int uMainStackSize() {
-	return 1000000000;		// very large stack size for uMain
+	return 1000000000;		// very large stack size for main
 }
-void uMain::main() {
-}
+int main() {}
 %]
 generates this error:
 \begin{quote}
@@ -7600,46 +7563,47 @@ generates this error:
 uC++ Runtime error (UNIX pid:24848) Attempt to allocate 1000000000 bytes of storage for coroutine or task execution-state but insufficient memory available.
 Error occurred while executing task uBootTask (0x4d6b0).
 \end{quote}
-because the declaration of %(uMain%) by the %(uBootTask%) fails due to the request for a 1000000000-byte stack\index{stack!overflow} for %(uMain%).
+because the declaration of the \Index{starting-task} %(main%)\index{main@%(main%)} by the %(uBootTask%) fails due to the request for a 1000000000-byte stack\index{stack!overflow} for %(main%).
+\end{comment}
 
 As mentioned in \VRef{s:uCKernel}, the \uC kernel provides no support for automatic growth of stack\index{stack!automatic growth} space for coroutines and tasks.
 Several checks are made to mitigate problems resulting from lack of dynamic stack growth.
 The following program:
 %[
-void uMain::main() {
-	char x[uThisCluster().getStackSize()];	// array larger than stack space
-	verify();
+int main() {
+	char x[512 * 1024];	// array larger than stack space
+	uThisTask().verify();
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24917) Stack overflow detected: stack pointer 0x7a650 below limit 0x7a820.
+uC++ Runtime error (UNIX pid:24494) Stack overflow detected: stack pointer 0x24090a0 below limit 0x240f000.
 Possible cause is allocation of large stack frame(s) and/or deep call stack.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffd314a6730).
 \end{quote}
-because the declaration of the array in %(uMain%) uses more than the current stack space.
+because the declaration of the array in the %(main%)\index{main@%(main%)} routine uses more than the current stack space.
 
 The following program:
 %[
-void uMain::main() {
+int main() {
 	{
 		char x[uThisCluster().getStackSize()];	// array larger than stack space
 		for ( int i = 0; i < uThisCluster().getStackSize(); i += 1 ) {
 			x[i] = 'a';		// write outside stack space
 		}
 	} // delete array
-	verify();
+	uThisTask().verify();
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24968) Stack corruption detected.
-Possible cause is corrupted stack frame via overwriting memory.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:4533) Attempt to address location 0x2458000.
+Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.
+Error occurred while executing task main (0x7ffdf4b5a830).
 \end{quote}
-because the declaration of the array in %(uMain%) uses more than the current stack space, and by writing into the array, the current stack space is corrupted (and possibly another stack, as well).
+because the declaration of the array in the %(main%) routine uses more than the current stack space, and by writing into the array, steps outside its current stack space.
 
 
 \subsubsection{Mutex Type}
@@ -7680,7 +7644,7 @@ _Task T {
 void CM::main() {
 	t->mem();			// call back into task
 }
-void uMain::main() {
+int main() {
 	CM cm;
 	T t( cm );
 }
@@ -7690,8 +7654,8 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:25043) Attempt to perform a non-nested entry and exit from multiple accessed mutex objects.
-Error occurred while executing task T (0x835f0).
+uC++ Runtime error (UNIX pid:12292) Attempt to perform a non-nested entry and exit from multiple accessed mutex objects.
+Error occurred while executing task T (0x1c09d80).
 \end{quote}
 because %(t%)'s thread first calls mutex routine %(CM::mem%) (and now owns coroutine monitor %(cm%)) and then resumes coroutine %(cm%), which now calls the mutex routine %(T::mem%) (%(t%) already owns itself).
 The coroutine %(cm%) resumes %(t%) from within %(T::mem%), which restarts in %(CM::mem%) (full coroutining) and exits before completing the nested call to mutex routine %(T::mem%) (where %(cm%) is suspended).
@@ -7745,7 +7709,7 @@ _Task T {
 void M::mem2() {
 	t->mem();			// call back into task
 }
-void uMain::main() {
+int main() {
 	C c;
 	M m( c );
 	T t( m, c );
@@ -7792,7 +7756,7 @@ _Task T {
 void C::main() {
 	t->mem();
 }
-void uMain::main() {
+int main() {
 	C c;
 	T t1( c ), t2( c );
 }
@@ -7802,9 +7766,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:25216) Attempt by task T (0x83050) to activate coroutine C (0x833c0) currently executing in a mutex object owned by task T (0x83208).
+uC++ Runtime error (UNIX pid:29903) Attempt by task T (0xd27d80) to activate coroutine C (0xd27940) currently executing in a mutex object owned by task T (0xd27a50).
 Possible cause is task attempting to logically change ownership of a mutex object via a coroutine.
-Error occurred while executing task T (0x83050).
+Error occurred while executing task T (0xd27d80).
 \end{quote}
 because %(t1%)'s thread first calls routine %(C::mem%) and then resumes coroutine %(c%), which now calls the mutex routine %(T::mem%).
 %(t1%) restarts in %(C::mem%) and returns back to %(T::main%) and yields the processor.
@@ -7848,7 +7812,7 @@ _Task T {
 void C::main() {
 	t->mem();
 }
-void uMain::main() {
+int main() {
 	C c;
 	T t1( c ), t2( c );
 }
@@ -7882,7 +7846,7 @@ class T {
 void M::mem( T *t ) {
 	t->mem2();				// call back to caller
 }
-void uMain::main() {
+int main() {
 	T t;
 	t.mem1();
 }
@@ -7890,9 +7854,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:25337) Attempt by task uMain (0xffbef008) to call the destructor for uSerial 0x83278, but this task has outstanding nested calls to this mutex object.
+uC++ Runtime error (UNIX pid:31045) Attempt by task main (0x7ffdd8d77cd0) to call the destructor for uSerial 0x24e5af8, but this task has outstanding nested calls to this mutex object.
 Possible cause is deleting a mutex object with outstanding nested calls to one of its members.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffdd8d77cd0).
 \end{quote}
 
 It is incorrect to perform more than one delete on a mutex object, which can happen if multiple tasks attempt to perform simultaneous deletes on the same object.
@@ -7918,7 +7882,7 @@ _Task T {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	M *m = new M;			// create mutex object
 	T t( m );				// create task
 	delete m;				// also delete mutex object
@@ -7927,9 +7891,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:25431) Attempt by task T (0x82cd0) to call the destructor for uSerial 0x83a48, but this destructor was already called by task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:31653) Attempt by task T (0x1e96da0) to call the destructor for uSerial 0x1e9bad8, but this destructor was already called by task main (0x7ffd9ce70430).
 Possible cause is multiple tasks simultaneously deleting a mutex object.
-Error occurred while executing task T (0x82cd0).
+Error occurred while executing task T (0x1e96da0).
 \end{quote}
 
 
@@ -7942,20 +7906,20 @@ The following program:
 _Task T {
 	uCondition w;
 	void main() {
-		_Accept( ~T );		// uMain invokes destructor
-		w.wait();			// T continues but blocks, which restarts uMain
+		_Accept( ~T );		// main routine invokes destructor
+		w.wait();			// T continues but blocks, which restarts starting-task main
 	}
 };
-void uMain::main() {
+int main() {
 	T t;
 } // implicitly invoke T::~T
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:25719) Attempt to delete task T (0x82900) that is not halted.
+uC++ Runtime error (UNIX pid:24374) Attempt to delete task T (0x1e83d90) that is not halted.
 Possible cause is task blocked on a condition queue.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffdd7629650).
 \end{quote}
 because the call to the destructor restarts the accept statement (see \VRef{s:AcceptingDestructor}), and the thread of %(t%) blocks on condition %(w%), which restarts the destructor.
 However, the destructor cannot cleanup without invalidating any subsequent execution of task %(t%).
@@ -7977,7 +7941,7 @@ _Task T {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	uCondition w;
 	T t( w );
 	w.wait();
@@ -7986,12 +7950,12 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:6605) Attempt to wait on a condition variable for a mutex object not locked by this task.
+uC++ Runtime error (UNIX pid:23772) Attempt to wait on a condition variable for a mutex object not locked by this task.
 Possible cause is accessing the condition variable outside of a mutex member for the mutex object owning the variable.
-Error occurred while executing task T (0x826c8).
+Error occurred while executing task T (0x143cda0).
 \end{quote}
-because the condition variable %(w%) is passed from %(uMain%) to %(t%), and then there is a race to wait on the condition.
-The error message shows that %(uMain%) waited first so it became the condition owner, and then %(t%)'s attempt to wait fails. 
+because the condition variable %(w%) is passed from the %(main%)\index{main@%(main%)} routine to %(t%), and then there is a race to wait on the condition.
+The error message shows that the \Index{starting-task} %(main%)\index{main@%(main%)} waited first so it became the condition owner, and then %(t%)'s attempt to wait fails. 
 Changing %(wait%) in %(T::main%) to %(signal%) generates a similar message with respect to signalling a condition not owned by mutex object %(t%).
 It is possible for one mutex object to create a condition and pass it to another, as long as the creator does not wait on it before passing it.
 
@@ -8008,7 +7972,7 @@ _Task T {
 };
 %]
 %[
-void uMain::main() {
+int main() {
 	T t;
 	yield();
 	t.mem();
@@ -8017,18 +7981,18 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:6502) Attempt to signal a condition variable for a mutex object not locked by this task.
+uC++ Runtime error (UNIX pid:6710) Attempt to signal a condition variable for a mutex object not locked by this task.
 Possible cause is accessing the condition variable outside of a mutex member for the mutex object owning the variable.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffc0894aad0).
 \end{quote}
-because task %(t%) is first to wait on condition variable %(w%) due to the %(yield%) in %(uMain::main%), and then %(uMain%) does not lock mutex-object %(t%) when calling %(mem%) as it is nomutex.
-Only if %(uMain%) has %(t%) locked can it access any condition variable owned by %(t%).
-Changing %(signal%) in %(T::mem%) to %(wait%) generates a similar message with respect to waiting on a condition not locked by mutex object %(uMain%).
+because task %(t%) is first to wait on condition variable %(w%) due to the %(yield%) in the %(main%)\index{main@%(main%)} routine, and then the \Index{starting-task} %(main%)\index{main@%(main%)} does not lock mutex-object %(t%) when calling %(mem%) as it is nomutex.
+Only if the starting-task %(main%) has %(t%) locked can it access any condition variable owned by %(t%).
+Changing %(signal%) in %(T::mem%) to %(wait%) generates a similar message with respect to waiting on a condition not locked by mutex object %(main%).
 
 A condition variable must be non-empty before examining data stored with the front task blocked on the queue (see \VRef{s:CondVarWaitSignal}).
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uCondition w;
 	int i = w.front();
 }
@@ -8036,9 +8000,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2411) Attempt to access user data on an empty condition.
+uC++ Runtime error (UNIX pid:24249) Attempt to access user data on an empty condition.
 Possible cause is not checking if the condition is empty before reading stored data.
-Error occurred while executing task uMain (0xffbef870).
+Error occurred while executing task main (0x7ffc44099980).
 \end{quote}
 because the condition variable %(w%) is empty so there is no data to return.
 
@@ -8056,7 +8020,7 @@ _Monitor M {
 		_Accept( mem1 );	// not allowed in nomutex member
 	}
 };
-void uMain::main() {
+int main() {
 	M m;
 	m.mem2();
 }
@@ -8064,9 +8028,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2159) Attempt to accept in a mutex object not locked by this task.
+uC++ Runtime error (UNIX pid:4088) Attempt to accept in a mutex object not locked by this task.
 Possible cause is accepting in a nomutex member routine.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffd8a9e5dd0).
 \end{quote}
 
 
@@ -8076,15 +8040,15 @@ Error occurred while executing task uMain (0xffbef008).
 When creating an absolute time value using %(uTime%) (see \VRef{s:TimeDelay}), the value must be in the range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038, which is the UNIX start and end epochs.
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uTime t( -17 );
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2243) Attempt to create uTime( year=1970, month=0, day=0, hour=0, min=0, sec=-17, nsec=0 ), which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:23867) Attempt to create uTime( year=1970, month=0, day=0, hour=0, min=0, sec=-17, nsec=0 ), which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
+Error occurred while executing task main (0x7ffc68620ca0).
 \end{quote}
 
 
@@ -8094,15 +8058,15 @@ Error occurred while executing task uMain (0xffbef008).
 The argument for the %(uLock%) constructor (see \VRef{s:Lock}) must be 0 or 1.
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uLock l(3);
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2328) Attempt to initialize uLock 0x91030 to 3 that exceeds range 0-1.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:31313) Attempt to initialize uLock 0xe850c0 to 3 that exceeds range 0-1.
+Error occurred while executing task main (0x7ffce021a300).
 \end{quote}
 because the value 3 passed to the constructor of %(uLock%) is outside the range 0--1.
 
@@ -8116,36 +8080,36 @@ The following program:
 _Task T {
 	void main() {}
 };
-void uMain::main() {
+int main() {
 	T *t = new T;
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2404) Attempt to delete cluster userCluster (0x82260) with task T (0x92770) still on it.
+uC++ Runtime error (UNIX pid:2916) Attempt to delete cluster userCluster (0x1144200) with task T (0x1205a88) still on it.
 Possible cause is the task has not been deleted.
-Error occurred while executing task uBootTask (0x5d6f0).
+Error occurred while executing task uBootTask (0x651ce0).
 \end{quote}
-because the %(uBootTask%) happens to delete the user cluster (see \VRef{s:Cluster}) after %(uMain::main%) terminates before the dynamically allocated task %(t%) has terminated.
-Deleting the task associated with %(t%) \emph{before} %(uMain::main%) terminates solves the problem.
+because the %(uBootTask%) happens to delete the user cluster (see \VRef{s:Cluster}) after the \Index{starting-task} %(main%)\index{main@%(main%)} terminates and before the dynamically allocated task %(t%) has terminated.
+Deleting the task associated with %(t%) \emph{before} the %(main%)\index{main@%(main%)} routine terminates solves the problem.
 
 Similarly, a cluster cannot be deleted with a processor still located on it, regardless of what state the processor is in (i.e., running or idle).
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uProcessor &p = *new uProcessor( uThisCluster() );
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2488) Attempt to delete cluster userCluster (0x81770) with processor 0x91c80 still on it.
+uC++ Runtime error (UNIX pid:11982) Attempt to delete cluster userCluster (0x26a5200) with processor 0x2766a88 still on it.
 Possible cause is the processor has not been deleted.
-Error occurred while executing task uBootTask (0x5cc00).
+Error occurred while executing task uBootTask (0x64fce0).
 \end{quote}
-because the %(uBootTask%) deletes the user cluster (see \VRef{s:Cluster}) after %(uMain::main%) terminates but the dynamically allocated processor %(p%) is still on the user cluster.
-Deleting the processor associated with %(p%) \emph{before} %(uMain::main%) terminates solves the problem.
+because the %(uBootTask%) deletes the user cluster (see \VRef{s:Cluster}) after the \Index{starting-task} %(main%)\index{main@%(main%)} terminates but the dynamically allocated processor %(p%) is still on the user cluster.
+Deleting the processor associated with %(p%) \emph{before} the %(main%) routine terminates solves the problem.
 
 
 \subsubsection{Heap}
@@ -8156,7 +8120,7 @@ Deleting the processor associated with %(p%) \emph{before} %(uMain::main%) termi
 Unlike most C/\CC dynamic memory allocation routines, \uC does extra checking to ensure that some aspects of dynamic memory usage are done correctly.
 The following program:
 %[
-void uMain::main() {
+int main() {
 	int *ip = (int *)1;		// invalid pointer address
 	delete ip;
 }
@@ -8164,15 +8128,15 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2535) Attempt to free storage 0x1 outside the current heap range:0x5e468 to 0x91b78.
-Possible cause is invalid pointer.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:16554) Attempt to free storage 0x1 with address outside the heap.
+Possible cause is duplicate free on same block or overwriting of memory.
+Error occurred while executing task main (0x7ffca9d0ec20).
 \end{quote}
 because the value of pointer %(ip%) is not within the heap storage area, and therefore, cannot be deleted.
 
 The following program:
 %[
-void uMain::main() {
+int main() {
 	int *ip = new int[10];
 	delete &ip[5];			// not the start of the array
 }
@@ -8180,9 +8144,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2607) Attempt to free storage 0x91c14 with corrupted header.
-Possible cause is duplicate free on same block or overwriting of header information.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:1538) Attempt to free storage 0xa0aa9c with address outside the heap.
+Possible cause is duplicate free on same block or overwriting of memory.
+Error occurred while executing task main (0x7ffd78aa1ca0).
 \end{quote}
 because the pointer passed to %(delete%) must always be the same as the pointer returned from %(new%).
 In this case, the value passed to %(delete%) is in the middle of the array instead of the start.
@@ -8194,7 +8158,7 @@ _Task T {
   public:
 	void mem() {}
 };
-void uMain::main() {
+int main() {
 	T *t = new T;
 	delete t;
 	t->mem();				// use deleted storage
@@ -8203,14 +8167,19 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2670) (uSpinLock \&)0x92a50.acquire() : internal error, attempt to multiply acquire spin lock by same task.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:31732) (uSerial \&)0x1fb6cf8 : Entry failure while executing mutex destructor: mutex object has been destroyed.
+Error occurred while executing task main (0x7ffddcadf7f0).
 \end{quote}
 because an attempt is made to use the storage for task %(t%) after it is deleted, which is always incorrect.
 This storage may have been reallocated to another task and now contains completely different information.
 The problem is detected inside of the \uC kernel, where there are assertion checks for invalid pre- or post-conditions.
 In this case, the invalid storage happened to trigger a check for a task acquiring a spin lock twice, which is never suppose to happen.
-Using storage incorrectly can trigger other ``internal errors'' from the \uC kernel.
+Using storage incorrectly can trigger other ``internal errors'' from the \uC kernel, e.g.:
+\begin{quote}
+\BGfont
+uC++ Runtime error (UNIX pid:2670) (uSpinLock \&)0x92a50.acquire() : internal error, attempt to multiply acquire spin lock by same task.
+Error occurred while executing task main (0xffbef008).
+\end{quote}
 
 As well, a warning message is issued at the end of a program if all storage is not freed.
 \begin{quote}
@@ -8237,28 +8206,28 @@ There are many different I/O errors;
 only those related to the \uC kernel are discussed.
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uThisCluster().select( -1, 0, nullptr );
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:2962) Attempt to select on file descriptor -1 that exceeds range 0-1023.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:11833) Attempt to select on file descriptor -1 that exceeds range 0-1023.
+Error occurred while executing task main (0x7fff904723d0).
 \end{quote}
 
 The following program:
 %[
-void uMain::main() {
+int main() {
 	uThisCluster().select( -1, nullptr, nullptr, nullptr, nullptr );
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:3008) Attempt to select with a file descriptor set size of -1 that exceeds range 0-1024.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:3614) Attempt to select with a file descriptor set size of -1 that exceeds range 0-1024.
+Error occurred while executing task main (0x7ffdd3d008b0).
 \end{quote}
 
 
@@ -8268,7 +8237,7 @@ Error occurred while executing task uMain (0xffbef008).
 The following program:
 %[
 #include <uSemaphore.h>
-void uMain::main() {
+int main() {
 	uSemaphore s(0);
 	s.P();					// block only thread => synchronization deadlock
 }
@@ -8276,9 +8245,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:3110) No ready or pending tasks.
-Possible cause is tasks are in a synchronization or mutual exclusion \Index{deadlock}.
-Error occurred while executing task uProcessorTask (0x82740).
+uC++ Runtime error (UNIX pid:24003) No ready or pending tasks.
+Possible cause is tasks are in a synchronization or mutual exclusion deadlock.
+Error occurred while executing task uProcessorTask (0x19c13a8) in coroutine uProcessorKernel (0x1900cf0).
 \end{quote}
 because the only thread blocks so there are no other tasks to execute, resulting in a synchronization deadlock.
 This message also appears for the more complex form of deadlock resulting from mutual exclusion.
@@ -8293,7 +8262,7 @@ A common error in \CC programs is to generate and use an invalid pointer.
 This situation can arise because of an incorrect pointer calculation, such as an invalid subscript.
 The following program:
 %[
-void uMain::main() {
+int main() {
 	int *ip = nullptr;			// set address to 0
 	*ip += 1;				// use the bad address
 }
@@ -8301,9 +8270,9 @@ void uMain::main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:3241) Attempt to address location 0x0.
+uC++ Runtime error (UNIX pid:16921) Attempt to address location (nil).
 Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.
-Error occurred while executing task uMain (0xffbef008).
+Error occurred while executing task main (0x7ffdf61dc890).
 \end{quote}
 because the value of pointer %(ip%) is probably within the executable code, which is read-only, but an attempt to write is occurring.
 
@@ -8313,15 +8282,15 @@ Termination is accomplished using a shell %(kill%) command, sending signal %(SIG
 The following program:
 %[
 #include <unistd.h>				// getpid prototype
-void uMain::main() {
+int main() {
 	kill( getpid(), SIGTERM );	// send SIGTERM signal to program
 }
 %]
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:3315) Application interrupted by a termination signal.
-Error occurred while executing task uMain (0xffbef008).
+uC++ Runtime error (UNIX pid:18636) Application interrupted by a termination signal.
+Error occurred while executing task main (0x7ffc075a2bf0).
 \end{quote}
 because the \uC program sent itself a termination (%(SIGTERM%)) signal.
 
@@ -8348,7 +8317,7 @@ For example, the UNIX random number generator %(rand%) maintains an internal sta
 Hence, one task executing the random number generator can be pre-empted and the generator state can be modified by another task, which may result in problems with the generated random values or errors.
 Therefore, when writing \uC programs, always use the thread-safe versions of UNIX library routines, such as %(rand_r%) to generate random numbers.
 
-For some non-thread-safe UNIX library-routines, \uC provides a thread-safe equivalent, such as %(abort%)\index{abort@%(abort%)}/%(uAbort%)\index{uAbort@%(uAbort%)}, %(exit%)\index{exit@%(exit%)} (see \VRef{s:Termination}), %(sleep%)\index{sleep@%(sleep%)}, %(usleep%)\index{usleep@%(usleep%)}, and the \uC I/O library (see \VRef[Chapter]{s:InputOutput}).
+For some non-thread-safe UNIX library-routines, \uC provides a thread-safe equivalent, such as %(abort%)\index{abort@%(abort%)}/%(abort%)\index{abort@%(abort%)}, %(exit%)\index{exit@%(exit%)} (see \VRef{s:Termination}), %(sleep%)\index{sleep@%(sleep%)}, %(usleep%)\index{usleep@%(usleep%)}, and the \uC I/O library (see \VRef[Chapter]{s:InputOutput}).
 
 
 \section{Memory Management}
@@ -8845,26 +8814,14 @@ For example, a \uC program, %(program.cc%), is compiled and linked with a pthrea
 u++ \(\emph{[\CC options]}\) program.cc plib.o
 %]
 Note, the standard pthreads library, %(libpthread%), must \emph{not} be linked with this program (i.e., %(-lpthreads%)) as only the pthreads routines provided by \uC work.
-However, this approach fails if %(plib.o%) uses routines not provided by \uC (see \VRef[Figure]{f:ImplementedPThreadRoutines}), the object file defines the entry point into the program (i.e., routine %(main%)), or if %(plib.o%) calls pthreads routines inside global constructors or destructors. 
+However, this approach fails if %(plib.o%) uses routines not provided by \uC (see \VRef[Figure]{f:ImplementedPThreadRoutines}), the object file defines the entry point into the program (i.e., routine %(main%)\index{main@%(main%)}), or if %(plib.o%) calls pthreads routines inside global constructors or destructors. 
 The second and third cases can be corrected if the source for %(plib.o%) can be changed and recompiled (described next).
 
 
 \subsection{Recompiling Pthreads Modules}
 
 If a translation unit declares global objects with constructors and destructors calling pthreads routines (i.e., \emph{before/after} the initial starting routine), the translation unit must be recompiled with the %(u++%) command (see \VRef{s:CompilinguCProgram}).
-As well, the pthreads module containing the initial entry point %(main%) must be converted to the \uC member %(uMain::main%) (see~\VRef{s:CompileTimeStructureuCProgram}).
-This change can be made conditionally using %(#ifdef%)s (see \VRef{s:PreprocessorVariables}) to allow a pthreads program to conditionally switch between running native pthreads or simulated pthreads in \uC depending on whether the program is compiled with %(g++%)\index{GNU C++@GNU \CC} or %(u++%)\index{u++@%(u++%)}\index{compilation option!u++@%(u++%)}, e.g.:
-%[
-#ifdef __U_CPLUSPLUS__
-void uMain::main() {	// only change starting routine if compiled with u++
-#else
-int main( int argc, char *argv[] ) {
-#endif
-	// body of pthreads main routine
-}
-%]
-With these changes, the entire program can be compiled with %(g++%), or another compatible \CC compiler, to use native pthreads and linked with the pthreads (%(-lpthread%)) library.
-Alternatively, the program can be complied with %(u++%), using the pthreads simulation provided by \uC.
+As well, the pthreads module containing the initial entry point %(main%) must be recompiled with the %(u++%) command.
 
 
 \section{\texorpdfstring{\uC Task as a Pthreads Thread}{uC++ Task as a Pthreads Thread}}
@@ -8928,8 +8885,8 @@ Note, (de)registering a cleanup handler using %(pthread_cleanup_push%)/\-%(pop%)
 the cleanup handler is associated with the stack frame on the task's stack where the (de)registration occurs.
 
 It is important to note that a %(uPthreadable%) task follows \uC semantics rather than pthreads semantics and is not considered a pthreads thread, which is defined as a task created by %(pthread_create%).
-In particular, the life time of a %(uPthreadable%) task is the same as an ordinary \uC task, and it becomes a monitor after its %(main%) routine ends.
-The task %(uMain%) is a %(uPthreadable%) task.
+In particular, the life time of a %(uPthreadable%) task is the same as an ordinary \uC task, and it becomes a monitor after its %(main%)\index{main@%(main%)} routine ends.
+The \Index{starting-task} %(main%)\index{main@%(main%)} is a %(uPthreadable%) task.
 
 
 \section{\texorpdfstring{Semantic Inconsistencies between Pthreads and \uC}{Semantic Inconsistencies between Pthreads and uC++}}
@@ -8939,8 +8896,8 @@ The combination of pthreads and \uC creates some conflicts, which are resolved i
 
 \subsection{\texorpdfstring{Termination of {\BGfont main}}{Termination of main}}
 
-When the starting %(main%) routine ends, pthreads semantics cause immediate termination of the program and any outstanding threads, whereas \uC semantics require that all threads be programmatically terminated.
-This inconsistency is resolved dynamically in favour of pthreads if any pthreads threads are running when %(uMain::main%) ends.
+When the starting %(main%)\index{main@%(main%)} routine ends, pthreads semantics cause immediate termination of the program and any outstanding threads, whereas \uC semantics require that all threads be programmatically terminated.
+This inconsistency is resolved dynamically in favour of pthreads if any pthreads threads are running when the \Index{starting-task} %(main%)\index{main@%(main%)} ends.
 In this case, the application is shut-down causing all threads (pthreads and \uC) to be terminated abruptly, i.e., no finalization code is executed for any of these threads.
 Recall that %(uPthreadable%) tasks are not considered pthreads threads. 
 
@@ -9006,10 +8963,9 @@ Finally, many algorithms with obvious concurrency potential cannot take advantag
 
 When \uC is used with an OpenMP-aware \CC compiler, the full range of OpenMP constructs are available for use in \uC programs (see Section \ref{s:InstallationRequirements} for supported compilers).
 This capability makes it straightforward to take an existing OpenMP program and compile it using \uC.
-In order to compile such a program with \uC, it is necessary to replace the special routine %(main%) by %(uMain::main%)\index{uMain@%(uMain%)} (see Section \ref{s:CompileTimeStructureuCProgram}).
 
 When invoking the \uC translator %(u++%)\index{u++@%(u++%)} to compile or link a program using OpenMP directives, it is necessary to pass a command-line argument indicating that OpenMP is in use.
-The specific argument to be passed depends on the \CC compiler used by %(u++%): the Intel \CC compiler uses %(-openmp%)\index{-openmp@%(-openmp%) option}\index{compilation option!-openmp@%(-openmp%)}, whereas the GNU \CC compiler uses %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)}.
+The specific argument to be passed depends on the \CC compiler used by %(u++%): the GNU \CC compiler uses %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)}.
 
 
 \section{OpenMP and Parallelism}
@@ -9133,7 +9089,7 @@ The creation and manipulation of %(uTime%) values are performed through the memb
 class uTime {
   public:
 	uTime();
-	uTime( long int sec );
+	explicit uTime( long int sec );	// explicit => unambiguous with uDuration( long int sec )
 	uTime( long int sec, long int nsec );
 	uTime( int min, int sec, long int nsec );
 	uTime( int hour, int min, int sec, long int nsec );
@@ -9492,7 +9448,7 @@ _PeriodicTask \(\nterminal{task-name}\) {
 };
 %]
 \index{_PeriodicTask@%(_PeriodicTask%)}\index{keyword, additions!_PeriodicTask@%(_PeriodicTask%)}%
-Like a task, a periodic task type has one distinguished member, named %(main%), in which the new thread starts execution.
+Like a task, a periodic task type has one distinguished member, named %(main%)\index{main@%(main%)}, in which the new thread starts execution.
 If not derived from some other periodic task type, each periodic task type is implicitly derived from the task type %(uPeriodicBaseTask%), e.g.:
 %[
 _Task \(\nterminal{task-name}\) : public uPeriodicBaseTask {
@@ -9544,9 +9500,9 @@ _PeriodicTask \(\nterminal{task-name}\) {
 	\(\nterminal{task-name}\)( uDuration period, uTime time ) : uPeriodicBaseTask( period, time, 0, 0 ) { };
 };
 %]
-The task body, i.e., routine %(main%), is implicitly surrounded with a loop that performs the task body periodically.
+The task body, i.e., routine %(main%)\index{main@%(main%)}, is implicitly surrounded with a loop that performs the task body periodically.
 As a result, terminating the task body requires a %(return%) (or the use of an end time);
-falling off the end of the %(main%) routine does not terminate a periodic task.
+falling off the end of the %(main%)\index{main@%(main%)} routine does not terminate a periodic task.
 
 
 \section{Sporadic Task}
@@ -9825,7 +9781,7 @@ _PeriodicTask PeriodicTask2 {
 	}
 };
 
-void uMain::main() {
+int main() {
 	uDeadlineMonotonic dm;				// create real-time scheduler
 	uRealTimeCluster RTClust( dm );		// create real-time cluster with scheduler
 	uProcessor *processor;
@@ -9854,7 +9810,7 @@ void uMain::main() {
 
 A sample real-time program is illustrated in \VRef[Figure]{f:SampleReal-TimeProgram}.  
 To utilize the deadline-monotonic algorithm include header file %(uDeadlineMonotonic.h%).
-In the example, the creation of the real-time scheduler and cluster is done at the beginning of %(uMain::main%).
+In the example, the creation of the real-time scheduler and cluster is done at the beginning of the %(main%)\index{main@%(main%)} routine.
 Note, the argument passed to the constructor of %(uRealTimeCluster%) is an instance of %(uDeadlineMonotonic%), which is a ready data-structure derived from %(uBaseSchedule%).
 
 The technique used to ensure that the tasks start at a critical instance is not to associate a processor with the cluster until after all tasks are created \emph{and scheduled} on the cluster.
@@ -9908,7 +9864,7 @@ Routine %(uDefaultStackSize%) returns a stack size \emph{to initialize a cluster
 A coroutine/task created on a cluster without an explicit stack size is initialized to the cluster's default stack-size;
 hence, there is a level of indirection between this default routine and its use for initializing a stack size.
 As well, a cluster's default stack-size can be explicitly changed after the cluster is created (see \VRef{s:Cluster}).
-Routine %(uMainStackSize%) is used directly to provide a stack size for the implicitly declared initial task of type %(uMain%) (see \VRef{s:CompileTimeStructureuCProgram}).
+Routine %(uMainStackSize%) is used directly to provide a stack size for the \Index{starting-task} %(main%)\index{main@%(main%)} (see \VRef{s:CompileTimeStructureuCProgram}).
 Since this initial task is defined and created by \uC, it has a separate default routine so it can be adjusted differently from the application tasks.
 Routine %(uDefaultPreemption%) returns a time in milliseconds \emph{to initialize a virtual processor's default pre-emption time} (versus being used directly to initialize a task's pre-emption time).
 A task executing on a processor is rescheduled after no more than this amount of time (see \VRef{s:Processors}).
@@ -10393,7 +10349,7 @@ struct stackNode : public uColable {
 	int v;
 	stackNode( int v ) : v( v ) {}
 };
-void uMain::main() {
+int main() {
 	uStack<stackNode> stack;
 	uStackIter<stackNode> stackiter;
 	stackNode *sp;
@@ -10510,7 +10466,7 @@ struct queueNode : public uColable {
 	int v;
 	queueNode( int v ) : v( v ) {}
 };
-void uMain::main() {
+int main() {
 	uQueue<queueNode> queue;
 	uQueueIter<queueNode> queueiter;
 	queueNode *qp;
@@ -10654,7 +10610,7 @@ struct seqNode : public uSeqable {
 	int v;
 	seqNode( int v ) : v( v ) {}
 };
-void uMain::main() {
+int main() {
 	uSequence<seqNode> seq;
 	uSeqIter<seqNode> seqiter;
 	seqNode *sp;

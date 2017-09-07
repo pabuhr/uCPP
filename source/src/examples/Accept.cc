@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 21 18:16:14 2011
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:48:49 2016
-// Update Count     : 4
+// Last Modified On : Sat Jan 28 09:57:01 2017
+// Update Count     : 6
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,10 +90,10 @@ _Task T2 {
     }
 };
 
-void uMain::main() {
+int main() {
     T1 t1;
     t1.X();
-    yield( 5 );
+    uBaseTask::yield( 5 );
     t1.Y();
     t1.Z();
     T2 t2;

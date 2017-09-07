@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:41 2016
-// Update Count     : 75
+// Last Modified On : Sat Jan 28 10:01:02 2017
+// Update Count     : 78
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,10 +37,10 @@ _Event E2 {};
 
 
 void one() {
-    uAbort( "invalid 1\n" );
+    abort( "invalid 1\n" );
 }
 void two() {
-    uAbort( "invalid 2\n" );
+    abort( "invalid 2\n" );
 }
 void three() {
     osacquire( cout ) << "success" << endl;
@@ -49,8 +49,7 @@ void three() {
 
 _Task fred {
     int id;
-  public:
-    fred( int id ) : id( id ) {}
+
     void main() {
 	if ( id % 2 ) { 
 	    std::set_terminate( one );
@@ -70,7 +69,9 @@ _Task fred {
 		assert( one == std::set_unexpected( one ) );
 	    } // if	    
 	} // for
-    } // fred::main    
+    } // fred::main
+  public:
+    fred( int id ) : id( id ) {}
 }; // fred
 
 
@@ -120,7 +121,7 @@ _Task mary {
     }
 };
 
-void uMain::main() {
+int main() {
     uProcessor processors[NP - 1] __attribute__(( unused )); // more than one processor
     fred *f[NP];
     int i;
@@ -137,6 +138,6 @@ void uMain::main() {
     try {
 	m.mem();
     } catch( E2 ) {
-	osacquire( cout ) << "uMain::main caught E2" << endl;
-    }
-} // uMain::main
+	osacquire( cout ) << "main caught E2" << endl;
+    } // try
+} // main

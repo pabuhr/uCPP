@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:42:34 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:36 2016
-// Update Count     : 28
+// Last Modified On : Sat Jan 28 10:00:27 2017
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,62 +29,58 @@ using std::cout;
 using std::osacquire;
 using std::endl;
 
-_Event fred {
+_Event Fred {
   public:
     int k;
-    fred ( int k ) : k(k) {}
+    Fred ( int k ) : k(k) {}
 };
 
-_Task mary {
-  public:
-    void main();
-};
+_Task Mary {
+	void main();
+}; // Mary
 
-_Task john {
-  public:
-    void main();
-};
+_Task John {
+	void main();
+}; // John
 
-mary m;
-john j;
+Mary mary;
+John john;
 
-void mary :: main() {
-    _Resume fred( 42 ) _At j;
-    try {
+void Mary::main() {
+	_Resume Fred( 42 ) _At john;
+	try {
 		_Enable {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
-    } catch ( j.fred f ) {
-		assert( &j == f.getOriginalThrower() );
-		assert( &j == &f.source() );
-		assert( f.k == 84 ); 
-		osacquire( cout ) << "mary catches exception from john: " << f.k << endl;
-	    for ( int i = 0; i < 200; i+= 1 )
-			yield();
-    } // try
-}
-    
-void john :: main() {
-    _Resume fred( 84 ) _At m;
-    try {
+	} catch ( john.Fred fred ) {
+		assert( &john == fred.getOriginalThrower() );
+		assert( &john == &fred.source() );
+		assert( fred.k == 84 ); 
+		osacquire( cout ) << "Mary catches exception from John: " << fred.k << endl;
+		for ( int i = 0; i < 200; i+= 1 ) yield();
+	} // try
+} // Mary::main
+
+void John::main() {
+	_Resume Fred( 84 ) _At mary;
+	try {
 		_Enable {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
-    } catch ( m.fred f ) {
-		assert( &m == f.getOriginalThrower() );
-		assert( &m == &f.source() );
-		assert( f.k == 42 ); 
-		osacquire( cout ) << "john catches exception from mary: " << f.k << endl
-			  << "mary m's address: " << (void *)&m << " exception binding: " << f.getOriginalThrower()
-			  << " exception Src: " << (void *)&f.source() << endl;
-	 
-	    for ( int i = 0; i < 200; i+= 1 ) yield();
-    } // try
-}
+	} catch ( mary.Fred fred ) {
+		assert( &mary == fred.getOriginalThrower() );
+		assert( &mary == &fred.source() );
+		assert( fred.k == 42 ); 
+		osacquire( cout ) << "John catches exception from Mary: " << fred.k << endl
+						  << "Mary's address: " << (void *)&mary << " exception binding: " << fred.getOriginalThrower()
+						  << " exception Src: " << (void *)&fred.source() << endl;
+		for ( int i = 0; i < 200; i+= 1 ) yield();
+	} // try
+} // John::main
 
-void uMain::main() {
-	for ( int i = 0; i < 200; i+= 1 ) yield();
-}
+int main() {
+	for ( int i = 0; i < 200; i+= 1 ) uBaseTask::yield();
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

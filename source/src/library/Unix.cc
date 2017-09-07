@@ -29,7 +29,7 @@ extern "C" int usleep( unsigned int usec ) {
 
 
 extern "C" unsigned int alarm( unsigned int sec ) __THROW {
-    uAbort( "alarm : not implemented" );
+    abort( "alarm : not implemented" );
     return 0;
 } // alarm
 

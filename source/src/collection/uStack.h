@@ -55,7 +55,7 @@ template<typename T> class uStack: public uCollection<T> {
     }
     void addHead( T *n ) {
 #ifdef __U_DEBUG__
-	if ( n->listed() ) uAbort( "(uStack &)%p.addHead( %p ) node is already on another list.", this, n );
+	if ( n->listed() ) abort( "(uStack &)%p.addHead( %p ) node is already on another list.", this, n );
 #endif // __U_DEBUG__
 	uNext(n) = root ? root : n;
 	root = n;

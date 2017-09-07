@@ -85,7 +85,7 @@ _Task fred {
     } // fred::main
 }; // fred
 
-void uMain::main() {
+int main() {
     uProcessor processors[3] __attribute__(( unused ));	// more than one processor
     fred f[4] __attribute__(( unused ));
-} // uMain::main
+} // main

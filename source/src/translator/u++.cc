@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:31:35 2016
-// Update Count     : 925
+// Last Modified On : Sat Mar 25 13:10:06 2017
+// Update Count     : 932
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,6 +40,7 @@ using std::string;
 
 
 //#define __U_DEBUG_H__
+#include "debug.h"
 
 #define STRINGIFY(s) #s
 #define VSTRINGIFY(s) STRINGIFY(s)
@@ -52,13 +53,9 @@ bool prefix( string arg, string pre ) {
 
 void shuffle( const char *args[], int S, int E, int N ) {
     // S & E index 1 passed the end so adjust with -1
-#ifdef __U_DEBUG_H__
-    cerr << "shuffle:" << S << " " << E << " " << N << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "shuffle:" << S << " " << E << " " << N << endl; )
     for ( int j = E-1 + N; j > S-1 + N; j -=1 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "\t" << j << " " << j-N << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "\t" << j << " " << j-N << endl; )
 	args[j] = args[j-N];
     } // for
 } // shuffle
@@ -140,20 +137,14 @@ int main( int argc, char *argv[] ) {
     string token;
     string uAlloc;
 
-#ifdef __U_DEBUG_H__
-    cerr << "u++:" << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "u++:" << endl; )
 
     // process command-line arguments
 
     for ( int i = 1; i < argc; i += 1 ) {
-#ifdef __U_DEBUG_H__
-	cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	arg = argv[i];					// convert to string value
-#ifdef __U_DEBUG_H__
-	cerr << "arg:\"" << arg << "\"" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
 	if ( prefix( arg, "-" ) ) {
 	    // pass through arguments
 
@@ -303,13 +294,18 @@ int main( int argc, char *argv[] ) {
 	} // if
     } // for
 
-#ifdef __U_DEBUG_H__
-    cerr << "args:";
-    for ( int i = 1; i < nargs; i += 1 ) {
-	cerr << " " << args[i];
-    } // for
-    cerr << endl;
-#endif // __U_DEBUG_H__
+    if ( tcpu == "x86_64" ) {
+	args[nargs] = "-mcx16";				// allow double-wide CAA
+	nargs += 1;
+    } // if
+
+    uDEBUGPRT(
+	cerr << "args:";
+	for ( int i = 1; i < nargs; i += 1 ) {
+	    cerr << " " << args[i];
+	} // for
+	cerr << endl;
+    )
 
     if ( cpp_flag && upp_flag ) {
 	cerr << argv[0] << " error, cannot use -E and -U++ flags together." << endl;
@@ -397,9 +393,7 @@ int main( int argc, char *argv[] ) {
 		    numOfDir += dirs[i].used;		// handle repeats
 		    dirs[i].used = 0;
 		    *dirs[i].dirname = dirname;
-#ifdef __U_DEBUG_H__
-		    cerr << dirkind << equal << dirname << endl;
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( cerr << dirkind << equal << dirname << endl; )
 		} // for
 	      fini:
 		if ( numOfDir != dirnum ) {
@@ -722,10 +716,12 @@ int main( int argc, char *argv[] ) {
 	nargs += 1;
     } // if
 
+#ifdef __linux__
     args[nargs] = "-Xlinker";				// used by backtrace
     nargs += 1;
     args[nargs] = "-export-dynamic";
     nargs += 1;
+#endif // __linux__
 
     // execute the compilation command
 
@@ -783,13 +779,13 @@ int main( int argc, char *argv[] ) {
 
     args[nargs] = nullptr;				// terminate with null
 
-#ifdef __U_DEBUG_H__
-    cerr << "nargs: " << nargs << endl;
-    cerr << "args:" << endl;
-    for ( int i = 0; args[i] != nullptr; i += 1 ) {
-	cerr << " \"" << args[i] << "\"" << endl;
-    } // for
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	cerr << "nargs: " << nargs << endl;
+	cerr << "args:" << endl;
+	for ( int i = 0; args[i] != nullptr; i += 1 ) {
+	    cerr << " \"" << args[i] << "\"" << endl;
+	} // for
+    )
 
     if ( ! quiet ) {
 	cerr << "uC++ " << "Version " << Version << heading << endl;

@@ -59,12 +59,12 @@ uProcessor processor1( cluster1 );
 uCluster cluster2( "cluster2" );
 uProcessor processor2( cluster2 );
 
-void uMain::main() {
+int main() {
     {
 	Worker task1( uThisCluster(), cluster1, cluster2 ), task2( cluster2, uThisCluster(), cluster1 ), task3( cluster1, cluster2, uThisCluster() );
     }
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Migrate.cc" //

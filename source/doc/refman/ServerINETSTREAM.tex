@@ -1,6 +1,6 @@
 % Remember to use the lgrind style
 
-\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1IO\1ServerINETSTREAM.cc},{22:15},{Dec 21 2016}
+\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1IO\1ServerINETSTREAM.cc},{11:26},{Jul  8 2017}
 \L{\LB{\C{}\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\-\*\-\0Mode:\0C++\0\-\*\-\0}}
 \CE{}\L{\LB{\C{}\1\1\0}}
 \CE{}\L{\LB{\C{}\1\1\0uC++\0Version\07.0.0,\0Copyright\0(C)\0Peter\0A.\0Buhr\01994}}
@@ -11,8 +11,8 @@
 \CE{}\L{\LB{\C{}\1\1\0Author\0\0\0\0\0\0\0\0\0\0\0:\0Peter\0A.\0Buhr}}
 \CE{}\L{\LB{\C{}\1\1\0Created\0On\0\0\0\0\0\0\0:\0Tue\0Jan\0\07\008:40:22\01992}}
 \CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0By\0:\0Peter\0A.\0Buhr}}
-\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Wed\0Dec\021\022:15:41\02016}}
-\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\0191}}
+\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Mon\0Jan\023\014:39:20\02017}}
+\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\0192}}
 \CE{}\L{\LB{\C{}\1\1}}
 \CE{}\L{\LB{\C{}\1\1\0This\0\0library\0is\0free\0\0software;\0you\0\0can\0redistribute\0\0it\0and\1or\0\0modify\0it}}
 \CE{}\L{\LB{\C{}\1\1\0under\0the\0terms\0of\0the\0GNU\0Lesser\0General\0Public\0License\0as\0published\0by\0the}}
@@ -98,14 +98,14 @@
 \CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0;;\0)\0\{}}
 \L{\LB{}\Tab{12}{\V{len}\0=\0\V{acceptor}.\V{read}(\0\V{buf},\0\K{sizeof}(\V{buf})\0);}\Tab{56}{\C{}\1\1\0read\0byte\0from\0client}}
 \CE{}\L{\LB{}\Tab{12}{\C{}\1\1\0osacquire(\0cerr\0)\0\<\<\0\"Server::acceptor\0read\0len:\"\0\<\<\0len\0\<\<\0endl;}}
-\CE{}\L{\LB{}\Tab{8}{\0\0\K{if}\0(\0\V{len}\0==\00\0)\0\V{uAbort}(\0\S{}\"server\0\%d\0:\0EOF\0ecountered\0without\0EOD\"\SE{},\0\V{getpid}()\0);}}
+\CE{}\L{\LB{}\Tab{8}{\0\0\K{if}\0(\0\V{len}\0==\00\0)\0\V{abort}(\0\S{}\"server\0\%d\0:\0EOF\0ecountered\0without\0EOD\"\SE{},\0\V{getpid}()\0);}}
 \L{\LB{}\Tab{12}{\V{acceptor}.\V{write}(\0\V{buf},\0\V{len}\0);}\Tab{56}{\C{}\1\1\0write\0byte\0back\0to\0client}}
 \CE{}\L{\LB{}\Tab{12}{\C{}\1\1\0The\0EOD\0character\0can\0be\0piggy\-backed\0onto\0the\0end\0of\0the\0message.}}
 \CE{}\L{\LB{}\Tab{8}{\0\0\K{if}\0(\0\V{buf}[\V{len}\0\-\01]\0==\0\V{EOD}\0)\0\K{break};}\Tab{56}{\C{}\1\1\0end\0of\0data\0?}}
 \CE{}\L{\LB{}\Tab{8}{\}\0\C{}\1\1\0for}}
 \CE{}\L{\LB{}\Tab{8}{\V{len}\0=\0\V{acceptor}.\V{read}(\0\V{buf},\0\K{sizeof}(\V{buf})\0);}\Tab{56}{\C{}\1\1\0read\0EOT\0from\0client}}
 \CE{}\L{\LB{}\Tab{8}{\K{if}\0(\0\V{len}\0!=\01\0\&\&\0\V{buf}[0]\0!=\0\V{EOT}\0)\0\{}}
-\L{\LB{}\Tab{12}{\V{uAbort}(\0\S{}\"server\0\%d\0:\0failed\0to\0read\0EOT\"\SE{},\0\V{getpid}()\0);}}
+\L{\LB{}\Tab{12}{\V{abort}(\0\S{}\"server\0\%d\0:\0failed\0to\0read\0EOT\"\SE{},\0\V{getpid}()\0);}}
 \L{\LB{}\Tab{8}{\}\0\C{}\1\1\0if}}
 \CE{}\L{\LB{}\Tab{8}{\V{server}.\V{complete}(\0\K{this},\0\K{false}\0);}\Tab{56}{\C{}\1\1\0terminate}}
 \CE{}\L{\LB{}\Tab{4}{\}\0\K{catch}(\0\V{uSocketAccept}::\V{OpenTimeout}\0)\0\{}}
@@ -113,7 +113,7 @@
 \CE{}\L{\LB{}\Tab{4}{\}\0\C{}\1\1\0try}}
 \CE{}\L{\LB{\}\0\C{}\1\1\0Acceptor::main}}
 \CE{}\L{\LB{}}
-\L{\LB{\K{void}\0\V{uMain}::\V{main}()\0\{}}
+\L{\LB{\K{int}\0\V{main}(\0\K{int}\0\V{argc},\0\K{char}\0\*\V{argv}[\,]\0)\0\{}}
 \L{\LB{}\Tab{4}{\K{switch}\0(\0\V{argc}\0)\0\{}}
 \L{\LB{}\Tab{4}{\0\0\K{case}\01:}}
 \L{\LB{}\Tab{8}{\K{break};}}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 19 10:33:58 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:48:38 2016
-// Update Count     : 18
+// Last Modified On : Sat Jan 28 09:56:22 2017
+// Update Count     : 19
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,7 +44,7 @@ _Task worker {
 	  case EXIT:
 	    exit( EXIT );
 	  case UABORT:
-	    uAbort( "worker %d %s", UABORT, "text" );
+	    abort( "worker %d %s", UABORT, "text" );
 	  case EXPLODE:
 	    kill( getpid(), SIGKILL );
 	    for ( ;; ) {}				// delay until signal delivered to some kernel thread
@@ -60,7 +60,7 @@ _Task worker {
     worker( uCluster &c ) : uBaseTask( c ) {}
 }; // worker
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     if ( argc <= 1 ) {
         cerr << "usage: " << argv[0] << " [0-7]" << endl;
 	exit( EXIT_FAILURE );
@@ -83,4 +83,4 @@ void uMain::main() {
 	uSemaphore s( 0 );
 	s.P();
     } // switch
-} // uMain::main
+} // main

@@ -59,7 +59,7 @@ _Task Worker {
 }; // Worker
 
 
-void uMain::main() {
+int main() {
     const unsigned int NoOfTasks = 3;
 
     uCluster *clusters[NoOfClusters];
@@ -88,7 +88,7 @@ void uMain::main() {
     } // for
 
     cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Migrate.cc" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Dec 15 14:05:51 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 21 11:13:15 2016
-// Update Count     : 271
+// Last Modified On : Wed Jan 11 23:05:54 2017
+// Update Count     : 272
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -117,7 +117,7 @@ namespace UPP {
 
     // optimizations for hardware supported integral types
 
-    template<unsigned int nbits> class uBitSetType;
+    template<unsigned int nbits> struct uBitSetType;
 
     template<> struct uBitSetType< sizeof( uint32_t ) * CHAR_BIT > {
 	typedef uint32_t type;

@@ -83,13 +83,13 @@ void uTime::uCreateTime( int year, int month, int day, int hour, int min, int se
 #endif // __freebsd__
 #ifdef __U_DEBUG__
     if ( epochsec == (time_t)-1 ) {
-	uAbort( uCreateFmt, year, month, day, hour, min, sec, nsec );
+	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
     } // if
 #endif // __U_DEBUG__
     tv = (long long int)(epochsec) * TIMEGRAN + nsec;	// convert to nanoseconds
 #ifdef __U_DEBUG__
     if ( tv > 2147483647LL * TIMEGRAN ) {		// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	uAbort( uCreateFmt, year, month, day, hour, min, sec, nsec );
+	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
     } // if
 #endif // __U_DEBUG__
 } // uTime::uCreateTime

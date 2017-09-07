@@ -75,7 +75,7 @@ template<typename T> class uFlexArray {
 	if ( 0 <= pos && pos < NoOfElems ) {		// in range ?
 	    return elems[pos];
 	} else {
-	    uAbort( "uFlexArray::[] : Attempt to subscript an element at position %d in an array of size 0 to %d.", pos, NoOfElems - 1 );
+	    abort( "uFlexArray::[] : Attempt to subscript an element at position %d in an array of size 0 to %d.", pos, NoOfElems - 1 );
 	} // if
     } // uFlexArray::operator[]
     
@@ -103,7 +103,7 @@ template<typename T> class uFlexArray {
 	    } // for
 	    NoOfElems -= 1;
 	} else {
-	    uAbort( "uFlexArray::remove : Attempt to remove an element at position %d in an array of size 0 to %d.", pos, NoOfElems - 1 );
+	    abort( "uFlexArray::remove : Attempt to remove an element at position %d in an array of size 0 to %d.", pos, NoOfElems - 1 );
 	} // if
     } // uFlexArray::remove
 

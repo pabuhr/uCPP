@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Sun Jan  9 16:09:19 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:27:03 2016
-// Update Count     : 14
+// Last Modified On : Sun Jan 22 22:58:19 2017
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,7 +32,7 @@ using std::endl;
 _Cormonitor CM {
     void main() {
 	osacquire( cout ) << uThisTask().getName() << " (" << &uThisTask() << ") " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") " << this << " CM::main enter" << endl;
-	uThisTask().yield();
+	uBaseTask::yield();
 	osacquire( cout ) << uThisTask().getName() << " (" << &uThisTask() << ") " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") " << this << " CM::main exit" << endl;
     } // CM::main
   public:
@@ -77,8 +77,8 @@ _Task T {
     } // T::T
 }; // T
 
-void uMain::main() {
+int main() {
     CM cm;
     C c( cm );
     T t1( c, "T1" ), t2( c, "T2" );
-} // uMain::main
+} // main

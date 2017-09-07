@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Sep 15 18:19:38 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:28:47 2016
-// Update Count     : 76
+// Last Modified On : Sun Jan 22 21:50:50 2017
+// Update Count     : 77
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -68,7 +68,7 @@ _Task consumer {
 	} // consumer::consumer
 }; // consumer
 
-void uMain::main() {
+int main() {
 	const int NoOfCons = 2, NoOfProds = 3;
 	BoundedBuffer<int> buf;								// create a buffer monitor
 	consumer *cons[NoOfCons];							// pointer to an array of consumers
@@ -92,7 +92,7 @@ void uMain::main() {
 	} // for
 
 	cout << "successful completion" << endl;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

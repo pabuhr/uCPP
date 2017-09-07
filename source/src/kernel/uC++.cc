@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 13:52:29 2016
-// Update Count     : 2998
+// Last Modified On : Wed Sep  6 13:00:08 2017
+// Update Count     : 3101
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,7 +38,8 @@
 #endif // __U_STATISTICS__
 
 #include <uDebug.h>					// access: uDebugWrite
-#undef __U_DEBUG_H__					// turn off debug prints
+#undef uDEBUGPRT					// turn off debug prints
+#define uDEBUGPRT( stmt )
 
 #include <iostream>
 #include <exception>
@@ -210,9 +211,7 @@ void UPP::Statistics::print() {
 
 
 bool uKernelModule::kernelModuleInitialized = false;
-#ifdef __U_DEBUG__
-bool uKernelModule::initialized = false;
-#endif // __U_DEBUG__
+uDEBUG( bool uKernelModule::initialized = false; )
 bool uKernelModule::coreDumped = false;
 #ifndef __U_MULTI__
 bool uKernelModule::deadlock = false;
@@ -248,7 +247,11 @@ uClusterSeq *uKernelModule::globalClusters = nullptr;
 bool uKernelModule::afterMain = false;
 int uKernelModule::retCode = 0;
 
-size_t uMachContext::pageSize = 0;
+size_t uMachContext::pageSize;				// architecture pagesize
+#if defined( __i386__ ) || defined( __x86_64__ )
+uint16_t uMachContext::fncw;				// floating/MMX control masks
+uint32_t uMachContext::mxcsr;
+#endif // __i386__ || __x86_64__
 
 #ifdef __U_FLOATINGPOINTDATASIZE__
 int uFloatingPointContext::uniqueKey = 0;
@@ -278,9 +281,9 @@ extern "C" void pthread_pid_destroy_( void );
 // The main routine that gets the first task started with the OS supplied arguments, waits for its completion, and
 // returns the result code to the OS.  Define in this translation unit so it cannot be replaced by a user.
 
-int main( int argc, char *argv[] ) {
+int uCpp_real_main( int argc, char *argv[], char *env[] ) {
     {
-	uMain uUserMain( argc, argv, uKernelModule::retCode ); // created on user cluster
+	uMain uUserMain( argc, argv, env, uKernelModule::retCode ); // created on user cluster
     }
 
     uKernelModule::afterMain = true;
@@ -303,7 +306,7 @@ void uKernelFailure::defaultTerminate() const {
     char msg[sizeof(uKernelFailureSuffixMsg) - 1 + uEHMMaxName];
     strcpy( msg, uKernelFailureSuffixMsg );
     uEHM::getCurrentEventName( uBaseEvent::ThrowRaise, msg + sizeof(uKernelFailureSuffixMsg) - 1, uEHMMaxName );
-    uAbort( "%s%s%s", msg, strlen( message() ) == 0 ? "" : " : ", message() );
+    abort( "%s%s%s", msg, strlen( message() ) == 0 ? "" : " : ", message() );
 } // uKernelFailure::defaultTerminate
 
 
@@ -322,10 +325,10 @@ uMutexFailure::EntryFailure::~EntryFailure() {}
 
 void uMutexFailure::EntryFailure::defaultTerminate() const {
     if ( src == nullptr ) {				// raised synchronously ?
-	uAbort( "(uSerial &)%p : Entry failure while executing mutex destructor: %.256s.",
+	abort( "(uSerial &)%p : Entry failure while executing mutex destructor: %.256s.",
 		serialId(), message() );
     } else {
-	uAbort( "(uSerial &)%p : Entry failure while executing mutex destructor: task %.256s (%p) found %.256s.",
+	abort( "(uSerial &)%p : Entry failure while executing mutex destructor: task %.256s (%p) found %.256s.",
 		serialId(), sourceName(), &source(), message() );
     } // if
 } // uMutexFailure::EntryFailure::defaultTerminate
@@ -338,7 +341,7 @@ uMutexFailure::RendezvousFailure::~RendezvousFailure() {}
 const uBaseCoroutine *uMutexFailure::RendezvousFailure::caller() const { return caller_; }
 
 void uMutexFailure::RendezvousFailure::defaultTerminate() const {
-    uAbort( "(uSerial &)%p : Rendezvous failure in %.256s from task %.256s (%p) to mutex member of task %.256s (%p).",
+    abort( "(uSerial &)%p : Rendezvous failure in %.256s from task %.256s (%p) to mutex member of task %.256s (%p).",
 	    serialId(), message(), sourceName(), &source(), uThisTask().getName(), &uThisTask() );
 } // uMutexFailure::RendezvousFailure::defaultTerminate
 
@@ -376,7 +379,7 @@ void uBaseSpinLock::acquire_( bool rollforward ) {
 
 #if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
     if ( value != 0 ) {					// locked ?
-	uAbort( "(uSpinLock &)%p.acquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
+	abort( "(uSpinLock &)%p.acquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
     } // if
 #endif // __U_DEBUG__ && ! __U_MULTI__
 
@@ -425,7 +428,7 @@ void uBaseSpinLock::acquire_( bool rollforward ) {
 bool uBaseSpinLock::tryacquire() {
 #if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
     if ( value != 0 ) {					// locked ?
-	uAbort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
+	abort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
     } // if
 #endif // __U_DEBUG__ && ! __U_MULTI__
 
@@ -507,17 +510,17 @@ void uOwnerLock::release_() {				// used by uCondLock::wait
 } // uOwnerLock::release_
 
 
-#ifdef __U_DEBUG__
-uOwnerLock::~uOwnerLock() {
-    spinLock.acquire();
-    if ( ! waiting.empty() ) {
-	uBaseTask *task = &(waiting.head()->task());	// waiting list could change as soon as spin lock released
+uDEBUG(
+    uOwnerLock::~uOwnerLock() {
+	spinLock.acquire();
+	if ( ! waiting.empty() ) {
+	    uBaseTask *task = &(waiting.head()->task());	// waiting list could change as soon as spin lock released
+	    spinLock.release();
+	    abort( "Attempt to delete owner lock with task %.256s (%p) still on it.", task->getName(), task );
+	} // if
 	spinLock.release();
-	uAbort( "Attempt to delete owner lock with task %.256s (%p) still on it.", task->getName(), task );
-    } // if
-    spinLock.release();
-} // uOwnerLock::uOwnerLock
-#endif // __U_DEBUG__
+    } // uOwnerLock::uOwnerLock
+)
 
 
 void uOwnerLock::acquire() {
@@ -580,21 +583,21 @@ void uOwnerLock::release() {
     assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
 
     spinLock.acquire();
-#ifdef __U_DEBUG__
-    if ( owner_ == nullptr ) {
-	spinLock.release();
-	uAbort( "Attempt to release owner lock (%p) that is not locked.", this );
-    } // if
-    if ( owner_ == (uBaseTask *)-1 ) {
-	spinLock.release();
-	uAbort( "Attempt to release owner lock (%p) that is in an invalid state. Possible cause is the lock has been freed.", this );
-    } // if
-    if ( owner_ != &uThisTask() ) {
-	uBaseTask *prev = owner_;			// owner could change as soon as spin lock released
-	spinLock.release();
-	uAbort( "Attempt to release owner lock (%p) that is currently owned by task %.256s (%p).", this, prev->getName(), prev );
-    } // if
-#endif // __U_DEBUG__
+    uDEBUG(
+	if ( owner_ == nullptr ) {
+	    spinLock.release();
+	    abort( "Attempt to release owner lock (%p) that is not locked.", this );
+	} // if
+	if ( owner_ == (uBaseTask *)-1 ) {
+	    spinLock.release();
+	    abort( "Attempt to release owner lock (%p) that is in an invalid state. Possible cause is the lock has been freed.", this );
+	} // if
+	if ( owner_ != &uThisTask() ) {
+	    uBaseTask *prev = owner_;			// owner could change as soon as spin lock released
+	    spinLock.release();
+	    abort( "Attempt to release owner lock (%p) that is currently owned by task %.256s (%p).", this, prev->getName(), prev );
+	} // if
+    )
     count -= 1;						// release the lock
     if ( count == 0 ) {					// if this is the last
 	if ( ! waiting.empty() ) {			// waiting tasks ?
@@ -615,28 +618,28 @@ void uOwnerLock::release() {
 //######################### uCondLock #########################
 
 
-#ifdef __U_DEBUG__
-uCondLock::~uCondLock() {
-    spinLock.acquire();
-    if ( ! waiting.empty() ) {
-	uBaseTask *task = &(waiting.head()->task());
+uDEBUG(
+    uCondLock::~uCondLock() {
+	spinLock.acquire();
+	if ( ! waiting.empty() ) {
+	    uBaseTask *task = &(waiting.head()->task());
+	    spinLock.release();
+	    abort( "Attempt to delete condition lock with task %.256s (%p) still blocked on it.", task->getName(), task );
+	} // if
 	spinLock.release();
-	uAbort( "Attempt to delete condition lock with task %.256s (%p) still blocked on it.", task->getName(), task );
-    } // if
-    spinLock.release();
-} // uCondLock::uCondLock
-#endif // __U_DEBUG__
+    } // uCondLock::uCondLock
+)
 
 
 void uCondLock::wait( uOwnerLock &lock ) {
     uBaseTask &task = uThisTask();			// optimization
-#ifdef __U_DEBUG__
-    uBaseTask *owner = lock.owner();			// owner could change
-    if ( owner != &task ) {
-	uAbort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
-		task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
-    } // if
-#endif // __U_DEBUG__
+    uDEBUG(
+	uBaseTask *owner = lock.owner();		// owner could change
+	if ( owner != &task ) {
+	    abort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
+		   task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
+	} // if
+    )
     task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
     unsigned int prevcnt = lock.count;			// remember this lock's recursive count before blocking
     spinLock.acquire();
@@ -658,20 +661,18 @@ bool uCondLock::wait( uOwnerLock &lock, uDuration duration ) {
 
 bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     uBaseTask &task = uThisTask();			// optimization
-#ifdef __U_DEBUG__
-    uBaseTask *owner = lock.owner();			// owner could change
-    if ( owner != &task ) {
-	uAbort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
-		task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
-    } // if
-#endif // __U_DEBUG__
+    uDEBUG(
+	uBaseTask *owner = lock.owner();		// owner could change
+	if ( owner != &task ) {
+	    abort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
+		   task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
+	} // if
+    )
     task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
     unsigned int prevcnt = lock.count;			// remember this lock's recursive count before blocking
     spinLock.acquire();
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCondLock &)%p.wait, task:%p\n", this, &task );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCondLock &)%p.wait, task:%p\n", this, &task ); )
 
     TimedWaitHandler handler( task, *this );		// handler to wake up blocking task
     uEventNode timeoutEvent( task, handler, time, 0 );
@@ -693,15 +694,14 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
 } // uCondLock::wait
 
 
-void uCondLock::waitTimeout( uBaseTask &task, TimedWaitHandler &h ) {
+void uCondLock::waitTimeout( TimedWaitHandler &h ) {
     // This uCondLock member is called from the kernel, and therefore, cannot block, but it can spin.
 
     spinLock.acquire();
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCondLock &)%p.waitTimeout, task:%p\n", this, &task );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCondLock &)%p.waitTimeout, task:%p\n", this, &task ); )
+    uBaseTask &task = *h.getThis();			// optimization
     if ( task.entryRef.listed() ) {			// is task on queue
-	waiting.remove( &(task.entryRef) );		// remove task at head of waiting list
+	waiting.remove( &(task.entryRef) );		// remove this task O(1)
 	h.timedout = true;
 	spinLock.release();
 	task.ownerLock->add_( task );			// restart it or chain to its owner lock
@@ -711,19 +711,20 @@ void uCondLock::waitTimeout( uBaseTask &task, TimedWaitHandler &h ) {
 } // uCondLock::waitTimeout
 
 
-void uCondLock::signal() {
+bool uCondLock::signal() {
     spinLock.acquire();
     if ( waiting.empty() ) {				// signal on empty condition is no-op
 	spinLock.release();
-	return;
+	return false;
     } // if
     uBaseTask &task = waiting.dropHead()->task();	// remove task at head of waiting list
     spinLock.release();
     task.ownerLock->add_( task );			// restart it or chain to its owner lock
+    return true;
 } // uCondLock::signal
 
 
-void uCondLock::broadcast() {
+bool uCondLock::broadcast() {
     // It is impossible to chain the entire waiting list to the associated owner lock because each wait can be on a
     // different owner lock. Hence, each task has to be individually processed to move it onto the correct owner lock.
 
@@ -731,10 +732,12 @@ void uCondLock::broadcast() {
     spinLock.acquire();
     temp.transfer( waiting );
     spinLock.release();
-    while ( ! temp.empty() ) {
+  if ( temp.empty() ) return false;
+    do {
 	uBaseTask &task = temp.dropHead()->task();	// remove task at head of waiting list
 	task.ownerLock->add_( task );			// restart it or chain to its owner lock
-    } // while
+    } while ( ! temp.empty() );
+    return true;
 } // uCondLock::broadcast
 
 
@@ -743,9 +746,7 @@ void uCxtSwtchHndlr::handler() {
     // signal handler stack frame on the current stack, and it is unclear what the semantics are for abnormally
     // terminating that frame.
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uCxtSwtchHndlr &)%p.handler yield task:%p\n", this, &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uCxtSwtchHndlr &)%p.handler yield task:%p\n", this, &uThisTask() ); )
 
 #if defined( __U_MULTI__ )
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
@@ -764,7 +765,7 @@ void uCxtSwtchHndlr::handler() {
 #if defined( __freebsd__ )
       if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
     } // if
-    if ( retcode == -1 ) uAbort( "(uCxtSwtchHndlr &)%p.handler() : internal error, pthread_kill failed, error(%d) %s.", this, errno, strerror( errno ) );
+    if ( retcode == -1 ) abort( "(uCxtSwtchHndlr &)%p.handler() : internal error, pthread_kill failed, error(%d) %s.", this, errno, strerror( errno ) );
     THREAD_GETMEM( This )->enableInterrupts();
 #endif // __freebsd__
 
@@ -785,7 +786,7 @@ uCondLock::TimedWaitHandler::TimedWaitHandler( uCondLock &condlock ) : condlock(
 } // uCondLock::TimedWaitHandler::TimedWaitHandler
 
 void uCondLock::TimedWaitHandler::handler() {
-    condlock.waitTimeout( *This, *this );
+    condlock.waitTimeout( *this );
 } // uCondLock::TimedWaitHandler::handler
 
 
@@ -879,7 +880,7 @@ int uBasePrioritySeq::reposition( uBaseTask &task, UPP::uSerial &serial ) {
 
 
 uRepositionEntry::uRepositionEntry( uBaseTask &blocked, uBaseTask &calling ) :
-	blocked( blocked ), calling( calling ), bSerial( blocked.getSerial() ), cSerial( calling.getSerial() ) {
+	blocked( blocked ), bSerial( blocked.getSerial() ), cSerial( calling.getSerial() ) {
 } // uRepositionEntry::uRepositionEntry
 
 int uRepositionEntry::uReposition( bool relCallingLock ) {
@@ -921,7 +922,7 @@ int uRepositionEntry::uReposition( bool relCallingLock ) {
 
 #define INIT_REALRTN( x, ver ) x = (__typeof__(x))interposeSymbol( #x, ver )
 
-namespace UPP {    
+namespace UPP {
     void *RealRtn::interposeSymbol( const char *symbolName, const char *version ) {
 	static void *library;
 	const char *error;
@@ -934,7 +935,7 @@ namespace UPP {
 	    library = dlopen( "libstdc++.so", RTLD_LAZY );
 	    error = dlerror();
 	    if ( error != nullptr ) {
-		uAbort( "RealRtn::interposeSymbol : internal error, %s\n", error );
+		abort( "RealRtn::interposeSymbol : internal error, %s\n", error );
 	    } // if
 #endif // RTLD_NEXT
 	} // if
@@ -949,14 +950,15 @@ namespace UPP {
 #endif // __linux__
 	error = dlerror();
 	if ( error != nullptr ) {
-	    uAbort( "RealRtn::interposeSymbol : internal error, %s\n", error );
+	    ::abort( "RealRtn::interposeSymbol : internal error, %s\n", error );
 	} // if
 	return originalFunc;
     } // RealRtn::interposeSymbol
     
     
     __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
-    __typeof__( ::abort ) *RealRtn::abort __attribute__(( noreturn ));
+    // cannot use typeof for abort here because it is now overloaded => explicitly select builtin abort
+    void (*RealRtn::abort)(void) __attribute__(( noreturn ));
     __typeof__( ::pselect ) *RealRtn::pselect;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
@@ -1064,11 +1066,10 @@ void uKernelModule::uKernelModuleData::ctor() volatile {
 
 
 void uKernelModule::rollForward( bool inKernel ) {
-#ifdef __U_DEBUG_H__
-    char buffer[256];
-    uDebugPrtBuf( buffer, "rollForward( %d ), disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d, RFpending:%d, RFinprogress:%d\n",
-		  inKernel, THREAD_GETMEM(disableInt), THREAD_GETMEM(disableIntCnt), THREAD_GETMEM(disableIntSpin), THREAD_GETMEM(disableIntSpinCnt), THREAD_GETMEM(RFpending), THREAD_GETMEM(RFinprogress) );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( char buffer[256];
+	      uDebugPrtBuf( buffer, "rollForward( %d ), disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d, RFpending:%d, RFinprogress:%d\n",
+			    inKernel, THREAD_GETMEM(disableInt), THREAD_GETMEM(disableIntCnt), THREAD_GETMEM(disableIntSpin), THREAD_GETMEM(disableIntSpinCnt),
+			    THREAD_GETMEM(RFpending), THREAD_GETMEM(RFinprogress) ); )
 
 #ifdef __U_STATISTICS__
     uFetchAdd( UPP::Statistics::roll_forward, 1 );
@@ -1089,9 +1090,7 @@ void uKernelModule::rollForward( bool inKernel ) {
     } // if
 #endif // __U_MULTI__
 
-#ifdef __U_DEBUG_H__
-    uDebugPrtBuf( buffer, "rollForward, leaving, RFinprogress:%d\n", THREAD_GETMEM( RFinprogress ) );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrtBuf( buffer, "rollForward, leaving, RFinprogress:%d\n", THREAD_GETMEM( RFinprogress ) ); )
 } // uKernelModule::rollForward
 
 
@@ -1177,10 +1176,9 @@ namespace UPP {
 	uBaseTask &task = uThisTask();			// optimization
 	spinLock.acquire();
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.enter enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.enter enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp ); )
+
 	if ( mask.isSet( mp ) ) {			// member acceptable ?
 	    mask.clrAll();				// clear the mask
 	    mr = task.mutexRecursion;			// save previous recursive count
@@ -1207,10 +1205,8 @@ namespace UPP {
 	    *mutexMaskLocn = mp;			// set accepted mutex member
 	    mutexMaskLocn = nullptr;			// mark as further mutex calls are not part of rendezvous
 	} // fi
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.enter exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.enter exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp ); )
     } // uSerial::enter
 
 
@@ -1219,7 +1215,7 @@ namespace UPP {
 	uBaseTask &task = uThisTask();			// optimization
 
 	if ( destructorStatus != NoDestructor ) {		// only one task is allowed to call destructor
-	    uAbort( "Attempt by task %.256s (%p) to call the destructor for uSerial %p, but this destructor was already called by task %.256s (%p).\n"
+	    abort( "Attempt by task %.256s (%p) to call the destructor for uSerial %p, but this destructor was already called by task %.256s (%p).\n"
 		    "Possible cause is multiple tasks simultaneously deleting a mutex object.",
 		    task.getName(), &task, this, destructorTask->getName(), destructorTask );
 	} // if
@@ -1229,10 +1225,8 @@ namespace UPP {
 	destructorStatus = DestrCalled;
 	destructorTask = &task;
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.enterDestructor enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.enterDestructor enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp ); )
 	if ( mask.isSet( mp ) ) {			// member acceptable ?
 	    mask.clrAll();				// clear the mask
 	    mr = task.mutexRecursion;			// save previous recursive count
@@ -1242,7 +1236,7 @@ namespace UPP {
 	    // hook is not executed for destructor
 	    spinLock.release();
 	} else if ( mutexOwner == &task ) {		// already hold mutex ?
-	    uAbort( "Attempt by task %.256s (%p) to call the destructor for uSerial %p, but this task has outstanding nested calls to this mutex object.\n"
+	    abort( "Attempt by task %.256s (%p) to call the destructor for uSerial %p, but this task has outstanding nested calls to this mutex object.\n"
 		    "Possible cause is deleting a mutex object with outstanding nested calls to one of its members.",
 		    task.getName(), &task, this );
 	} else {					// otherwise block the calling task
@@ -1255,10 +1249,8 @@ namespace UPP {
 	    *mutexMaskLocn = mp;			// set accepted mutex member
 	    mutexMaskLocn = nullptr;			// mark as further mutex calls are not part of rendezvous
 	} // fi
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.exitDestructor exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.exitDestructor exit, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p, ml:%p, mp:%d\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn, &ml, mp ); )
     } // uSerial::enterDestructor
 
 
@@ -1267,10 +1259,8 @@ namespace UPP {
 
 	spinLock.acquire();
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.enterTimeout enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.enterTimeout enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn ); )
 	if ( mask.isSet( __U_TIMEOUTPOSN__ ) ) {	// timeout member acceptable ?  0 => timeout mask bit
 	    mask.clrAll();				// clear the mask
 	    *mutexMaskLocn = 0;				// set timeout mutex member  0 => timeout mask bit
@@ -1283,9 +1273,7 @@ namespace UPP {
 		entryList.onAcquire( *mutexOwner );
 	    } // if
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uSerial &)%p.enterTimeout, waking task %.256s (%p) \n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.enterTimeout, waking task %.256s (%p) \n", this, mutexOwner->getName(), mutexOwner ); )
 	    mutexOwner->wake();				// wake up next task to use this mutex object
 	} // if
 
@@ -1297,10 +1285,8 @@ namespace UPP {
     // Throwing an exception out of these destructors causes problems.
 
     void uSerial::leave( unsigned int mr ) {		// used when a task is leaving a mutex and has not queued itself before calling
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.leave enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, mr:%u\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mr );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, mr:%u\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mr ); )
 	uBaseTask &task = uThisTask();			// optimization
 
 	if ( task.mutexRecursion != 0 ) {		// already hold mutex ?
@@ -1341,9 +1327,7 @@ namespace UPP {
 			} // if
 			if ( &task == destructorTask ) resetDestructorStatus();
 			spinLock.release();
-#ifdef __U_DEBUG_H__
-			uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+			uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 			mutexOwner->wake();		// wake up next task to use this mutex object
 		    } // if
 		} else {
@@ -1354,9 +1338,7 @@ namespace UPP {
 			// do not call acquire the hook for the destructor
 		    } // if
 		    spinLock.release();
-#ifdef __U_DEBUG_H__
-		    uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 		    mutexOwner->wake();			// wake up next task to use this mutex object
 		} // if
 	    } else {
@@ -1368,16 +1350,12 @@ namespace UPP {
 		    mutexOwner = &(acceptSignalled.drop()->task()); // next task to gain control of the mutex object
 		    if ( checkHookConditions( &task ) ) entryList.onRelease( task );
 		    if ( checkHookConditions( mutexOwner ) ) entryList.onAcquire( *mutexOwner );
-#ifdef __U_DEBUG_H__
-		    uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 		    mutexOwner->wake();			// wake up next task to use this mutex object
 		    if ( &task == destructorTask ) resetDestructorStatus();
 		    spinLock.release();
 		} else {
-#ifdef __U_DEBUG_H__
-		    uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 		    mutexOwner = &(acceptSignalled.drop()->task()); // next task to gain control of the mutex object
 		    if ( &task == destructorTask ) {
 			spinLock.acquire();
@@ -1390,9 +1368,7 @@ namespace UPP {
 	    task.mutexRecursion = mr;			// restore previous recursive count
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.leave, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n", this, mask[0], mask[1], mask[2], mask[3], mutexOwner );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n", this, mask[0], mask[1], mask[2], mask[3], mutexOwner ); )
     } // uSerial::leave
 
 
@@ -1426,9 +1402,7 @@ namespace UPP {
 			if ( checkHookConditions( &task ) ) entryList.onRelease( task );
 			if ( checkHookConditions( mutexOwner ) ) entryList.onAcquire( *mutexOwner );
 		    } // if
-#ifdef __U_DEBUG_H__
-		    uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 		    uProcessorKernel::schedule( &spinLock, mutexOwner ); // find someone else to execute; release lock and wake on kernel stack
 		} // if
 	    } else {
@@ -1438,18 +1412,14 @@ namespace UPP {
 		    if ( checkHookConditions( &task ) ) entryList.onRelease( task );
 		    // do not call acquire the hook for the destructor
 		} // if
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 		uProcessorKernel::schedule( &spinLock, mutexOwner ); // find someone else to execute; release lock and wake on kernel stack
 	    } // if
 	} else {
 	    // priority-inheritance, bump up priority of mutexowner from head of prioritized entry queue (NOT leaving
 	    // task), because suspended stack is not prioritized.
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave2, waking task %.256s (%p)\n", this, mutexOwner->getName(), mutexOwner ); )
 	    if ( entryList.executeHooks ) {
 		spinLock.acquire();
 		mutexOwner = &(acceptSignalled.drop()->task()); // next task to gain control of the mutex object
@@ -1461,10 +1431,8 @@ namespace UPP {
 		uProcessorKernel::schedule( mutexOwner ); // find someone else to execute; wake on kernel stack
 	    } // if
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.leave2, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.leave2, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner ); )
     } // uSerial::leave2
 
 
@@ -1488,13 +1456,12 @@ namespace UPP {
 #if defined( __U_DEBUG__ ) || defined( __U_PROFILER__ )
 	uBaseTask &task = uThisTask();			// optimization
 #endif // __U_DEBUG__ || __U_PROFILER__
-#ifdef __U_DEBUG__
-	if ( &task != mutexOwner ) {			// must have mutex lock to wait
-	    uAbort( "Attempt to accept in a mutex object not locked by this task.\n"
-		    "Possible cause is accepting in a nomutex member routine." );
-	} // if
-#endif // __U_DEBUG__
-
+	uDEBUG(
+	    if ( &task != mutexOwner ) {		// must have mutex lock to wait
+		abort( "Attempt to accept in a mutex object not locked by this task.\n"
+		       "Possible cause is accepting in a nomutex member routine." );
+	    } // if
+	)
 #ifdef __U_PROFILER__
 	if ( task.profileActive && uProfiler::uProfiler_registerAcceptStart ) { // task registered for profiling ?
 	    (*uProfiler::uProfiler_registerAcceptStart)( uProfiler::profilerInstance, *this, task );
@@ -1503,18 +1470,14 @@ namespace UPP {
 
 	uSerial::mutexMaskLocn = &mutexMaskLocn;
 	acceptLocked = false;
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptStart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, &mutexMaskLocn );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptStart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, &mutexMaskLocn ); )
     } // uSerial::acceptStart
 
 
     bool uSerial::acceptTry( uBasePrioritySeq &ml, int mp ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptTry enter, mask:0x%x,0x%x,0x%x,0x%x, ml:%p, mp:%d\n",
-		   this, mask[0], mask[1], mask[2], mask[3], &ml, mp );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptTry enter, mask:0x%x,0x%x,0x%x,0x%x, ml:%p, mp:%d\n",
+			      this, mask[0], mask[1], mask[2], mask[3], &ml, mp ); )
 	if ( ! acceptLocked ) {				// lock is acquired on demand
 	    spinLock.acquire();
 	    mask.clrAll();
@@ -1622,10 +1585,8 @@ namespace UPP {
 
 
     void uSerial::acceptPause() {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptPause enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptPause enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner ); )
 	// lock is acquired at beginning of accept statement
 	uBaseTask &task = uThisTask();			// optimization
 	lastAcceptor = &task;				// saving the acceptor thread of a rendezvous
@@ -1641,10 +1602,8 @@ namespace UPP {
 	    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
 	    task.acceptedCall = nullptr;
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptPause restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptPause restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn ); )
 	_Enable <uMutexFailure>;			// implicit poll
     } // uSerial::acceptPause
 
@@ -1655,10 +1614,8 @@ namespace UPP {
 
 
     void uSerial::acceptPause( uTime time ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptPause( time ) enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptPause( time ) enter, mask:0x%x,0x%x,0x%x,0x%x, owner:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner ); )
 	// lock is acquired at beginning of accept statement
 	uBaseTask &task = uThisTask();			// optimization
 	uTimeoutHndlr handler( task, *this );		// handler to wake up blocking task
@@ -1685,10 +1642,8 @@ namespace UPP {
 	    task.acceptedCall->acceptorSuspended = false; // acceptor resumes
 	    task.acceptedCall = nullptr;
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerial &)%p.acceptPause( time ) restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
-		   this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerial &)%p.acceptPause( time ) restart, mask:0x%x,0x%x,0x%x,0x%x, owner:%p, maskposn:%p\n",
+			      this, mask[0], mask[1], mask[2], mask[3], mutexOwner, mutexMaskLocn ); )
 	_Enable <uMutexFailure>;			// implicit poll
     } // uSerial::acceptPause
 
@@ -1705,15 +1660,11 @@ namespace UPP {
 
 
     uSerialConstructor::uSerialConstructor( uAction f, uSerial &serial ) : f( f ), serial( serial ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p\n", this, f, &serial );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p\n", this, f, &serial ); )
     } // uSerialConstructor::uSerialConstructor
 
     uSerialConstructor::uSerialConstructor( uAction f, uSerial &serial, const char *n ) : f( f ), serial( serial ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p, n:%s\n", this, f, &serial, n );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p, n:%s\n", this, f, &serial, n ); )
 
 #ifdef __U_PROFILER__
 	if ( f == uYes ) {
@@ -1726,9 +1677,7 @@ namespace UPP {
 
 
     uSerialConstructor::~uSerialConstructor() {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uSerialConstructor &)%p.~uSerialConstructor\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.~uSerialConstructor\n", this ); )
 	if ( f == uYes && ! std::uncaught_exception() ) {
 	    uBaseTask &task = uThisTask();		// optimization
 
@@ -1741,9 +1690,7 @@ namespace UPP {
     uSerialDestructor::uSerialDestructor( uAction f, uSerial &serial, uBasePrioritySeq &ml, int mp ) : f( f ) {
 	if ( f == uYes ) {
 	    uBaseTask &task = uThisTask();		// optimization
-#ifdef __U_DEBUG__
-	    nlevel = task.currSerialLevel += 1;
-#endif // __U_DEBUG__
+	    uDEBUG( nlevel = task.currSerialLevel += 1; )
 	    serial.prevSerial = &task.getSerial();	// save previous serial
 	    task.setSerial( serial );			// set new serial
 
@@ -1765,12 +1712,12 @@ namespace UPP {
 	    uSerial &serial = task.getSerial();		// get current serial
 	    // Useful for dynamic allocation if an exception is thrown in the destructor so the object can continue to
 	    // be used and deleted again.
-#ifdef __U_DEBUG__
-	    if ( nlevel != task.currSerialLevel ) {
-		uAbort( "Attempt to perform a non-nested entry and exit from multiple accessed mutex objects." );
-	    } // if
-	    task.currSerialLevel -= 1;
-#endif // __U_DEBUG__
+	    uDEBUG(
+		if ( nlevel != task.currSerialLevel ) {
+		    abort( "Attempt to perform a non-nested entry and exit from multiple accessed mutex objects." );
+		} // if
+		task.currSerialLevel -= 1;
+	    )
 	    if ( std::uncaught_exception() ) {
 		serial.leave( mr );
 	    } else {
@@ -1787,12 +1734,12 @@ namespace UPP {
 
 
     void uSerialMember::finalize( uBaseTask &task ) {
-#ifdef __U_DEBUG__
-	if ( nlevel != task.currSerialLevel ) {
-	    uAbort( "Attempt to perform a non-nested entry and exit from multiple accessed mutex objects." );
-	} // if
-	task.currSerialLevel -= 1;
-#endif // __U_DEBUG__
+	uDEBUG(
+	    if ( nlevel != task.currSerialLevel ) {
+		abort( "Attempt to perform a non-nested entry and exit from multiple accessed mutex objects." );
+	    } // if
+	    task.currSerialLevel -= 1;
+	)
 	task.setSerial( *prevSerial );			// reset previous serial
     } // uSerialMember::finalize
 
@@ -1818,9 +1765,7 @@ namespace UPP {
 
 	    prevSerial = &task.getSerial();		// save previous serial
 	    task.setSerial( serial );			// set new serial
-#ifdef __U_DEBUG__
-	    nlevel = task.currSerialLevel += 1;
-#endif // __U_DEBUG__
+	    uDEBUG( nlevel = task.currSerialLevel += 1; )
 	    serial.enter( mr, ml, mp );
 	    acceptor = serial.lastAcceptor;
 	    acceptorSuspended = acceptor != nullptr;
@@ -1910,22 +1855,22 @@ uCondition::~uCondition() {
 } // uCondition::~uCondition
 
 
-#ifdef __U_DEBUG__
+uDEBUG(
 #define uConditionMsg( operation ) \
     "Attempt to " operation " a condition variable for a mutex object not locked by this task.\n" \
     "Possible cause is accessing the condition variable outside of a mutex member for the mutex object owning the variable."
-#endif // __U_DEBUG__
+)
 
 
 void uCondition::wait() {				// wait on a condition
     uBaseTask &task = uThisTask();			// optimization
     UPP::uSerial &serial = task.getSerial();
 
-#ifdef __U_DEBUG__
-    if ( owner != nullptr && &task != owner->mutexOwner ) { // must have mutex lock to wait
-	uAbort( uConditionMsg( "wait on" ) );
-    } // if
-#endif // __U_DEBUG__
+    uDEBUG(
+	if ( owner != nullptr && &task != owner->mutexOwner ) { // must have mutex lock to wait
+	    abort( uConditionMsg( "wait on" ) );
+	} // if
+    )
     if ( owner != &serial ) {				// only owner can use condition
 	if ( owner == nullptr ) {				// owner exist ?
 	    owner = &serial;				// set condition owner
@@ -1941,7 +1886,8 @@ void uCondition::wait() {				// wait on a condition
     condQueue.add( &(task.mutexRef) );			// add to end of condition queue
 
     serial.leave2();					// release mutex and let it schedule another task
-    _Enable <uMutexFailure>;				// implicit poll
+
+    _Enable <uMutexFailure><WaitingFailure>;		// implicit poll
 
 #ifdef __U_PROFILER__
     if ( task.profileActive && uProfiler::uProfiler_registerReady ) { // task registered for profiling ?
@@ -1951,59 +1897,57 @@ void uCondition::wait() {				// wait on a condition
 } // uCondition::wait
 
 
-#ifdef __U_DEBUG__
+uDEBUG(
 #define uSignalCheck() \
     /* must have mutex lock to signal */ \
-    if ( owner != nullptr && &task != owner->mutexOwner ) uAbort( uConditionMsg( "signal" ) );
-#endif // __U_DEBUG__
+    if ( owner != nullptr && &task != owner->mutexOwner ) abort( uConditionMsg( "signal" ) );
+)
 
 
-void uCondition::signal() {				// signal a condition
-    if ( ! condQueue.empty() ) {
-	uBaseTask &task = uThisTask();			// optimization
-	UPP::uSerial &serial = task.getSerial();
-#ifdef __U_DEBUG__
-	uSignalCheck();
-#endif // __U_DEBUG__
+bool uCondition::signal() {				// signal a condition
+  if ( condQueue.empty() ) return false;		// signal on empty condition is no-op
+
+    uBaseTask &task = uThisTask();			// optimization
+    UPP::uSerial &serial = task.getSerial();
+    uDEBUG( uSignalCheck(); )
 
 #ifdef __U_PROFILER__
-	if ( task.profileActive && uProfiler::uProfiler_registerSignal ) { // task registered for profiling ?
-	    (*uProfiler::uProfiler_registerSignal)( uProfiler::profilerInstance, *this, task, serial );
-	} // if
+    if ( task.profileActive && uProfiler::uProfiler_registerSignal ) { // task registered for profiling ?
+	(*uProfiler::uProfiler_registerSignal)( uProfiler::profilerInstance, *this, task, serial );
+    } // if
 #endif // __U_PROFILER__
 
-	serial.acceptSignalled.add( condQueue.drop() );	// move signalled task on top of accept/signalled stack
-    } // if
+    serial.acceptSignalled.add( condQueue.drop() );	// move signalled task on top of accept/signalled stack
+    return true;
 } // uCondition::signal
 
 
-void uCondition::signalBlock() {			// signal a condition
-    if ( ! condQueue.empty() ) {
-	uBaseTask &task = uThisTask();			// optimization
-	UPP::uSerial &serial = task.getSerial();
-#ifdef __U_DEBUG__
-	uSignalCheck();
-#endif // __U_DEBUG__
+bool uCondition::signalBlock() {			// signal a condition
+    if ( condQueue.empty() ) return false;		// signal on empty condition is no-op
+
+    uBaseTask &task = uThisTask();			// optimization
+    UPP::uSerial &serial = task.getSerial();
+    uDEBUG( uSignalCheck(); )
 
 #ifdef __U_PROFILER__
-	if ( task.profileActive && uProfiler::uProfiler_registerSignal ) { // task registered for profiling ?
-	    (*uProfiler::uProfiler_registerSignal)( uProfiler::profilerInstance, *this, task, serial );
-	} // if
-	if ( task.profileActive && uProfiler::uProfiler_registerWait ) { // task registered for profiling ?
-	    (*uProfiler::uProfiler_registerWait)( uProfiler::profilerInstance, *this, task, serial );
-	} // if
-#endif // __U_PROFILER__
-
-	serial.acceptSignalled.add( &(task.mutexRef) ); // suspend signaller task on accept/signalled stack
-	serial.acceptSignalled.addHead( condQueue.drop() ); // move signalled task on head of accept/signalled stack
-	serial.leave2();				// release mutex and let it schedule the signalled task
-
-#ifdef __U_PROFILER__
-	if ( task.profileActive && uProfiler::uProfiler_registerReady ) { // task registered for profiling ?
-	    (*uProfiler::uProfiler_registerReady)( uProfiler::profilerInstance, *this, task, serial );
-	} // if
-#endif // __U_PROFILER__
+    if ( task.profileActive && uProfiler::uProfiler_registerSignal ) { // task registered for profiling ?
+	(*uProfiler::uProfiler_registerSignal)( uProfiler::profilerInstance, *this, task, serial );
     } // if
+    if ( task.profileActive && uProfiler::uProfiler_registerWait ) { // task registered for profiling ?
+	(*uProfiler::uProfiler_registerWait)( uProfiler::profilerInstance, *this, task, serial );
+    } // if
+#endif // __U_PROFILER__
+
+    serial.acceptSignalled.add( &(task.mutexRef) );	// suspend signaller task on accept/signalled stack
+    serial.acceptSignalled.addHead( condQueue.drop() ); // move signalled task on head of accept/signalled stack
+    serial.leave2();					// release mutex and let it schedule the signalled task
+
+#ifdef __U_PROFILER__
+    if ( task.profileActive && uProfiler::uProfiler_registerReady ) { // task registered for profiling ?
+	(*uProfiler::uProfiler_registerReady)( uProfiler::profilerInstance, *this, task, serial );
+    } // if
+#endif // __U_PROFILER__
+    return true;
 } // uCondition::signalBlock
 
 
@@ -2014,7 +1958,7 @@ uCondition::WaitingFailure::~WaitingFailure() {}
 const uCondition &uCondition::WaitingFailure::conditionId() const { return cond; }
 
 void uCondition::WaitingFailure::defaultTerminate() const {
-    uAbort( "(uCondition &)%p : Waiting failure as task %.256s (%p) found blocked task %.256s (%p) on condition variable during deletion.",
+    abort( "(uCondition &)%p : Waiting failure as task %.256s (%p) found blocked task %.256s (%p) on condition variable during deletion.",
 	    &conditionId(), sourceName(), &source(), uThisTask().getName(), &uThisTask() );
 } // uCondition::WaitingFailure::defaultTerminate
 
@@ -2032,7 +1976,8 @@ inline void UPP::umainProfile() {
 #endif // __U_PROFILER__
 } // umainProfile
 
-uMain::uMain( int argc, char *argv[], int &retcode ) : uPthreadable( uMainStackSize() ), argc( argc ), argv( argv ), uRetCode( retcode ) {
+uMain::uMain( int argc, char *argv[], char *env[], int &retcode ) : uPthreadable( uMainStackSize() ), argc( argc ), argv( argv ), env( env ), uRetCode( retcode ) {
+    setName( "main" );					// pretend to be user's uCpp_main
     umainProfile();
 } // uMain::uMain
 
@@ -2063,16 +2008,38 @@ void UPP::uKernelBoot::startup() {
 
     uMachContext::pageSize = sysconf( _SC_PAGESIZE );
 
+    // Cause floating-point errors to signal SIGFPE, which is handled by uC++ signal handler.
+
+#if defined( __solaris__ )
+    fpsetmask( FP_X_INV | FP_X_OFL | FP_X_UFL | FP_X_DZ ); // raise floating-point signal
+    // TEMPORARY, do not add FP_X_IMP, there is a bug in "sin" (maybe other trig routines)
+    // fpsetmask( FP_X_IMP );
+#else	// Linux
+    feenableexcept( FE_ALL_EXCEPT );			// raise floating-point signal
+    // TEMPORARY removal, there is a bug in "sin" (maybe other trig routines)
+    fedisableexcept( FE_INEXACT );
+
+    // Store modified control registers as default values for register virtualization.
+#if defined( __i386__ ) || defined( __x86_64__ )
+    asm volatile ( "fnstcw %0" : "=m" (uMachContext::fncw) );
+    asm volatile ( "stmxcsr %0" : "=m" (uMachContext::mxcsr) );
+#endif // __i386__ || __x86_64__
+
+#if defined( __ia64__ )
+    // TEMPORARY removal, there is a bug in "__builtin_clz"
+    fedisableexcept( FE_UPWARD );
+    fedisableexcept( FE_DOWNWARD );
+#endif // __ia64__
+#endif // __solaris__
+
     // create kernel locks
 
     uKernelModule::globalAbortLock = new uSpinLock;
     uKernelModule::globalProcessorLock = new uSpinLock;
     uKernelModule::globalClusterLock = new uSpinLock;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::startup1, disableInt:%d, disableIntCnt:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ) );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::startup1, disableInt:%d, disableIntCnt:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ) ); )
 
     // initialize kernel signal handlers
 
@@ -2153,23 +2120,6 @@ void UPP::uKernelBoot::startup() {
     RealRtn::set_terminate( uEHM::terminateHandler );
     RealRtn::set_unexpected( uEHM::unexpectedHandler );
 
-    // Cause floating-point errors to signal SIGFPE, which is handled by uC++.
-
-#if defined( __solaris__ )
-    fpsetmask( FP_X_INV | FP_X_OFL | FP_X_UFL | FP_X_DZ ); // raise floating-point signal
-    // TEMPORARY, do not add FP_X_IMP, there is a bug in "sin" (maybe other trig routines)
-    // fpsetmask( FP_X_IMP );
-#else
-    feenableexcept( FE_ALL_EXCEPT );			// raise floating-point signal
-    // TEMPORARY removal, there is a bug in "sin" (maybe other trig routines)
-    fedisableexcept( FE_INEXACT );
-#if defined( __ia64__ )
-    // TEMPORARY removal, there is a bug in "__builtin_clz"
-    fedisableexcept( FE_UPWARD );
-    fedisableexcept( FE_DOWNWARD );
-#endif // __ia64__
-#endif // __solaris__
-
     // create user cluster
 
     uKernelModule::userCluster = new uCluster( "userCluster" );
@@ -2177,28 +2127,22 @@ void UPP::uKernelBoot::startup() {
     // create user processors
 
     uKernelModule::numUserProcessors = uDefaultProcessors();
-#ifdef __U_DEBUG__
-    if ( uKernelModule::numUserProcessors == 0 ) {
-	uAbort( "uDefaultProcessors must return a value 1 or greater" );
-    } // if
-#endif // __U_DEBUG__
-
+    uDEBUG(
+	if ( uKernelModule::numUserProcessors == 0 ) {
+	    abort( "uDefaultProcessors must return a value 1 or greater" );
+	} // if
+    )
     uKernelModule::userProcessors = new uProcessor*[ uKernelModule::numUserProcessors ];
     uKernelModule::userProcessors[0] = new uProcessor( *uKernelModule::userCluster );
 
-#ifdef __U_DEBUG__
     // uOwnerLock has a runtime check testing if locking is attempted from inside the kernel. This check only applies
     // once the system becomes concurrent. During the previous boot-strapping code, some locks may be invoked (and hence
     // a runtime check would occur) but the system is not concurrent. Hence, these locks are always open and no blocking
     // can occur. This flag enables uOwnerLock checking after this point.
+    uDEBUG( uKernelModule::initialized = true; )
 
-    uKernelModule::initialized = true;
-#endif // __U_DEBUG__
-
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::startup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::startup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); )
 
     uKernelModule::bootTask->migrate( *uKernelModule::userCluster );
 
@@ -2213,18 +2157,14 @@ void UPP::uKernelBoot::startup() {
     uKernelModule::cinFilebuf  = new std::filebuf( 0 );
     std::cin.rdbuf( uKernelModule::cinFilebuf );
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::startup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::startup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); )
 } // uKernelBoot::startup
 
 
 void UPP::uKernelBoot::finishup() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); )
 
     // Flush standard output streams as required by 27.4.2.1.6
 
@@ -2245,10 +2185,8 @@ void UPP::uKernelBoot::finishup() {
 
     uKernelModule::bootTask->migrate( *uKernelModule::systemCluster );
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::finishup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); )
 
     delete uKernelModule::userProcessors[0];
     delete [] uKernelModule::userProcessors;
@@ -2257,15 +2195,13 @@ void UPP::uKernelBoot::finishup() {
     delete uKernelModule::systemTask;
     uKernelModule::systemTask = nullptr;
 
-#ifdef __U_DEBUG__
     // Turn off uOwnerLock checking.
-    uKernelModule::initialized = false;
-#endif // __U_DEBUG__
+    uDEBUG( uKernelModule::initialized = false; )
 
     THREAD_GETMEM( This )->disableInterrupts();
     // Block all signals as system can no longer handle them, and there may be pending timer values.
     if ( sigprocmask( SIG_BLOCK, &UPP::uSigHandlerModule::block_mask, nullptr ) == -1 ) {
-	uAbort( "internal error, sigprocmask" );
+	abort( "internal error, sigprocmask" );
     } // if
     THREAD_GETMEM( This )->enableInterrupts();
 
@@ -2317,10 +2253,8 @@ void UPP::uKernelBoot::finishup() {
     // no tasks on the ready queue so it can be deleted
     delete uKernelModule::systemScheduler;
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uKernelBoot::finishup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-	       THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+			  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); )
 
     delete uKernelModule::globalClusters;
     delete uKernelModule::globalProcessors;

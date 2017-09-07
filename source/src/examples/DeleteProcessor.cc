@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:03:54 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:50:39 2016
-// Update Count     : 4
+// Last Modified On : Mon Jan 23 18:08:28 2017
+// Update Count     : 6
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,13 +42,13 @@ _Task worker {
     worker( uCluster &cl ): clus( cl ) {}
 }; // worker
 
-void uMain::main(){
+int main(){
     uCluster cluster;
     uProcessor *processor = new uProcessor( cluster );
     cout << "Task main created processor " << processor << "\n";
     {
 	worker f( cluster );
-	uSleep( uDuration( 2 ) );
+	sleep( 2 );
 	processor = new uProcessor( cluster );
 	cout << "Task main created processor " << processor << "\n";
     }

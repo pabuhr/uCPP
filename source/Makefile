@@ -46,8 +46,12 @@ TMPDIR ?= /tmp
 ## but can be dynamically overridden using the "-compiler" flag on the "u++"
 ## command. Supported compilers: GNU g++.
 
-CCBUILD ?= g++
+CCBUILD ?= g++-6
 CCAPP ?= ${CCBUILD}
+
+## Define name of the uC++ translator so multiple u++ versions can coexist.
+
+UPP ?= u++
 
 ## Define the maximum number of mutex methods in a monitor or task; N-1 mutex
 ## members, including destructor, and timeout. 128 is a good number for most
@@ -185,11 +189,12 @@ configure :
 	echo 'TMPDIR = ${TMPDIR}' >> ${CONFIG}
 	echo 'CCBUILD = ${CCBUILD}' >> ${CONFIG}
 	echo 'CCAPP = ${CCAPP}' >> ${CONFIG}
-	echo 'MULTI = ${MULTI}' >> ${CONFIG}
-	echo 'SHELL := /bin/sh' >> ${CONFIG}
+	echo 'UPP = ${UPP}' >> ${CONFIG}
 	echo 'MAXENTRYBITS := ${MAXENTRYBITS}' >> ${CONFIG}
 	echo 'STATISTICS := ${STATISTICS}' >> ${CONFIG}
 	echo 'CPP11 := ${CPP11}' >> ${CONFIG}
+	echo 'MULTI = ${MULTI}' >> ${CONFIG}
+	echo 'SHELL := /bin/sh' >> ${CONFIG}
 
 	for file in `find doc src -type f -name Makefile -print` ; do \
 		tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \

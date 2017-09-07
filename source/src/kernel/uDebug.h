@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 12:56:10 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 13 14:04:04 2012
-// Update Count     : 48
+// Last Modified On : Sat Feb 18 18:45:35 2017
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,14 +28,12 @@
 #ifndef __U_DEBUG_H__
 #define __U_DEBUG_H__
 
-
 extern "C" void uDebugWrite( int fd, const char *buffer, int len );
 extern "C" void uDebugAcquire();
 extern "C" void uDebugRelease();
 extern "C" void uDebugPrt( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
 extern "C" void uDebugPrt2( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
 extern "C" void uDebugPrtBuf( char buffer[], const char fmt[], ... ) __attribute__(( format (printf, 2, 3) ));
-
 
 #endif // __U_DEBUG_H__
 

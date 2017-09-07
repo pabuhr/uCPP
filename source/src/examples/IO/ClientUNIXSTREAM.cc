@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:42:32 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:13:19 2016
-// Update Count     : 108
+// Last Modified On : Mon Jan 23 14:36:03 2017
+// Update Count     : 109
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ _Task Reader {
 		for ( ;; ) {
 			len = client.read( buf, sizeof(buf) );
 			// osacquire( cerr ) << "reader read len:" << len << endl;
-		  if ( len == 0 ) uAbort( "client %d : EOF ecountered without EOD", getpid() );
+		  if ( len == 0 ) abort( "client %d : EOF ecountered without EOD", getpid() );
 			rcnt += len;
 			// The EOD character can be piggy-backed onto the end of the message.
 		  if ( buf[len - 1] == EOD ) {
@@ -87,7 +87,7 @@ _Task Writer {
 	} // Writer::Writer
 }; // Writer
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
 	switch ( argc ) {
 	  case 2:
 		break;
@@ -104,9 +104,9 @@ void uMain::main() {
 		Writer wr( client );							// emit worker to read from input and write to server
 	}
 	if ( wcnt != rcnt ) {
-		uAbort( "Error: client not all data transfered, wcnt:%d rcnt:%d", wcnt, rcnt );
+		abort( "Error: client not all data transfered, wcnt:%d rcnt:%d", wcnt, rcnt );
 	} // if
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

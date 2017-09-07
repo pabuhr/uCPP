@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:29:05 2016
-// Update Count     : 138
+// Last Modified On : Sun Jun 18 07:37:30 2017
+// Update Count     : 139
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -91,7 +91,7 @@ extern "C" void uDebugPrt( const char fmt[], ... ) {
     int len = sprintf( ::buffer, "(%ld) ", (long int)
 #if defined( __U_MULTI__ )
 	     // null if called early in boot sequence
-	     (RealRtn::pthread_self == 0 ? 0 : RealRtn::pthread_self())
+	     (RealRtn::pthread_self == nullptr ? 0 : RealRtn::pthread_self())
 #else
 	     getpid()
 #endif // __U_MULTI__

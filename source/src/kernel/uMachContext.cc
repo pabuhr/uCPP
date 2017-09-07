@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:28:25 2016
-// Update Count     : 726
+// Last Modified On : Thu Feb 16 21:20:47 2017
+// Update Count     : 794
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -74,7 +74,7 @@ namespace UPP {
 	if ( uThisTask().profileActive && uProfiler::uProfiler_postallocateMetricMemory ) {
 	    (*uProfiler::uProfiler_postallocateMetricMemory)( uProfiler::profilerInstance, uThisTask() );
 	} // if
-	// also appears in uBaseCoroutine::uContextSw2
+	// also appears in uBaseCoroutine::corCxtSw
 	if ( ! THREAD_GETMEM( disableInt ) && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
 	    (*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
 	} // if
@@ -104,7 +104,7 @@ namespace UPP {
 	} // if
 	if ( &This != activeProcessorKernel ) {		// uProcessorKernel exit ?
 	    This.corFinish();
-	    uAbort( "internal error, uMachContext::invokeCoroutine, no return" );
+	    abort( "internal error, uMachContext::invokeCoroutine, no return" );
 	} // if
     } // uMachContext::invokeCoroutine
 
@@ -171,7 +171,7 @@ namespace UPP {
 
 	This.getSerial().leave2();
 	// CONTROL NEVER REACHES HERE!
-	uAbort( "(uMachContext &)%p.invokeTask() : internal error, attempt to return.", &This );
+	abort( "(uMachContext &)%p.invokeTask() : internal error, attempt to return.", &This );
     } // uMachContext::invokeTask
 
 
@@ -211,10 +211,19 @@ namespace UPP {
 
     void uMachContext::startHere( void (*uInvoke)( uMachContext & ) ) {
 #if defined( __i386__ )
+// https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
+// The control bits of the MXCSR register are callee-saved (preserved across calls), while the status bits are
+// caller-saved (not preserved). The x87 status word register is caller-saved, whereas the x87 control word is
+// callee-saved.
 
+// Bits 16 through 31 of the MXCSR register are reserved and are cleared on a power-up or reset of the processor;
+// attempting to write a non-zero value to these bits, using either the FXRSTOR or LDMXCSR instructions, will result in
+// a general-protection exception (#GP) being generated.
 #if ! defined( __U_SWAPCONTEXT__ )
 	struct FakeStack {
 	    void *fixedRegisters[3];			// fixed registers ebx, edi, esi (popped on 1st uSwitch, values unimportant)
+	    uint32_t mxcsr;				// MXCSR control and status register
+	    uint16_t fpucsr;				// x87 FPU control and status register
 	    void *rturn;				// where to go on return from uSwitch
 	    void *dummyReturn;				// fake return compiler would have pushed on call to uInvoke
 	    void *argument;				// for 16-byte ABI, 16-byte alignment starts here
@@ -227,9 +236,11 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
 	((FakeStack *)(((uContext_t *)context)->SP))->argument = this; // argument to uInvoke
 	((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvoke );
+	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
+	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
 #else
 	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    uAbort( "internal error, getcontext failed" );
+	    abort( "internal error, getcontext failed" );
 	} // if
 	((ucontext *)context)->uc_stack.ss_sp = (char *)limit;
 	((ucontext *)context)->uc_stack.ss_size = size; 
@@ -244,17 +255,21 @@ namespace UPP {
 #if ! defined( __U_SWAPCONTEXT__ )
 	struct FakeStack {
 	    void *fixedRegisters[5];			// fixed registers rbx, r12, r13, r14, r15
+	    uint32_t mxcsr;				// MXCSR control and status register
+	    uint16_t fpucsr;				// x87 FPU control and status register
 	    void *rturn;				// where to go on return from uSwitch
 	    void *dummyReturn;				// null return address to provide proper alignment
 	}; // FakeStack
 
 	((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
 	((uContext_t *)context)->FP = nullptr;		// terminate stack with null fp
-
+	
 	((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
 	((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvokeStub );
 	((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[0] = this;
 	((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[1] = rtnAdr( (void (*)())uInvoke );
+	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
+	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
 #else
 	// makecontext is difficult to support.  See http://sources.redhat.com/bugzilla/show_bug.cgi?id=404
 	#error uC++ : internal error, swapcontext cannot be used on the x86_64 architecture
@@ -304,7 +319,7 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b2 = nullptr; // null terminate for stack walking
 #else
 	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    uAbort( "internal error, getcontext failed" );
+	    abort( "internal error, getcontext failed" );
 	} // if
 	((ucontext *)context)->uc_stack.ss_sp = (char *)limit;
 	((ucontext *)context)->uc_stack.ss_size = size;
@@ -333,7 +348,7 @@ namespace UPP {
 	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[6] = nullptr; // terminate stack with null fp
 #else
 	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    uAbort( " : internal error, getcontext failed" );
+	    abort( " : internal error, getcontext failed" );
 	} // if
 	((ucontext *)context)->uc_stack.ss_sp = (char *)base - 8;	// TEMPORARY: -8 for bug in Solaris (fixed in Solaris 4.10)
 	((ucontext *)context)->uc_stack.ss_size = size; 
@@ -377,14 +392,14 @@ namespace UPP {
 #ifdef __U_DEBUG__
 	    storage = memalign( pageSize, cxtSize + size + pageSize );
 	    if ( ::mprotect( storage, pageSize, PROT_NONE ) == -1 ) {
-		uAbort( "(uMachContext &)%p.createContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
+		abort( "(uMachContext &)%p.createContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
 	    } // if
 #else
 	    // assume malloc has 8 byte alignment so add 8 to allow rounding up to 16 byte alignment
 	    storage = malloc( cxtSize + size + 8 );
 #endif // __U_DEBUG__
 	    if ( storage == nullptr ) {
-		uAbort( "Attempt to allocate %d bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
+		abort( "Attempt to allocate %d bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
 	    } // if
 #ifdef __U_DEBUG__
 	    limit = (char *)storage + pageSize;
@@ -394,7 +409,7 @@ namespace UPP {
 	} else {
 #ifdef __U_DEBUG__
 	    if ( ((size_t)storage & (uAlign() - 1)) != 0 ) { // multiple of uAlign ?
-		uAbort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage, (int)uAlign() );
+		abort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage, (int)uAlign() );
 	    } // if
 #endif // __U_DEBUG__
 	    userStack = true;
@@ -404,7 +419,7 @@ namespace UPP {
 	} // if
 #ifdef __U_DEBUG__
 	if ( size < MinStackSize ) {			// below minimum stack size ?
-	    uAbort( "Stack size %d provides less than minimum of %d bytes for a stack.", size, MinStackSize );
+	    abort( "Stack size %d provides less than minimum of %d bytes for a stack.", size, MinStackSize );
 	} // if
 #endif // __U_DEBUG__
 
@@ -515,7 +530,7 @@ namespace UPP {
 	void *sp = stackPointer();			// optimization
 
 	if ( sp < limit ) {
-	    uAbort( "Stack overflow detected: stack pointer %p below limit %p.\n"
+	    abort( "Stack overflow detected: stack pointer %p below limit %p.\n"
 		    "Possible cause is allocation of large stack frame(s) and/or deep call stack.",
 		    sp, limit );
 #define MINSTACKSIZE 1
@@ -526,13 +541,13 @@ namespace UPP {
 #define MINSTACKSIZEWARNING "uC++ Runtime warning : within " xstr(MINSTACKSIZE) "K of stack limit.\n"
 	    uDebugWrite( STDERR_FILENO, MINSTACKSIZEWARNING, sizeof(MINSTACKSIZEWARNING) - 1 );
 	} else if ( sp > base ) {
-	    uAbort( "Stack underflow detected: stack pointer %p above base %p.\n"
+	    abort( "Stack underflow detected: stack pointer %p above base %p.\n"
 		    "Possible cause is corrupted stack frame via overwriting memory.",
 		    sp, base );
 #if defined( __ia64__ )
 	} else if ( registerStackPointer() >= sp ) {
 	    // on ia64 the stack grows from both ends; when the two stack pointers cross, we have overflow
-	    uAbort( "Stack overflow detected: stack pointer %p at or below register stack pointer %p.\n"
+	    abort( "Stack overflow detected: stack pointer %p at or below register stack pointer %p.\n"
 		    "Possible cause is allocation of large stack frame(s) and/or deep call stack.",
 		    sp, registerStackPointer() );
 #endif // __ia64__

@@ -60,13 +60,13 @@ template<typename T> class uQueue : public uCollection<T> {
     }
     inline T *succ( T *n ) const {			// pre: *n in *this
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uQueue &)%p.succ( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uQueue &)%p.succ( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	return (uNext(n) == n) ? 0 : (T *)uNext(n);
     }							// post: n == tail() & succ(n) == 0 | n != tail() & *succ(n) in *this
     void addHead( T *n ) {
 #ifdef __U_DEBUG__
-	if ( n->listed() ) uAbort( "(uQueue &)%p.addHead( %p ) : Node is already on another list.", this, n );
+	if ( n->listed() ) abort( "(uQueue &)%p.addHead( %p ) : Node is already on another list.", this, n );
 #endif // __U_DEBUG__
 	if (last) {
 	    uNext(n) = root;
@@ -78,7 +78,7 @@ template<typename T> class uQueue : public uCollection<T> {
     }
     void addTail( T *n ) {
 #ifdef __U_DEBUG__
-	if ( n->listed() ) uAbort( "(uQueue &)%p.addTail( %p ) : Node is already on another list.", this, n );
+	if ( n->listed() ) abort( "(uQueue &)%p.addTail( %p ) : Node is already on another list.", this, n );
 #endif // __U_DEBUG__
 	if (last) uNext(last) = n;
 	else root = n;
@@ -108,7 +108,7 @@ template<typename T> class uQueue : public uCollection<T> {
     }
     void remove( T *n ) {				// O(n)
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uQueue &)%p.remove( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uQueue &)%p.remove( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	T *prev = 0;
 	T *curr = root;
@@ -127,7 +127,7 @@ template<typename T> class uQueue : public uCollection<T> {
 	    }
 #ifdef __U_DEBUG__
 	    // not found => error
-	    if (curr == last) uAbort( "(uQueue &)%p.remove( %p ) : Node is not in list.", this, n );
+	    if (curr == last) abort( "(uQueue &)%p.remove( %p ) : Node is not in list.", this, n );
 #endif // __U_DEBUG__
 	    prev = curr;
 	    curr = (T *)uNext(curr);
@@ -148,7 +148,7 @@ template<typename T> class uQueue : public uCollection<T> {
     // Node "n" must be in the "from" list.
     void split( uQueue<T> &from, T *n ) {
 #ifdef __U_DEBUG__
-	if ( ! n->listed() ) uAbort( "(uQueue &)%p.split( %p ) : Node is not on a list.", this, n );
+	if ( ! n->listed() ) abort( "(uQueue &)%p.split( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	uQueue<T> to;
 	to.root = from.root;				// start of "to" list

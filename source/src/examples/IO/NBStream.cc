@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr 28 13:23:14 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:13:53 2016
-// Update Count     : 29
+// Last Modified On : Sat Jul  1 07:18:47 2017
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,7 +38,7 @@ _Task Reader {
 	      if ( cin.fail() ) break;
 	    } // for
 	} catch( ... ) {
-	    uAbort( "reader failure" );
+	    abort( "reader failure" );
 	} // try
     } // Reader::main
 }; // Reader
@@ -46,23 +46,23 @@ _Task Reader {
 _Task Writer {
     void main() {
 	try {
-	    for ( int i = 0;; i += 1 ) {
+	    for ( unsigned int i = 0;; i += 1 ) {
 	      if ( cin.fail() ) break;
-		if ( i % 100 == 0 ) {			// don't print too much
+		if ( i % 500 == 0 ) {			// don't print too much
 		    cerr << d;				// write number to stderr (no buffering)
-		} // if					// if cout is used, it must be flushed with endl
+		} // if
 		yield( 1 );
 	    } // for
 	} catch( ... ) {
-	    uAbort( "writer failure" );
+	    abort( "writer failure" );
 	} // try
     } // Writer::main
 }; // Writer
 
-void uMain::main() {
+int main() {
     Reader r;
     Writer w;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ NBStream.cc" //

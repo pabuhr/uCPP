@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 08:13:58 2016
-// Update Count     : 204
+// Last Modified On : Fri Jul  7 16:28:03 2017
+// Update Count     : 207
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -60,7 +60,7 @@ void context() {
     cerr << "\"" << endl;
 } // context
 
-void sigSegvBusHandler( int sig ) {
+void sigSegvBusHandler( int ) {
     cerr << "uC++ Translator error: fatal problem during parsing." << endl <<
 	"Probable cause is mismatched braces, missing terminating quote, or use of an undeclared type name." << endl <<
 	"Possible area where problem occurred:" << endl;
@@ -132,6 +132,9 @@ void putoutput( token_t *token ) {
       case MUTEX:
       case NOMUTEX:
       case WHEN:
+	break;
+      case CATCH:					// catch and _Catch => catch
+	*yyout << " " << "catch";
 	break;
       case ACTOR:
       case EVENT:

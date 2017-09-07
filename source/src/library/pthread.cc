@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:09:33 2016
-// Update Count     : 1043
+// Last Modified On : Sat Feb 18 22:05:59 2017
+// Update Count     : 1048
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -240,24 +240,29 @@ namespace UPP {
 
 
     _Task Pthread : public ::uPthreadable {		// private type
-      public:
-	void *(*start_func)( void * );			// thread starting routine
-	void *arg;					// thread parameter
-
-	static unsigned int pthreadCount;
-	static uOwnerLock pthreadCountLock;
-
 	void main() {
 	    CancelSafeFinish dummy( *this );
 	    joinval = (*start_func)( arg );
 	} // Pthread::main
 
+	void *(*start_func)( void * );			// thread starting routine
+	void *arg;					// thread parameter
+
+	static unsigned int pthreadCount;
+	static uOwnerLock pthreadCountLock;
+      public:
 	Pthread( pthread_t *threadId, void * (*start_func)( void * ), const pthread_attr_t *attr, void *arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
 	    pthreadCountLock.acquire();
 	    pthreadCount += 1;
 	    pthreadCountLock.release();
 	    *threadId = pthreadId();			// publish thread id
 	} // Pthread::Pthread
+
+	~Pthread() {
+	    pthreadCountLock.acquire();
+	    pthreadCount -= 1;
+	    pthreadCountLock.release();
+	} // Pthread::~Pthread
 
 	_Nomutex void finishUp() {
 	    int detachstate;
@@ -266,12 +271,6 @@ namespace UPP {
 		uKernelModule::systemTask->pthreadDetachEnd( *this );
 	    } // if
 	} // Pthread::finishUp
-
-	~Pthread() {
-	    pthreadCountLock.acquire();
-	    pthreadCount -= 1;
-	    pthreadCountLock.release();
-	} // Pthread::~Pthread
 
 	// execute some Pthread finalizations even if cancellation/exit/exception happens    
 	class CancelSafeFinish {
@@ -704,12 +703,12 @@ extern "C" {
     void pthread_exit( void *status ) {
 	uPthreadable *p = dynamic_cast<uPthreadable *>(&uThisCoroutine());
 #ifdef __U_DEBUG__
-	if ( p == nullptr ) uAbort( "pthread_exit performed on non-pthread task or while executing a uC++ coroutine" );
+	if ( p == nullptr ) abort( "pthread_exit performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
 	p->joinval = status;
 	p->do_unwind();
 	// CONTROL NEVER REACHES HERE!
-	uAbort( "pthread_exit( %p ) : internal error, attempt to return.", status );
+	abort( "pthread_exit( %p ) : internal error, attempt to return.", status );
     } // pthread_exit
 
     int pthread_join( pthread_t threadID, void **status ) {
@@ -736,7 +735,7 @@ extern "C" {
     } // pthread_tryjoin_np
 
     int pthread_timedjoin_np( pthread_t threadID, void **status, const struct timespec *abstime ) { // GNU extension
-	uAbort( "pthread_timedjoin_np : not implemented" );
+	abort( "pthread_timedjoin_np : not implemented" );
 	return 0;
     } // pthread_timedjoin_np
 
@@ -800,12 +799,12 @@ extern "C" {
 	for ( int attempts = 0; attempts < PTHREAD_DESTRUCTOR_ITERATIONS && destcalled ; attempts += 1 ) {
 	    destcalled = false;
 	    for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) { // remove each value from key list
-#ifdef __U_DEBUG_H__
-		if ( values[i].in_use ) {
-		    uDebugPrt( "pthread_deletespecific_, value[%d].in_use:%d, value:%p\n",
-			       i, values[i].in_use, values[i].value );
-		} // if
-#endif // __U_DEBUG_H__
+		uDEBUGPRT(
+		    if ( values[i].in_use ) {
+			uDebugPrt( "pthread_deletespecific_, value[%d].in_use:%d, value:%p\n",
+				   i, values[i].in_use, values[i].value );
+		    } // if
+		)
 		if ( values[i].in_use ) {
 		    Pthread_values &entry = values[i];
 		    entry.in_use = false;
@@ -813,18 +812,14 @@ extern "C" {
 		    if ( u_pthread_keys[i].destructor != nullptr && entry.value != nullptr ) {
 			void *data = entry.value;
 			entry.value = nullptr;
-#ifdef __U_DEBUG_H__
-			uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p begin\n",
-				   &uThisTask(), u_pthread_keys[i].destructor, data );
-#endif // __U_DEBUG_H__
+			uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p begin\n",
+					      &uThisTask(), u_pthread_keys[i].destructor, data ); )
 			destcalled = true;
 			pthread_mutex_unlock( &u_pthread_keys_lock );
 			u_pthread_keys[i].destructor( data );
 			pthread_mutex_lock( &u_pthread_keys_lock );
-#ifdef __U_DEBUG_H__
-			uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p end\n",
-				   &uThisTask(), u_pthread_keys[i].destructor, data );
-#endif // __U_DEBUG_H__
+			uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p end\n",
+					      &uThisTask(), u_pthread_keys[i].destructor, data ); )
 		    } // if
 		} // if
 	    } // for
@@ -835,9 +830,7 @@ extern "C" {
 
 
     int pthread_key_create( pthread_key_t *key, void (*destructor)( void * ) ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_key_create(key:%p, destructor:%p) enter task:%p\n", key, destructor, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%p, destructor:%p) enter task:%p\n", key, destructor, &uThisTask() ); )
 	pthread_mutex_lock( &u_pthread_keys_lock );
 	for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) {
  	    if ( ! u_pthread_keys[i].in_use ) {
@@ -845,23 +838,17 @@ extern "C" {
 		u_pthread_keys[i].destructor = destructor;
 		pthread_mutex_unlock( &u_pthread_keys_lock );
 		*key = i;
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "pthread_key_create(key:%d, destructor:%p) exit task:%p\n", *key, destructor, &uThisTask() );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%d, destructor:%p) exit task:%p\n", *key, destructor, &uThisTask() ); )
 		return 0;
 	    } // if
 	} // for
 	pthread_mutex_unlock( &u_pthread_keys_lock );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_key_create(key:%p, destructor:%p) try again!!! task:%p\n", key, destructor, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%p, destructor:%p) try again!!! task:%p\n", key, destructor, &uThisTask() ); )
 	return EAGAIN;
     } // pthread_key_create
 
     int pthread_key_delete( pthread_key_t key ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_key_delete(key:0x%x) enter task:%p\n", key, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_key_delete(key:0x%x) enter task:%p\n", key, &uThisTask() ); )
 	pthread_mutex_lock( &u_pthread_keys_lock );
       if ( key >= PTHREAD_KEYS_MAX || ! u_pthread_keys[key].in_use ) {
 	    pthread_mutex_unlock( &u_pthread_keys_lock );
@@ -880,16 +867,12 @@ extern "C" {
 	} // for
 
 	pthread_mutex_unlock( &u_pthread_keys_lock );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_key_delete(key:0x%x) exit task:%p\n", key, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_key_delete(key:0x%x) exit task:%p\n", key, &uThisTask() ); )
 	return 0;
     } // pthread_key_delete
 
     int pthread_setspecific( pthread_key_t key, const void *value ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_setspecific(key:0x%x, value:%p) enter task:%p\n", key, value, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_setspecific(key:0x%x, value:%p) enter task:%p\n", key, value, &uThisTask() ); )
 	uBaseTask &t = uThisTask();
 
 	Pthread_values *values;
@@ -916,16 +899,12 @@ extern "C" {
 	} // if
 	entry.value = (void *)value;
 	pthread_mutex_unlock( &u_pthread_keys_lock );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_setspecific(key:0x%x, value:%p) exit task:%p\n", key, value, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_setspecific(key:0x%x, value:%p) exit task:%p\n", key, value, &uThisTask() ); )
 	return 0;
     } // pthread_setspecific
 
     void *pthread_getspecific( pthread_key_t key ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_getspecific(key:0x%x) enter task:%p\n", key, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_getspecific(key:0x%x) enter task:%p\n", key, &uThisTask() ); )
       if ( key >= PTHREAD_KEYS_MAX ) return nullptr;
 
 	uBaseTask &t = uThisTask();
@@ -939,9 +918,7 @@ extern "C" {
 	} // if
 	void *value = entry.value;
 	pthread_mutex_unlock( &u_pthread_keys_lock );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "%p = pthread_getspecific(key:0x%x) exit task:%p\n", value, key, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "%p = pthread_getspecific(key:0x%x) exit task:%p\n", value, key, &uThisTask() ); )
 	return value;
     } // pthread_getspecific
 
@@ -954,14 +931,12 @@ extern "C" {
     } // pthread_sigmask
 
     int pthread_kill( pthread_t thread, int sig ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_kill( 0x%lx, %d )\n", thread, sig );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_kill( 0x%lx, %d )\n", thread, sig ); )
 	assert( thread != NOT_A_PTHREAD );
 	if ( sig == 0 ) {
 	    return 0;
 	} else {
-	    uAbort( "pthread_kill : not implemented" );
+	    abort( "pthread_kill : not implemented" );
 	} // if
 	return 0;
     } // pthread_kill
@@ -971,9 +946,7 @@ extern "C" {
 
 
     pthread_t pthread_self( void ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_self enter task:%p\n", &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_self enter task:%p\n", &uThisTask() ); )
 #ifdef __U_DEBUG__
 	uPthreadable *p = dynamic_cast<uPthreadable *>(&uThisTask());
       if ( p == nullptr ) {
@@ -994,9 +967,9 @@ extern "C" {
 #endif // ! __linux__
 
     int pthread_once( pthread_once_t *once_control, void (*init_routine)( void ) ) __OLD_THROW {
-#ifdef __U_DEBUG_H__
-//	uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) enter task:%p\n", once_control, init_routine, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    //uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) enter task:%p\n", once_control, init_routine, &uThisTask() );
+	)
 
 	// storage for pthread_once_t must be >= int and initialized to zero by PTHREAD_ONCE_INIT
 	static_assert( sizeof(pthread_once_t) >= sizeof(int), "sizeof(pthread_once_t) < sizeof(int)" );
@@ -1006,9 +979,7 @@ extern "C" {
 	    *((int *)once_control) = 1;
 	} // if
 	pthread_mutex_unlock( &u_pthread_once_lock );
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) exit task:%p\n", once_control, init_routine, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) exit task:%p\n", once_control, init_routine, &uThisTask() ); )
 	return 0;
     } // pthread_once
 
@@ -1017,12 +988,12 @@ extern "C" {
 
 
     int pthread_setschedparam( pthread_t thread, int policy, const struct sched_param *param ) __THROW {
-	uAbort( "pthread_setschedparam : not implemented" );
+	abort( "pthread_setschedparam : not implemented" );
 	return 0;
     } // pthread_setschedparam
 
     int pthread_getschedparam( pthread_t thread, int *policy, struct sched_param *param ) __THROW {
-	uAbort( "pthread_getschedparam : not implemented" );
+	abort( "pthread_getschedparam : not implemented" );
 	return 0;
     } // pthread_getschedparam
 
@@ -1042,7 +1013,7 @@ extern "C" {
         uBaseCoroutine *c = &uThisCoroutine();
 #ifdef __U_DEBUG__
 	uPthreadable *p = dynamic_cast<uPthreadable *>(c);
-	if ( p == nullptr ) uAbort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
+	if ( p == nullptr ) abort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
 	if ( oldstate != nullptr ) *oldstate = c->getCancelState();
 	c->setCancelState( (uBaseCoroutine::CancellationState)state );
@@ -1055,7 +1026,7 @@ extern "C" {
 	uBaseCoroutine *c = &uThisCoroutine();
 #ifdef __U_DEBUG__
 	uPthreadable *p = dynamic_cast<uPthreadable *>(c);
-	if ( p == nullptr ) uAbort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
+	if ( p == nullptr ) abort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
 	if ( oldtype != nullptr ) *oldtype = c->getCancelType();
 	c->setCancelType( (uBaseCoroutine::CancellationType)type );
@@ -1068,7 +1039,7 @@ extern "C" {
       if ( p == nullptr ) return;
         if ( c->getCancelState() == (uBaseCoroutine::CancellationState)PTHREAD_CANCEL_DISABLE || ! c->cancelled() ) return;
 #if defined( __U_BROKEN_CANCEL__ )
-	uAbort( "pthread cancellation is not supported on this system" );
+	abort( "pthread cancellation is not supported on this system" );
 #else
 	pthread_exit( PTHREAD_CANCELED );
 #endif // __U_BROKEN_CANCEL__
@@ -1100,7 +1071,7 @@ _getfp:\n\
 #endif // __solaris__ || __linux__
   	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
-	if ( p == nullptr ) uAbort( "pthread_cleanup_push performed on something other than a pthread task" );	    
+	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
 	p->cleanup_push( routine, args, buffer );
 
@@ -1109,14 +1080,14 @@ _getfp:\n\
     void __pthread_cleanup_push_imp( void (*routine) (void *), void *args, _pthread_cleanup_info *info ) {
 	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
-	if ( p == nullptr ) uAbort( "pthread_cleanup_push performed on something other than a pthread task" );	    
+	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
 	p->cleanup_push( routine, args, info );
 #else
     void pthread_cleanup_push( void (*routine) (void *), void *args ) {
 	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
-	if ( p == nullptr ) uAbort( "pthread_cleanup_push performed on something other than a pthread task" );	    
+	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
 	// NOTE: gcc on freebsd usually pushes arguments onto the stack instead of copying them just above %esp, and
 	// also allocates additional 8 bytes before the call (so it can adjust sp by 0x10 ? maybe there's something in
@@ -1145,7 +1116,7 @@ _getfp:\n\
 #endif
 	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
-	if ( p == nullptr ) uAbort( "pthread_cleanup_pop performed on something other than a pthread task" );	    
+	if ( p == nullptr ) abort( "pthread_cleanup_pop performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
 	p->cleanup_pop( ex );
     } // pthread_cleanup_pop
@@ -1188,9 +1159,7 @@ _getfp:\n\
     } // mutex_check
 
     int pthread_mutex_init( pthread_mutex_t *mutex, const pthread_mutexattr_t *attr ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_mutex_init(mutex:%p, attr:%p) enter task:%p\n", mutex, attr, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_mutex_init(mutex:%p, attr:%p) enter task:%p\n", mutex, attr, &uThisTask() ); )
 	PthreadLock::init< uOwnerLock >( mutex );
 	return 0;
     } // pthread_mutex_init
@@ -1205,26 +1174,20 @@ _getfp:\n\
 	    uKernelModule::startup();
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_mutex_lock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_mutex_lock(mutex:%p) enter task:%p\n", mutex, &uThisTask() ); )
 	mutex_check( mutex );
 	PthreadLock::get< uOwnerLock >( mutex )->acquire();
 	return 0;
     } // pthread_mutex_lock
 
     int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_mutex_trylock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(uDebugPrt( "pthread_mutex_trylock(mutex:%p) enter task:%p\n", mutex, &uThisTask() ); )
 	mutex_check( mutex );
 	return PthreadLock::get< uOwnerLock >( mutex )->tryacquire() ? 0 : EBUSY;
     } // pthread_mutex_trylock
 
     int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_mutex_unlock(mutex:%p) enter task:%p\n", mutex, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_mutex_unlock(mutex:%p) enter task:%p\n", mutex, &uThisTask() ); )
 	PthreadLock::get< uOwnerLock >( mutex )->release();
 	return 0;
     } // pthread_mutex_unlock
@@ -1322,17 +1285,13 @@ _getfp:\n\
     } // pthread_cond_init
 
     int pthread_cond_destroy( pthread_cond_t *cond ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_cond_destroy(cond:%p) task:%p\n", cond, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_cond_destroy(cond:%p) task:%p\n", cond, &uThisTask() ); )
 	PthreadLock::destroy< uCondLock >( cond );
 	return 0;
     } // pthread_cond_destroy
 
     int pthread_cond_wait( pthread_cond_t *cond, pthread_mutex_t *mutex ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_cond_wait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_cond_wait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); )
 	cond_check( cond );
 	pthread_testcancel();				// pthread_cond_wait is a cancellation point
 	PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ) );
@@ -1340,27 +1299,21 @@ _getfp:\n\
     } // pthread_cond_wait
 
     int pthread_cond_timedwait( pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_cond_timedwait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_cond_timedwait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); )
 	cond_check( cond );
 	pthread_testcancel();				// pthread_cond_timedwait is a cancellation point
 	return PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ), uTime( abstime->tv_sec, abstime->tv_nsec ) ) ? 0 : ETIMEDOUT;
     } // pthread_cond_timedwait
 
     int pthread_cond_signal( pthread_cond_t *cond ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_cond_signal(cond:%p) enter task:%p\n", cond, &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(	uDebugPrt( "pthread_cond_signal(cond:%p) enter task:%p\n", cond, &uThisTask() ); )
 	cond_check( cond );
 	PthreadLock::get< uCondLock >( cond )->signal();
 	return 0;
     } // pthread_cond_signal
 
     int pthread_cond_broadcast( pthread_cond_t *cond ) __THROW {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "pthread_cond_broadcast(cond:%p) task:%p\n", cond, &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "pthread_cond_broadcast(cond:%p) task:%p\n", cond, &uThisTask() ); )
 	cond_check( cond );
 	PthreadLock::get< uCondLock >( cond )->broadcast();
 	return 0;
@@ -1475,75 +1428,75 @@ extern "C" {
     //######################### Mutex #########################
 
     int pthread_mutex_timedlock( pthread_mutex_t *__restrict __mutex, __const struct timespec *__restrict __abstime ) __THROW {
-	uAbort( "pthread_mutex_timedlock" );
+	abort( "pthread_mutex_timedlock" );
     } // pthread_mutex_timedlock
 
     //######################### Condition #########################
 
     int pthread_condattr_getclock( __const pthread_condattr_t * __restrict __attr, __clockid_t *__restrict __clock_id ) __THROW {
-	uAbort( "pthread_condattr_getclock" );
+	abort( "pthread_condattr_getclock" );
     } // pthread_condattr_getclock
 
     int pthread_condattr_setclock( pthread_condattr_t *__attr, __clockid_t __clock_id ) __THROW {
-	uAbort( "pthread_condattr_setclock" );
+	abort( "pthread_condattr_setclock" );
     } // pthread_condattr_setclock
 
     //######################### Spinlock #########################
 
     int pthread_spin_init( pthread_spinlock_t *__lock, int __pshared ) __THROW {
-	uAbort( "pthread_spin_init" );
+	abort( "pthread_spin_init" );
     } // pthread_spin_init
 
     int pthread_spin_destroy( pthread_spinlock_t *__lock ) __THROW {
-	uAbort( "pthread_spin_destroy" );
+	abort( "pthread_spin_destroy" );
     } // pthread_spin_destroy
 
     int pthread_spin_lock( pthread_spinlock_t *__lock ) __THROW {
-	uAbort( "pthread_spin_lock" );
+	abort( "pthread_spin_lock" );
     } // pthread_spin_lock
 
     int pthread_spin_trylock( pthread_spinlock_t *__lock ) __THROW {
-	uAbort( "pthread_spin_trylock" );
+	abort( "pthread_spin_trylock" );
     } // pthread_spin_trylock
 
     int pthread_spin_unlock( pthread_spinlock_t *__lock ) __THROW {
-	uAbort( "pthread_spin_unlock" );
+	abort( "pthread_spin_unlock" );
     } // pthread_spin_unlock
 
     //######################### Barrier #########################
 
     int pthread_barrier_init( pthread_barrier_t *__restrict __barrier, __const pthread_barrierattr_t *__restrict __attr, unsigned int __count ) __THROW {
-	uAbort( "pthread_barrier_init" );
+	abort( "pthread_barrier_init" );
     } // pthread_barrier_init
 
     int pthread_barrier_destroy( pthread_barrier_t *__barrier ) __THROW {
-	uAbort( "pthread_barrier_destroy" );
+	abort( "pthread_barrier_destroy" );
     } // pthread_barrier_destroy
 
     int pthread_barrier_wait( pthread_barrier_t *__barrier ) __THROW {
-	uAbort( "pthread_barrier_wait" );
+	abort( "pthread_barrier_wait" );
     } // pthread_barrier_wait
 
     int pthread_barrierattr_init( pthread_barrierattr_t *__attr ) __THROW {
-	uAbort( "pthread_barrierattr_init" );
+	abort( "pthread_barrierattr_init" );
     } // pthread_barrierattr_init
 
     int pthread_barrierattr_destroy( pthread_barrierattr_t *__attr ) __THROW {
-	uAbort( "pthread_barrierattr_destroy" );
+	abort( "pthread_barrierattr_destroy" );
     } // pthread_barrierattr_destroy
 
     int pthread_barrierattr_getpshared( __const pthread_barrierattr_t * __restrict __attr, int *__restrict __pshared ) __THROW {
-	uAbort( "pthread_barrierattr_getpshared" );
+	abort( "pthread_barrierattr_getpshared" );
     } // pthread_barrierattr_getpshared
 
     int pthread_barrierattr_setpshared( pthread_barrierattr_t *__attr, int __pshared ) __THROW {
-	uAbort( "pthread_barrierattr_setpshared" );
+	abort( "pthread_barrierattr_setpshared" );
     } // pthread_barrierattr_setpshared
 
     //######################### Clock #########################
 
     int pthread_getcpuclockid( pthread_t __thread_id, __clockid_t *__clock_id ) __THROW {
-	uAbort( "pthread_getcpuclockid" );
+	abort( "pthread_getcpuclockid" );
     } // pthread_getcpuclockid
 
     // pthread_atfork()
@@ -1553,65 +1506,65 @@ extern "C" {
     //######################### Read/Write #########################
 
     int pthread_rwlock_init( pthread_rwlock_t *__restrict __rwlock, __const pthread_rwlockattr_t *__restrict __attr ) __THROW {
-	uAbort( "pthread_rwlock_init" );
+	abort( "pthread_rwlock_init" );
     } // pthread_rwlock_init
 
     int pthread_rwlock_destroy( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_destroy" );
+	abort( "pthread_rwlock_destroy" );
     } // pthread_rwlock_destroy
 
     int pthread_rwlock_rdlock( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_rdlock" );
+	abort( "pthread_rwlock_rdlock" );
     } // pthread_rwlock_rdlock
 
     int pthread_rwlock_tryrdlock( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_tryrdlock" );
+	abort( "pthread_rwlock_tryrdlock" );
     } // pthread_rwlock_tryrdlock
 
     int pthread_rwlock_wrlock( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_wrlock" );
+	abort( "pthread_rwlock_wrlock" );
     } // pthread_rwlock_wrlock
 
     int pthread_rwlock_trywrlock( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_trywrlock" );
+	abort( "pthread_rwlock_trywrlock" );
     } // pthread_rwlock_trywrlock
 
     int pthread_rwlock_unlock( pthread_rwlock_t *__rwlock ) __THROW {
-	uAbort( "pthread_rwlock_unlock" );
+	abort( "pthread_rwlock_unlock" );
     } // pthread_rwlock_unlock
 
     int pthread_rwlockattr_init( pthread_rwlockattr_t *__attr ) __THROW {
-	uAbort( "pthread_rwlockattr_init" );
+	abort( "pthread_rwlockattr_init" );
     } // pthread_rwlockattr_init
 
     int pthread_rwlockattr_destroy( pthread_rwlockattr_t *__attr ) __THROW {
-	uAbort( "pthread_rwlockattr_destroy" );
+	abort( "pthread_rwlockattr_destroy" );
     } // pthread_rwlockattr_destroy
 
     int pthread_rwlockattr_getpshared( __const pthread_rwlockattr_t * __restrict __attr, int *__restrict __pshared ) __THROW {
-	uAbort( "pthread_rwlockattr_getpshared" );
+	abort( "pthread_rwlockattr_getpshared" );
     } // pthread_rwlockattr_getpshared
 
     int pthread_rwlockattr_setpshared( pthread_rwlockattr_t *__attr, int __pshared ) __THROW {
-	uAbort( "pthread_rwlockattr_setpshared" );
+	abort( "pthread_rwlockattr_setpshared" );
     } // pthread_rwlockattr_setpshared
 
     int pthread_rwlockattr_getkind_np( __const pthread_rwlockattr_t *__attr, int *__pref ) __THROW {
-	uAbort( "pthread_rwlockattr_getkind_np" );
+	abort( "pthread_rwlockattr_getkind_np" );
     } // pthread_rwlockattr_getkind_np
 
     int pthread_rwlockattr_setkind_np( pthread_rwlockattr_t *__attr, int __pref ) __THROW {
-	uAbort( "pthread_rwlockattr_setkind_np" );
+	abort( "pthread_rwlockattr_setkind_np" );
     } // pthread_rwlockattr_setkind_np
 
 // UNIX98 + XOPEN
 
     int pthread_rwlock_timedrdlock( pthread_rwlock_t *__restrict __rwlock, __const struct timespec *__restrict __abstime ) __THROW {
-	uAbort( "pthread_rwlock_timedrdlock" );
+	abort( "pthread_rwlock_timedrdlock" );
     } // pthread_rwlock_timedrdlock
 
     int pthread_rwlock_timedwrlock( pthread_rwlock_t *__restrict __rwlock, __const struct timespec *__restrict __abstime ) __THROW {
-	uAbort( "pthread_rwlock_timedwrlock" );
+	abort( "pthread_rwlock_timedwrlock" );
     } // pthread_rwlock_timedwrlock
 
 // GNU
@@ -1619,19 +1572,19 @@ extern "C" {
     //######################### Parallelism #########################
 
     int pthread_setaffinity_np( pthread_t __th, size_t __cpusetsize, __const cpu_set_t *__cpuset ) __THROW {
-	uAbort( "pthread_setaffinity_np" );
+	abort( "pthread_setaffinity_np" );
     } // pthread_setaffinity_np
 
     int pthread_getaffinity_np( pthread_t __th, size_t __cpusetsize, cpu_set_t *__cpuset ) __THROW {
-	uAbort( "pthread_getaffinity_np" );
+	abort( "pthread_getaffinity_np" );
     } // pthread_getaffinity_np
 
     int pthread_attr_setaffinity_np( pthread_attr_t *__attr, size_t __cpusetsize, __const cpu_set_t *__cpuset ) __THROW {
-	uAbort( "pthread_attr_setaffinity_np" );
+	abort( "pthread_attr_setaffinity_np" );
     } // pthread_attr_setaffinity_np
 
     int pthread_attr_getaffinity_np( __const pthread_attr_t *__attr, size_t __cpusetsize, cpu_set_t *__cpuset ) __THROW {
-	uAbort( "pthread_attr_getaffinity_np" );
+	abort( "pthread_attr_getaffinity_np" );
     } // pthread_attr_getaffinity_np
 
     //######################### Cancellation #########################
@@ -1640,11 +1593,11 @@ extern "C" {
 // pthread_cleanup_pop_restore_np() GNU extension
 
     void _pthread_cleanup_push_defer( struct _pthread_cleanup_buffer *__buffer, void( *__routine )( void * ), void *__arg ) __THROW {
-	uAbort( "_pthread_cleanup_push_defer" );
+	abort( "_pthread_cleanup_push_defer" );
     } // _pthread_cleanup_push_defer
 
     void _pthread_cleanup_pop_restore( struct _pthread_cleanup_buffer *__buffer, int __execute ) __THROW {
-	uAbort( "_pthread_cleanup_pop_restore" );
+	abort( "_pthread_cleanup_pop_restore" );
     } // _pthread_cleanup_pop_restore
 } // extern "C"
 

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 12:22:22 2016
-// Update Count     : 955
+// Last Modified On : Tue Aug 22 18:13:39 2017
+// Update Count     : 980
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -178,7 +178,7 @@ void gen_member_prefix( token_t *before, symbol_t *symbol ) {
 } // gen_member_prefix
 
 
-void gen_member_suffix( token_t *before, symbol_t *symbol ) {
+void gen_member_suffix( token_t *before ) {
     gen_code( before, "}" );
 } // gen_member_suffix
 
@@ -194,28 +194,26 @@ void gen_main_prefix( token_t *before, symbol_t *symbol ) {
 	gen_code( before, "{" );
     } else if ( table->symbol->data->key == TASK ) {
 	gen_code( before, "{ uTaskMain uTaskMainInstance ( * this ) ;" );
-    } // if
 
-    if ( table->symbol->data->key == TASK ) {
 	if ( table->symbol->data->attribute.rttskkind.kind.PERIODIC ) {
 	    gen_code( before,
-		     "uSleep ( firstActivateTime ) ; "
-		     "if ( endTime == 0 || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
-		     "for ( ; ; ) { "
-		     "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
-		     );
+		      "uBaseTask :: sleep ( firstActivateTime ) ; "
+		      "if ( endTime == uTime( 0 ) || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
+		      "for ( ; ; ) { "
+		      "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
+		);
 	} else if ( table->symbol->data->attribute.rttskkind.kind.SPORADIC ) {
 	    gen_code( before,
-		     "uSleep ( firstActivateTime ) ; "
-		     "if ( endTime == 0 || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
-		     "for ( ; ; ) { "
-		     "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
-		     );
+		      "uBaseTask :: sleep ( firstActivateTime ) ; "
+		      "if ( endTime == uTime( 0 ) || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
+		      "for ( ; ; ) { "
+		      "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
+		);
 	} else if ( table->symbol->data->attribute.rttskkind.kind.APERIODIC ) {
 	    gen_code( before,
-		     "uSleep ( firstActivateTime ) ; "
-		     "for ( ; ; ) {"
-		     );
+		      "uBaseTask :: sleep ( firstActivateTime ) ; "
+		      "for ( ; ; ) {"
+		);
 	} // if
     } // if
 } // gen_main_prefix
@@ -228,23 +226,23 @@ void gen_main_suffix( token_t *before, symbol_t *symbol ) {
     uassert( table != nullptr );
     uassert( table->symbol != nullptr );
 
-    if ( table->symbol->data->key == COROUTINE || table->symbol->data->key == TASK ) {
+    if ( table->symbol->data->key == TASK ) {
 	if ( table->symbol->data->attribute.rttskkind.kind.PERIODIC ) {
 	    gen_code( before,
-		     "if ( endTime != 0 && endTime <= uStartTime ) break ; "
-		     "uSleep( uStartTime ) ;"
+		     "if ( endTime != uTime( 0 ) && endTime <= uStartTime ) break ; "
+		     "uBaseTask :: sleep( uStartTime ) ;"
 		     );
 	    gen_code( before, "} }" );
 	} else if ( table->symbol->data->attribute.rttskkind.kind.SPORADIC ) {
 	    gen_code( before,
-		     "if ( endTime != 0 && endTime <= uStartTime ) break ;"
+		     "if ( endTime != uTime( 0 ) && endTime <= uStartTime ) break ;"
 		     );
 	    gen_code( before, "} }" );
 	} else if ( table->symbol->data->attribute.rttskkind.kind.APERIODIC ) {
 	    gen_code( before, "}" );
 	} // if
-	gen_code( before, "}" );
     } // if
+    gen_code( before, "}" );
 } // gen_main_suffix
 
 
@@ -285,7 +283,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 
     // if mutex, generate constructor code
 
-    if ( symbol->data->attribute.Mutex ) {			// is it a monitor?
+    if ( symbol->data->attribute.Mutex ) {		// is it a monitor?
 	if ( symbol->data->key == COROUTINE || symbol->data->key == TASK ) {
 	    gen_code( before, "UPP :: uSerialConstructor uSerialConstructorInstance ( uConstruct , this -> uSerialInstance ) ;" );
 	} else {
@@ -299,17 +297,17 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 
     if ( symbol->data->key == COROUTINE ) {
 	if ( symbol->data->attribute.Mutex ) {		// is it a coroutine monitor?
-	    gen_code( before, "uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , this -> uSerialInstance , * this ," );
+	    gen_code( before, "uBaseCoroutine :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , this -> uSerialInstance , * this ," );
 	} else {
-	    gen_code( before, "uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * ( UPP :: uSerial * ) 0, * this ," );
+	    gen_code( before, "uBaseCoroutine :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * ( UPP :: uSerial * ) 0, * this ," );
 	} // if
 	gen_quote_hash( before, symbol->hash );
 	gen_code( before, ") ;" );
     } else if ( symbol->data->key == TASK ) {
 	if ( symbol->data->attribute.startP == nullptr ) {
-	    gen_code( before, "uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * ( uBasePIQ * ) 0 ," );
+	    gen_code( before, "uBaseTask :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * ( uBasePIQ * ) 0 ," );
 	} else {
-	    gen_code( before, "uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , uPIQInstance ," );
+	    gen_code( before, "uBaseTask :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , uPIQInstance ," );
 	} // if
 	gen_quote_hash( before, symbol->hash );
 	if ( profile ) {
@@ -319,7 +317,15 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	} // if
 	gen_code( before, ") ;" );
     } else if ( symbol->data->key == ACTOR ) {
-	gen_code( before, "uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
+	if ( symbol->data->table ) {			// local members ?
+	    // search for preStart routine, and create constructor to send preStart message
+	    for ( local_t *p = symbol->data->table->local; p; p = p->link ) {
+	      if ( ! p->tblsym && strcmp( p->kind.sym->hash->text, "preStart" ) == 0 ) {
+		    gen_code( before, "uActor :: uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
+		    break;
+		} // if
+	    } // for
+	} // if
     } // if
 } // gen_constructor_prefix
 
@@ -462,7 +468,7 @@ void gen_serial_initializer( token_t *rp, token_t *end, token_t *before, symbol_
 } // gen_serial_initializer
 
 
-void gen_constructor( token_t *before, symbol_t *symbol ) {
+void gen_constructor( symbol_t *symbol ) {
     table_t *table;
 
     uassert( symbol != nullptr );
@@ -518,9 +524,9 @@ void gen_destructor_prefix( token_t *before, symbol_t *symbol ) {
     // if task, generate task destructor code
 
     if ( symbol->data->key == COROUTINE ) {
-	gen_code( before, "uCoroutineDestructor uCoroutineDestructorInstance ( uDestruct , ( uBaseCoroutine & ) * this ) ;" );
+	gen_code( before, "uBaseCoroutine :: uCoroutineDestructor uCoroutineDestructorInstance ( uDestruct , ( uBaseCoroutine & ) * this ) ;" );
     } else if ( symbol->data->key == TASK ) {
-	gen_code( before, "uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
+	gen_code( before, "uBaseTask :: uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
     } // if
 } // gen_destructor_prefix
 
@@ -536,7 +542,7 @@ void gen_destructor_suffix( token_t *before, symbol_t *symbol ) {
 } // gen_destructor_suffix
 
 
-void gen_destructor( token_t *before, symbol_t *symbol ) {
+void gen_destructor( symbol_t *symbol ) {
     table_t *table;
 
     uassert( symbol != nullptr );
@@ -590,7 +596,7 @@ void gen_class_prefix( token_t *before, symbol_t *symbol ) {
 } // gen_class_prefix
 
 
-void gen_class_suffix( token_t *before, symbol_t *symbol ) {
+void gen_class_suffix( symbol_t *symbol ) {
     table_t *table;
 
     uassert( symbol != nullptr );
@@ -600,10 +606,10 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     if ( symbol->data->key == EVENT ) {
 	gen_code( table->protected_area, "virtual" );
 	gen_hash( table->protected_area, symbol->hash );
-	gen_code( table->protected_area, "* duplicate ( ) const { return new" );
+	gen_code( table->protected_area, "* duplicate ( ) const override { return new" );
 	gen_hash( table->protected_area, symbol->hash );
 	gen_code( table->protected_area, "( * this ) ; }" );
-	gen_code( table->protected_area, "virtual void stackThrow ( ) const { throw * this ; }" );
+	gen_code( table->protected_area, "virtual void stackThrow ( ) const override { throw * this ; }" );
     } // if
 
     // declare uSerialInstance *after* the mutex queues (uMutexList) because ~uSerial accesses these queues to check if
@@ -639,7 +645,7 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     // generate either the default destructor or the supplied destructors
 
     if ( table->destructor.empty_structor_list() ) {
-	gen_destructor( table->public_area, symbol );
+	gen_destructor( symbol );
     } else {
 	while ( ! table->destructor.empty_structor_list() ) {
 	    structor_t *structor = table->destructor.remove_structor();
@@ -660,7 +666,7 @@ void gen_class_suffix( token_t *before, symbol_t *symbol ) {
     // generate the default constructor, or add the required code to the constructors seen thus far
 
     if ( table->constructor.empty_structor_list() ) {
-	gen_constructor( table->public_area, symbol );
+	gen_constructor( symbol );
     } else {
 	while ( ! table->constructor.empty_structor_list() ) {
 	    structor_t *structor = table->constructor.remove_structor();

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  4 09:43:51 2014
-// Update Count     : 89
+// Last Modified On : Tue Jul 18 07:37:45 2017
+// Update Count     : 120
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -44,19 +44,21 @@ namespace UPP {
     } // uSemaphore::TimedWaitHandler::TimedWaitHandler
 
     void uSemaphore::TimedWaitHandler::handler() {
-	semaphore.waitTimeout( *This, *this );
+	semaphore.waitTimeout( *this );
     } // uSemaphore::TimedWaitHandler::handler
 
 
 //######################### uSemaphore #########################
 
 
-    void uSemaphore::waitTimeout( uBaseTask &task, TimedWaitHandler &h ) {
+    void uSemaphore::waitTimeout( TimedWaitHandler &h ) {
 	// This uSemaphore member is called from the kernel, and therefore, cannot block, but it can spin.
 
 	spinLock.acquire();
+	uBaseTask &task = *h.getThis();			// optimization
 	if ( task.entryRef.listed() ) {			// is task on queue
-	    uBaseTask &task = waiting.dropHead()->task(); // remove task at head of waiting list
+	    // Remove is a linear search on a queue, but timeouts should be rare and the waiting queue should be short.
+	    waiting.remove( &(task.entryRef) );		// remove this task, O(N)
 	    h.timedout = true;
 	    count += 1;					// adjust the count to reflect the wake up
 	    spinLock.release();
@@ -197,7 +199,7 @@ namespace UPP {
     void uSemaphore::V( int inc ) {			// signal semaphore
 #ifdef __U_DEBUG__
 	if ( inc < 0 ) {
-	    uAbort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
+	    abort( "Attempt to advance uSemaphore %p to %d that must be >= 0.", this, inc );
 	} // if
 #endif // __U_DEBUG__
 	spinLock.acquire();

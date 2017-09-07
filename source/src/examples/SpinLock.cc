@@ -36,7 +36,7 @@ void CriticalSection() {
     for ( int i = 1; i <= 100; i += 1 ) {		// delay
 	// perform critical section operation
 	if ( CurrTid != &uThisTask() ) {		// check for mutual exclusion violation
-	    uAbort( "interference" );
+	    abort( "interference" );
 	} // if
     } // for
 } // CriticalSection   
@@ -55,7 +55,7 @@ _Task Tester {
     Tester() {}
 }; // Tester
     
-void uMain::main() {
+int main() {
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
     Tester t[10];
 } // main

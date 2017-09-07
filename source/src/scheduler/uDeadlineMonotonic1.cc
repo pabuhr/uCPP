@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Fri Oct 27 08:25:33 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:28:07 2016
-// Update Count     : 34
+// Last Modified On : Sun Feb 19 23:17:58 2017
+// Update Count     : 35
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,15 +32,13 @@
 
 
 void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "(uDeadlineMonotonic1 &)%p.addInitialize: enter\n", this );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic1 &)%p.addInitialize: enter\n", this ); )
 
     uBaseTask &task = taskList.tail()->task();
 
     uPIHeap *PIHptr = dynamic_cast<uPIHeap *>(task.uPIQ);
     if ( PIHptr == nullptr ) {
-	uAbort("(uDeadlineMonotonic1 &)%p.addInitialize : Task %p has incorrect uPIQ type.", this, &task );
+	abort("(uDeadlineMonotonic1 &)%p.addInitialize : Task %p has incorrect uPIQ type.", this, &task );
     } // if
 
     int queueNum = PIHptr->head();
@@ -50,9 +48,7 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
     uSporadicBaseTask *sbtask;
 
     if ( ( rbtask = dynamic_cast<uRealTimeBaseTask *>(&task) ) == nullptr ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uDeadlineMonotonic1 &)%p.addInitialize: exit1\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uDeadlineMonotonic1 &)%p.addInitialize: exit1\n", this ); )
 	setBasePriority( task, INT_MAX );		// set to a large number
 
 	if ( queueNum == -1 ) {
@@ -111,7 +107,7 @@ void uDeadlineMonotonic1::addInitialize( uSequence<uBaseTaskDL> &taskList ) {
 		setActiveQueue( task, queueNum );
 	    } // if
 	} else {
-	    uAbort( "(uDeadlineMonotonic1 &)%p.addInitialize : Cannot schedule task as more priorities are needed than current limit of %d.",
+	    abort( "(uDeadlineMonotonic1 &)%p.addInitialize : Cannot schedule task as more priorities are needed than current limit of %d.",
 		    this, __U_MAX_NUMBER_PRIORITIES__ );
 	} // if
     } // if

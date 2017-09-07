@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 21 22:17:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:17:51 2016
-// Update Count     : 1
+// Last Modified On : Sat Jul  8 15:51:24 2017
+// Update Count     : 2
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -158,7 +158,7 @@ _Task Reader {
 	if ( nfds == -1 ) {
 	    cerr << "select failure " << errno << " " << strerror( errno ) << endl;
 	} // if
-	osacquire( cout ) << "Reader:" << &uThisTask() << endl;
+	osacquire( cout ) << "Reader:" << &uThisTask() << " terminates" << endl;
     } // Reader::main
   public:
     Reader() {}
@@ -172,7 +172,7 @@ volatile bool stopWriters = false;
 
 _Task Writer {
     void main() {
-	//osacquire( cerr ) << "Starting writer thread " << &uThistask() << endl;
+	//osacquire( cerr ) << "Starting writer thread " << &uThisTask() << endl;
 	int pipe = rand() % PIPE_NUM;
 
 	for ( ; ! stopWriters; ) {
@@ -181,7 +181,7 @@ _Task Writer {
 	    pipe += 1;
 	    if ( pipe >= PIPE_NUM ) pipe = 0;
 	} // for
-	osacquire( cout ) << "Writer:" << &uThisTask() << endl;
+	osacquire( cout ) << "Writer:" << &uThisTask() << " terminates" << endl;
     } // Writer::main
   public:
     Writer();
@@ -201,7 +201,7 @@ unsigned int uMainStackSize() {
 } // uMainStackSize
 
 
-void uMain::main() {
+int main() {
     unsigned int i;
 #ifdef __U_STATISTICS__
     UPP::Statistics::prtSigterm = true;
@@ -239,7 +239,7 @@ void uMain::main() {
 #ifdef __U_STATISTICS__
 //    UPP::Statistics::print();
 #endif // __U_STATISTICS__
-}  // uMain::main
+}  // main
 
 // Local Variables: //
 // compile-command: "u++-work -g -Wall -multi -O2 -DFD_SETSIZE=65536 -D__U_STATISTICS__ PipesSelect.cc" //

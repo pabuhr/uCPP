@@ -156,7 +156,7 @@ _Task TaskDummy5 {
 	} catch( uMutexFailure::EntryFailure &ex ) {
 	    osacquire( cout ) << "handled exception uMutexFailure::EntryFailure : while executing mutex destructor, task " << ex.source().getName() << " (" << &(ex.source()) << ") found task " << uThisTask().getName() << " (" << &uThisTask() << ") " << ex.message() << endl << endl;
 	} catch( ... ) {
-	    uAbort( "invalid exception" );
+	    abort( "invalid exception" );
 	} // try
     } // TaskDummy5::main
 }; // TaskDummy5
@@ -189,13 +189,13 @@ _Task TaskDummy7 {
 	} catch( uMutexFailure::EntryFailure &ex ) {
 	    osacquire( cout ) << "handled exception uMutexFailure::EntryFailure : while executing mutex destructor, task " << ex.source().getName() << " (" << &(ex.source()) << ") found task " << uThisTask().getName() << " (" << &uThisTask() << ") " << ex.message() << endl << endl;
 	} catch( ... ) {
-	    uAbort( "invalid exception" );
+	    abort( "invalid exception" );
 	} // try
     } // TaskDummy7::main
 }; // TaskDummy7
 
 
-void uMain::main() {
+int main() {
     //######################### uBaseCoroutine::UnhandledException #########################
     {
 	CoroutineDummy1 dummy1( true );
@@ -210,7 +210,7 @@ void uMain::main() {
 	    } _CatchResume( YYY & ) {
 	    } // try
 	} catch( ... ) {
-	    uAbort( "invalid exception" );
+	    abort( "invalid exception" );
 	} // try
     }
     {
@@ -230,10 +230,10 @@ void uMain::main() {
 	    } catch ( XXX &ex ) {
 		osacquire( cout ) << "caught XXX : " << ex.message() << endl;
 	    } catch ( ... ) {
-		uAbort( "invalid exception" );
+		abort( "invalid exception" );
 	    } // try
 	} catch( ... ) {
-	    uAbort( "invalid exception" );
+	    abort( "invalid exception" );
 	} // try
     }
     //######################### uCondition::uWaitingFailure #########################
@@ -252,7 +252,7 @@ void uMain::main() {
 	    } // _Enable
 	} catch( XXX &ex ) {
 	} catch( ... ) {
-	    uAbort( "invalid exception" );
+	    abort( "invalid exception" );
 	} // try
     }
     //######################### uMutexFailure::uEntryFailure (acceptor/signalled stack) #########################
@@ -270,4 +270,4 @@ void uMain::main() {
     delete t7;
 
     cout << "successful completion" << endl;
-} // uMain::main
+} // main

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr  5 08:06:57 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:04:12 2016
-// Update Count     : 3
+// Last Modified On : Sat Jan 28 10:04:33 2017
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,14 +33,14 @@ using namespace std;
 _Task T {
     void main() {
 	osacquire( cout ) << "start " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
-	sleep( 5 );
+	sleep( uDuration( 5 ) );
 	osacquire( cout ) << "done " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
-    }
+    } // T:: main
   public:
     T( uCluster &clus ) : uBaseTask( clus ) {}
-};
+}; // T
 
-void uMain::main() {
+int main() {
     uCluster clus( "clus" );
     osacquire( cout ) << "cluster: " << &clus << endl;
     uProcessor p;
@@ -54,7 +54,7 @@ void uMain::main() {
     osacquire( cout ) << "over" << endl;
     p.setCluster( clus );
     osacquire( cout ) << "finish" << endl;
-}
+} // main
 
 // Local Variables: //
 // compile-command: "u++ TimeoutProcessor.cc" //

@@ -7,8 +7,8 @@
 // Author           : Jun Shih
 // Created On       : Sat Nov 11 14:44:08 EST 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  2 23:15:37 2016
-// Update Count     : 47
+// Last Modified On : Mon Feb 20 11:09:44 2017
+// Update Count     : 48
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,18 +76,13 @@ CodeAddress uBConditionEval::eval_address_local( int which ) {
     // local address is the real fp + offset (usually negative)
     unsigned long address = ((unsigned long) prev_2fp + (int)bp_cond.var[which].offset );
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( " EVAL_ADDRESS_LOCAL: fp = 0x%x %d 0x%x\n", bp_cond.fp, bp_cond.var[which].offset, (unsigned int)bp_cond.fp + (int)bp_cond.var[which].offset );
-    uDebugPrt( " EVAL_ADDRESS_LOCAL: 0x%x\n", address );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( " EVAL_ADDRESS_LOCAL: fp = 0x%x %d 0x%x 0x%x\n", bp_cond.fp, bp_cond.var[which].offset, (unsigned int)bp_cond.fp + (int)bp_cond.var[which].offset, address ); )
 
     if ( bp_cond.var[which].field_off ) {
 	if ( bp_cond.var[which].field_off == -1) { // *p
 	    bp_cond.var[which].field_off = 0;
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "address = 0x%x \n", *(long*)address );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "address = 0x%x \n", *(long*)address ); )
 	return (CodeAddress)(*(long*) address + bp_cond.var[which].field_off);
     } // if
     return (CodeAddress) address;
@@ -98,19 +93,14 @@ CodeAddress uBConditionEval::eval_address_static( int which ) {
     assert( bp_cond.var[which].atype == BreakpointCondition::STATIC);
 
     if ( bp_cond.var[which].field_off == -1 ) { // *p
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "address = 0x%x \n", bp_cond.var[which].offset );
-	uDebugPrt( "address = %d \n", *(long*)bp_cond.var[which].offset );
+	uDEBUGPRT( uDebugPrt( "address = 0x%x %d\n", bp_cond.var[which].offset, *(long*)bp_cond.var[which].offset ); )
 	return (CodeAddress) *(long*) bp_cond.var[which].offset;
-#endif // __U_DEBUG_H__
     } // if
 
     unsigned long address = bp_cond.var[which].offset + bp_cond.var[which].field_off;
 
     if ( bp_cond.var[which].field_off ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "address = 0x%x \n", *(long*)address );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "address = 0x%x \n", *(long*)address ); )
 	return (CodeAddress) address + bp_cond.var[which].field_off;
     } // if
     // offset is the address
@@ -135,8 +125,7 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
     // page 195 "The SPARC Architecture Manual" version 8.
 
     unsigned long prev_fp = *(unsigned long*) (bp_cond.fp + 4 * 14);
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "prev_fp:%p\n",prev_fp );
+    uDEBUGPRT( uDebugPrt( "prev_fp:%p\n",prev_fp );
     for ( int i = 0; i < 25; i++) {
 	int *addr = (int*) (prev_fp + (i*4));
 	uDebugPrt( "addr:%9p i:%3d off:%4d val:%11d val:0x%9p\n",addr,i,bp_cond.var[which].offset,*addr, *addr );
@@ -144,24 +133,23 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
     for ( int i = 0; i < 25; i++) {
 	int *addr = (int*) ( bp_cond.fp + ( i*4));
 	uDebugPrt( "addr:%9p i:%3d off:%4d val:%11d val:0x%9p\n",addr,i,bp_cond.var[which].offset,*addr, *addr );
-    } // for
-#endif // __U_DEBUG_H__
+    } // for )
     if ( (int)bp_cond.var[which].offset >= 16 && (int) bp_cond.var[which].offset < 32 ) { // local and in registers
 	address = ((unsigned long) prev_fp + (long) (sizeof(long)  *((int)bp_cond.var[which].offset - 16)));
     } else if ( (int)bp_cond.var[which].offset >= 8 && (int) bp_cond.var[which].offset < 15) { // out register (r8 at 17th word)
 	address = ((unsigned long) bp_cond.fp + (long) (sizeof(long)  *(bp_cond.var[which].offset)));
     } else {
-	uAbort( "uBConditionEval::eval_address_register : internal error, failed to find global registers" );
+	abort( "uBConditionEval::eval_address_register : internal error, failed to find global registers" );
     } // if
 #elif defined( __i386__ )
     unsigned long prev_fp = *(unsigned int*) ((int) bp_cond.fp);
     address =  (unsigned long) prev_fp - (sizeof(long)  *(bp_cond.var[which].offset+1));
-#ifdef __U_DEBUG_H__
-    for ( int i = -10; i < 10; i++){
-	unsigned long addr = (unsigned long) prev_fp + (long) (i * sizeof(long));
-	uDebugPrt( "i:%d addr:%p val:%d %p\n",i,addr, *(int*)addr,*(int*)addr );
-    } // for
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(
+	for ( int i = -10; i < 10; i += 1 ) {
+	    unsigned long addr = (unsigned long) prev_fp + (long) (i * sizeof(long));
+	    uDebugPrt( "i:%d addr:%p val:%d %p\n",i,addr, *(int*)addr,*(int*)addr );
+	} // for
+    )
 #elif defined( __ia64__ )
     address = 0;
 #elif defined( __x86_64__ )
@@ -174,9 +162,7 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
 	if ( bp_cond.var[which].field_off == -1) { // *p
 	    bp_cond.var[which].field_off = 0;
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "address = 0x%x \n", *(long*)address);
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "address = 0x%x \n", *(long*)address); )
 	return (CodeAddress)(*(long*) address + bp_cond.var[which].field_off);
     } // if
     return (CodeAddress) address;
@@ -231,9 +217,7 @@ BreakpointCondition &uBConditionEval::getBp_cond() {
 
 
 int uBConditionEval::evaluate() {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "bp_cond.var[0].vtype is %d and bp_cond.var[1].vtype is %d\n",bp_cond.var[0].vtype,bp_cond.var[1].vtype );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "bp_cond.var[0].vtype is %d and bp_cond.var[1].vtype is %d\n",bp_cond.var[0].vtype,bp_cond.var[1].vtype ); )
     if ( bp_cond.var[0].vtype == BreakpointCondition::INVALID || bp_cond.var[1].vtype == BreakpointCondition::INVALID) {
 	return 0;					// can not find address of one of them
     } // if

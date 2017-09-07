@@ -100,12 +100,12 @@ void Cons::main() {
     cout << " and stops" << endl;
 }; // Cons::main
 
-void uMain::main() {
+int main() {
     Prod prod;
     Cons cons( prod );
 
     prod.start( 5, &cons );
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ CorFullProdCons.cc" //

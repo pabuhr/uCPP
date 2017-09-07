@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 16 13:51:34 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:03:11 2016
-// Update Count     : 141
+// Last Modified On : Sun Jan 22 23:32:42 2017
+// Update Count     : 142
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -81,11 +81,11 @@ void Worker::main() {
     } // if
 } // Worker::main
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     unsigned int NoWorkers, NoProcessors, work;
 
     if ( argc != 4 ) {
-	uAbort( "Usage: no.-processors  no.-worker-tasks  amount-of-task-work" );
+	abort( "Usage: no.-processors  no.-worker-tasks  amount-of-task-work" );
     } // if
 
     NoProcessors = atoi( argv[1] );

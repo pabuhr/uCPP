@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jan 22 12:32:28 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 21 22:16:33 2016
-// Update Count     : 9
+// Last Modified On : Mon Jan 23 13:53:19 2017
+// Update Count     : 10
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,7 @@ using std::skipws;
 #include <string>
 using std::string;
 
-void uMain::main() {
+int main( int argc, char *argv[] ) {
     istream *infile;									// pointer to input stream
     ostream *outfile = &cout;							// pointer to output stream; default to cout
     string str;

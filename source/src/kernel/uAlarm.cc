@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 15 00:58:09 2013
-// Update Count     : 306
+// Last Modified On : Tue Aug 22 17:21:14 2017
+// Update Count     : 310
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,31 +72,29 @@ uEventNode::uEventNode( uBaseTask &task, uSignalHandler &sig, uTime alarm, uDura
 
 
 uEventNode::uEventNode( uSignalHandler &sig ) {
-    createEventNode( nullptr, &sig, 0, 0 );
+    createEventNode( nullptr, &sig, uTime( 0 ), 0 );
 } // uEventNode::uEventNode
 
 
 uEventNode::uEventNode() {
-    createEventNode( nullptr, nullptr, 0, 0 );
+    createEventNode( nullptr, nullptr, uTime( 0 ), 0 );
 } // uEventNode::uEventNode
 
 
 void uEventNode::add( bool block ) {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventNode &)%p.add( %d ) alarm:%lld period:%lld\n", this, block, alarm.nanoseconds(), period.nanoseconds() );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventNode &)%p.add( %d ) alarm:%lld period:%lld\n", this, block, alarm.nanoseconds(), period.nanoseconds() );
+    )
     uProcessor::events->addEvent( *this, block );
 } // uEventNode::add
 
 
 void uEventNode::remove() {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventNode &)%p.remove alarm:%lld period:%lld\n", this, alarm.nanoseconds(), period.nanoseconds() );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventNode &)%p.remove alarm:%lld period:%lld\n", this, alarm.nanoseconds(), period.nanoseconds() );
+    )
     uProcessor::events->removeEvent( *this );
 } // uEventNode::remove
 
@@ -105,11 +103,10 @@ void uEventNode::remove() {
 
 
 void uEventList::addEvent( uEventNode &newEvent, bool block ) {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventList &)%p.addEvent, newEvent:%p\n", this, &newEvent );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventList &)%p.addEvent, newEvent:%p\n", this, &newEvent );
+    )
     eventLock.acquire();
 
     uEventNode *event;
@@ -128,11 +125,10 @@ void uEventList::addEvent( uEventNode &newEvent, bool block ) {
 
 
 void uEventList::removeEvent( uEventNode &event ) {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventList &)%p.removeEvent, event:%p\n", this, &event );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventList &)%p.removeEvent, event:%p\n", this, &event );
+    )
     eventLock.acquire();
 
     // If a task is trying to remove an event at the same time the event expires, both the task and roll forward race to
@@ -180,22 +176,20 @@ bool uEventList::userEventPresent() {
 
 
 void uEventList::setTimer( uDuration duration ) {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventList &)%p.setTimer, duration %lld\n", this, duration.nanoseconds() );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventList &)%p.setTimer, duration %lld\n", this, duration.nanoseconds() );
+    )
     activeProcessorKernel->setTimer( duration );
 } // uEventList::setTimer
 
 
 void uEventList::setTimer( uTime time ) {		// time parameter is real-time (not virtual time)
-#ifdef __U_DEBUG_H__
-    char buffer[256];
-    uDebugPrtBuf( buffer, "uEventList::setTimer, time:%lld\n", time.nanoseconds() );
-#endif // __U_DEBUG_H__
-
-  if ( time == 0 ) return;				// zero time is invalid
+    uDEBUGPRT(
+	char buffer[256];
+	uDebugPrtBuf( buffer, "uEventList::setTimer, time:%lld\n", time.nanoseconds() );
+    )
+  if ( time == uTime( 0 ) ) return;			// zero time is invalid
 
 #if defined( REALTIME_POSIX )
     timespec curr;
@@ -209,9 +203,8 @@ void uEventList::setTimer( uTime time ) {		// time parameter is real-time (not v
 
     uDuration dur = time - currtime;
     if ( dur <= 0 ) {					// if duration is zero or negative (it has already past)
-#ifdef __U_DEBUG_H__
-	uDebugPrtBuf( buffer, "uEventList::setTimer, kill time:%lld currtime:%lld dur:%lld\n", time.nanoseconds(), currtime.nanoseconds(), dur.nanoseconds() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrtBuf( buffer, "uEventList::setTimer, kill time:%lld currtime:%lld dur:%lld\n",
+				 time.nanoseconds(), currtime.nanoseconds(), dur.nanoseconds() ); )
 	//kill( getpid(), SIGALRM );			// send SIGALRM immediately, works uni and multi processor
 	THREAD_SETMEM( RFpending, true );		// force rollForward to be called
     } else {
@@ -243,11 +236,10 @@ uEventListPop::uEventListPop( uEventList &events, bool inKernel ) {
 
 
 uEventListPop::~uEventListPop() {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventListPop &)%p.~uEventListPop\n", this );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventListPop &)%p.~uEventListPop\n", this );
+    )
 #if defined( __U_MULTI__ )
     assert( &uThisProcessor() == uKernelModule::systemProcessor );
 #endif // __U_MULTI__
@@ -286,11 +278,10 @@ uEventListPop::~uEventListPop() {
 
 
 bool uEventListPop::operator>>( uEventNode *&node ) {
-#ifdef __U_DEBUG_H__
-    char buf[1024];
-    uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, event list %p\n", this, events );
-#endif // __U_DEBUG_H__
-
+    uDEBUGPRT(
+	char buf[1024];
+	uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, event list %p\n", this, events );
+    )
     events->eventLock.acquire_( true );
 
     node = events->eventlist.head();			// get event at the start of the list with the shortest time delay
@@ -300,9 +291,8 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
 	return false;
     } // if
 
-#ifdef __U_DEBUG_H__
-    uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, currTime:%lld node:%p %s alarm:%lld period:%lld\n", this, currTime.nanoseconds(), node, node->task != nullptr ? node->task->getName() : "*noname*", node->alarm.nanoseconds(), node->period.nanoseconds() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrtBuf( buf, "(uEventListPop &)%p.>>, currTime:%lld node:%p %s alarm:%lld period:%lld\n",
+			     this, currTime.nanoseconds(), node, node->task != nullptr ? node->task->getName() : "*noname*", node->alarm.nanoseconds(), node->period.nanoseconds() ); )
 
   if ( node->alarm > currTime ) {			// event time delay greater than the start time for the iteration
 	events->eventLock.release_( true );

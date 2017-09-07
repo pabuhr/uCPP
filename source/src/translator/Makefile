@@ -19,7 +19,7 @@ include ${PACKAGE}/src/MakeTools
 CC := ${CCBUILD}
 
 ## Override from MakeTools
-CCFLAGS := -std=${CPP11} -Wall -I. -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DTVENDOR=\"${TVENDOR}\" -DTOS=\"${TOS}\" -DTCPU=\"${TCPU}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DCPP11=\"${CPP11}\" -DWORDSIZE=${WORDSIZE}
+CCFLAGS := -std=${CPP11} -I. -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -D__${VENDOR}__ -D__${OS}__ -D__${CPU}__ -DTVENDOR=\"${TVENDOR}\" -DTOS=\"${TOS}\" -DTCPU=\"${TCPU}\" -DINSTALLINCDIR=\"${INSTALLINCDIR}\" -DINSTALLLIBDIR=\"${INSTALLLIBDIR}\" -DINSTALLBINDIR=\"${INSTALLBINDIR}\" -DTMPDIR=\"${TMPDIR}\" -DMULTI=\"${MULTI}\" -DCCAPP=\"${CCAPP}\" -D__U_MAXENTRYBITS__=${MAXENTRYBITS} -DCPP11=\"${CPP11}\" -DWORDSIZE=${WORDSIZE}
 
 ifeq (${STATISTICS},TRUE)
 	CCFLAGS += -DSTATISTICS
@@ -40,7 +40,7 @@ CPPNAME = cc1plus
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
-	CCFLAGS += -g -O2 #
+	CCFLAGS += -g -O2 -Wextra #
 else
 	CCFLAGS += -O2 # -DNDEBUG
 endif
@@ -104,7 +104,7 @@ DEPENDS = ${OBJDIR}/depend.mk
 
 ## Define which executables should be built.
 
-BINS = u++
+BINS = ${UPP}
 LIBS = ${CPPNAME} u++-cpp
 
 ## Define the specific recipes.
@@ -118,8 +118,8 @@ install : all ${INSTALLFILES}
 test :
 	set -x ; \
 	for filename in Operators AcceptStmt SelectStmt BreakStmt Finally CatchResume Exception Termination Event MutexTaskParms Constructor \
-			Lookup InheritanceException Template Friend Inheritance STL Types C++11 ; do \
-		${INSTALLBINDIR}/u++ ${CCFLAGS} -Wno-unused-label -c test$${filename}.cc ; \
+			Lookup Inheritance InheritanceException Template Friend STL Types C++11 ; do \
+		${INSTALLBINDIR}/${UPP} ${CCFLAGS} -c test$${filename}.cc ; \
 	done ; \
 	rm -f ./a.out test*.o ;
 
@@ -140,7 +140,7 @@ ${OBJDIR}/%.o : ${SRCDIR}/%.cc
 
 ## Dependencies and recipes for the driver.
 
-${BINDIR}/u++ : ${OBJ} ${DOBJ}
+${BINDIR}/${UPP} : ${OBJ} ${DOBJ}
 	${CC} ${CCFLAGS} ${OBJ} ${DOBJ} -o $@
 
 ## Dependencies and recipes for the preprocessor.

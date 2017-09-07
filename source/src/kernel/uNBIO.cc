@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:29:14 2016
-// Update Count     : 1485
+// Last Modified On : Sat Jul  8 11:56:37 2017
+// Update Count     : 1500
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -53,19 +53,19 @@ using std::min;
 
 
 namespace UPP {
-#ifdef __U_DEBUG_H__
-    static void printFDset( uNBIO *nbio, const char *title, int nmasks, fd_set *fds ) {
-	uDebugPrt2( "(uNBIO &)%p.printFDset, masks %d, %s:", nbio, nmasks, title );
-	if ( fds != nullptr ) {
-	    for ( int i = 0; i < nmasks; i += 1 ) {
-		uDebugPrt2( "%lx ", fds->fds_bits[i] );
-	    } // for
-	} else {
-	    uDebugPrt2( "nullptr" );
+    uDEBUGPRT(
+	static void printFDset( uNBIO *nbio, const char *title, int nmasks, fd_set *fds ) {
+	    uDebugPrt2( "(uNBIO &)%p.printFDset, masks %d, %s:", nbio, nmasks, title );
+	    if ( fds != nullptr ) {
+		for ( int i = 0; i < nmasks; i += 1 ) {
+		    uDebugPrt2( "%lx ", fds->fds_bits[i] );
+		} // for
+	    } else {
+		uDebugPrt2( "nullptr" );
 	} // if
-	uDebugPrt2( "\n" );
-    } // printFDset
-#endif // __U_DEBUG_H__
+	    uDebugPrt2( "\n" );
+	} // printFDset
+    )
 
     /****************** countBits ********************
 	Purpose: Count number of bits with value 1
@@ -141,7 +141,7 @@ namespace UPP {
 	assert( l >= 0 );
 	return l;
     } // msbpos
-#endif
+#endif // 0
 
 
     /****************** findMaxFD *******************
@@ -154,7 +154,7 @@ namespace UPP {
 	nfds = 0;
 
 	fd_mask tmask = howmany( prevMax, NFDBITS ) - 1; // number of "chunks" (words) in previous mask
-	fd_mask combined;
+	fd_mask combined = 0;
 
 	// This code makes assumptions about the implementation of fd_set.  Namely that the size of each chunk is the
 	// same as the size of "combined" and the most significant bit contains the highest numbered fd.
@@ -305,7 +305,7 @@ namespace UPP {
 	    sigaddset( &new_mask, SIGUSR1 );
 	    // race to disable interupt and deliver interrupt
 	    if ( sigprocmask( SIG_BLOCK, &new_mask, &old_mask ) == -1 ) {
-		uAbort( "internal error, sigprocmask" );
+		abort( "internal error, sigprocmask" );
 	    } // if
 
 	    // check if any interrupt occured before interrupts disabled (i.e., interrupt won race)
@@ -314,7 +314,7 @@ namespace UPP {
 		// execute after I/O polling.
 		uThisCluster().readyIdleTaskLock.release();
 		if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
-		    uAbort( "internal error, sigprocmask" );
+		    abort( "internal error, sigprocmask" );
 		} // if
 		terrno = select( nullptr );		// poll for descriptors
 	    } else {
@@ -350,7 +350,7 @@ namespace UPP {
 		terrno = select( &old_mask );
 
 		if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // new mask restored so install old signal mask over new one
-		    uAbort( "internal error, sigprocmask" );
+		    abort( "internal error, sigprocmask" );
 		} // if
 
 		if ( uThisProcessor().idle() )
@@ -398,9 +398,7 @@ namespace UPP {
 		    FD_SET( fd, &sefds );		// reset single master for pending tasks on next select
 		} // if
 	} else {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.performIO, removing node %p, cnt:%d, timedout:%d\n", this, p, cnt, p->timedout );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.performIO, removing node %p, cnt:%d, timedout:%d\n", this, p, cnt, p->timedout ); )
 	    pendingIO.remove( p );			// remove node from list of waiting tasks
 	    p->nfds = cnt;				// set return value
 	    p->pending.V();				// wake up waiting task (empty for IOPoller)
@@ -412,10 +410,8 @@ namespace UPP {
     void uNBIO::checkSfds( int fd, NBIOnode *p, uSequence<NBIOnode> &pendingIO ) {
 	int temp = 0, cnt = 0;
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.checkSfds, found task %.256s (%p) waiting on single fd %d with mask 0x%x\n",
-		   this, p->pendingTask->getName(), p->pendingTask, fd, *p->smfd.sfd.uRWE );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkSfds, found task %.256s (%p) waiting on single fd %d with mask 0x%x\n",
+			      this, p->pendingTask->getName(), p->pendingTask, fd, *p->smfd.sfd.uRWE ); )
 
 	// Determine all IO events registered by a task.
 	if ( (*p->smfd.sfd.uRWE & uCluster::ReadSelect) && FD_ISSET( fd, &mRFDs ) ) {
@@ -437,9 +433,7 @@ namespace UPP {
 	    *p->smfd.sfd.uRWE = temp;
 	    performIO( fd, p, pendingIO, cnt );
 	} else if ( p->timedout ) {			// timed out (set by event handler) ? not needed for single fds without timeout
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkSfds, removing node %p, cnt:%d, timedout:%d\n", this, p, cnt, p->timedout );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkSfds, removing node %p, cnt:%d, timedout:%d\n", this, p, cnt, p->timedout ); )
 	    pendingIO.remove( p );			// remove node from list of waiting tasks
 	    p->nfds = cnt;				// set return value
 	    p->pending.V();				// wake up waiting task (empty for IOPoller)
@@ -459,10 +453,8 @@ namespace UPP {
 	NBIOnode *p = pendingIO.head();
 	IOPoller = p->pendingTask;			// next poller task
 	p->pending.V();					// wake up waiting task
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.unblockFD, poller %.256s (%p) nominating task %.256s (%p) to be next poller\n",
-		   this, uThisTask().getName(), &uThisTask(), (IOPoller != nullptr ? IOPoller->getName() : "nullptr"), IOPoller );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.unblockFD, poller %.256s (%p) nominating task %.256s (%p) to be next poller\n",
+			      this, uThisTask().getName(), &uThisTask(), (IOPoller != nullptr ? IOPoller->getName() : "nullptr"), IOPoller ); )
     } // uNBIO::unblockFD
 
 
@@ -471,22 +463,18 @@ namespace UPP {
 	unsigned int tmasks;
 	NBIOnode *p;
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.checkIOEnd, select returns: found %d\n", this, descriptors );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, select returns: found %d\n", this, descriptors ); )
 
 	if ( descriptors > 0 ) {			// I/O has occurred (from pselect) ?
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::select_events, descriptors );
 #endif // __U_STATISTICS__
 
-#ifdef __U_DEBUG_H__
-	    tmasks = howmany( maxFD, NFDBITS );		// total number of masks in fd set
+	    uDEBUGPRT( tmasks = howmany( maxFD, NFDBITS ); // total number of masks in fd set
 	    uDebugAcquire();
 	    uDebugPrt2( "(uNBIO &)%p.checkIOEnd, found %d pending IO operations\n", this, descriptors );
 	    printFDset( this, "mRFDs", tmasks, &mRFDs ); printFDset( this, "mWFDs", tmasks, &mWFDs ); printFDset( this, "mEFDs", tmasks, &mEFDs );
-	    uDebugRelease();
-#endif // __U_DEBUG_H__
+	    uDebugRelease(); )
 
 	    // Check to see which tasks are waiting for ready I/O operations on multiple mask and wake them.
 
@@ -503,10 +491,8 @@ namespace UPP {
 			    FD_ZERO( &mefds );		// clear the exceptional set
 			multiples = true;
 		    } // if
-#ifdef __U_DEBUG_H__
-		    uDebugPrt( "(uNBIO &)%p.checkIOEnd, found task %.256s (%p) waiting for multiple fd, nfd:%d\n",
-			       this, p->pendingTask->getName(), p->pendingTask, p->smfd.mfd.tnfds );
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, found task %.256s (%p) waiting for multiple fd, nfd:%d\n",
+					  this, p->pendingTask->getName(), p->pendingTask, p->smfd.mfd.tnfds ); )
 		    // "min" is necessary because new tasks can enter after a select occurs, so maxFD does not reflect
 		    // the current max.
 		    tmasks = howmany( min( p->smfd.mfd.tnfds, maxFD ), NFDBITS ); // total number of masks in fd set
@@ -514,16 +500,16 @@ namespace UPP {
 		    // this mask prevents bits in the user fdset from being changed when the returned fdset is shorter
 		    int shift = p->smfd.mfd.tnfds % NFDBITS;
 		    if ( shift == 0 ) shift = NFDBITS;
-		    fd_mask mask = -1L << shift;	// mask for interest bits
+		    fd_mask mask = (~0ul) << shift;	// (all 1s) mask for interest bits
 
-#ifdef __U_DEBUG_H__
-		    uDebugAcquire();
-		    uDebugPrt2( "(uNBIO &)%p.checkIOEnd Multi before, tmasks %d\n", this, tmasks );
-		    printFDset( this, "trfds", tmasks, p->smfd.mfd.trfds );
-		    printFDset( this, "twfds", tmasks, p->smfd.mfd.twfds );
-		    printFDset( this, "tefds", tmasks, p->smfd.mfd.tefds );
-		    uDebugRelease();
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT(
+			uDebugAcquire();
+			uDebugPrt2( "(uNBIO &)%p.checkIOEnd Multi before, tmasks %d\n", this, tmasks );
+			printFDset( this, "trfds", tmasks, p->smfd.mfd.trfds );
+			printFDset( this, "twfds", tmasks, p->smfd.mfd.twfds );
+			printFDset( this, "tefds", tmasks, p->smfd.mfd.tefds );
+			uDebugRelease();
+		    )
 
 		    fd_mask temp;
 		    tcnt = cnt = 0;
@@ -581,20 +567,18 @@ namespace UPP {
 		    } // if
 		    tcnt += cnt;
 
-#ifdef __U_DEBUG_H__
-		    uDebugAcquire();
-		    uDebugPrt2( "(uNBIO &)%p.checkIOEnd Multi after, tcnt:%d\n", this, tcnt );
-		    printFDset( this, "trfds", tmasks, p->smfd.mfd.trfds );
-		    printFDset( this, "twfds", tmasks, p->smfd.mfd.twfds );
-		    printFDset( this, "tefds", tmasks, p->smfd.mfd.tefds );
-		    uDebugRelease();
-#endif // __U_DEBUG_H__
+		    uDEBUGPRT(
+			uDebugAcquire();
+			uDebugPrt2( "(uNBIO &)%p.checkIOEnd Multi after, tcnt:%d\n", this, tcnt );
+			printFDset( this, "trfds", tmasks, p->smfd.mfd.trfds );
+			printFDset( this, "twfds", tmasks, p->smfd.mfd.twfds );
+			printFDset( this, "tefds", tmasks, p->smfd.mfd.tefds );
+			uDebugRelease();
+		    )
 
 		    if ( tcnt != 0 || p->timedout ) {	// I/O completed for this task or timed out (set by event handler) ?
-#ifdef __U_DEBUG_H__
-			uDebugPrt( "(uNBIO &)%p.checkIOEnd, removing node %p for task %s (%p), tcnt:%d, timedout:%d\n",
-				   this, p, p->pendingTask->getName(), p->pendingTask, tcnt, p->timedout );
-#endif // __U_DEBUG_H__
+			uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, removing node %p for task %s (%p), tcnt:%d, timedout:%d\n",
+					      this, p, p->pendingTask->getName(), p->pendingTask, tcnt, p->timedout ); )
 			pendingIOMfds.remove( p );	// remove node from list of waiting tasks
 			p->nfds = tcnt;			// set return value
 			p->pending.V();			// wake up waiting task (empty for IOPoller)
@@ -608,12 +592,12 @@ namespace UPP {
 			if ( p->smfd.mfd.tefds != nullptr )
 			    for ( i = 0; i < tmasks; i += 1 ) mefds.fds_bits[i] |= p->smfd.mfd.tefds->fds_bits[i];
 
-#ifdef __U_DEBUG_H__
-			uDebugAcquire();
-			uDebugPrt2( "(uNBIO &)%p.checkIOEnd multiple set\n", this );
-			printFDset( this, "mrfds", tmasks, &mrfds ); printFDset( this, "mwfds", tmasks, &mwfds ); printFDset( this, "mefds", tmasks, &mefds );
-			uDebugRelease();
-#endif // __U_DEBUG_H__
+			uDEBUGPRT(
+			    uDebugAcquire();
+			    uDebugPrt2( "(uNBIO &)%p.checkIOEnd multiple set\n", this );
+			    printFDset( this, "mrfds", tmasks, &mrfds ); printFDset( this, "mwfds", tmasks, &mwfds ); printFDset( this, "mefds", tmasks, &mefds );
+			    uDebugRelease();
+			)
 		    } // if
 		} // if
 	    } // for
@@ -628,20 +612,18 @@ namespace UPP {
 					    &mefds );
 		} // if
 	    } // if
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkIOEnd multiple mmaxFD:%d\n", this, mmaxFD );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd multiple mmaxFD:%d\n", this, mmaxFD ); )
 
 	    // Check to see which tasks are waiting for ready I/O operations on single mask and wake them.
 
 	    tmasks = howmany( smaxFD, NFDBITS );	// total number of masks in fd set
 
-#ifdef __U_DEBUG_H__
-	    uDebugAcquire();
-	    uDebugPrt2( "(uNBIO &)%p.checkIOEnd single set before smaxFD:%d\n", this, smaxFD );
-	    printFDset( this, "srfds", tmasks, &srfds ); printFDset( this, "swfds", tmasks, &swfds ); printFDset( this, "sefds", tmasks, &sefds );
-	    uDebugRelease();
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT(
+		uDebugAcquire();
+		uDebugPrt2( "(uNBIO &)%p.checkIOEnd single set before smaxFD:%d\n", this, smaxFD );
+		printFDset( this, "srfds", tmasks, &srfds ); printFDset( this, "swfds", tmasks, &swfds ); printFDset( this, "sefds", tmasks, &sefds );
+		uDebugRelease();
+	    )
 
 	    unsigned long int combined;
 	    for ( i = 0; i < tmasks; i += 1 ) {		// single fds with no timeout
@@ -657,10 +639,8 @@ namespace UPP {
 		if ( efdsUsed )
 		    sefds.fds_bits[i] &= ~mEFDs.fds_bits[i];
 
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "(uNBIO &)%p.checkIOEnd %d  combined:%lx  single %lx %lx %lx  master %lx %lx %lx \n",
-			   this, i, combined, srfds.fds_bits[i], swfds.fds_bits[i], sefds.fds_bits[i], mRFDs.fds_bits[i], mWFDs.fds_bits[i], mEFDs.fds_bits[i] );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd %d  combined:%lx  single %lx %lx %lx  master %lx %lx %lx \n",
+				      this, i, combined, srfds.fds_bits[i], swfds.fds_bits[i], sefds.fds_bits[i], mRFDs.fds_bits[i], mWFDs.fds_bits[i], mEFDs.fds_bits[i] ); )
 
 		// process each bit in the combined chunks
 		for ( int fd = i * NFDBITS - 1; combined != 0; ) { // fd is origin 0 so substract 1
@@ -687,18 +667,14 @@ namespace UPP {
 				! efdsUsed ? nullptr :
 				    &sefds );
 
-#ifdef __U_DEBUG_H__
-	    tmasks = howmany( smaxFD, NFDBITS );	// total number of masks in fd set
+	    uDEBUGPRT( tmasks = howmany( smaxFD, NFDBITS ); // total number of masks in fd set
 	    uDebugAcquire();
 	    uDebugPrt2( "(uNBIO &)%p.checkIOEnd single set after smaxFD:%d\n", this, smaxFD );
 	    printFDset( this, "srfds", tmasks, &srfds ); printFDset( this, "swfds", tmasks, &swfds ); printFDset( this, "sefds", tmasks, &sefds );
-	    uDebugRelease();
-#endif // __U_DEBUG_H__
+	    uDebugRelease(); )
 
 	} else if ( descriptors == 0 ) {		// time limit expired, no IO is ready
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkIOEnd, time limit expired\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, time limit expired\n", this ); )
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::select_nothing, 1 );
 #endif // __U_STATISTICS__
@@ -711,9 +687,7 @@ namespace UPP {
 		NBIOnode *p;
 		for ( uSeqIter<NBIOnode> iter( pendingIOMfds ); iter >> p; ) {
 		    if ( p->timedout ) {		// timed out waiting for I/O for this task ?
-#ifdef __U_DEBUG_H__
-			uDebugPrt( "(uNBIO &)%p.checkIOEnd, removing node %p for task %s (%p)\n", this, p, p->pendingTask->getName(), p->pendingTask );
-#endif // __U_DEBUG_H__
+			uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, removing node %p for task %s (%p)\n", this, p, p->pendingTask->getName(), p->pendingTask ); )
 			pendingIOMfds.remove( p );	// remove node from list of waiting tasks
 			p->nfds = 0;			// set return value
 			p->pending.V();			// wake up waiting task (empty for IOPoller)
@@ -722,9 +696,7 @@ namespace UPP {
 		} // for
 	    } // if
 	} else {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkIOEnd, error, errno:%d %s\n", this, terrno, strerror( terrno ) );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, error, errno:%d %s\n", this, terrno, strerror( terrno ) ); )
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::select_errors, 1 );
 #endif // __U_STATISTICS__
@@ -746,7 +718,7 @@ namespace UPP {
 		for ( unsigned int fd = 0; fd < smaxFD; fd += 1 ) { // single fd with no timeout
 		    // process each task waiting for this fd's events, list can be empty due to timeout
 		    for ( uSeqIter<NBIOnode> iter( pendingIOSfds[fd] ); iter >> p; ) {
-			performIO( fd, p, pendingIOMfds, -1 );
+			performIO( fd, p, pendingIOSfds[fd], -1 );
 		    } // for
 		} // for
 		smaxFD = 0;
@@ -773,7 +745,7 @@ namespace UPP {
 		    mmaxFD = 0;
 		} // if
 	    } else {
-		uAbort( "(uNBIO &)%p.checkIOEnd() : internal error, maxFD:%d error(%d) %s.", this, maxFD, terrno, strerror( terrno ) );
+		abort( "(uNBIO &)%p.checkIOEnd() : internal error, maxFD:%d error(%d) %s.", this, maxFD, terrno, strerror( terrno ) );
 	    } // if
 	} // if
 
@@ -795,9 +767,7 @@ namespace UPP {
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::iopoller_spin, 1 );
 #endif // __U_STATISTICS__
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkIOEnd, poller %.256s (%p) continuing to poll\n", this, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkIOEnd, poller %.256s (%p) continuing to poll\n", this, uThisTask().getName(), &uThisTask() ); )
 	    return true;
 	} // if
     } // uNBIO::checkIOEnd
@@ -812,14 +782,10 @@ namespace UPP {
 	if ( IOPoller == nullptr ) {
 	    IOPoller = &uThisTask();			// make this task the poller
 
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uNBIO &)%p.checkPoller, set poller task %.256s (%p)\n", this, IOPoller->getName(), IOPoller );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkPoller, set poller task %.256s (%p)\n", this, IOPoller->getName(), IOPoller ); )
 	    return true;
 	} // if
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.checkPoller, blocking non-poller I/O task %.256s (%p))\n", this, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.checkPoller, blocking non-poller I/O task %.256s (%p))\n", this, uThisTask().getName(), &uThisTask() ); )
 
 	return false;
     } // uNBIO::checkPoller
@@ -858,9 +824,7 @@ namespace UPP {
 	    FD_SET( fd, &sefds );
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.initSfd, adding node %p for fd %d\n", this, &node, fd );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.initSfd, adding node %p for fd %d\n", this, &node, fd ); )
 
 	if ( timeoutEvent != nullptr ) {
 	    timeoutEvent->add();
@@ -900,9 +864,7 @@ namespace UPP {
 	    } // for
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.initMfds, adding node %p\n", this, &node );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.initMfds, adding node %p\n", this, &node ); )
 
 	if ( timeoutEvent != nullptr ) {
 	    timeoutEvent->add();
@@ -918,9 +880,7 @@ namespace UPP {
 
 
     uNBIO::uNBIO() {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.uNBIO\n", this );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.uNBIO\n", this ); )
 	FD_ZERO( &srfds );				// clear the read set
 	FD_ZERO( &swfds );				// clear the write set
 	FD_ZERO( &sefds );				// clear the exceptional set
@@ -941,16 +901,16 @@ namespace UPP {
 
 
     int uNBIO::select( uIOClosure &closure, int &rwe, timeval *timeout ) {
-#ifdef __U_DEBUG_H__
-	uDebugAcquire();
-	uDebugPrt2( "(uNBIO &)%p.select1, fd:%d, rwe:0x%x", this, closure.access.fd, rwe );
-	if ( timeout != nullptr ) uDebugPrt2( ", timeout:%ld.%ld", timeout->tv_sec, timeout->tv_usec );
-	uDebugPrt2( "\n" );
-	uDebugRelease();
-#endif // __U_DEBUG_H__
+	uDEBUGPRT(
+	    uDebugAcquire();
+	    uDebugPrt2( "(uNBIO &)%p.select1, fd:%d, rwe:0x%x", this, closure.access.fd, rwe );
+	    if ( timeout != nullptr ) uDebugPrt2( ", timeout:%ld.%ld", timeout->tv_sec, timeout->tv_usec );
+	    uDebugPrt2( "\n" );
+	    uDebugRelease();
+	)
 
 	if ( closure.access.fd < 0 || FD_SETSIZE <= closure.access.fd ) {
-	    uAbort( "Attempt to select on file descriptor %d that exceeds range 0-%d.",
+	    abort( "Attempt to select on file descriptor %d that exceeds range 0-%d.",
 		    closure.access.fd, FD_SETSIZE - 1 );
 	} // if
 
@@ -988,28 +948,24 @@ namespace UPP {
 	    waitOrPoll( node );
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.select1, exits, cnt:%d\n", this, node.nfds );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.select1, exits, cnt:%d\n", this, node.nfds ); )
 	return node.nfds;
     } // uNBIO::select
 
 
     int uNBIO::select( int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, timeval *timeout ) {
-#ifdef __U_DEBUG_H__
-	unsigned int tmasks = howmany( FD_SETSIZE, NFDBITS );	// total number of masks in fd set
+	uDEBUGPRT( unsigned int tmasks = howmany( FD_SETSIZE, NFDBITS ); // total number of masks in fd set
 	uDebugAcquire();
 	uDebugPrt2( "(uNBIO &)%p.select2 enter, nfds:%d\n", this, nfds );
 	printFDset( this, "rfds", tmasks, rfds );
 	printFDset( this, "wfds", tmasks, wfds );
 	printFDset( this, "efds", tmasks, efds );
 	if ( timeout != nullptr ) uDebugPrt2( "(uNBIO &)%p.select2, timeout:%ld.%ld\n", this, timeout->tv_sec, timeout->tv_usec );
-	uDebugRelease();
-#endif // __U_DEBUG_H__
+	uDebugRelease(); )
 
 #ifdef __U_DEBUG__
 	if ( nfds < 1 || FD_SETSIZE < nfds ) {
-	    uAbort( "Attempt to select with a file descriptor set size of %ld that exceeds range 0-%d.",
+	    abort( "Attempt to select with a file descriptor set size of %ld that exceeds range 0-%d.",
 		    (long int)nfds, FD_SETSIZE );
 	} // if
 #endif // __U_DEBUG__
@@ -1050,9 +1006,7 @@ namespace UPP {
 	    waitOrPoll( nfds, node );
 	} // if
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "(uNBIO &)%p.select2, exits, cnt:%d\n", this, node.nfds );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "(uNBIO &)%p.select2, exits, cnt:%d\n", this, node.nfds ); )
 	return node.nfds;
     } // uNBIO::select
 } // UPP
@@ -1067,7 +1021,7 @@ extern "C" int pselect( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, const t
     sigset_t old_mask;
     sigemptyset( &old_mask );
     if ( sigprocmask( SIG_BLOCK, sigmask, &old_mask ) == -1 ) {
-        uAbort( "internal error, sigprocmask" );
+        abort( "internal error, sigprocmask" );
     } // if
 
     int ready;
@@ -1079,7 +1033,7 @@ extern "C" int pselect( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, const t
     } // if
 
     if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
-        uAbort( "internal error, sigprocmask" );
+        abort( "internal error, sigprocmask" );
     } // if
 
     return ready;
@@ -1098,13 +1052,11 @@ extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
       if ( fds[i].fd < 0 ) continue;
 	if ( ( fds[i].events & ~( POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM | POLLPRI |
 				  POLLERR | POLLHUP | POLLNVAL ) ) != 0 ) { // output only so ignore
-	    uAbort( "poll: unknown event requested %x", fds[i].events );
+	    abort( "poll: unknown event requested %x", fds[i].events );
 	} // if
 	if ( fds[i].fd > maxfd ) maxfd = fds[i].fd;
 
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "poll( %p, %lu, %d ): fd %d ask ", fds, nfds, timeout, fds[i].fd );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "poll( %p, %lu, %d ): fd %d ask ", fds, nfds, timeout, fds[i].fd ); )
 	if ( fds[i].events & POLLIN || fds[i].events & POLLRDNORM ) {
 	    FD_SET( fds[i].fd, &rfd );
 	} // if
@@ -1140,9 +1092,7 @@ extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
 	} // if
     } // for
 
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "poll( %p, %lu, %d ) returns %d\n", fds, nfds, timeout, nresults );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "poll( %p, %lu, %d ) returns %d\n", fds, nfds, timeout, nresults ); )
     return nresults;
 } // poll
 
@@ -1154,13 +1104,13 @@ extern "C" int ppoll( struct pollfd *fds, nfds_t nfds, const struct timespec *ti
     sigemptyset( &old_mask );
 
     if ( sigprocmask( SIG_BLOCK, sigmask, &old_mask ) == -1 ) {
-        uAbort( "internal error, sigprocmask" );
+        abort( "internal error, sigprocmask" );
     } // if
 
     int ready = poll( fds, nfds, timeout );
 
     if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) {
-        uAbort( "internal error, sigprocmask" );
+        abort( "internal error, sigprocmask" );
     } // if
 
     return ready;

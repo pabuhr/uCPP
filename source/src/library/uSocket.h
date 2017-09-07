@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:04:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:31:01 2016
-// Update Count     : 376
+// Last Modified On : Wed Sep  6 07:40:34 2017
+// Update Count     : 384
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,7 +87,7 @@ class uSocket {
 	const char *kind, *text;
       public:
 	IPConvertFailure( const char *kind, const char *text );
-	void defaultTerminate() const;
+	void defaultTerminate() const override;
     }; // uSocket::IPConvertFailure
 
     _Event Failure : public uIOFailure {
@@ -96,7 +96,7 @@ class uSocket {
 	Failure( const uSocket &s, int errno_, const char *const msg );
       public:
 	const uSocket &socket() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocket::Failure
 
     friend _Event Failure;				// access: access
@@ -108,13 +108,13 @@ class uSocket {
 	const int protocol;
       public:
 	OpenFailure( const uSocket &socket, int errno_, const int domain, const int type, const int protocol, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocket::OpenFailure
 
     _Event CloseFailure : public uSocket::Failure {
       public:
 	CloseFailure( const uSocket &socket, int errno_, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocket::CloseFailure
     friend _Event CloseFailure;				// access: access
 }; // uSocket
@@ -131,15 +131,18 @@ class uSocketIO : public uFileIO {
 	    sin_port = htons( port );
 	    sin_addr = ip;
 	    memset( &sin_zero, '\0', sizeof(sin_zero) );
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uSocketIO &)%p::inetAddr::inetAddr, sin_family:%d sin_port:%d (0x%x), sin_addr:%8x\n", this, sin_family, sin_port, sin_port, sin_addr.s_addr );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uSocketIO &)%p::inetAddr::inetAddr, sin_family:%d sin_port:%d (0x%x), sin_addr:%8x\n", this, sin_family, sin_port, sin_port, sin_addr.s_addr ); )
 	} // uSocketIO::inetAddr::inetAddr
     }; // inetAddr
 
     struct sockaddr *saddr;				// default send/receive address
     socklen_t saddrlen;					// size of send address
     socklen_t baddrlen;					// size of address buffer (UNIX/INET)
+
+    using uFileIO::readFailure;
+    using uFileIO::readTimeout;
+    using uFileIO::writeFailure;
+    using uFileIO::writeTimeout;
 
     virtual void readFailure( int errno_, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const op ) = 0;
     virtual void readTimeout( const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const op ) = 0;
@@ -227,7 +230,7 @@ _Monitor uSocketServer : public uSocketIO {
       public:
 	const uSocketServer &server() const;
 	int fileDescriptor() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::Failure
     friend _Event Failure;				// access: socket
 
@@ -243,14 +246,14 @@ _Monitor uSocketServer : public uSocketIO {
       public:
 	OpenFailure( const uSocketServer &server, int errno_, const char *const name, const unsigned short port, const in_addr ip, const int domain, const int type, const int protocol, int backlog, const char *const msg );
 	const char *name() const;			// return socket name, or null when hostname is used
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::OpenFailure
 
     _Event CloseFailure : public uSocketServer::Failure {
 	const int acceptorCnt;
       public:
 	CloseFailure( const uSocketServer &server, int errno_, const int acceptorCnt, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::CloseFailure
 
     _Event ReadFailure : public uSocketServer::Failure {
@@ -263,13 +266,13 @@ _Monitor uSocketServer : public uSocketIO {
 	const uDuration *timeout;
       public:
 	ReadFailure( const uSocketServer &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::ReadFailure
 
     _Event ReadTimeout : public uSocketServer::ReadFailure {
       public:
 	ReadTimeout( const uSocketServer &sa, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::ReadTimeout
 
     _Event WriteFailure : public uSocketServer::Failure {
@@ -282,13 +285,13 @@ _Monitor uSocketServer : public uSocketIO {
 	const uDuration *timeout;
       public:
 	WriteFailure( const uSocketServer &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::WriteFailure
 
     _Event WriteTimeout : public uSocketServer::WriteFailure {
       public:
 	WriteTimeout( const uSocketServer &sa, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::WriteTimeout
 
     _Event SendfileFailure : public Failure {
@@ -299,13 +302,13 @@ _Monitor uSocketServer : public uSocketIO {
 	const uDuration *timeout;
       public:
 	SendfileFailure( const uSocketServer &sa, int errno_, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::SendfileFailure
 
     _Event SendfileTimeout : public SendfileFailure {
       public:
 	SendfileTimeout( const uSocketServer &sa, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketServer::SendfileTimeout
 
 
@@ -346,7 +349,7 @@ _Monitor uSocketServer : public uSocketIO {
     void setClient( struct sockaddr *addr, socklen_t len ) {
 #ifdef __U_DEBUG__
 	if ( len > baddrlen ) {
-	    uAbort( "(uSocketServer &)%p.setClient( addr:%p, len:%d ) : New server address to large.", this, addr, len );
+	    abort( "(uSocketServer &)%p.setClient( addr:%p, len:%d ) : New server address to large.", this, addr, len );
 	} // if
 #endif // __U_DEBUG__
 	memcpy( saddr, addr, len );
@@ -355,7 +358,7 @@ _Monitor uSocketServer : public uSocketIO {
     void getClient( struct sockaddr *addr, socklen_t *len ) {
 #ifdef __U_DEBUG__
 	if ( *len < baddrlen ) {
-	    uAbort( "(uSocketServer &)%p.getClient( addr:%p, len:%d ) : Area for server address to small.", this, addr, *len );
+	    abort( "(uSocketServer &)%p.getClient( addr:%p, len:%d ) : Area for server address to small.", this, addr, *len );
 	} // if
 #endif // __U_DEBUG__
 	*len = baddrlen;
@@ -406,7 +409,7 @@ _Monitor uSocketAccept : public uSocketIO {
 	const uSocketAccept &acceptor() const;
 	const uSocketServer &server() const;
 	int fileDescriptor() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::Failure
 
     _Event OpenFailure : public Failure {
@@ -416,19 +419,19 @@ _Monitor uSocketAccept : public uSocketIO {
 	const socklen_t *len;
       public:
 	OpenFailure( const uSocketAccept &acceptor, int errno_, const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::OpenFailure
 
     _Event OpenTimeout : public OpenFailure {
       public:
 	OpenTimeout( const uSocketAccept &acceptor, const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::OpenTimeout
 
     _Event CloseFailure : public Failure {
       public:
 	CloseFailure( const uSocketAccept &acceptor, int errno_, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::CloseFailure
 
     _Event ReadFailure : public Failure {
@@ -441,13 +444,13 @@ _Monitor uSocketAccept : public uSocketIO {
 	const uDuration *timeout;
       public:
 	ReadFailure( const uSocketAccept &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::ReadFailure
 
     _Event ReadTimeout : public ReadFailure {
       public:
 	ReadTimeout( const uSocketAccept &sa, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::ReadTimeout
 
     _Event WriteFailure : public Failure {
@@ -460,13 +463,13 @@ _Monitor uSocketAccept : public uSocketIO {
 	const uDuration *timeout;
       public:
 	WriteFailure( const uSocketAccept &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::WriteFailure
 
     _Event WriteTimeout : public WriteFailure {
       public:
 	WriteTimeout( const uSocketAccept &sa, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::WriteTimeout
 
     _Event SendfileFailure : public Failure {
@@ -477,13 +480,13 @@ _Monitor uSocketAccept : public uSocketIO {
 	const uDuration *timeout;
       public:
 	SendfileFailure( const uSocketAccept &sa, int errno_, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::SendfileFailure
 
     _Event SendfileTimeout : public SendfileFailure {
       public:
 	SendfileTimeout( const uSocketAccept &sa, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketAccept::SendfileTimeout
 
 
@@ -558,6 +561,7 @@ _Monitor uSocketClient : public uSocketIO {
     void sendfileTimeout( const int in_fd, const off_t *off, const size_t len, const uDuration *timeout ) __attribute__ ((noreturn));
     void openFailure( int errno_, const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) __attribute__ ((noreturn));
     void openTimeout( const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) __attribute__ ((noreturn));
+    void closeTempFile( const char * msg );
   public:
     _Event Failure : public uSocket::Failure {
 	const uSocketClient &client_;			// do not dereference
@@ -567,7 +571,7 @@ _Monitor uSocketClient : public uSocketIO {
       public:
 	const uSocketClient &client() const;
 	int fileDescriptor() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::Failure
 
     _Event OpenFailure : public Failure {
@@ -582,19 +586,19 @@ _Monitor uSocketClient : public uSocketIO {
       public:
 	OpenFailure( const uSocketClient &client, int errno_, const char *name, const unsigned short port, const in_addr ip, uDuration *timeout, int domain, int type, int protocol, const char *const msg );
 	const char *name() const;
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::OpenFailure
 
     _Event OpenTimeout : public OpenFailure {
       public:
 	OpenTimeout( const uSocketClient &client, const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::OpenTimeout
 
     _Event CloseFailure : public Failure {
       public:
 	CloseFailure( const uSocketClient &acceptor, int errno_, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::CloseFailure
 
     _Event ReadFailure : public Failure {
@@ -607,13 +611,13 @@ _Monitor uSocketClient : public uSocketIO {
 	const uDuration *timeout;
       public:
 	ReadFailure( const uSocketClient &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::ReadFailure
 
     _Event ReadTimeout : public ReadFailure {
       public:
 	ReadTimeout( const uSocketClient &sa, const char *buf, const int len, const int flags, const struct sockaddr *from, const socklen_t *fromlen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::ReadTimeout
 
     _Event WriteFailure : public Failure {
@@ -626,13 +630,13 @@ _Monitor uSocketClient : public uSocketIO {
 	const uDuration *timeout;
       public:
 	WriteFailure( const uSocketClient &sa, int errno_, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::WriteFailure
 
     _Event WriteTimeout : public WriteFailure {
       public:
 	WriteTimeout( const uSocketClient &sa, const char *buf, const int len, const int flags, const struct sockaddr *to, const int tolen, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::WriteTimeout
 
     _Event SendfileFailure : public Failure {
@@ -643,13 +647,13 @@ _Monitor uSocketClient : public uSocketIO {
 	const uDuration *timeout;
       public:
 	SendfileFailure( const uSocketClient &sa, int errno_, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::SendfileFailure
 
     _Event SendfileTimeout : public SendfileFailure {
       public:
 	SendfileTimeout( const uSocketClient &sa, const int in_fd, const off_t *off, const size_t len, const uDuration *timeout, const char *const msg );
-	virtual void defaultTerminate() const;
+	virtual void defaultTerminate() const override;
     }; // uSocketClient::SendfileTimeout
 
     // AF_UNIX
@@ -690,7 +694,7 @@ _Monitor uSocketClient : public uSocketIO {
     void setServer( struct sockaddr *addr, socklen_t len ) {
 #ifdef __U_DEBUG__
 	if ( len > baddrlen ) {
-	    uAbort( "(uSocketClient &)%p.setServer( addr:%p, len:%d ) : New server address to large.", this, addr, len );
+	    abort( "(uSocketClient &)%p.setServer( addr:%p, len:%d ) : New server address to large.", this, addr, len );
 	} // if
 #endif // __U_DEBUG__
 	memcpy( saddr, addr, len );
@@ -699,7 +703,7 @@ _Monitor uSocketClient : public uSocketIO {
     void getServer( struct sockaddr *addr, socklen_t *len ) {
 #ifdef __U_DEBUG__
 	if ( *len < baddrlen ) {
-	    uAbort( "(uSocketClient &)%p.getServer( addr:%p, len:%d ) : Area for server address to small.", this, addr, *len );
+	    abort( "(uSocketClient &)%p.getServer( addr:%p, len:%d ) : Area for server address to small.", this, addr, *len );
 	} // if
 #endif // __U_DEBUG__
 	*len = baddrlen;

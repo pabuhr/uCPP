@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:11:49 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 11 16:41:22 2016
-// Update Count     : 69
+// Last Modified On : Mon Feb 20 09:50:51 2017
+// Update Count     : 74
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,10 +33,10 @@
 #include <cstdio>					// EOF
 
 //#define __U_DEBUG_H__
+#include "debug.h"
 
 #ifdef __U_DEBUG_H__
 #include <iostream>
-
 using std::cerr;
 using std::endl;
 #endif // __U_DEBUG_H__
@@ -57,15 +57,11 @@ void scan() {
     } else if ( ahead->value == IDENTIFIER ) {
 	// use the symbol to determine whether the identifier is a type or a variable.
 
-#ifdef __U_DEBUG_H__
-	cerr << "scan: token " << ahead << " (" << ahead->hash->text << ") focus " << focus << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( cerr << "scan: token " << ahead << " (" << ahead->hash->text << ") focus " << focus << endl; )
 	if ( focus != nullptr ) {			// scanning mode
 	    ahead->symbol = focus->search_table( ahead->hash );
 	    if ( ahead->symbol != nullptr ) {
-#ifdef __U_DEBUG_H__
-		cerr << "scan: setting token " << ahead << " (" << ahead->hash->text << ") to value " << ahead->symbol->value << endl;
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( cerr << "scan: setting token " << ahead << " (" << ahead->hash->text << ") to value " << ahead->symbol->value << endl; )
 		ahead->value = ahead->symbol->value;
 	    } // if
 	} // if
@@ -75,9 +71,7 @@ void scan() {
 
 void unscan( token_t *back ) {
     for ( token_t *t = back->next_parse_token(); t != ahead->next_parse_token(); t = t->next_parse_token() ) {
-#ifdef __U_DEBUG_H__
-	if ( t->value == TYPE || t->symbol != nullptr ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl;
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( if ( t->value == TYPE || t->symbol != nullptr ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl; )
 	if ( t->value == TYPE ) t->value = IDENTIFIER;
 	t->symbol = nullptr;
     } // for

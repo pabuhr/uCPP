@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:18:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 13 21:15:33 2016
-// Update Count     : 73
+// Last Modified On : Mon Feb 20 10:12:49 2017
+// Update Count     : 74
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,6 +34,7 @@ using std::cerr;
 using std::endl;
 
 //#define __U_DEBUG_H__
+#include "debug.h"
 
 symbol_data_t::symbol_data_t() {
     found = nullptr;
@@ -52,9 +53,7 @@ symbol_t::symbol_t( int v, hash_t *h ) {
     hash = h;
     copied = typname = false;
     data = new symbol_data_t;
-#ifdef __U_DEBUG_H__
-    cerr << "add1 symbol " << hash->text << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT(cerr << "add1 symbol " << hash->text << endl; )
 } // symbol_t::symbol_t
 
 
@@ -63,16 +62,12 @@ symbol_t::symbol_t( const symbol_t &other ) {
     hash = other.hash;
     copied = false;
     data = new symbol_data_t;
-#ifdef __U_DEBUG_H__
-    cerr << "add2 symbol " << hash->text << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "add2 symbol " << hash->text << endl; )
 } // symbol_t::symbol_t
 
 
 symbol_t::~symbol_t() {
-#ifdef __U_DEBUG_H__
-    cerr << "delete symbol " << hash->text << endl;
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( cerr << "delete symbol " << hash->text << endl; )
     if ( ! copied ) {					// data shared for typedef and using
 	delete data->table;
 	delete data;

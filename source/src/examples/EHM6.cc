@@ -53,7 +53,7 @@ class fred {
 };
 
 
-void uMain::main() {
+int main() {
 	fred ff, gg;
 
 	try {

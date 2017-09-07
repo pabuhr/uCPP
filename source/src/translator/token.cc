@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:19:14 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  2 15:50:34 2011
-// Update Count     : 95
+// Last Modified On : Fri Jul  7 16:29:44 2017
+// Update Count     : 96
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -69,7 +69,7 @@ void *token_t::operator new( size_t ) {
     return token_boss.give_token();
 } // token_t::operator new
 
-void token_t::operator delete( void *p ) {
+void token_t::operator delete( void * ) {
 } // token_t::operator delete
 
 token_t::~token_t() {

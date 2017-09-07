@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 22 22:02:12 2016
-// Update Count     : 121
+// Last Modified On : Sat Jan 28 14:05:49 2017
+// Update Count     : 123
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -138,6 +138,7 @@ keyword_t key[] = {
     { "_AcceptWait", ACCEPTWAIT },
     { "_Actor", ACTOR },
     { "_At", AT },
+    { "_Catch", CATCH },
     { "_CatchResume", CATCHRESUME },
     { "_Coroutine", COROUTINE },
     { "_Disable", DISABLE },

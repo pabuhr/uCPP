@@ -47,7 +47,7 @@ void *r1main( void *arg ) {
     timeout.tv_sec = now.tv_sec + 1;
     timeout.tv_nsec = now.tv_usec * 1000;
     if ( pthread_cond_timedwait( &waitc, &mutex, &timeout ) != ETIMEDOUT ) {
-	uAbort( "timeout failed" );
+	abort( "timeout failed" );
     } // if
     osacquire( cout ) << &uThisTask() << " timedout" << endl;
 
@@ -67,7 +67,7 @@ void *r1main( void *arg ) {
 	} else if ( rc ==  ETIMEDOUT ) { 
 	    osacquire( cout ) << &uThisTask() << " timedout" << endl;
 	} else {
-	    uAbort( "timeout invalid\n" );
+	    abort( "timeout invalid\n" );
 	} // if
 
 	b.block();
@@ -104,7 +104,7 @@ void *r2main( void *arg ) {
     return 0;
 } // r2main
 
-void uMain::main(){
+int main(){
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
     pthread_t r1, r2;
 
@@ -123,7 +123,7 @@ void uMain::main(){
 
     pthread_join( r1, nullptr );
     pthread_join( r2, nullptr );
-} // uMain::main
+} // main
 
 
 // Local Variables: //

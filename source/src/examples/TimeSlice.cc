@@ -50,10 +50,10 @@ _Task T2 {
     } // T2::main
 }; // T2
 
-void uMain::main() {
+int main() {
     T1 t1;
     T2 t2;
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ TimeSlice.cc" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:15 2016
-// Update Count     : 49
+// Last Modified On : Mon Jan 23 08:54:13 2017
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -123,7 +123,7 @@ _Task T2 {
 };
 
 
-void uMain::main() {
+int main() {
 	int x = 1;
 	char y = 'a';
 	try {
@@ -172,7 +172,7 @@ void uMain::main() {
 		try {
 			_Enable {
 				_Resume D() _At t;
-				yield();								// let t run
+				uBaseTask::yield();						// let t run
 			}
 		} _CatchResume( D ) {
 			osacquire( cout ) << "Handler second" << endl;
@@ -184,13 +184,13 @@ void uMain::main() {
 		try {
 			_Enable {
 				_Resume D() _At t;
-				yield();								// let t run
+				uBaseTask::yield();						// let t run
 			}
 		} catch( D ) {
 			osacquire( cout ) << "second" << endl;
 		} // try
 	}
-} // uMain::main
+} // main
 
 // Local Variables: //
 // tab-width: 4 //

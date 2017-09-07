@@ -78,10 +78,10 @@ _Task T {
     } // T::main
 }; // T
 
-void uMain::main() {
+int main() {
     M m;
     C c( m );
     T &t = *new T( c, "T" );
     t.mem();
     cout << "Here3" << endl;
-} // uMain::main
+} // main

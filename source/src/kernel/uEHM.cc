@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:27:09 2016
-// Update Count     : 728
+// Last Modified On : Mon Sep  4 16:27:14 2017
+// Update Count     : 757
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,21 +44,21 @@ void uEHM::terminate() {
 
     bool exception = ExName[0] != '\0';			// optimization
     bool resumption = ResName[0] != '\0';
-    
-  if ( ! exception && ! resumption ) uAbort( nullptr );	// direct call without exception propagation
+
+    if ( ! exception && ! resumption ) abort( "terminate called without an active exception" );
 
     uBaseEvent *curr = getCurrentException();		// optimization
     bool msg = curr != nullptr && curr->msg[0] != '\0';
 
-    uAbort( "%s%s%s%s%s%s%s%s",
+    abort( "%s%s%s%s%s%s%s%s",
 	    ( uThisCoroutine().unexpected ?
 	      "Exception propagated through a function whose exception-specification does not permit exceptions of that type.\n" :
 	      "Propagation failed to find a matching handler.\n"
 	      "Possible cause is a missing try block with appropriate catch clause for specified or derived exception type,\n"
 	      "or throwing an exception from within a destructor while propagating an exception.\n" ),
-	    (exception  ? "Type of last active exception: "  : ""), (exception  ? ExName  : ""), (exception && resumption ? "\n" : ""),
+	    (exception  ? "Type of last active termination: "  : ""), (exception  ? ExName  : ""), (exception && resumption ? "\n" : ""),
 	    (resumption ? "Type of last active resumption: " : ""), (resumption ? ResName : ""),
-	    (msg ? ", Exception message: " : ""), (msg ? curr->msg : "") ); // uAbort puts a "\n"
+	    (msg ? ", Exception message: " : ""), (msg ? curr->msg : "") ); // abort puts a "\n"
 } // uEHM::terminate
 
 void uEHM::terminateHandler() {
@@ -176,11 +176,11 @@ void uBaseEvent::reraise() {
     uEHM::Resume( *this );
 } // uBaseEvent::reraise
 
-void uBaseEvent::defaultTerminate() {
+void uBaseEvent::defaultTerminate() const {
     // do nothing so per thread "terminate()" is called
 } // uBaseEvent::defaultTerminate
 
-void uBaseEvent::defaultResume() {
+void uBaseEvent::defaultResume() const {
     stackThrow();
     // CONTROL NEVER REACHES HERE!
     assert( false );
@@ -260,11 +260,13 @@ static void Check( uBaseCoroutine &target, const char *kind ) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress"
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
     // SKULLDUGGERY: simplify call with reference parameter then treat as pointer to check for overwritten memory.
-    if ( &target == nullptr || &target == (uBaseCoroutine *)-1 || *((void **)&target) == nullptr || *((void **)&target) == (void *)-1 ) {
+    if ( &target == nullptr || &target == (uBaseCoroutine *)-1 ||
+	 *((void **)&target) == nullptr || *((void **)&target) == (void *)-1 ) {
 #pragma GCC diagnostic pop
 
-	uAbort( "Attempt by task %.256s (%p) to %s a nonlocal exception at target %p, but the target is invalid or has been deleted",
+	abort( "Attempt by task %.256s (%p) to %s a nonlocal exception at target %p, but the target is invalid or has been deleted",
 		uThisTask().getName(), &uThisTask(), kind, &target );
     } // if
 } // Check
@@ -303,7 +305,7 @@ void uEHM::asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind 
 	} // if
     } // if
     
-    if ( r == nullptr ) {					// => there is nothing to resume => terminate
+    if ( r == nullptr ) {				// => there is nothing to resume => terminate
 	terminateHandler();
     } else {
 	asyncToss( *r, target, raiseKind, true );
@@ -312,9 +314,8 @@ void uEHM::asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind 
 
 
 void uEHM::Throw( const uBaseEvent &event, void *const bound ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uEHM::Throw( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n", &event, bound, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uEHM::Throw( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n",
+			  &event, bound, uThisTask().getName(), &uThisTask() ); )
     event.staticallyBoundObject = bound;
     event.raiseKind = uBaseEvent::ThrowRaise;
     event.stackThrow();
@@ -324,21 +325,18 @@ void uEHM::Throw( const uBaseEvent &event, void *const bound ) {
 
 void uEHM::ReThrow() {
     uBaseEvent *e = getCurrentException();		// optimization
-    if ( e == nullptr ) {
-	e = getCurrentResumption();
+    if ( ! e ) {
+	abort( "Attempt to rethrow but no active exception.\n"
+	       "Possible cause is a rethrow not directly or indirectly performed from a catch clause." );
     } // if
-
-    if ( e != nullptr ) {
-	e->stackThrow();
-    } // if
+    e->stackThrow();
     throw;
 } // uEHM::ReThrow
 
 
 void uEHM::Resume( const uBaseEvent &event, void *const bound ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uEHM::Resume( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n", &event, bound, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uEHM::Resume( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n",
+			  &event, bound, uThisTask().getName(), &uThisTask() ); )
     event.staticallyBoundObject = bound;
     event.raiseKind = uBaseEvent::ResumeRaise;
     resumeWorkHorse( event, true );
@@ -346,16 +344,11 @@ void uEHM::Resume( const uBaseEvent &event, void *const bound ) {
 
 void uEHM::ReResume() {
     uBaseEvent *r = getCurrentResumption();		// optimization
-
-    if ( r == nullptr ) {
-	r = getCurrentException();
+    if ( ! r ) {
+	abort( "Attempt to reresume but no active exception.\n"
+	       "Possible cause is a reresume not directly or indirectly performed from a catch clause." );
     } // if
-
-    if ( r == nullptr ) {					// => there is nothing to resume => terminate
-	terminateHandler();
-    } else {						// => there is something to resume
-	resumeWorkHorse( *r, true );	
-    } // if
+    resumeWorkHorse( *r, true );	
 }; // uEHM::ReResume
 
 
@@ -426,7 +419,8 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
 
 uBaseEvent *uEHM::getCurrentException() {
     // check if exception type derived from uBaseEvent (works for basic/POD types)
-    if ( uEHM::match_exception_type( __cxxabiv1::__cxa_current_exception_type(), &typeid( uBaseEvent ) ) ) {
+    const std::type_info *t = __cxxabiv1::__cxa_current_exception_type();
+    if ( t && uEHM::match_exception_type( t, &typeid( uBaseEvent ) ) ) {
 	__cxxabiv1::__cxa_eh_globals *globals = __cxxabiv1::__cxa_get_globals();
 	if ( globals != nullptr ) {
 	    __cxxabiv1::__cxa_exception *header = globals->caughtExceptions;
@@ -481,7 +475,7 @@ bool uEHM::match_exception_type( const std::type_info *derived_type, const std::
     // return true if derived_type event is derived from parent_type event
     void *dummy;
 #ifdef __DEBUG__
-    if ( ! parent_type ) uAbort( "internal error, error in setting up guarded region." );
+    if ( ! parent_type ) abort( "internal error, error in setting up guarded region." );
 #endif // __DEBUG__
 
     // Problem: version of g++ and stdc++ must match because of this virtual call to do the handler matching.  If the
@@ -516,18 +510,14 @@ bool uEHM::deliverable_exception( const std::type_info *event_type ) {
 // stack is used.
 
 void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
-#ifdef __U_DEBUG_H__
-    uDebugPrt( "uEHM::resumeWorkHorse( ex:%p, conseq:%d ) from task %.256s (%p)\n",
-	       &event, conseq, uThisTask().getName(), &uThisTask() );
-#endif // __U_DEBUG_H__
+    uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse( ex:%p, conseq:%d ) from task %.256s (%p)\n",
+			  &event, conseq, uThisTask().getName(), &uThisTask() ); )
 
     const std::type_info *raisedtype = event.getEventType();
     uResumptionHandlers *tmp = (conseq) ? uThisCoroutine().handlerStackVisualTop : uThisCoroutine().handlerStackTop;
 
     while ( tmp ) {
-#ifdef __U_DEBUG_H__
-	uDebugPrt( "uEHM::resumeWorkHorse tmp:%p, raisedtype:%p\n", tmp, raisedtype );
-#endif // __U_DEBUG_H__
+	uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse tmp:%p, raisedtype:%p\n", tmp, raisedtype ); )
 
 	uResumptionHandlers *next = (conseq) ? tmp->conseqNext : tmp->next;
 
@@ -535,16 +525,12 @@ void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
 	for ( unsigned int i = 0; i < tmp->size; i += 1 ) {
 	    uHandlerBase *elem = tmp->table[i];		// optimization
 	    const void *bound = event.staticallyBoundObject;
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
-		       i, elem, elem->staticallyBoundObject, elem->EventType, bound );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
+				  i, elem, elem->staticallyBoundObject, elem->EventType, bound ); )
 	    // if (no binding OR binding match) AND (type match OR resume_any) => handler found
 	    if ( ( elem->getMatchBinding() == nullptr || bound == elem->getMatchBinding() ) &&
 		 ( elem->getEventType() == nullptr || match_exception_type( raisedtype, elem->getEventType() ) ) ) {
-#ifdef __U_DEBUG_H__
-		uDebugPrt( "uEHM::resumeWorkHorse match\n" );
-#endif // __U_DEBUG_H__
+		uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse match\n" ); )
 		ResumeWorkHorseInit newStackVisualTop( next, (uBaseEvent &)event );
 		elem->uHandler( (uBaseEvent &)event );
 		return;					// return after handling the exception

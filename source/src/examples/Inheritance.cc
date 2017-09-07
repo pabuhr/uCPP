@@ -121,7 +121,7 @@ char sub::jane( char c ) {
     return c;
 } // sub::jane
 
-void uMain::main() {
+int main() {
     super S;
     sub s;
 
@@ -130,7 +130,7 @@ void uMain::main() {
     s.fred( 5 );
     s.mary( 7.0 );
     s.jane( 'a' );
-} // uMain::main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Inheritance.cc" //

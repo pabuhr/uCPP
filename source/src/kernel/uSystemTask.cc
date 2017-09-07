@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun 22 15:25:53 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  7 22:35:28 2016
-// Update Count     : 115
+// Last Modified On : Sat Feb 18 18:41:58 2017
+// Update Count     : 117
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,15 +54,11 @@ void uSystemTask::main() {
 	// check for debugger attach request
 
 	if ( uKernelModule::attaching != 0 ) {
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uSystemTask &)%p.main, attaching\n", this );
-#endif // __U_DEBUG_H__ 
+	    uDEBUFPRT( uDebugPrt( "(uSystemTask &)%p.main, attaching\n", this ); )
 	    int port = uKernelModule::attaching;
 	    uKernelModule::attaching = 0;		// reset flag so don't do this again
 	    uLocalDebugger::uLocalDebuggerInstance = new uLocalDebugger( port );
-#ifdef __U_DEBUG_H__
-	    uDebugPrt( "(uSystemTask &)%p.main, local debugger started\n", this );
-#endif // __U_DEBUG_H__
+	    uDEBUGPRT( uDebugPrt( "(uSystemTask &)%p.main, local debugger started\n", this ); )
 	} // if
 #endif // __U_LOCALDEBUGGER_H__
     } // for
