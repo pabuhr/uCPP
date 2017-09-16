@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Sep  6 16:46:43 2017
-%% Update Count     : 7356
+%% Last Modified On : Sat Sep 16 14:39:41 2017
+%% Update Count     : 7357
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -341,7 +341,7 @@ Approaches taken by distributed shared-memory systems may provide the necessary 
 \label{s:CompileTimeStructureuCProgram}
 
 A \uC program is constructed exactly like a normal \CC program with one exception:
-the main (starting) routine is called by a \uC task so all \uC task operations are usable in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}}, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uThisTask}\V{uThisTask}()}}\endlgrinde\LGend{} (see~\VRef{s:TaskInheritedMembers}).
+the \newterm{program main} routine is called by a \uC task called \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMain}}}\endlgrinde\LGend{}\index{uMain@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMain}}}\endlgrinde\LGend{}} so all \uC task operations are usable in the program main, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uThisTask}\V{uThisTask}()}}\endlgrinde\LGend{} (see~\VRef{s:TaskInheritedMembers}).
 
 
 \section{\texorpdfstring{\uC Runtime Structure}{uC++ Runtime Structure}}
@@ -4171,7 +4171,7 @@ Once in a discrimination clause, the variable \LGinlinetrue\LGbegin\lgrinde\L{\L
 For a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StrMsg}}}\endlgrinde\LGend{}, the actor continues to exist by returning \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{};
 for a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopMsg}}}\endlgrinde\LGend{}, the actor terminates by returning \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} member creates two actors and passes each actor three messages, two string messages and a stop message.
-Then the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} program waits for all actors to end.
+Then the \Index{program main} waits for all actors to end.
 
 \VRef[Figure]{f:FibonacciActor} shows two actors computing Fibonacci numbers, the left actor manages the three states of the Fibonacci algorithm using the flag variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{state}}}\endlgrinde\LGend{}, and the right actor uses \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{} to change the receive target for each of the three states.
 The actors accept a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{NextMsg}}}\endlgrinde\LGend{} to compute the next Fibonacci number and a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopMsg}}}\endlgrinde\LGend{} to terminate.
@@ -6613,7 +6613,7 @@ For example, in:
 \L{\LB{\}}}
 \endlgrinde\LGend
 the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}.\V{mem}}}\endlgrinde\LGend{} resumes coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}, and then inside \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}.\V{main}}}\endlgrinde\LGend{} an exception is raised that is not handled locally by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}.
-When the exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{E}}}\endlgrinde\LGend{} reaches the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s stack without finding an appropriate handler, coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{} is terminated and the nonlocal exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{} is implicitly raised at \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s last resumer, the \Index{starting-coroutine} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} that called routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}}, rather than \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s starter.
+When the exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{E}}}\endlgrinde\LGend{} reaches the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s stack without finding an appropriate handler, coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{} is terminated and the nonlocal exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{} is implicitly raised at \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s last resumer rather than \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s starter.
 (This action replaces the normal call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultResume}}}\endlgrinde\LGend{} (see \VRef{s:ExceptionsInheritedMembers}) because the exception has been caught and transformed.)
 This behaviour reflects the fact that the last resumer is most capable of understanding and reacting to a failure of the operation it just invoked.
 Furthermore, the last resumer (coroutine or task) is guaranteed to be restartable because it became inactive when it did the last resume.
@@ -6726,12 +6726,12 @@ Alternatively, ensuring a coroutine's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mai
 Cancellation is used in situations where the work of a task is not required any more and its resources should be freed.
 \VRef[Figure]{f:CancellationExample} shows a generic example in which a solution space is divided into sub-domains and worker tasks are dispatched to search their respective sub-domain for a suitable solution.
 For this particular problem class, any specific solution is sufficient.
-In the program, after \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} creates the tasks, it waits for a solution to be found by any of the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Worker}}}\endlgrinde\LGend{} tasks.
+After the \Index{program main} creates the tasks, it waits for a solution to be found by any of the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Worker}}}\endlgrinde\LGend{} tasks.
 If a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Worker}}}\endlgrinde\LGend{} task finds a solution, it stores it in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Result}}}\endlgrinde\LGend{} monitor and restarts \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} (if appropriate).
 Since a solution has been found, the other worker solutions are not required and allowing these workers to proceed is a waste of resources.
-Hence, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} marks them all for cancellation and uses the result.
-After the result has been processed, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} deletes the worker tasks, which allows for execution overlap of result processing with the worker tasks detecting, starting, and finishing cancellation.
-Alternatively, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} can delete the workers right away, with the consequence that it may have to wait for the worker tasks to finish cancellation before processing the result.
+Hence, the \Index{program main} marks them all for cancellation and uses the result.
+After the result has been processed, the worker tasks are deleted, which allows for execution overlap of result processing with the worker tasks detecting, starting, and finishing cancellation.
+Alternatively, the workers can be deleted immediately, with the consequence that the program main may have to wait for the worker tasks to finish cancellation before processing the result.
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
@@ -7161,7 +7161,7 @@ uC++ Runtime error (UNIX pid:11770) (uBaseCoroutine \&)0x7ffdc489c080 : Unhandle
 Error occurred while executing task main (0x7ffdc489c080).
 \end{quote}
 because the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}.\V{mem}}}\endlgrinde\LGend{} resumes coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{} and then coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{} throws an exception it does not handle.
-As a result, when the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s stack is reached, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}} is raised at the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}}, since it last resumed \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}.
+As a result, when the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}'s stack is reached, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}} is raised at the \Index{program main}, since it last resumed \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}.
 A more complex version of this situation occurs when there is a resume chain and no coroutine along the chain handles the exception.
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7192,7 +7192,7 @@ uC++ Runtime error (UNIX pid:24224) (uBaseCoroutine \&)0x7fffef980760 : Unhandle
 Error occurred while executing task main (0x7fffef980760).
 \end{quote}
 because the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c1}.\V{mem}}}\endlgrinde\LGend{} resumes coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c1}}}\endlgrinde\LGend{}, which creates coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c2}}}\endlgrinde\LGend{} and call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c2}.\V{mem}}}\endlgrinde\LGend{} to resume it, and then coroutine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c2}}}\endlgrinde\LGend{} throws an exception it does not handle.
-As a result, when the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c2}}}\endlgrinde\LGend{}'s stack is reached, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}} is raised at the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}}, since it last resumed \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}.
+As a result, when the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c2}}}\endlgrinde\LGend{}'s stack is reached, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}} is raised at the \Index{program main}, since it last resumed \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgrinde\LGend{}.
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7209,7 +7209,7 @@ or throwing an exception from within a destructor while propagating an exception
 Type of last active termination: int
 Error occurred while executing task main (0x7ffdabdb98d0).
 \end{quote}
-because no \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{try}}}\endlgrinde\LGend{} statement with an appropriate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} clause is in effect for the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} so propagation fails to locate a matching handler.
+because no \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{try}}}\endlgrinde\LGend{} statement with an appropriate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} clause is in effect for the \Index{program main}, propagation fails to locate a matching handler.
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7244,7 +7244,7 @@ uC++ Runtime error (UNIX pid:12109) (uSerial \&)0x1fa9af8 : Entry failure while 
 Error occurred while executing task main (0x7ffd36532540).
 \end{quote}
 because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine deletes the monitor \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{m}}}\endlgrinde\LGend{} and then calls the member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{} through the deleted pointer.
-As a result, the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} finds the mutex object has been destroyed.
+As a result, the \Index{program main} finds the mutex object has been destroyed.
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7283,7 +7283,7 @@ uC++ Runtime error (UNIX pid:3678) (uSerial \&)0x2631cf8 : Entry failure while e
 Error occurred while executing task T2 (0x2671e08).
 \end{quote}
 because task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} is allowed to wait on condition variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{} in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}.\V{mem}}}\endlgrinde\LGend{}, and then task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{} signals condition \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{}, which moves task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} to the acceptor/signalled stack, and accepts its destructor.
-As a result, when the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the acceptor/signalled stack.
+As a result, when the \Index{program main} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the acceptor/signalled stack.
 Similarly, the following program:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Task}\0\V{T1}\0\{}}
@@ -7317,7 +7317,7 @@ uC++ Runtime error (UNIX pid:15587) (uSerial \&)0x2595cf8 : Entry failure while 
 Error occurred while executing task T2 (0x25d5e08).
 \end{quote}
 because task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} happens to block on the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}.\V{mem}}}\endlgrinde\LGend{}, and then task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{} accepts its destructor.
-As a result, when the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the entry queue of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}.
+As a result, when the \Index{program main} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the entry queue of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}.
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7353,7 +7353,7 @@ uC++ Runtime error (UNIX pid:27411) (uSerial \&)0x22cbff0 : Rendezvous failure i
 Error occurred while executing task T (0x22cbd80).
 \end{quote}
 because in the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}.\V{mem}}}\endlgrinde\LGend{} from the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine, the rendezvous terminates abnormally by raising an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{E}}}\endlgrinde\LGend{}.
-As a result, the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} implicitly resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{}\index{uSerial@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSerial}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}\index{RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}} concurrently at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} so it knows the call did not complete and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
+As a result, the \Index{program main} implicitly resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{}\index{uSerial@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSerial}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}\index{RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}} concurrently at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} so it knows the call did not complete and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
 If the call \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uRendezvousAcceptor}()}}\endlgrinde\LGend{} is uncommented, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{} is not resumed at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}, and task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} restarts as if the rendezvous completed.
 A more complex version of this situation occurs when a blocked call is aborted, i.e., before the call even begins.
 The following program:
@@ -7390,8 +7390,8 @@ uC++ Runtime error (UNIX pid:8347) (uSerial \&)0xa6bff0 : Rendezvous failure in 
 Error occurred while executing task T (0xa6bd80).
 \end{quote}
 because the blocked call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}.\V{mem}}}\endlgrinde\LGend{} from the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is interrupted by the \Index{concurrent exception}\index{exception!concurrent} of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{E}}}\endlgrinde\LGend{}.
-When the blocked call from the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} is accepted, the starting-task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} immediately detects the concurrent exception and does not start the call.
-As a result, the starting-task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} implicitly resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{}\index{uSerial@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSerial}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}\index{RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}} concurrently at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} so it knows the call did not occur and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
+When the blocked call from the \Index{program main} is accepted, it immediately detects the concurrent exception and does not start the call.
+As a result, the \Index{program main} implicitly resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{}\index{uSerial@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSerial}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}\index{RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}} concurrently at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} so it knows the call did not occur and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
@@ -7426,7 +7426,7 @@ uC++ Runtime error (UNIX pid:18211) (uCondition \&)0x2742da8 : Waiting failure a
 Error occurred while executing task T2 (0x2782e08).
 \end{quote}
 because the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}.\V{mem}}}\endlgrinde\LGend{} blocks task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} on condition queue \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{} and then task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{} implicitly accepts its destructor when its \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} terminates.
-As a result, when the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the condition queue.
+As a result, when the \Index{program main} attempts to delete task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t1}}}\endlgrinde\LGend{}, it finds task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t2}}}\endlgrinde\LGend{} still blocked on the condition queue.
 
 
 \subsubsection{Coroutine}
@@ -7563,7 +7563,7 @@ generates this error:
 uC++ Runtime error (UNIX pid:24848) Attempt to allocate 1000000000 bytes of storage for coroutine or task execution-state but insufficient memory available.
 Error occurred while executing task uBootTask (0x4d6b0).
 \end{quote}
-because the declaration of the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} by the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} fails due to the request for a 1000000000-byte stack\index{stack!overflow} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}.
+because the declaration of the \Index{program main} by the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} fails due to the request for a 1000000000-byte stack\index{stack!overflow} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}.
 \end{comment}
 
 As mentioned in \VRef{s:uCKernel}, the \uC kernel provides no support for automatic growth of stack\index{stack!automatic growth} space for coroutines and tasks.
@@ -7907,7 +7907,7 @@ The following program:
 \L{\LB{}\Tab{4}{\V{uCondition}\0\V{w};}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Accept}(\0\~\V{T}\0);}\Tab{28}{\C{}\1\1\0main\0routine\0invokes\0destructor}}
-\CE{}\L{\LB{}\Tab{8}{\V{w}.\V{wait}();}\Tab{28}{\C{}\1\1\0T\0continues\0but\0blocks,\0which\0restarts\0starting\-task\0main}}
+\CE{}\L{\LB{}\Tab{8}{\V{w}.\V{wait}();}\Tab{28}{\C{}\1\1\0T\0continues\0but\0blocks,\0which\0restarts\0the\0program\0main}}
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
@@ -7955,7 +7955,7 @@ Possible cause is accessing the condition variable outside of a mutex member for
 Error occurred while executing task T (0x143cda0).
 \end{quote}
 because the condition variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{} is passed from the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}, and then there is a race to wait on the condition.
-The error message shows that the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} waited first so it became the condition owner, and then \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}'s attempt to wait fails. 
+The error message shows that the \Index{program main} waited first so it became the condition owner, and then \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}'s attempt to wait fails. 
 Changing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T}::\V{main}}}\endlgrinde\LGend{} to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{} generates a similar message with respect to signalling a condition not owned by mutex object \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}.
 It is possible for one mutex object to create a condition and pass it to another, as long as the creator does not wait on it before passing it.
 
@@ -7985,8 +7985,8 @@ uC++ Runtime error (UNIX pid:6710) Attempt to signal a condition variable for a 
 Possible cause is accessing the condition variable outside of a mutex member for the mutex object owning the variable.
 Error occurred while executing task main (0x7ffc0894aad0).
 \end{quote}
-because task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} is first to wait on condition variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{} due to the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine, and then the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} does not lock mutex-object \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} when calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{} as it is nomutex.
-Only if the starting-task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} has \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} locked can it access any condition variable owned by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}.
+because task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} is first to wait on condition variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{w}}}\endlgrinde\LGend{} due to the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine, and then the \Index{program main} does not lock mutex-object \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} when calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{} as it is nomutex.
+Only if the \Index{program main} has \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} locked can it access any condition variable owned by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}.
 Changing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{} in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T}::\V{mem}}}\endlgrinde\LGend{} to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} generates a similar message with respect to waiting on a condition not locked by mutex object \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}.
 
 A condition variable must be non-empty before examining data stored with the front task blocked on the queue (see \VRef{s:CondVarWaitSignal}).
@@ -8091,7 +8091,7 @@ uC++ Runtime error (UNIX pid:2916) Attempt to delete cluster userCluster (0x1144
 Possible cause is the task has not been deleted.
 Error occurred while executing task uBootTask (0x651ce0).
 \end{quote}
-because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} happens to delete the user cluster (see \VRef{s:Cluster}) after the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} terminates and before the dynamically allocated task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} has terminated.
+because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} happens to delete the user cluster (see \VRef{s:Cluster}) after the \Index{program main} terminates and before the dynamically allocated task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} has terminated.
 Deleting the task associated with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} \emph{before} the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine terminates solves the problem.
 
 Similarly, a cluster cannot be deleted with a processor still located on it, regardless of what state the processor is in (i.e., running or idle).
@@ -8108,7 +8108,7 @@ uC++ Runtime error (UNIX pid:11982) Attempt to delete cluster userCluster (0x26a
 Possible cause is the processor has not been deleted.
 Error occurred while executing task uBootTask (0x64fce0).
 \end{quote}
-because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} deletes the user cluster (see \VRef{s:Cluster}) after the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} terminates but the dynamically allocated processor \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{p}}}\endlgrinde\LGend{} is still on the user cluster.
+because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBootTask}}}\endlgrinde\LGend{} deletes the user cluster (see \VRef{s:Cluster}) after the \Index{program main} terminates but the dynamically allocated processor \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{p}}}\endlgrinde\LGend{} is still on the user cluster.
 Deleting the processor associated with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{p}}}\endlgrinde\LGend{} \emph{before} the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} routine terminates solves the problem.
 
 
@@ -8886,7 +8886,7 @@ the cleanup handler is associated with the stack frame on the task's stack where
 
 It is important to note that a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{} task follows \uC semantics rather than pthreads semantics and is not considered a pthreads thread, which is defined as a task created by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pthread\_create}}}\endlgrinde\LGend{}.
 In particular, the life time of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{} task is the same as an ordinary \uC task, and it becomes a monitor after its \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine ends.
-The \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} is a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{} task.
+The \Index{program main} is a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{} task.
 
 
 \section{\texorpdfstring{Semantic Inconsistencies between Pthreads and \uC}{Semantic Inconsistencies between Pthreads and uC++}}
@@ -8896,8 +8896,8 @@ The combination of pthreads and \uC creates some conflicts, which are resolved i
 
 \subsection{\texorpdfstring{Termination of {\BGfont main}}{Termination of main}}
 
-When the starting \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine ends, pthreads semantics cause immediate termination of the program and any outstanding threads, whereas \uC semantics require that all threads be programmatically terminated.
-This inconsistency is resolved dynamically in favour of pthreads if any pthreads threads are running when the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} ends.
+When the \Index{program main} routine ends, pthreads semantics cause immediate termination of the program and any outstanding threads, whereas \uC semantics require that all threads be programmatically terminated.
+This inconsistency is resolved dynamically in favour of pthreads if any pthreads threads are running when the \Index{program main} ends.
 In this case, the application is shut-down causing all threads (pthreads and \uC) to be terminated abruptly, i.e., no finalization code is executed for any of these threads.
 Recall that \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{} tasks are not considered pthreads threads. 
 
@@ -9864,7 +9864,7 @@ Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultStackSize}}}\endlgrinde\L
 A coroutine/task created on a cluster without an explicit stack size is initialized to the cluster's default stack-size;
 hence, there is a level of indirection between this default routine and its use for initializing a stack size.
 As well, a cluster's default stack-size can be explicitly changed after the cluster is created (see \VRef{s:Cluster}).
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMainStackSize}}}\endlgrinde\LGend{} is used directly to provide a stack size for the \Index{starting-task} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} (see \VRef{s:CompileTimeStructureuCProgram}).
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMainStackSize}}}\endlgrinde\LGend{} is used directly to provide a stack size for the \Index{program main} (see \VRef{s:CompileTimeStructureuCProgram}).
 Since this initial task is defined and created by \uC, it has a separate default routine so it can be adjusted differently from the application tasks.
 Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultPreemption}}}\endlgrinde\LGend{} returns a time in milliseconds \emph{to initialize a virtual processor's default pre-emption time} (versus being used directly to initialize a task's pre-emption time).
 A task executing on a processor is rescheduled after no more than this amount of time (see \VRef{s:Processors}).
