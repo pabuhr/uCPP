@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 25 13:03:05 2017
-// Update Count     : 4702
+// Last Modified On : Sat Sep 16 12:06:05 2017
+// Update Count     : 4710
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2389,6 +2389,11 @@ static bool statement( symbol_t *symbol ) {
 	    if ( match( ';' ) ) return true;
 	    if ( compound_statement( symbol, nullptr, 0 ) ) return true; // gcc compound in expression
 	    if ( check( RC ) ) return false;		// don't backtrack
+	    // Need to rewrite name of program main. Does not handle "main" nested in "main" without global qualifier "::".
+	    if ( strcmp( ahead->hash->text, "main" ) == 0 && strcmp( ahead->prev_parse_token()->hash->text, "::" ) == 0 ) {
+		ahead->hash = hash_table->lookup( "uCpp_main" ); // change name
+		ahead->value = ahead->hash->value;
+	    } // if
 	    scan();
 	    if ( ahead->value >= ASM ) break;		// check again if keyword
 	} // for
