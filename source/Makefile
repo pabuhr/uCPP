@@ -46,7 +46,7 @@ TMPDIR ?= /tmp
 ## but can be dynamically overridden using the "-compiler" flag on the "u++"
 ## command. Supported compilers: GNU g++.
 
-CCBUILD ?= g++-6
+CCBUILD ?= g++
 CCAPP ?= ${CCBUILD}
 
 ## Define name of the uC++ translator so multiple u++ versions can coexist.
