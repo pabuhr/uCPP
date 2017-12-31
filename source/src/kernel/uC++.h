@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Sep  5 08:58:51 2017
-// Update Count     : 5750
+// Last Modified On : Sun Dec 17 08:08:26 2017
+// Update Count     : 5778
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,6 +35,15 @@
 
 #ifndef __U_CPLUSPLUS_H__
 #define __U_CPLUSPLUS_H__
+
+#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+// Mute g++-7
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif // __GNUC__ >= 7
+#if __clang__
+// Mute clang
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // __clang__
 
 #pragma __U_NOT_USER_CODE__
 
@@ -360,6 +369,7 @@ namespace UPP {
 
 	static void signal( int sig, void (*handler)(__U_SIGPARMS__), int flags = 0 );
 	static void *signalContextPC( __U_SIGCXT__ cxt );
+	static void *signalContextSP( __U_SIGCXT__ cxt );
 	static void *functionAddress( void (*function)() );
 	static void sigTermHandler( __U_SIGPARMS__ );
 	static void sigAlrmHandler( __U_SIGPARMS__ );
@@ -922,7 +932,7 @@ class uCondLock {
     // pthread_cond_t, if sizeof(pthread_cond_t) >= sizeof(uCondLock).
 
     uBaseSpinLock spinLock;				// must be first field for alignment
-    uSequence<uBaseTaskDL> waiting;
+    uSequence<uBaseTaskDL> waiting;			// queue of blocked tasks
     void waitTimeout( TimedWaitHandler &h );		// timeout
   public:
     uCondLock( const uCondLock & ) = delete;		// no copy
@@ -936,16 +946,19 @@ class uCondLock {
     } // uCondLock::uCondLock
 
     uDEBUG( ~uCondLock(); )
+    void wait( uOwnerLock &lock );
+    void wait( uOwnerLock &lock, uintptr_t info );
+    bool wait( uOwnerLock &lock, uDuration duration );
+    bool wait( uOwnerLock &lock, uintptr_t info, uDuration duration );
+    bool wait( uOwnerLock &lock, uTime time );
+    bool wait( uOwnerLock &lock, uintptr_t info, uTime time );
+    bool signal();
+    bool broadcast();
 
     bool empty() const {
 	return waiting.empty();
     } // uCondLock::empty
-
-    void wait( uOwnerLock &lock );
-    bool wait( uOwnerLock &lock, uDuration duration );
-    bool wait( uOwnerLock &lock, uTime time );
-    bool signal();
-    bool broadcast();
+    uintptr_t front() const;
 
     void *operator new( size_t size ) {
 	return ::operator new( size );
@@ -1130,12 +1143,12 @@ namespace UPP {
 	static uint32_t mxcsr;
 #endif // __i386__ || __x86_64__
 
-	unsigned int size;				// size of stack
 	void *storage;					// pointer to stack
 	void *limit;					// stack grows towards stack limit
 	void *base;					// base of stack
 	void *context;					// address of uContext_t
 	void *top;					// address of top of storage
+	size_t size;					// size of stack
 	union {
 	    long int allExtras;				// allow access to all extra flags
 	    struct {					// put all extra flags in this structure
@@ -1431,7 +1444,12 @@ class uBaseCoroutine : public UPP::uMachContext {
 	uBaseCoroutine &coroutine;
 #endif // __U_PROFILER__
       public:
-	uCoroutineDestructor( UPP::uAction f, uBaseCoroutine &coroutine );
+	uCoroutineDestructor(
+#ifdef __U_PROFILER__
+	    UPP::uAction f,
+#endif // __U_PROFILER__
+	    uBaseCoroutine &coroutine
+	);
 #ifdef __U_PROFILER__
 	~uCoroutineDestructor();
 #endif // __U_PROFILER__
@@ -2319,7 +2337,7 @@ class uDisableCancel : public uBaseCoroutine::Cancel<uBaseCoroutine::CancelDisab
 
 
 class uCondition {
-    uQueue<uBaseTaskDL> condQueue;			// queue of blocked tasks
+    uQueue<uBaseTaskDL> waiting;			// queue of blocked tasks
     UPP::uSerial *owner;				// mutex object owning condition, only set in wait
   public:
     uCondition( const uCondition & ) = delete;		// no copy
@@ -2332,27 +2350,25 @@ class uCondition {
     ~uCondition();
 
     void wait();					// wait on condition
-
     void wait( uintptr_t info ) {			// wait on a condition with information
 	uThisTask().info = info;			// store the information with this task
 	wait();						// wait on this condition
     } // uCondition::wait
-
     bool signal();					// signal condition
     bool signalBlock();					// signal condition
 
     bool empty() const {				// test for tasks on a condition
-	return condQueue.empty();			// check if the condition queue is empty
+	return waiting.empty();				// check if the condition queue is empty
     } // uCondition::empty
 
     uintptr_t front() const {				// return task information
 	uDEBUG(
-	    if ( condQueue.empty() ) {			// condition queue must not be empty
+	    if ( waiting.empty() ) {			// condition queue must not be empty
 		abort( "Attempt to access user data on an empty condition.\n"
 		       "Possible cause is not checking if the condition is empty before reading stored data." );
 	    } // if
 	)
-	return condQueue.head()->task().info;		// return condition information stored with blocked task
+	return waiting.head()->task().info;		// return condition information stored with blocked task
     } // uCondition::front
 
     // exception handling
@@ -3048,7 +3064,6 @@ _Task uMain : public uPthreadable {
 namespace UPP {
     class uHeapControl {
 	friend class UPP::uKernelBoot;			// access: startup, finishup
-	friend class UPP::uMachContext;			// access: startTask, finishup
 	friend class ::uBaseTask;			// access: prepareTask
 	friend class UPP::PthreadLock;			// access: startup
 

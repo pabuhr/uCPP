@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct 16 22:36:50 2014
-// Update Count     : 47
+// Last Modified On : Tue Oct 31 20:58:14 2017
+// Update Count     : 48
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,6 +45,10 @@ _Mutex _Coroutine uBarrier {
 	    suspend();
 	} // for
     } // uBarrier::main
+
+    virtual void last() {				// called by last task to reach the barrier
+	resume();
+    } // uBarrier::last
   public:
     uBarrier( unsigned int total ) {
 	init( total );
@@ -83,10 +87,6 @@ _Mutex _Coroutine uBarrier {
 	} // if
 	Count -= 1;
     } // uBarrier::block
-
-    virtual void last() {				// called by last task to reach the barrier
-	resume();
-    } // uBarrier::last
 }; // uBarrier
 
 

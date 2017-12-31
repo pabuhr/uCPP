@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep 16 12:06:05 2017
-// Update Count     : 4710
+// Last Modified On : Sat Nov 25 12:36:50 2017
+// Update Count     : 4740
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -515,6 +515,11 @@ static token_t *op() {
 static bool specifier_list( attribute_t &attribute );
 static bool ptr_operator();
 static bool cv_qualifier_list();
+static bool attribute_clause();
+static bool attribute_clause_list();
+static bool asm_clause();
+static bool exception_list();
+
 
 // conversion-function-id:
 //   "operator" conversion-type-id
@@ -556,10 +561,11 @@ static token_t *operater() {
 		token_t *save = ahead;
 
 		if ( match( LP ) ) {
-		    cv_qualifier_list();		// optional
+		    cv_qualifier_list();		// optional pre qualifiers
 		    token_t *temp = type();
 		    if ( temp != nullptr && temp->symbol == focus->symbol ) {
-			if ( (match( CONST ) && match( '&' )) || match( '&' ) ) {
+			cv_qualifier_list();		// optional post qualifiers
+			if ( match( '&' ) ) {
 			    match( IDENTIFIER );	// optional identifier
 			    if ( match( RP ) ) {
 				focus->hasassnop = true;
@@ -661,13 +667,13 @@ static bool condition( bool semicolon = false ) {
 static void prefix_labels( token_t *before, token_t *after, token_t *label[], int cnt, bool contlabels ) {
     if ( cnt > 0 ) {					// prefix labels ?
 	gen_code( before, "{" );
-	char name[256];
+	char name[300];
 	token_t *l;
 	if ( contlabels ) {				// continue labels ?
 	    for ( int i = 0; i < cnt; i += 1 ) {
 		l = label[i];				// optimization
 		if ( l != nullptr && l->symbol != nullptr ) {	// ignore duplicate and non-prefix labels
-		    sprintf( name, "_U_C_%.248s : __attribute__ (( unused )) ;", l->hash->text );
+		    sprintf( name, "_U_C_%.256s : __attribute__ (( unused )) ;", l->hash->text );
 		    gen_code( after, name );
 		} // if
 	    } // for
@@ -676,7 +682,7 @@ static void prefix_labels( token_t *before, token_t *after, token_t *label[], in
 	for ( int i = 0; i < cnt; i += 1 ) {
 	    l = label[i];				// optimization
 	    if ( l != nullptr && l->symbol != nullptr ) { // ignore duplicate and non-prefix labels
-		sprintf( name, "_U_B_%.248s : __attribute__ (( unused )) ;", l->hash->text );
+		sprintf( name, "_U_B_%.256s : __attribute__ (( unused )) ;", l->hash->text );
 		gen_code( ahead, name );
 	    } // if
 	} // for
@@ -805,8 +811,8 @@ static bool break_statement() {
 		// cannot remove "break" token as there may be pointers to it
 		blocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 		blocn->value = blocn->hash->value;
-		char name[256];				// generate new label
-		sprintf( name, "_U_B_%.252s", label->hash->text );
+		char name[300];				// generate new label
+		sprintf( name, "_U_B_%.256s", label->hash->text );
 		label->hash = hash_table->lookup( name ); // change label
 	    } else {
 		gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\", \"if\" or compound \"{}\" statement." );
@@ -830,12 +836,12 @@ static bool continue_statement() {
     if ( match( CONTINUE ) ) {
 	token_t *label = ahead;
 	if ( match( IDENTIFIER ) ) {
-	    if ( label->symbol != nullptr && label->symbol->data->index == 1 ) {		// prefix label ?
+	    if ( label->symbol != nullptr && label->symbol->data->index == 1 ) { // prefix label ?
 		// cannot remove "continue" token as there may be pointers to it
 		clocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 		clocn->value = clocn->hash->value;
-		char name[256];				// generate new label
-		sprintf( name, "_U_C_%.252s", label->hash->text );
+		char name[300];				// generate new label
+		sprintf( name, "_U_C_%.256s", label->hash->text );
 		label->hash = hash_table->lookup( name ); // change label
 	    } else {
 		gen_error( ahead, "label is not a prefix of a \"for\", \"while\" or \"do\" statement." );
@@ -1687,9 +1693,9 @@ static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry
 
     gen_code( startTry, "[ & ]\n" );
     gen_code( startTry, linedir, '#' );
-    gen_code( startblock, "-> uEHM :: RETURN_DISALLOWED {" );
+    gen_code( startblock, "-> uEHM :: FINALLY_CATCHRESUME_DISALLOW_RETURN {" );
     move_tokens_all( startTry, back, ahead );
-    gen_code( startTry, "return uEHM :: RETURN_DISALLOWED :: NORETURN ; } ) ;" );
+    gen_code( startTry, "return uEHM :: FINALLY_CATCHRESUME_DISALLOW_RETURN :: NORETURN ; } ) ;" );
 
     return true;
 } // catchResume_body
@@ -1882,10 +1888,10 @@ static bool finally_clause( symbol_t *symbol, token_t *start ) {
 
 	// hoist finally clause into lambda, return special type to prevent returns in finally body
 
-	gen_code( start, "uEHM :: uFinallyHandler uFinallyHandler( [ & ] ( ) -> uEHM :: RETURN_DISALLOWED {\n" );
+	gen_code( start, "uEHM :: uFinallyHandler uFinallyHandler( [ & ] ( ) -> uEHM :: FINALLY_CATCHRESUME_DISALLOW_RETURN {\n" );
 	gen_code( start, linedir, '#' );
 	move_tokens_all( start, prev, ahead );
-	gen_code( start, "return uEHM :: RETURN_DISALLOWED :: NORETURN ; } ) ;" );
+	gen_code( start, "return uEHM :: FINALLY_CATCHRESUME_DISALLOW_RETURN :: NORETURN ; } ) ;" );
 
 	back->remove_token();				// remove the "_Finally" token
 	return true;
@@ -3023,9 +3029,6 @@ static bool template_qualifier( attribute_t &attribute ) {
 } // template_qualifier
 
 
-static bool attribute_clause_list();
-
-
 static token_t *class_head( attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
@@ -3468,7 +3471,6 @@ static bool enumerator_specifier() {
 
 
 static bool specifier( attribute_t &attribute, bool &rt );
-static bool exception_list();
 
 
 static bool formal_parameter_empty( attribute_t &attribute ) {
@@ -4121,6 +4123,9 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
     function = function_declarator( attribute );
     if ( function != ABSTRACT && ( ( function != nullptr && explict ) || ( function != nullptr && function->symbol->value == OPERATOR ) ) ) {
 	cv_qualifier_list();				// optional post qualifiers
+	match( '&' );					// optional reference qualifier
+	match( AND_AND );
+	while ( attribute_clause() || asm_clause() || exception_list() ); // more optional post qualifiers
 	pure_specific();				// optional pure specifier for virtual functions
 
 	symbol = function->symbol;			// grab the symbol associated with the token
@@ -4282,29 +4287,74 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 		    } // if
 		} else {				// routine
 		    // Convert main routine into another named routine called by uMain::main, so creating uMain::main is unnecessary.
-		    // single type and must be int
+
+		    // return type must be int
 		    if ( attribute.startRet->next_parse_token() == attribute.endRet && strcmp( attribute.startRet->hash->text, "int" ) == 0 ) {
 			// empty parameters or first type must be int types (misses const after int)
-			if ( attribute.emptyparms || strcmp( attribute.startParms->hash->text, "int" ) == 0 ) {
-			    int commas = 0;
-			    // scan parameters for correct types and number
-			    for ( token_t *p = attribute.startParms; p != attribute.endParms; p = p->next_parse_token() ) {
-				if ( strcmp( p->hash->text, "," ) == 0 ) {
-				    commas += 1;
-				    if ( p->next_parse_token() && strcmp( p->next_parse_token()->hash->text, "char" ) != 0 ) goto fini;
-				} // if
+			int commas = 0, stars1 = 0, stars2 = 0, openbracket = 0, closebracket = 0;
+			// scan parameters for correct types and number
+			token_t * p, * argcstart = nullptr, * argcend = nullptr, * argvstart = nullptr, * argvend = nullptr, * envstart = nullptr, * envend = nullptr;
+			bool foundint = false, foundchar = false;
+
+			if ( ! attribute.emptyparms ) {
+			    // handle argc
+			    argcstart = attribute.startParms;
+			    for ( p = attribute.startParms; p != attribute.endParms && strcmp( p->hash->text, "," ) != 0; p = p->next_parse_token() ) {
+				if ( strcmp( p->hash->text, "int" ) == 0 ) foundint = true;
 			    } // for
-			    if ( (! attribute.emptyparms && commas == 0) || commas > 2 ) goto fini; // too few/many parameters
-			    gen_code( suffix->prev_parse_token(), "return 0 ;" ); // add return to prevent warning
-			    function->hash = hash_table->lookup( "uCpp_main" ); // change routine name
-			    gen_code( suffix, "void uMain :: main ( ) { uCpp_main(" ); // generate uMain::main
-			    if ( commas == 1 ) {
-				gen_code( suffix, "argc, argv" );
-			    } else if ( commas == 2 ) {
-				gen_code( suffix, "argc, argv, env" );
+			    if ( strcmp( p->hash->text, "," ) != 0 && ! foundint ) goto fini;
+			    argcend = p;
+			    commas += 1;
+			    // handle argv
+			    argvstart = p->next_parse_token();
+			    for ( p = p->next_parse_token(); p != attribute.endParms && strcmp( p->hash->text, "," ) != 0; p = p->next_parse_token() ) {
+				if ( strcmp( p->hash->text, "char" ) == 0 ) foundchar = true;
+				if ( strcmp( p->hash->text, "*" ) == 0 ) stars1 += 1;
+				if ( strcmp( p->hash->text, "[" ) == 0 ) openbracket += 1;
+				if ( strcmp( p->hash->text, "]" ) == 0 ) closebracket += 1;
+			    } // for
+			    if ( ! ( foundchar && ( stars1 == 2 || ( stars1 == 1 && openbracket == 1 && closebracket == 1 ) ) ) ) goto fini;
+			    argvend = p;
+			    if ( strcmp( p->hash->text, "," ) == 0 ) { // has env ?
+				foundchar = false;
+				openbracket = closebracket = 0;
+				commas += 1;
+				// handle env
+				envstart = p->next_parse_token();
+				for ( p = p->next_parse_token(); p != attribute.endParms; p = p->next_parse_token() ) {
+				    if ( strcmp( p->hash->text, "char" ) == 0 ) foundchar = true;
+				    if ( strcmp( p->hash->text, "*" ) == 0 ) stars2 += 1;
+				    if ( strcmp( p->hash->text, "[" ) == 0 ) openbracket += 1;
+				    if ( strcmp( p->hash->text, "]" ) == 0 ) closebracket += 1;
+				} // for
+				if ( ! ( foundchar && ( stars2 == 2 || ( stars2 == 1 && openbracket == 1 && closebracket == 1 ) ) ) ) goto fini;
+				envend = p;
 			    } // if
-			    gen_code( suffix, ") ; }" );
 			} // if
+			gen_code( suffix->prev_parse_token(), "return 0 ;" ); // add return to prevent warning
+			function->hash = hash_table->lookup( "uCpp_main" ); // change routine name
+			gen_code( suffix, "void uMain :: main ( ) { uCpp_main (" ); // generate uMain::main
+
+			if ( commas >= 1 ) {		// has argc, argv ?
+			    gen_code( suffix, "(" );
+			    copy_tokens( suffix, argcstart, argcend->prev_parse_token() ); // copy type for cast
+			    gen_code( suffix, ") argc ," );
+			    gen_code( suffix, "(" );
+			    // backup over "name [ ]" tokens
+			    if ( stars1 == 1 ) argvend = argvend->prev_parse_token()->prev_parse_token();
+			    copy_tokens( suffix, argvstart, argvend->prev_parse_token() ); // copy type for cast
+			    if ( stars1 == 1 ) gen_code( suffix, "*" ); // change [] to *
+			    gen_code( suffix, ") argv" );
+			    if ( commas == 2 ) {	// has env ?
+				gen_code( suffix, ", (" );
+				// backup over "name [ ]" tokens
+				if ( stars2 == 1 ) envend = envend->prev_parse_token()->prev_parse_token();
+				copy_tokens( suffix, envstart, envend->prev_parse_token() ); // copy type for cast
+				if ( stars2 == 1 ) gen_code( suffix, "*" ); // change [] to *
+				gen_code( suffix, ") env" );
+			    } // if
+			} // if
+			gen_code( suffix, ") ; }" );
 		    } // if
 		  fini: ;
 		} // if

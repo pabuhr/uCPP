@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Tue Jun 20 11:12:58 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  2 23:14:50 2016
-// Update Count     : 59
+// Last Modified On : Fri Dec 15 16:31:50 2017
+// Update Count     : 60
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -48,12 +48,6 @@ template<int MaxSize> struct uStaticHeapArray {
 	Elt A[ MaxSize + 1 ];
       public:
 	ArrayType() {}
-    
-	ArrayType( int size ) {
-#ifdef __U_DEBUG__
-	    assert( size <= MaxSize );
-#endif // __U_DEBUG__
-	} // ArrayType::ArrayType
     
 	const Elt &operator[]( int index ) const {
 #ifdef __U_DEBUG__

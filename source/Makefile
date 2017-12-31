@@ -65,7 +65,7 @@ STATISTICS ?= TRUE
 
 ## Define version of C++11 (-std=): c++11 (minimum), c++14, c++17, c++1y
 
-CPP11 ?= c++11
+CPP11 ?= c++14
 
 ########################### END OF THINGS TO CHANGE ###########################
 

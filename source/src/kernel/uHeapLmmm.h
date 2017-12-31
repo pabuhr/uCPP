@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 18 20:49:25 2017
-// Update Count     : 343
+// Last Modified On : Wed Dec 20 08:01:17 2017
+// Update Count     : 376
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,15 +40,15 @@
 
 
 extern "C" {
-    void *malloc( size_t size ) __THROW;
-    void *calloc( size_t noOfElems, size_t elemSize ) __THROW;
-    void *realloc( void *addr, size_t size ) __THROW;
-    void *memalign( size_t alignment, size_t size ) __THROW;
-    void *valloc( size_t size ) __THROW;
-    void free( void *addr ) __THROW;
-    size_t malloc_alignment( void *addr ) __THROW;
-    bool malloc_zero_fill( void *addr ) __THROW;
-    size_t malloc_usable_size( void *addr ) __THROW;
+    void * malloc( size_t size ) __THROW;
+    void * calloc( size_t noOfElems, size_t elemSize ) __THROW;
+    void * realloc( void * addr, size_t size ) __THROW;
+    void * memalign( size_t alignment, size_t size ) __THROW;
+    void * valloc( size_t size ) __THROW;
+    void free( void * addr ) __THROW;
+    size_t malloc_alignment( void * addr ) __THROW;
+    bool malloc_zero_fill( void * addr ) __THROW;
+    size_t malloc_usable_size( void * addr ) __THROW;
     void malloc_stats() __THROW;
     int malloc_stats_fd( int fd ) __THROW;
     int mallopt( int param_number, int value ) __THROW;
@@ -60,18 +60,18 @@ namespace UPP {
 	friend class uKernelBoot;			// access: uHeap
 	friend class UPP::uMachContext;			// access: pageSize
 	friend class UPP::uSigHandlerModule;		// access: print
-	friend void *::malloc( size_t size ) __THROW;	// access: boot
-	friend void *::calloc( size_t noOfElems, size_t elemSize ) __THROW;
-	friend void *::cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW; // access: Storage
-	friend void *::realloc( void *addr, size_t size ) __THROW; // access: boot
-	friend void *::memalign( size_t alignment, size_t size ) __THROW; // access: boot
-	friend void *::valloc( size_t size ) __THROW;	// access: pageSize
-	friend void ::free( void *addr ) __THROW;	// access: doFree
+	friend void * ::malloc( size_t size ) __THROW;	// access: boot
+	friend void * ::calloc( size_t noOfElems, size_t elemSize ) __THROW;
+	friend void * ::cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW; // access: Storage
+	friend void * ::realloc( void * addr, size_t size ) __THROW; // access: boot
+	friend void * ::memalign( size_t alignment, size_t size ) __THROW; // access: boot
+	friend void * ::valloc( size_t size ) __THROW;	// access: pageSize
+	friend void ::free( void * addr ) __THROW;	// access: doFree
 	friend int ::mallopt( int param_number, int value ) __THROW; // access: heapManagerInstance, setHeapExpand, setMmapStart
-	friend bool ::malloc_zero_fill( void *addr ) __THROW; // access: Storage
+	friend bool ::malloc_zero_fill( void * addr ) __THROW; // access: Storage
 	// paraenthesis required for typedef
-	friend size_t (::malloc_alignment)( void *addr ) __THROW; // access: Header, FreeHeader
-	friend size_t (::malloc_usable_size)( void *addr ) __THROW; // access: Header, FreeHeader
+	friend size_t (::malloc_alignment)( void * addr ) __THROW; // access: Header, FreeHeader
+	friend size_t (::malloc_usable_size)( void * addr ) __THROW; // access: Header, FreeHeader
 	friend void ::malloc_stats() __THROW;
 	friend int ::malloc_stats_fd( int fd ) __THROW;
 	friend class uHeapControl;			// access: heapManagerInstance, boot
@@ -79,8 +79,7 @@ namespace UPP {
 	friend void UPP::Statistics::print();
 	#endif // __U_STATISTICS__
 
-	class Storage;					// forward declaration
-	struct FreeHeader;
+	struct FreeHeader;				// forward declaration
 
 	struct Storage {
 	    struct Header {				// header
@@ -88,16 +87,21 @@ namespace UPP {
 		    struct RealHeader {
 			union {
 			    struct {			// 32-bit word => 64-bit header, 64-bit word => 128-bit header
-				#if __U_WORDSIZE__ == 32
+				#if __BYTE_ORDER == __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
 				uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
-				#endif // __U_WORDSIZE__ == 32
+				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
+
 				union {
-				    FreeHeader *home;	// allocated block points back to home locations (must overlay alignment)
+				    FreeHeader * home;	// allocated block points back to home locations (must overlay alignment)
 				    size_t blockSize;	// size for munmap (must overlay alignment)
 				    #if BUCKLOCK == SPINLOCK
-				    Storage *next;	// freed block points next freed block of same size
+				    Storage * next;	// freed block points next freed block of same size
 				    #endif // SPINLOCK
 				};
+
+				#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
+				    uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
+				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
 			    };
 			    #if BUCKLOCK == LOCKFREE
 			    Stack<Storage>::Link next;	// freed block points next freed block of same size (double-wide)
@@ -105,22 +109,33 @@ namespace UPP {
 			};
 		    } real;
 		    struct FakeHeader {
-			uint32_t offset, alignment;	// low-order bits of home/blockSize used for tricks
+			#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__
+			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
+			#endif // __BYTE_ORDER
+
+			uint32_t offset;
+
+			#if __BYTE_ORDER == __ORDER_BIG_ENDIAN__
+			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
+			#endif // __BYTE_ORDER
 		    } fake;
 		} kind;
 		#if defined( __U_PROFILER__ )
 		// Used by uProfiler to find matching allocation data-structure for a deallocation.
-		size_t *profileMallocEntry;
+		size_t * profileMallocEntry;
 		#define PROFILEMALLOCENTRY( header ) ( header->profileMallocEntry )
 		#endif // __U_PROFILER__
 	    } header; // Header
+	    char pad[uAlign() - sizeof( Header )];
 	    char data[0];				// storage
 	}; // Storage
+
+	static_assert( uAlign() >= sizeof( Storage ), "uAlign() < sizeof( Storage )" );
 
 	struct FreeHeader {
 	    #if BUCKLOCK == SPINLOCK
 	    uSpinLock lock;				// must be first field for alignment
-	    Storage *freeList;
+	    Storage * freeList;
 	    #elif BUCKLOCK == LOCKFREE
 	    StackLF<Storage> freeList;
 	    #else
@@ -131,13 +146,13 @@ namespace UPP {
 	    bool operator<( const size_t bsize ) const { return blockSize < bsize; }
 	}; // FreeHeader
 
-	enum { NoBucketSizes = 97,			// number of buckets sizes
+	enum { NoBucketSizes = 93,			// number of buckets sizes
 	       #ifdef FASTLOOKUP
 	       LookupSizes = 65536,			// number of fast lookup sizes
 	       #endif // FASTLOOKUP
 	};
 
-	static uHeapManager *heapManagerInstance;	// pointer to heap manager object
+	static uHeapManager * heapManagerInstance;	// pointer to heap manager object
 	static size_t pageSize;				// architecture pagesize
 	static size_t heapExpand;			// sbrk advance
 	static size_t mmapStart;			// cross over point for mmap
@@ -181,26 +196,29 @@ namespace UPP {
 	FreeHeader freeLists[NoBucketSizes];		// buckets for different allocation sizes
 	uSpinLock extlock;				// protects allocation-buffer extension
 
-	void *heapBegin;				// start of heap
-	void *heapEnd;					// logical end of heap
+	void * heapBegin;				// start of heap
+	void * heapEnd;					// logical end of heap
 	size_t heapRemaining;				// amount of storage not allocated in the current chunk
 
 	static void boot();
 	static void noMemory();				// called by "builtin_new" when malloc returns 0
+	static void fakeHeader( Storage::Header *& header, size_t & size, size_t & alignment );
 	static void checkAlign( size_t alignment );
 	static bool setHeapExpand( size_t value );
 	static bool setMmapStart( size_t value );
 
-	bool headers( const char *name, void *addr, Storage::Header *&header, FreeHeader *&freeElem, size_t &size, size_t &alignment );
-	void *extend( size_t size );
-	void *doMalloc( size_t size );
-	void doFree( void *addr );
+	bool headers( const char * name, void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment );
+	void * extend( size_t size );
+	void * doMalloc( size_t size );
+	static void * malloc2( size_t size ) __THROW;
+	static void * memalign2( size_t alignment, size_t size ) __THROW;
+	void doFree( void * addr );
 	size_t checkFree( bool prt = false );
 	uHeapManager();
 	~uHeapManager();
 
-	void *operator new( size_t, void *storage );
-	void *operator new( size_t size );
+	void * operator new( size_t, void * storage );
+	void * operator new( size_t size );
       public:
     }; // uHeapManager
 } // UPP

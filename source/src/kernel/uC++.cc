@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  6 13:00:08 2017
-// Update Count     : 3101
+// Last Modified On : Sat Dec 16 16:20:15 2017
+// Update Count     : 3121
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -653,11 +653,19 @@ void uCondLock::wait( uOwnerLock &lock ) {
     lock.count = prevcnt;				// reestablish lock's recursive count after blocking
 } // uCondLock::wait
 
+void uCondLock::wait( uOwnerLock &lock, uintptr_t info ) {
+    uThisTask().info = info;				// store the information with this task
+    wait( lock );
+} // uCondLock::wait
 
 bool uCondLock::wait( uOwnerLock &lock, uDuration duration ) {
     return wait( lock, activeProcessorKernel->kernelClock.getTime() + duration );
 } // uCondLock::wait
 
+bool uCondLock::wait( uOwnerLock &lock, uintptr_t info, uDuration duration ) {
+    uThisTask().info = info;				// store the information with this task
+    return wait( lock, duration );
+} // uCondLock::wait
 
 bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     uBaseTask &task = uThisTask();			// optimization
@@ -692,6 +700,21 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
 
     return ! handler.timedout;
 } // uCondLock::wait
+
+bool uCondLock::wait( uOwnerLock &lock, uintptr_t info, uTime time ) {
+    uThisTask().info = info;			// store the information with this task
+    return wait( lock, time );
+} // uCondLock::wait
+
+uintptr_t uCondLock::front() const {			// return task information
+    uDEBUG(
+	if ( waiting.empty() ) {			// condition queue must not be empty
+	    abort( "Attempt to access user data on an empty condition lock.\n"
+		   "Possible cause is not checking if the condition lock is empty before reading stored data." );
+	} // if
+    )
+    return waiting.head()->task().info;			// return condition information stored with blocked task
+} // uCondition::front
 
 
 void uCondLock::waitTimeout( TimedWaitHandler &h ) {
@@ -958,7 +981,7 @@ namespace UPP {
     
     __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
     // cannot use typeof for abort here because it is now overloaded => explicitly select builtin abort
-    void (*RealRtn::abort)(void) __attribute__(( noreturn ));
+    void (*RealRtn::abort)(void) __THROW __attribute__(( noreturn ));
     __typeof__( ::pselect ) *RealRtn::pselect;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
@@ -1841,10 +1864,10 @@ uCondition::~uCondition() {
     // cannot protect against concurrent execution.  As long as uCondition objects are declared inside its owner mutex
     // object, the proper order of destruction is guaranteed.
 
-    if ( ! condQueue.empty() ) {
+    if ( ! waiting.empty() ) {
 	// wake each task blocked on the condition with an async event
 	for ( ;; ) {
-	    uBaseTaskDL *p = condQueue.head();		// get the task blocked at the start of the condition
+	    uBaseTaskDL *p = waiting.head();		// get the task blocked at the start of the condition
 	  if ( p == nullptr ) break;			// list empty ?
 	    uEHM::uDeliverEStack dummy( false );	// block all async exceptions in destructor
 	    uBaseTask &task = p->task();
@@ -1883,7 +1906,7 @@ void uCondition::wait() {				// wait on a condition
     } // if
 #endif // __U_PROFILER__
 
-    condQueue.add( &(task.mutexRef) );			// add to end of condition queue
+    waiting.add( &(task.mutexRef) );			// add to end of condition queue
 
     serial.leave2();					// release mutex and let it schedule another task
 
@@ -1905,7 +1928,7 @@ uDEBUG(
 
 
 bool uCondition::signal() {				// signal a condition
-  if ( condQueue.empty() ) return false;		// signal on empty condition is no-op
+  if ( waiting.empty() ) return false;			// signal on empty condition is no-op
 
     uBaseTask &task = uThisTask();			// optimization
     UPP::uSerial &serial = task.getSerial();
@@ -1917,13 +1940,13 @@ bool uCondition::signal() {				// signal a condition
     } // if
 #endif // __U_PROFILER__
 
-    serial.acceptSignalled.add( condQueue.drop() );	// move signalled task on top of accept/signalled stack
+    serial.acceptSignalled.add( waiting.drop() );	// move signalled task on top of accept/signalled stack
     return true;
 } // uCondition::signal
 
 
 bool uCondition::signalBlock() {			// signal a condition
-    if ( condQueue.empty() ) return false;		// signal on empty condition is no-op
+    if ( waiting.empty() ) return false;		// signal on empty condition is no-op
 
     uBaseTask &task = uThisTask();			// optimization
     UPP::uSerial &serial = task.getSerial();
@@ -1939,7 +1962,7 @@ bool uCondition::signalBlock() {			// signal a condition
 #endif // __U_PROFILER__
 
     serial.acceptSignalled.add( &(task.mutexRef) );	// suspend signaller task on accept/signalled stack
-    serial.acceptSignalled.addHead( condQueue.drop() ); // move signalled task on head of accept/signalled stack
+    serial.acceptSignalled.addHead( waiting.drop() );	// move signalled task on head of accept/signalled stack
     serial.leave2();					// release mutex and let it schedule the signalled task
 
 #ifdef __U_PROFILER__

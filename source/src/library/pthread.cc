@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 18 22:05:59 2017
-// Update Count     : 1048
+// Last Modified On : Sun Dec 10 21:49:52 2017
+// Update Count     : 1050
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -103,7 +103,7 @@ namespace UPP {
 	friend _Task ::uPthreadable;
 
 	static pthread_t create( ::uPthreadable *p ) {
-	    return (pthread_t)(long)p;			// extra cast to avoid gcc 4 "cast loses precision" error
+	    return (pthread_t)p;
 	} // PthreadPid::Impl::create
 
 	static void recycle( pthread_t threadID ) {
@@ -111,8 +111,6 @@ namespace UPP {
 	} // PthreadPid::Impl::recycle
 
 	static ::uPthreadable *lookup( pthread_t threadID ) {
-	    // gcc 3.4.5 generates a spurious mismatched size of int/pointer because it analyzes this code when the
-	    // template is not expanded.
 	    return (::uPthreadable *)threadID;
 	} // PthreadPid::lookup
 

@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:01:02 2017
-// Update Count     : 78
+// Last Modified On : Fri Dec  1 17:36:50 2017
+// Update Count     : 82
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,7 +34,6 @@ using std::endl;
 
 _Event E1 {};
 _Event E2 {};
-
 
 void one() {
     abort( "invalid 1\n" );
@@ -87,6 +86,9 @@ void T3() {
     osacquire( cout ) << "T3" << endl;
     _Throw E2();
 }
+
+// For backwards compatibility, keep testing dynamic-exception-specifiers until they are no longer supported.
+#pragma GCC diagnostic ignored "-Wdeprecated"
 
 _Task mary {
   public:

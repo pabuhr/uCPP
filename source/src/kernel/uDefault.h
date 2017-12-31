@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Sep  5 13:51:28 2017
-// Update Count     : 58
+// Last Modified On : Fri Dec 22 13:51:28 2017
+// Update Count     : 60
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -71,17 +71,22 @@
 #define __U_DEFAULT_MAIN_STACK_SIZE__ 500000
 
 
-// Define the default number of processors created on the user cluster. May be greater than 0.
+// Define the default number of processors created on the user cluster. Must be greater than 0.
 
 #define __U_DEFAULT_USER_PROCESSORS__ 1
 
-// Define the default number of processors created in the actor executor. May be greater than 0.
 
-#define __U_DEFAULT_ACTOR_PROCESSORS__ 2
+// Define the default number of executor request queues (mailboxes). Must be greater than 0.
 
-// Define the default number of threads created in the actor executor. May be greater than 0.
+#define __U_DEFAULT_ACTOR_MAILBOXES__ 4
+
+// Define the default number of threads created in the actor executor. Must be greater than 0.
 
 #define __U_DEFAULT_ACTOR_THREADS__ 4
+
+// Define the default number of processors created in the actor executor. Must be greater than 0.
+
+#define __U_DEFAULT_ACTOR_PROCESSORS__ 2
 
 // Define affinity for actor executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
 
@@ -100,8 +105,9 @@ extern unsigned int uDefaultPreemption();		// processor scheduling pre-emption d
 extern unsigned int uDefaultProcessors();		// number of processors created on the user cluster
 extern unsigned int uDefaultBlockingIOProcessors();	// number of blocking I/O processors created on the blocking I/O cluster
 
-extern unsigned int uDefaultActorProcessors();		// kernel threads (processors) servicing executor thread-pool
+extern unsigned int uDefaultActorMailboxes();		// executor request queues
 extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
+extern unsigned int uDefaultActorProcessors();		// kernel threads (processors) servicing executor thread-pool
 extern int uDefaultActorOffset();			// affinity and offset (-1 => no affinity, default)
 extern bool uDefaultActorSepClus();			// create processors on separate cluster
 

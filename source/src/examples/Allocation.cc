@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 25 10:30:53 2016
-// Update Count     : 162
+// Last Modified On : Tue Dec  5 10:30:22 2017
+// Update Count     : 176
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,7 +44,7 @@ _Task Worker {
 
 
 void Worker::main() {
-    enum { NoOfAllocs = 5000 };
+    enum { NoOfAllocs = 5000, NoOfMmaps = 10 };
     char *locns[NoOfAllocs];
     int i;
 
@@ -77,7 +77,7 @@ void Worker::main() {
 	} // for
     } // for
 
-    // check malloc/free
+    // check malloc/free (sbrk)
 
     for ( i = 0; i < NoOfAllocs; i += 1 ) {
 	size_t s = (i + 1) * 20;
@@ -102,11 +102,36 @@ void Worker::main() {
 	free( locns[i] );
     } // for
 
-    // check calloc/free
+    // check malloc/free (mmap)
+
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	char *area = (char *)malloc( s );
+	if ( area == nullptr ) abort( "malloc/free out of memory" );
+	area[0] = '\345'; area[s - 1] = '\345';		// fill first/last
+	area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+	free( area );
+    } // for
+
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	locns[i] = (char *)malloc( s );
+	if ( locns[i] == nullptr ) abort( "malloc/free out of memory" );
+	locns[i][0] = '\345'; locns[i][s - 1] = '\345';	// fill first/last
+	locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
+    } // for
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
+	     locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "malloc/free corrupt storage" );
+	free( locns[i] );
+    } // for
+
+    // check calloc/free (sbrk)
 
     for ( i = 0; i < NoOfAllocs; i += 1 ) {
-	size_t s = i + 1;
-	char *area = (char *)calloc( 1, s );
+	size_t s = (i + 1) * 20;
+	char *area = (char *)calloc( 5, s );
 	if ( area == nullptr ) abort( "calloc/free out of memory" );
 	if ( area[0] != '\0' || area[s - 1] != '\0' ||
 	     area[malloc_usable_size( area ) - 1] != '\0' ||
@@ -118,7 +143,7 @@ void Worker::main() {
 
     for ( i = 0; i < NoOfAllocs; i += 1 ) {
 	size_t s = i + 1;
-	locns[i] = (char *)calloc( 1, s );
+	locns[i] = (char *)calloc( 5, s );
 	if ( locns[i] == nullptr ) abort( "calloc/free out of memory" );
 	if ( locns[i][0] != '\0' || locns[i][s - 1] != '\0' ||
 	     locns[i][malloc_usable_size( locns[i] ) - 1] != '\0' ||
@@ -133,12 +158,44 @@ void Worker::main() {
 	free( locns[i] );
     } // for
 
-    // check memalign/free
+    // check calloc/free (mmap)
 
-    const size_t limit = 64 * 1024;			// check alignments up to here
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	char *area = (char *)calloc( 1, s );
+	if ( area == nullptr ) abort( "calloc/free out of memory" );
+	if ( area[0] != '\0' || area[s - 1] != '\0' ) abort( "calloc/free corrupt storage4.1" );
+	if ( area[malloc_usable_size( area ) - 1] != '\0' ) abort( "calloc/free corrupt storage4.2" );
+	if ( ! malloc_zero_fill( area ) ) abort( "calloc/free corrupt storage4.3" );
+	area[0] = '\345'; area[s - 1] = '\345';		// fill first/last
+	area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+	free( area );
+    } // for
+
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	locns[i] = (char *)calloc( 1, s );
+	if ( locns[i] == nullptr ) abort( "calloc/free out of memory" );
+	if ( locns[i][0] != '\0' || locns[i][s - 1] != '\0' ||
+	     locns[i][malloc_usable_size( locns[i] ) - 1] != '\0' ||
+	     ! malloc_zero_fill( locns[i] ) ) abort( "calloc/free corrupt storage5" );
+	locns[i][0] = '\345'; locns[i][s - 1] = '\345';	// fill first/last
+	locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
+    } // for
+    for ( i = 0; i < NoOfMmaps; i += 1 ) {
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
+	     locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "calloc/free corrupt storage6" );
+	free( locns[i] );
+    } // for
+
+    // check memalign/free (sbrk)
+
+    enum { limit = 64 * 1024 };				// check alignments up to here
+
     for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
 	//cout << setw(6) << alignments[a] << endl;
-	for ( int s = 1; s < 64 * 1024; s += 1 ) {	// allocation of size 0 can return null
+	for ( int s = 1; s < NoOfAllocs; s += 1 ) {	// allocation of size 0 can return null
 	    char *area = (char *)memalign( a, s );
 	  if ( area == nullptr ) abort( "memalign/free out of memory" );
 	    //cout << setw(6) << i << " " << area << endl;
@@ -151,12 +208,30 @@ void Worker::main() {
 	} // for
     } // for
 
+    // check memalign/free (mmap)
+
+    for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+	//cout << setw(6) << alignments[a] << endl;
+	for ( i = 1; i < NoOfMmaps; i += 1 ) {
+	    size_t s = i + uDefaultMmapStart();		// cross over point
+	    char *area = (char *)memalign( a, s );
+	  if ( area == nullptr ) abort( "memalign/free out of memory" );
+	    //cout << setw(6) << i << " " << area << endl;
+	    if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+		abort( "memalign/free bad alignment : memalign(%d,%d) = %p", (int)a, (int)s, area );
+	    } // if
+	    area[0] = '\345'; area[s - 1] = '\345';	// fill first/last byte
+	    area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
+	    free( area );
+	} // for
+    } // for
+
 #ifndef ALLOCATOR					// uC++ allocator only
-    // check calloc/realloc/free
+    // check calloc/realloc/free (sbrk)
 
     for ( i = 1; i < 10000; i += 12 ) {
 	// initial N byte allocation
-	char *area = (char *)calloc( 1, i );
+	char *area = (char *)calloc( 5, i );
 	if ( area == nullptr ) abort( "calloc/realloc/free out of memory" );
 	if ( area[0] != '\0' || area[i - 1] != '\0' ||
 	     area[malloc_usable_size( area ) - 1] != '\0' ||
@@ -167,6 +242,28 @@ void Worker::main() {
 	    area = (char *)realloc( area, s );		// attempt to reuse storage
 	    if ( area == nullptr ) abort( "calloc/realloc/free out of memory" );
 	    if ( area[0] != '\0' || area[s - 1] != '\0' ||
+		 area[malloc_usable_size( area ) - 1] != '\0' ||
+		 ! malloc_zero_fill( area ) ) abort( "calloc/realloc/free corrupt storage2" );
+	} // for
+	free( area );
+    } // for
+
+    // check calloc/realloc/free (mmap)
+
+    for ( i = 1; i < 1000; i += 12 ) {
+	// initial N byte allocation
+	size_t s = i + uDefaultMmapStart();		// cross over point
+	char *area = (char *)calloc( 1, s );
+	if ( area == nullptr ) abort( "calloc/realloc/free out of memory" );
+	if ( area[0] != '\0' || area[s - 1] != '\0' ||
+	     area[malloc_usable_size( area ) - 1] != '\0' ||
+	     ! malloc_zero_fill( area ) ) abort( "calloc/realloc/free corrupt storage1" );
+
+	// Do not start this loop index at 0 because realloc of 0 bytes frees the storage.
+	for ( int r = i; r < 256 * 1024; r += 26 ) {	// start at initial memory request
+	    area = (char *)realloc( area, r );		// attempt to reuse storage
+	    if ( area == nullptr ) abort( "calloc/realloc/free out of memory" );
+	    if ( area[0] != '\0' || area[r - 1] != '\0' ||
 		 area[malloc_usable_size( area ) - 1] != '\0' ||
 		 ! malloc_zero_fill( area ) ) abort( "calloc/realloc/free corrupt storage2" );
 	} // for
@@ -204,7 +301,7 @@ void Worker::main() {
 
     for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
 	//cout << setw(6) << alignments[a] << endl;
-	for ( int s = 1; s < 64 * 1024; s += 1 ) {	// allocation of size 0 can return null
+	for ( int s = 1; s < limit; s += 1 ) {		// allocation of size 0 can return null
 	    char *area = (char *)cmemalign( a, 1, s );
 	  if ( area == nullptr ) abort( "cmemalign/free out of memory" );
 	    //cout << setw(6) << i << " " << area << endl;

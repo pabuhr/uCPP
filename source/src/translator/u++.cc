@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 25 13:10:06 2017
-// Update Count     : 932
+// Last Modified On : Sat Dec 16 19:10:21 2017
+// Update Count     : 947
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -95,8 +95,6 @@ int main( int argc, char *argv[] ) {
     string compiler_path( CCAPP );			// path/name of C compiler
     string compiler_name;				// name of C compiler
 
-    string cpp11;					// C++11 version
-
     bool nonoptarg = false;				// indicates non-option argument specified
     bool link = true;					// linking as well as compiling
     bool verbose = false;				// -v flag
@@ -112,6 +110,7 @@ int main( int argc, char *argv[] ) {
     bool debugging = false;				// -g flag
     bool openmp = false;				// -openmp flag
     bool nouinc = false;				// -no-u++-include: avoid "inc" directory
+    bool cpp11 = false;					// C++11 version
 
     const char *args[argc + 100];			// u++ command line values, plus some space for additional flags
     int sargs = 1;					// starting location for arguments in args list
@@ -218,15 +217,7 @@ int main( int argc, char *argv[] ) {
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-std=" ) || prefix( arg, "--std=" ) ) {
-		string langstd = arg.substr( arg[1] == '-' ? 6 : 5 ); // strip the -std= flag
-		if ( langstd == "c++0x" || langstd == "gnu++0x" ||
-		     langstd == "c++11" || langstd == "gnu++11" ||
-		     langstd == "c++14" || langstd == "gnu++14" ||
-		     langstd == "c++17" || langstd == "gnu++17" ||
-		     langstd == "c++1y" || langstd == "gnu++1y"
-		    ) {
-		    cpp11 = langstd;			// unsure if other values are valid
-		} // if
+		cpp11 = true;
 		args[nargs] = argv[i];			// pass the argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-B" ) ) {
@@ -745,13 +736,11 @@ int main( int argc, char *argv[] ) {
 	    args[nargs] = "-mcpu=v9";			// minimum architecture level for __sync_fetch_and_add
 	    nargs += 1;
 	} // if
-	// minimum c++0x
-	if ( cpp11.length() == 0 ) {
+
+	if ( ! cpp11 ) {
 	    args[nargs] = ( *new string( string("-std=") + CPP11 ) ).c_str(); // default
-	} else {
-	    args[nargs] = ( *new string( string("-std=") + cpp11 ) ).c_str(); // user supplied
+	    nargs += 1;
 	} // if
-	nargs += 1;
 	args[nargs] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
 	nargs += 1;
 	args[nargs] = "-no-integrated-cpp";

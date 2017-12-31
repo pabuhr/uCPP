@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 10 14:12:26 2017
-// Update Count     : 556
+// Last Modified On : Sat Dec 16 07:52:05 2017
+// Update Count     : 561
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -373,7 +373,11 @@ uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor( UPP::uAction f, UP
 } // uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor
 
 
-uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor( UPP::uAction f, uBaseCoroutine &coroutine )
+uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor(
+#ifdef __U_PROFILER__
+	UPP::uAction f,
+#endif // __U_PROFILER__
+	uBaseCoroutine &coroutine )
 #ifdef __U_PROFILER__
 	: f( f ), coroutine( coroutine )
 #endif // __U_PROFILER__

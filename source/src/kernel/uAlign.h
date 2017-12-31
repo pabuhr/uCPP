@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 22:08:40 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 21 14:43:15 2014
-// Update Count     : 46
+// Last Modified On : Tue Dec  5 08:31:45 2017
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,10 +30,11 @@
 
 
 // Minimum size used to align memory boundaries for memory allocations. Minimum size must be >=
-// sizeof(uHeapManager::uStorage::uHeader).
+// sizeof(uHeapManager::uStorage).
 
-#define uAlign() (sizeof(double))
-
+//#define uAlign() (sizeof(double))
+// gcc-7 uses xmms instructions, which require 16 byte alignment.
+#define uAlign() (16)
 
 // Check for power of 2
 

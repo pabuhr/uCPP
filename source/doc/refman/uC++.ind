@@ -150,7 +150,7 @@
 		\hyperpage{28}
   \item binomial theorem, \hyperpage{23}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Blocked}}}\endlgrinde\LGend{}, 
 		\hyperpage{32}
   \item blocked, \hyperpage{4}
@@ -287,7 +287,7 @@
   \indexspace
 
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}, 
-		\hyperpage{26}, \hyperpage{37, 38}, 
+		\hyperpage{26}, \hyperpage{37}, \hyperpage{39}, 
 		\hyperpage{158, 159}, \hyperpage{161}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{END}}}\endlgrinde\LGend{}, 
 		\hyperpage{28}
@@ -391,7 +391,7 @@
 		\hyperpage{123}
   \item free routine, \hyperpage{5}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}, 
-		\hyperpage{26}
+		\hyperpage{26}, \hyperpage{39}
   \item full coroutine, \hyperpage{13}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{futex}}}\endlgrinde\LGend{}, 
 		\hyperpage{69}
@@ -699,7 +699,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}, 
 		\hyperpage{61}
   \item priming
-    \subitem barrier, \hyperpage{40}
+    \subitem barrier, \hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}, 
 		\hyperpage{69}, \hyperpage{106}
   \item prioritized pre-emptive scheduling, \hyperpage{144}
@@ -849,7 +849,7 @@
 		\hyperpage{59}
   \item reresume, \hyperpage{81}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}, 
 		\hyperpage{141}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}, 
@@ -1020,7 +1020,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{top}}}\endlgrinde\LGend{}, 
 		\hyperpage{158}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{transfer}}}\endlgrinde\LGend{}, 
 		\hyperpage{159}, \hyperpage{161}
   \item translator, \hyperpage{7}
@@ -1269,13 +1269,15 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCondLock}}}\endlgrinde\LGend{}, 
 		\hyperpage{38}, \hyperpage{129}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{broadcast}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}, 
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uContext}}}\endlgrinde\LGend{}, 
 		\hyperpage{42}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorOffset}}}\endlgrinde\LGend{}, 
@@ -1779,7 +1781,7 @@
   \item wait-for-all, \hyperpage{51}
   \item wait-for-any, \hyperpage{51}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{waiters}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{WaitingFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{25}, \hyperpage{95}
   \item warnings

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 10 18:02:20 2017
-// Update Count     : 760
+// Last Modified On : Fri Dec 22 14:18:46 2017
+// Update Count     : 793
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,7 +34,7 @@
 _Event uFutureFailue {};
 
 _Event uCancellation : public uFutureFailue {};		// raised if future cancelled
-    
+
 namespace UPP {
     template<typename T> _Monitor uBaseFuture {
 	T result;					// future result
@@ -700,8 +700,9 @@ class uExecutor {
 	    delay.signal();				// restart
 	} // Buffer::insert
 
-	ELEMTYPE *remove() {
-	    if ( buf.empty() ) delay.wait();		// no request to process ? => wait
+	ELEMTYPE * remove() {
+//	    if ( buf.empty() ) delay.wait();		// no request to process ? => wait
+	    if ( buf.empty() ) return nullptr;		// no request to process ? => 
 	    return buf.dropHead();
 	} // Buffer::remove
     }; // Buffer
@@ -732,11 +733,12 @@ class uExecutor {
     // Each worker has its own work buffer to reduce contention between client and server. Hence, work requests arrive
     // and are distributed into buffers in a roughly round-robin order.
     template< typename ELEMTYPE > _Task Worker {
-	Buffer< WRequest > &requests;
+	Buffer< WRequest > * requests;
+	unsigned int start, range;
 
 	void main() {
-	    for ( ;; ) {
-		WRequest *request = requests.remove();
+	    for ( int i = 0;; i = (i + 1) % range ) {
+		WRequest *request = requests[i + start].remove();
 	      if ( ! request ) {
 		    #if ! defined( __U_MULTI__ )
 		    uThisTask().uYieldNoPoll();
@@ -749,21 +751,22 @@ class uExecutor {
 	    } // for
 	} // Worker::main
       public:
-	Worker( uCluster &wc, Buffer< WRequest > &requests ) : uBaseTask( wc ), requests( requests ) {}
+	Worker( uCluster & wc, Buffer< WRequest > * requests, unsigned int start, unsigned int range ) :
+	    uBaseTask( wc ), requests( requests ), start( start ), range( range ) {}
     }; // Worker
 
     enum { DefaultWorkers = 8, DefaultProcessors = 4 };
-    const unsigned int nworkers, nprocessors;		// number of workers/processor tasks
-    const bool sepClus;					// use same or separate cluster for executor
-    Worker< WRequest > **workers;			// array of workers executing work requests
-    uProcessor **processors;				// array of virtual processors adding parallelism for workers
     uCluster *cluster;					// if workers execute on separate cluster
+    uProcessor **processors;				// array of virtual processors adding parallelism for workers
     Buffer< WRequest > *requests;			// list of work requests
+    Worker< WRequest > **workers;			// array of workers executing work requests
+    const unsigned int nmailboxes, nworkers, nprocessors; // number of mailboxes/workers/processor tasks
+    const bool sepClus;					// use same or separate cluster for executor
     unsigned int next = 0;				// demultiplexed across workers buffers
 
     unsigned int tickets() {
-	//return uFetchAdd( next, 1 ) % nworkers;
-	return next++ % nworkers;			// no locking, interference randomizes
+	//return uFetchAdd( next, 1 ) % nmailboxes;
+	return next++ % nmailboxes;			// no locking, interference randomizes
     } // uExecutor::tickets
 
     template< typename Func > void send( Func action, unsigned int ticket ) { // asynchronous call, no return value
@@ -778,10 +781,11 @@ class uExecutor {
 	return result;
     } // uExecutor::sendrecv
   public:
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, bool sepClus = false ) : nworkers( nworkers ), nprocessors( nprocessors ), sepClus( sepClus ) {
+    uExecutor( unsigned int nmailboxes, unsigned int nworkers, unsigned int nprocessors, int affOffset, bool sepClus = false ) : nmailboxes( nmailboxes ), nworkers( nworkers ), nprocessors( nprocessors ), sepClus( sepClus ) {
+	assert( nmailboxes >= nworkers );
 	cluster = sepClus ? new uCluster( "uExecutor" ) : &uThisCluster();
 	processors = new uProcessor *[ nprocessors ];
-	requests = new Buffer< WRequest >[ nworkers ];
+	requests = new Buffer< WRequest >[ nmailboxes ];
 	workers = new Worker< WRequest > *[ nworkers ];
 
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
@@ -791,12 +795,14 @@ class uExecutor {
 	    } // if
 	} // for
 
-	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
-	    workers[ i ] = new Worker< WRequest >( *cluster, requests[i] );
+	unsigned int reqPerWorker = nmailboxes / nworkers, extras = nmailboxes % nworkers;
+	for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker + ( i < extras ? 1 : 0 ) ) {
+	    workers[ i ] = new Worker< WRequest >( *cluster, requests, step, reqPerWorker + ( i < extras ? 1 : 0 ) );
 	} // for
     } // uExecutor::uExecutor
 
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, bool sepClus = false ) : uExecutor( nworkers, nprocessors, -1, sepClus ) {}
+    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, bool sepClus = false ) : uExecutor( nworkers, nworkers, nprocessors, affOffset, sepClus ) {}
+    uExecutor( unsigned int nworkers, unsigned int nprocessors, bool sepClus = false ) : uExecutor( nworkers, nworkers, nprocessors, -1, sepClus ) {}
     uExecutor( unsigned int nworkers, bool sepClus = false ) : uExecutor( nworkers, DefaultProcessors, sepClus ) {}
     uExecutor( bool sepClus ) : uExecutor( DefaultWorkers, DefaultProcessors, sepClus ) {}
     uExecutor() : uExecutor( DefaultWorkers, DefaultProcessors, false ) {}
@@ -806,8 +812,9 @@ class uExecutor {
 	// next two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1 may take
 	// the single sentinel while waiting for worker 0 to end.
 	WRequest sentinel[nworkers];
-	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
-	    requests[i].insert( &sentinel[i] );		// force eventually termination
+	unsigned int reqPerWorker = nmailboxes / nworkers, extras = nmailboxes % nworkers;
+	for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
+	    requests[step].insert( &sentinel[i] );	// force eventually termination
 	} // for
 	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
 	    delete workers[ i ];
@@ -819,7 +826,7 @@ class uExecutor {
 	delete [] workers;
 	delete [] requests;
 	delete [] processors;
-	if ( sepClus ) delete cluster;
+	if ( sepClus ) { delete cluster; }
     } // uExecutor::~uExecutor
 
     template< typename Func > void send( Func action ) { // asynchronous call, no return value

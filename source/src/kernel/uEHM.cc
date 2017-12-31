@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  4 16:27:14 2017
-// Update Count     : 757
+// Last Modified On : Wed Dec  6 22:15:48 2017
+// Update Count     : 759
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -260,7 +260,9 @@ static void Check( uBaseCoroutine &target, const char *kind ) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress"
+#if __GNUC__ >= 6					// valid GNU compiler diagnostic ?
 #pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif // __GNUC__ >= 6
     // SKULLDUGGERY: simplify call with reference parameter then treat as pointer to check for overwritten memory.
     if ( &target == nullptr || &target == (uBaseCoroutine *)-1 ||
 	 *((void **)&target) == nullptr || *((void **)&target) == (void *)-1 ) {

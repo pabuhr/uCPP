@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  1 08:36:44 2017
-// Update Count     : 330
+// Last Modified On : Fri Dec  1 08:15:51 2017
+// Update Count     : 342
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,7 +90,7 @@ class uActor {
 	void operator()() {				// functor
 	    try {
 		Allocation ret = actor.process_( msg );	// call current message handler
-		if ( ret == Delete ) delete &actor;
+		if ( ret == Delete ) { delete &actor; }
 		else if ( ret == Destroy ) actor.~uActor();
 	    } catch ( uBaseEvent &ex ) {
 		Case( uActor::ReplyMsg, msg ) {		// unknown future message
@@ -98,7 +98,7 @@ class uActor {
 		} else {
 		    _Throw;				// fail to worker thread
 		} // Case
-	    } catch( ... ) {
+	    } catch ( ... ) {
 		abort( "C++ exceptions unsupported from throw in actor for future message" );
 		// Case( uActor::ReplyMsg, msg ) {	// unknown future message
 		//     //msg_t->reply( std::current_exception() ); // complain in future
@@ -106,7 +106,7 @@ class uActor {
 		//     _Throw;
 		// } // Case
 	    } _Finally {
-		if ( msg.allocation == Delete ) delete &msg;
+		if ( msg.allocation == Delete ) { delete &msg; }
 		else if ( msg.allocation == Destroy ) msg.~Message();
 	    } // try
 	} // Deliver_::operator()
@@ -153,7 +153,7 @@ class uActor {
 	return msg.result;
     } // uActor::ask
 
-    template< typename Result > Future_ISM< Result >operator||( FutureMessage< Result > &msg ) { // operator async call, return future
+    template< typename Result > Future_ISM< Result > operator||( FutureMessage< Result > &msg ) { // operator async call, return future
 	return ask( msg, nullptr );
     } // uActor::operator||
 

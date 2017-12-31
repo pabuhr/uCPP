@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 16:26:52 2017
-// Update Count     : 185
+// Last Modified On : Sat Dec 16 22:52:49 2017
+// Update Count     : 208
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,6 +41,7 @@ using std::string;
 //#define __U_DEBUG_H__
 #include "debug.h"
 
+//#define CLANG
 string compiler_name( CCAPP );				// path/name of C compiler
 
 string D__U_GCC_BPREFIX__( "-D__U_GCC_BPREFIX__=" );
@@ -181,6 +182,9 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	    // all other flags
 
+#ifdef CLANG
+	    } else if ( arg == "-fworking-directory" ) {
+#endif // CLANG
 	    } else if ( arg == "-o" ) {
 		i += 1;
 		o_name = argv[i];
@@ -282,7 +286,11 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    exit( EXIT_FAILURE );
 	} // if
 
+#ifdef CLANG	
+	args[0] = "clang-5.0";
+#else	
 	args[0] = compiler_name.c_str();
+#endif // CLANG
 	args[nargs] = cpp_in;				// input to cpp
 	nargs += 1;
 	args[nargs] = nullptr;				// terminate argument list
@@ -426,7 +434,13 @@ void Stage2( const int argc, const char * const * argv ) {
 	if ( cpp_in != nullptr ) cerr << " " << cpp_in;
     )
 
+#ifdef CLANG
+    args[0] = "clang-5.0";
+    args[nargs] = "-fno-integrated-as";
+    nargs += 1;
+#else
     args[0] = compiler_name.c_str();
+#endif // CLANG
     args[nargs] = "-S";					// only compile and put assembler output in specified file
     nargs += 1;
     args[nargs] = cpp_in;
@@ -448,12 +462,6 @@ void Stage2( const int argc, const char * const * argv ) {
 
 
 int main( const int argc, const char * const argv[] ) {
-    uDEBUGPRT(
-	for ( int i = 0; env[i] != nullptr; i += 1 ) {
-	    cerr << env[i] << endl;
-	} // for
-    )
-
     string arg = argv[1];
 
     // Currently, stage 1 starts with flag -E and stage 2 with flag -fpreprocessed.

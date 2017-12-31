@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:36:05 2016
-// Update Count     : 4
+// Last Modified On : Fri Dec  1 08:59:46 2017
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,7 +47,7 @@ _Actor Restart {
 	PRT( osacquire( cout ) << "preStart" << endl; )
     } // Restart::preStart
 
-    Allocation receive( Message &msg ) {
+    Allocation receive( Message & msg ) {
 	Case( DummyMsg, msg ) {				// determine message kind
 	    PRT( osacquire( cout ) << "receive " << msg_t->id << endl; )
 	    cnt += 1;
@@ -57,7 +57,7 @@ _Actor Restart {
 	return Nodelete;				// reuse actor
     } // Restart::receive
 
-    Allocation receive2( Message &msg ) {
+    Allocation receive2( Message & msg ) {
 	Case( DummyMsg, msg ) {				// determine message kind
 	    PRT( osacquire( cout ) << "receive2 " << msg_t->id << endl; )
 	    cnt += 1;
@@ -81,7 +81,8 @@ int main() {
     } // for
 
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {		// access future values
-	osacquire( cout ) << "futures message " << i << " " << fi[i]() << endl;
+	int v = fi[i]();
+	osacquire( cout ) << "futures message " << i << " " << v << endl;
     } // for
     osacquire( cout ) << endl;
 
@@ -90,7 +91,8 @@ int main() {
 	fi[i] = *restart || *new DummyMsg( i );		// send N future messages
     } // for
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {		// access future values
-	osacquire( cout ) << "futures message " << i << " " << fi[i]() << endl;
+	int v = fi[i]();
+	osacquire( cout ) << "futures message " << i << " " << v << endl;
     } // for
 
     *restart | uActor::stopMsg;				// stop restart actor

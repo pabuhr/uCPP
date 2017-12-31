@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  6 16:55:02 2017
-// Update Count     : 1288
+// Last Modified On : Sat Dec 16 16:27:24 2017
+// Update Count     : 1333
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,14 +52,14 @@ namespace UPP {
 #endif // __U_DEBUG__
     static char uHeapStorage[sizeof(uHeapManager)] __attribute__(( aligned (128) )) = {0}; // size of cache line to prevent false sharing
 
-    uHeapManager *uHeapManager::heapManagerInstance = nullptr;
+    uHeapManager * uHeapManager::heapManagerInstance = nullptr;
     size_t uHeapManager::pageSize;
     unsigned int uHeapManager::maxBucketsUsed;
     size_t uHeapManager::heapExpand;
     size_t uHeapManager::mmapStart;
 
     unsigned int uHeapManager::bucketSizes[uHeapManager::NoBucketSizes] = {
-	16, 24, 32, 40, 48, 56, 64, 72,
+	16, 32, 48, 64,
 	80, 96, 112, 128, 144, 160, 192, 224,
 	256, 320, 384, 448, 512, 640, 768, 896,
 	1024, 1536, 2048, 2560, 3072, 3584, 4096, 6144,
@@ -161,7 +161,7 @@ namespace UPP {
 	return false;
     } // uHeapManager::setMmapStart
 
-    static void checkHeader( bool check, const char *name, void *addr ) {
+    static inline void checkHeader( bool check, const char * name, void * addr ) {
 	if ( UNLIKELY( check ) ) {			// bad address ?
 	    abort( "Attempt to %s storage %p with address outside the heap.\n"
 		   "Possible cause is duplicate free on same block or overwriting of memory.",
@@ -169,28 +169,37 @@ namespace UPP {
 	} // if
     } // checkHeader
 
-    inline bool uHeapManager::headers( const char *name, void *addr, Storage::Header *&header, FreeHeader *&freeElem, size_t &size, size_t &alignment ) {
-	header = (Storage::Header *)( (char *)addr - sizeof(Storage::Header) );
+    inline void uHeapManager::fakeHeader( Storage::Header *& header, size_t & size, size_t & alignment ) {
+	if ( UNLIKELY( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
+	    size_t offset = header->kind.fake.offset;
+	    alignment = header->kind.fake.alignment & -2; // remove flag from value
+#ifdef __U_DEBUG__
+	    checkAlign( alignment );			// check alignment
+#endif // __U_DEBUG__
+	    header = (Storage::Header *)((char *)header - offset);
+	} // if
+    } // fakeHeader
+
+#   define headerAddr( addr ) ((UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage) ))
+
+    inline bool uHeapManager::headers( const char * name, void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment ) {
+	header = headerAddr( addr );
+
+	if ( UNLIKELY( heapEnd < addr ) ) {		// mmapped ?
+	    fakeHeader( header, size, alignment );
+	    size = header->kind.real.blockSize & -3;	// mmap size
+	    return true;
+	} // if
+
 #ifdef __U_DEBUG__
 	checkHeader( addr < heapBegin || header < heapBegin, name, addr ); // bad low address ?
 #endif // __U_DEBUG__
 	// header may be safe to dereference
-	if ( UNLIKELY( heapEnd < addr ) ) {		// mmapped ?
-	    size = header->kind.real.blockSize & -3;
-	    return true;
-	} // if
+	fakeHeader( header, size, alignment );
 #ifdef __U_DEBUG__
-	checkHeader( heapEnd < header, name, addr );	// bad high address ?
+	checkHeader( header < heapBegin || heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
 #endif // __U_DEBUG__
-	if ( UNLIKELY( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
-	    size_t offset = header->kind.fake.offset;
-	    alignment = header->kind.fake.alignment & -2; // remove flag from value
-	    header = (Storage::Header *)((char *)header - offset);
-#ifdef __U_DEBUG__
-	    checkHeader( header < heapBegin || heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
-	    checkAlign( alignment );			// bad alignment ?
-#endif // __U_DEBUG__
-	} // if
+
 	freeElem = (FreeHeader *)((size_t)header->kind.real.home & -3);
 #ifdef __U_DEBUG__
 	if ( freeElem < &freeLists[0] || &freeLists[NoBucketSizes] <= freeElem ) {
@@ -204,7 +213,7 @@ namespace UPP {
     } // uHeapManager::headers
 
 
-    inline void *uHeapManager::extend( size_t size ) {
+    inline void * uHeapManager::extend( size_t size ) {
 	extlock.acquire();
 	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
 			      this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) ); )
@@ -231,7 +240,7 @@ namespace UPP {
 	    rem = heapRemaining + increase - size;
 	} // if
 
-	Storage *block = (Storage *)heapEnd;
+	Storage * block = (Storage *)heapEnd;
 	heapRemaining = rem;
 	heapEnd = (char *)heapEnd + size;
 	uDEBUGPRT( uDebugPrt( "%p = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
@@ -241,17 +250,17 @@ namespace UPP {
     } // uHeapManager::extend
 
 
-    inline void *uHeapManager::doMalloc( size_t size ) {
+    inline void * uHeapManager::doMalloc( size_t size ) {
 	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size ); )
 
-	Storage *block;
+	Storage * block;
 
 	// Look up size in the size list.  Make sure the user request includes space for the header that must be allocated
 	// along with the block and is a multiple of the alignment size.
 
-	size_t tsize = size + sizeof(Storage::Header);
+	size_t tsize = size + sizeof(Storage);
 	if ( LIKELY( tsize < mmapStart ) ) {		// small size => sbrk
-	    FreeHeader *freeElem =
+	    FreeHeader * freeElem =
 #ifdef FASTLOOKUP
 		tsize < LookupSizes ? &freeLists[lookup[tsize]] :
 #endif // FASTLOOKUP
@@ -311,7 +320,7 @@ namespace UPP {
 	    block->header.kind.real.blockSize = tsize;	// storage size for munmap
 	} // if
 
-	void *area = &(block->data);			// adjust off header to user bytes
+	void * area = &(block->data);			// adjust off header to user bytes
 
 #ifdef __U_DEBUG__
 	assert( ((uintptr_t)area & (uAlign() - 1)) == 0 ); // minimum alignment ?
@@ -329,8 +338,7 @@ namespace UPP {
 	return area;
     } // uHeapManager::doMalloc
 
-
-    inline void uHeapManager::doFree( void *addr ) {
+    inline void uHeapManager::doFree( void * addr ) {
 	uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p )\n", this, addr ); )
 
 #ifdef __U_DEBUG__
@@ -339,8 +347,8 @@ namespace UPP {
 	} // if
 #endif // __U_DEBUG__
 
-	Storage::Header *header;
-	FreeHeader *freeElem;
+	Storage::Header * header;
+	FreeHeader * freeElem;
 	size_t size, alignment;				// not used (see realloc)
 
 	if ( headers( "free", addr, header, freeElem, size, alignment ) ) { // mmapped ?
@@ -358,13 +366,13 @@ namespace UPP {
 	} else {
 #ifdef __U_PROFILER__
 	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
-		(*uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, freeElem->blockSize, PROFILEMALLOCENTRY( header ) ); 
+		(* uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, freeElem->blockSize, PROFILEMALLOCENTRY( header ) ); 
 	    } // if
 #endif // __U_PROFILER__
 
 #ifdef __U_DEBUG__
 	    // Set free memory to garbage so subsequent usages might fail.
-	    memset( ((Storage *)header)->data, '\377', freeElem->blockSize - sizeof( Storage::Header ) );
+	    memset( ((Storage *)header)->data, '\377', freeElem->blockSize - sizeof( Storage ) );
 #endif // __U_DEBUG__
 
 	    uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeElem:%p\n", this, addr, &header, &freeElem ); )
@@ -407,9 +415,9 @@ namespace UPP {
 	    unsigned int N = 0;
 #endif // __U_STATISTICS__
 #if defined( SPINLOCK )
-	    for ( Storage *p = freeLists[i].freeList; p != nullptr; p = p->header.kind.real.next ) {
+	    for ( Storage * p = freeLists[i].freeList; p != nullptr; p = p->header.kind.real.next ) {
 #else
-	    for ( Storage *p = freeLists[i].freeList.top(); p != nullptr; p = p->header.kind.real.next.top ) {
+	    for ( Storage * p = freeLists[i].freeList.top(); p != nullptr; p = p->header.kind.real.next.top ) {
 #endif // SPINLOCK
 		total += size;
 #ifdef __U_STATISTICS__
@@ -450,7 +458,7 @@ namespace UPP {
 	} // if
 	heapExpand = uDefaultHeapExpansion();
 
-	char *end = (char *)sbrk( 0 );
+	char * end = (char *)sbrk( 0 );
 	sbrk( (char *)uCeiling( (long unsigned int)end, uAlign() ) - end ); // move start of heap to multiple of alignment
 	heapBegin = heapEnd = sbrk( 0 );		// get new start point
 
@@ -500,12 +508,12 @@ namespace UPP {
     } // uHeapManager::boot
 
 
-    void *uHeapManager::operator new( size_t, void *storage ) {
+    void * uHeapManager::operator new( size_t, void * storage ) {
 	return storage;
     } // uHeapManager::operator new
 
 
-    void *uHeapManager::operator new( size_t size ) {
+    void * uHeapManager::operator new( size_t size ) {
 	return ::operator new( size );
     } // uHeapManager::operator new
 
@@ -537,104 +545,152 @@ namespace UPP {
 	uHeapManager::heapManagerInstance->uHeapManager::~uHeapManager();
     } // uHeapControl::finishup
 
-    void uHeapControl::prepareTask( uBaseTask *task ) {
+    void uHeapControl::prepareTask( uBaseTask * task ) {
     } // uHeapControl::prepareTask
 
-    void uHeapControl::startTask() {
-    } // uHeapControl::startTask
+    // void uHeapControl::startTask() {
+    // } // uHeapControl::startTask
 
-    void uHeapControl::finishTask() {
-    } // uHeapControl::finishTask
+    // void uHeapControl::finishTask() {
+    // } // uHeapControl::finishTask
+
+
+    inline void * uHeapManager::malloc2( size_t size ) __THROW {
+	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
+	    UPP::uHeapManager::boot();
+	} // if
+
+	void * area = UPP::uHeapManager::heapManagerInstance->doMalloc( size );
+	if ( UNLIKELY( area == nullptr ) ) errno = ENOMEM; // POSIX
+
+#ifdef __U_PROFILER__
+	if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
+	    UPP::uHeapManager::Storage::Header * header = headerAddr( area );
+	    PROFILEMALLOCENTRY( header ) = (* uProfiler::uProfiler_registerMemoryAllocate)( uProfiler::profilerInstance, area, size, header->kind.real.blockSize & -3 );
+	} // if
+#endif // __U_PROFILER__
+	return area;
+    } // malloc2
+
+
+    inline void * uHeapManager::memalign2( size_t alignment, size_t size ) __THROW {
+#ifdef __U_DEBUG__
+	UPP::uHeapManager::checkAlign( alignment );	// check alignment
+#endif // __U_DEBUG__
+
+	// if alignment <= default alignment, do normal malloc as two headers are unnecessary
+      if ( UNLIKELY( alignment <= uAlign() ) ) return UPP::uHeapManager::malloc2( size );
+
+	// Allocate enough storage to guarantee an address on the alignment boundary, and sufficient space before it for
+	// administrative storage. NOTE, WHILE THERE ARE 2 HEADERS, THE FIRST ONE IS IMPLICITLY CREATED BY DOMALLOC.
+	//      .-------------v-----------------v----------------v----------,
+	//      | Real Header | ... padding ... |   Fake Header  | data ... |
+	//      `-------------^-----------------^-+--------------^----------'
+	//      |<--------------------------------' offset/align |<-- alignment boundary
+
+	// subtract uAlign() because it is already the minimum alignment
+	// add sizeof(Storage) for fake header
+	char * area = (char *)UPP::uHeapManager::heapManagerInstance->doMalloc( size + alignment - uAlign() + sizeof(UPP::uHeapManager::Storage) );
+      if ( UNLIKELY( area == nullptr ) ) return area;
+
+	// address in the block of the "next" alignment address
+	char * user = (char *)uCeiling( (uintptr_t)(area + sizeof(UPP::uHeapManager::Storage)), alignment );
+
+	// address of header from malloc
+	UPP::uHeapManager::Storage::Header * realHeader = headerAddr( area );
+	// address of fake header * before* the alignment location
+	UPP::uHeapManager::Storage::Header * fakeHeader = headerAddr( user );
+	// SKULLDUGGERY: insert the offset to the start of the actual storage block and remember alignment
+	fakeHeader->kind.fake.offset = (char *)fakeHeader - (char *)realHeader;
+	// SKULLDUGGERY: odd alignment imples fake header
+	fakeHeader->kind.fake.alignment = alignment | 1;
+
+#ifdef __U_PROFILER__
+	if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
+	    PROFILEMALLOCENTRY( fakeHeader ) = (* uProfiler::uProfiler_registerMemoryAllocate)( uProfiler::profilerInstance, area, size, realHeader->kind.real.home->blockSize & -3 );
+	} // if
+#endif // __U_PROFILER__
+
+	return user;
+    } // memalign2
 } // UPP
 
 
 // Operators new and new [] call malloc; delete calls free
 
 extern "C" {
-    void *malloc( size_t size ) __THROW {
-	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
-	    UPP::uHeapManager::boot();
-	} // if
-
+    void * malloc( size_t size ) __THROW {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::malloc_calls, 1 );
 	uFetchAdd( UPP::uHeapManager::malloc_storage, size );
 #endif // __U_STATISTICS__
 
-	void *area = UPP::uHeapManager::heapManagerInstance->doMalloc( size );
-	if ( UNLIKELY( area == nullptr ) ) errno = ENOMEM;	// POSIX
+	void * area = UPP::uHeapManager::malloc2( size );
 
-#ifdef __U_PROFILER__
-	if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
-	    UPP::uHeapManager::Storage::Header *header = (UPP::uHeapManager::Storage::Header *)( (char *)area - sizeof(UPP::uHeapManager::Storage::Header) );
-	    PROFILEMALLOCENTRY( header ) = (*uProfiler::uProfiler_registerMemoryAllocate)( uProfiler::profilerInstance, area, size, header->kind.real.blockSize & -3 );
-	} // if
-#endif // __U_PROFILER__
 	uDEBUGPRT( uDebugPrt( "%p = malloc( %zu )\n", area, size ); )
 	return area;
     } // malloc
 
 
-    void *calloc( size_t noOfElems, size_t elemSize ) __THROW {
+    void * calloc( size_t noOfElems, size_t elemSize ) __THROW {
 	size_t size = noOfElems * elemSize;
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::calloc_calls, 1 );
 	uFetchAdd( UPP::uHeapManager::calloc_storage, size );
 #endif // __U_STATISTICS__
 
-	char *area = (char *)malloc( size );
+	char * area = (char *)UPP::uHeapManager::malloc2( size );
       if ( UNLIKELY( area == nullptr ) ) return nullptr;
-	UPP::uHeapManager::Storage::Header *header;
-	UPP::uHeapManager::FreeHeader *freeElem;
+	UPP::uHeapManager::Storage::Header * header;
+	UPP::uHeapManager::FreeHeader * freeElem;
 	size_t asize, alignment;
 	bool mapped __attribute__(( unused )) = UPP::uHeapManager::heapManagerInstance->headers( "calloc", area, header, freeElem, asize, alignment );
 #ifndef __U_DEBUG__
-	if ( ! mapped )					// mapped storage is zero filled, except debug mode scrubs memory
+	// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero. 
+	if ( ! mapped )
 #endif // __U_DEBUG__
-	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
+	    memset( area, '\0', asize - sizeof(UPP::uHeapManager::Storage) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
 	uDEBUGPRT( uDebugPrt( "%p = calloc( %zu, %zu )\n", area, noOfElems, elemSize ); )
 	return area;
     } // calloc
 
 
-    void *cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW {
+    void * cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW {
 	size_t size = noOfElems * elemSize;
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::cmemalign_calls, 1 );
 	uFetchAdd( UPP::uHeapManager::cmemalign_storage, size );
 #endif // __U_STATISTICS__
 
-	char *area = (char *)memalign( alignment, size );
+	char * area = (char *)UPP::uHeapManager::memalign2( alignment, size );
       if ( UNLIKELY( area == nullptr ) ) return nullptr;
-	UPP::uHeapManager::Storage::Header *header;
-	UPP::uHeapManager::FreeHeader *freeElem;
+	UPP::uHeapManager::Storage::Header * header;
+	UPP::uHeapManager::FreeHeader * freeElem;
 	size_t asize;
 	bool mapped __attribute__(( unused )) = UPP::uHeapManager::heapManagerInstance->headers( "cmemalign", area, header, freeElem, asize, alignment );
 #ifndef __U_DEBUG__
-	if ( ! mapped )					// mapped storage is zero filled, except debug mode scrubs memory
+	// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero. 
+	if ( ! mapped )
 #endif // __U_DEBUG__
 	    memset( area, '\0', asize - ( (char *)area - (char *)header ) ); // set to zeros
 	header->kind.real.blockSize |= 2;		// mark as zero filled
+
 	uDEBUGPRT( uDebugPrt( "%p = cmemalign( %zu, %zu, %zu )\n", area, alignment, noOfElems, elemSize ); )
 	return area;
     } // cmemalign
 
 
-    void *realloc( void *addr, size_t size ) __THROW {
-	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
-	    UPP::uHeapManager::boot();
-	} // if
-
+    void * realloc( void * addr, size_t size ) __THROW {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
 #endif // __U_STATISTICS__
 
-      if ( UNLIKELY( addr == nullptr ) ) return malloc( size ); // special cases
+      if ( UNLIKELY( addr == nullptr ) ) return UPP::uHeapManager::malloc2( size ); // special cases
       if ( UNLIKELY( size == 0 ) ) { free( addr ); return nullptr; }
 
-	UPP::uHeapManager::Storage::Header *header;
-	UPP::uHeapManager::FreeHeader *freeElem;
+	UPP::uHeapManager::Storage::Header * header;
+	UPP::uHeapManager::FreeHeader * freeElem;
 	size_t asize, alignment = 0;
 	UPP::uHeapManager::heapManagerInstance->headers( "realloc", addr, header, freeElem, asize, alignment );
 
@@ -649,18 +705,19 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::realloc_storage, size );
 #endif // __U_STATISTICS__
 
-	void *area;
+	void * area;
 	if ( UNLIKELY( alignment != 0 ) ) {		// previous request memalign?
 	    area = memalign( alignment, size );		// create new area
 	} else {
-	    area = malloc( size );			// create new area
+	    area = UPP::uHeapManager::malloc2( size );	// create new area
 	} // if
       if ( UNLIKELY( area == nullptr ) ) return nullptr;
 	if ( UNLIKELY( header->kind.real.blockSize & 2 ) ) { // previous request zero fill (calloc/cmemalign) ?
 	    assert( (header->kind.real.blockSize & 1) == 0 );
 	    bool mapped __attribute__(( unused )) = UPP::uHeapManager::heapManagerInstance->headers( "realloc", area, header, freeElem, asize, alignment );
 #ifndef __U_DEBUG__
-	    if ( ! mapped )				// mapped storage is zero filled, except debug mode scrubs memory
+	    // Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero. 
+	    if ( ! mapped )
 #endif // __U_DEBUG__
 		memset( (char *)area + usize, '\0', asize - ( (char *)area - (char *)header ) - usize ); // zero-fill back part
 	    header->kind.real.blockSize |= 2;		// mark new request as zero fill
@@ -672,72 +729,33 @@ extern "C" {
     } // realloc
 
 
-    void *memalign( size_t alignment, size_t size ) __THROW {
-	if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
-	    UPP::uHeapManager::boot();
-	} // if
-
+    void * memalign( size_t alignment, size_t size ) __THROW {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::memalign_calls, 1 );
 	uFetchAdd( UPP::uHeapManager::memalign_storage, size );
 #endif // __U_STATISTICS__
 
-#ifdef __U_DEBUG__
-	UPP::uHeapManager::checkAlign( alignment );	// check alignment
-#endif // __U_DEBUG__
+	void * area = UPP::uHeapManager::memalign2( alignment, size );
 
-	// if alignment <= default alignment, do normal malloc as two headers are unnecessary
-      if ( UNLIKELY( alignment <= uAlign() ) ) return malloc( size );
-
-	// Allocate enough storage to guarantee an address on the alignment boundary, and sufficient space before it for
-	// administrative storage. NOTE, WHILE THERE ARE 2 HEADERS, THE FIRST ONE IS IMPLICITLY CREATED BY DOMALLOC.
-	//      .-------------v-----------------v----------------v----------,
-	//      | Real Header | ... padding ... |   Fake Header  | data ... |
-	//      `-------------^-----------------^-+--------------^----------'
-	//      |<--------------------------------' offset/align |<-- alignment boundary
-
-	// subtract uAlign() because it is already the minimum alignment
-	// add sizeof(Storage) for fake header
-	char *area = (char *)UPP::uHeapManager::heapManagerInstance->doMalloc( size + alignment - uAlign() + sizeof(UPP::uHeapManager::Storage) );
-      if ( UNLIKELY( area == nullptr ) ) return area;
-
-	// address in the block of the "next" alignment address
-	char *user = (char *)uCeiling( (uintptr_t)(area + sizeof(UPP::uHeapManager::Storage)), alignment );
-
-	// address of header from malloc
-	UPP::uHeapManager::Storage::Header *realHeader = (UPP::uHeapManager::Storage::Header *)(area - sizeof(UPP::uHeapManager::Storage::Header));
-	// address of fake header *before* the alignment location
-	UPP::uHeapManager::Storage::Header *fakeHeader = (UPP::uHeapManager::Storage::Header *)(user - sizeof(UPP::uHeapManager::Storage::Header));
-	// SKULLDUGGERY: insert the offset to the start of the actual storage block and remember alignment
-	fakeHeader->kind.fake.offset = (char *)fakeHeader - (char *)realHeader;
-	// SKULLDUGGERY: odd alignment imples fake header
-	fakeHeader->kind.fake.alignment = alignment | 1;
-
-#ifdef __U_PROFILER__
-	if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
-	    PROFILEMALLOCENTRY( fakeHeader ) = (*uProfiler::uProfiler_registerMemoryAllocate)( uProfiler::profilerInstance, area, size, realHeader->kind.real.home->blockSize & -3 );
-	} // if
-#endif // __U_PROFILER__
-
-	uDEBUGPRT( uDebugPrt( "%p = memalign( %zu, %zu )\n", user, alignment, size ); )
-	return user;
+	uDEBUGPRT( uDebugPrt( "%p = memalign( %zu, %zu )\n", area, alignment, size ); )
+	return area;
     } // memalign
 
 
-    int posix_memalign( void **memptr, size_t alignment, size_t size ) {
+    int posix_memalign( void ** memptr, size_t alignment, size_t size ) {
 	if ( alignment < sizeof(void *) || ! uPow2( alignment ) ) return EINVAL; // check alignment
-	*memptr = memalign( alignment, size );
-	if ( UNLIKELY( *memptr == nullptr ) ) return ENOMEM;
+	* memptr = memalign( alignment, size );
+	if ( UNLIKELY( * memptr == nullptr ) ) return ENOMEM;
 	return 0;
     } // posix_memalign
 
 
-    void *valloc( size_t size ) __THROW {
+    void * valloc( size_t size ) __THROW {
 	return memalign( UPP::uHeapManager::pageSize, size );
     } // valloc
 
 
-    void free( void *addr ) __THROW {
+    void free( void * addr ) __THROW {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::uHeapManager::free_calls, 1 );
 #endif // __U_STATISTICS__
@@ -745,16 +763,16 @@ extern "C" {
       if ( UNLIKELY( addr == nullptr ) ) {			// special case
 #ifdef __U_PROFILER__
 	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
-		(*uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, 0, 0 ); 
+		(* uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, 0, 0 ); 
 	    } // if
 #endif // __U_PROFILER__
-#ifdef __U_DEBUG__
-	    if ( UPP::uHeapControl::traceHeap() ) {
-#		define nullmsg "Free( 0x0 ) size:0\n"
-		// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
-		//uDebugWrite( STDERR_FILENO, nullmsg, sizeof(nullmsg) - 1 );
-	    } // if
-#endif // __U_DEBUG__
+// #ifdef __U_DEBUG__
+// 	    if ( UPP::uHeapControl::traceHeap() ) {
+// #		define nullmsg "Free( 0x0 ) size:0\n"
+// 		// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
+// 		uDebugWrite( STDERR_FILENO, nullmsg, sizeof(nullmsg) - 1 );
+// 	    } // if
+// #endif // __U_DEBUG__
 	    return;
 	} // exit
 
@@ -764,9 +782,9 @@ extern "C" {
     } // free
 
 
-    size_t malloc_alignment( void *addr ) __THROW {
+    size_t malloc_alignment( void * addr ) __THROW {
       if ( UNLIKELY( addr == nullptr ) ) return uAlign(); // minimum alignment
-	UPP::uHeapManager::Storage::Header *header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage::Header) );
+	UPP::uHeapManager::Storage::Header * header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage) );
 	if ( (header->kind.fake.alignment & 1) == 1 ) {	// fake header ?
 	    return header->kind.fake.alignment & -2;	// remove flag from value
 	} else {
@@ -775,19 +793,19 @@ extern "C" {
     } // malloc_alignment
 
 
-//     bool malloc_zero_fill( void *addr ) __THROW {
+//     bool malloc_zero_fill( void * addr ) __THROW {
 //      if ( UNLIKELY( addr == nullptr ) ) return false;	// nullptr allocation is not zero fill
-// 	UPP::uHeapManager::Storage::Header *header;
-// 	UPP::uHeapManager::FreeHeader *freeElem;
+// 	UPP::uHeapManager::Storage::Header * header;
+// 	UPP::uHeapManager::FreeHeader * freeElem;
 // 	size_t size, alignment;
 
 // 	UPP::uHeapManager::heapManagerInstance->headers( "malloc_zero_fill", addr, header, freeElem, size, alignment );
 // 	return (header->kind.real.blockSize & 2) != 0;	// zero filled (calloc/cmemalign) ?
 //     } // malloc_zero_fill
 
-    bool malloc_zero_fill( void *addr ) __THROW {
+    bool malloc_zero_fill( void * addr ) __THROW {
       if ( UNLIKELY( addr == nullptr ) ) return false;	// null allocation is not zero fill
-	UPP::uHeapManager::Storage::Header *header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage::Header) );
+	UPP::uHeapManager::Storage::Header * header = (UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage) );
 	if ( (header->kind.fake.alignment & 1) == 1 ) { // fake header ?
 	    header = (UPP::uHeapManager::Storage::Header *)((char *)header - header->kind.fake.offset);
 	} // if
@@ -795,10 +813,10 @@ extern "C" {
     } // malloc_zero_fill
 
 
-    size_t malloc_usable_size( void *addr ) __THROW {
+    size_t malloc_usable_size( void * addr ) __THROW {
       if ( UNLIKELY( addr == nullptr ) ) return 0;	// null allocation has 0 size
- 	UPP::uHeapManager::Storage::Header *header;
- 	UPP::uHeapManager::FreeHeader *freeElem;
+ 	UPP::uHeapManager::Storage::Header * header;
+ 	UPP::uHeapManager::FreeHeader * freeElem;
  	size_t size, alignment;
 
  	UPP::uHeapManager::heapManagerInstance->headers( "malloc_usable_size", addr, header, freeElem, size, alignment );

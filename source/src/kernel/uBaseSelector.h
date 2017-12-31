@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 12 11:51:19 2017
-// Update Count     : 441
+// Last Modified On : Sat Dec 16 16:17:57 2017
+// Update Count     : 454
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,6 +31,7 @@
 //using namespace std;
 //static const char *StateName[] = { "NonAvail", "Avil" };
 //static const char *TypeName[] = { "And", "Or" };
+
 
 namespace UPP {
     // The complexity of this algorithm stems from the need to support all possible executable statements in the
@@ -77,13 +78,23 @@ namespace UPP {
     };  // SelectorClient
 
 
+    // remove unnecessary warnings for SelectorDL::client
+#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif // __GNUC__ >= 7
+
     // Each UnarySelector owns a SelectorDL, it is used for registering. 
     struct SelectorDL : public BaseFutureDL {
-	SelectorClient *client;				// client data for server
+	SelectorClient * client;			// client data for server, set in registerSelf
 	virtual ~SelectorDL() {}
 	virtual void signal() { client->sem.V(); }	// SelectorDL::signal
     }; // SelectorDL
 
+#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+#pragma GCC diagnostic pop
+#endif // __GNUC__ >= 7
 
     struct Condition {					// represent And and Or condition
 	enum Type { And, Or };

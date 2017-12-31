@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 22 18:13:39 2017
-// Update Count     : 980
+// Last Modified On : Sat Dec 16 08:28:33 2017
+// Update Count     : 983
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -524,7 +524,11 @@ void gen_destructor_prefix( token_t *before, symbol_t *symbol ) {
     // if task, generate task destructor code
 
     if ( symbol->data->key == COROUTINE ) {
-	gen_code( before, "uBaseCoroutine :: uCoroutineDestructor uCoroutineDestructorInstance ( uDestruct , ( uBaseCoroutine & ) * this ) ;" );
+	gen_code( before, "uBaseCoroutine :: uCoroutineDestructor uCoroutineDestructorInstance (" );
+	if ( profile ) {
+	    gen_code( before, "uDestruct ," );
+	} // if
+	gen_code( before, "( uBaseCoroutine & ) * this ) ;" );
     } else if ( symbol->data->key == TASK ) {
 	gen_code( before, "uBaseTask :: uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
     } // if

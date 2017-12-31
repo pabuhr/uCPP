@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 20 09:00:44 2017
-// Update Count     : 166
+// Last Modified On : Wed Nov 22 23:13:43 2017
+// Update Count     : 167
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -144,7 +144,7 @@ int main( int argc, char *argv[] ) {
 
     hash_table = new hash_table_t;
 
-    focus = root = new table_t( nullptr );			// start at the root table
+    focus = root = new table_t( nullptr );		// start at the root table
     top = new lexical_t( focus );
 
     // Insert the keywords into the root symbol table.

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:37 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:36:56 2016
-// Update Count     : 4
+// Last Modified On : Fri Dec  1 08:54:49 2017
+// Update Count     : 38
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -92,9 +92,9 @@ int main() {
     Actor * actor = new Actor;
 
     for ( int i = 0; i < Times; i += 1 ) {		// tell messages
-    	*actor | *new IntMsgV( 2 );			// ignore future
-    	*actor | *new IntMsg( 3 );
-    	*actor | *new StrMsg( "ABC" );
+	*actor | *new IntMsgV( 2 );			// ignore future
+	*actor | *new IntMsg( 3 );
+	*actor | *new StrMsg( "ABC" );
     } // for
 
     for ( int i = 0; i < Times; i += 1 ) {		// ask messages
@@ -102,20 +102,23 @@ int main() {
 	fs[i] = *actor || *new StrMsg( "DEF" );
     } // for
     for ( int i = 0; i < Times; i += 1 ) {		// access future values
-	osacquire( cout ) << "futures " << fi[i]() << " " << fs[i]() << endl;
+	int x = fi[i]();
+	string y = fs[i]();
+	osacquire( cout ) << "futures " << x << " " << y << endl;
     } // for
 
     for ( int i = 0; i < Times; i += 1 ) {		// ask messages
-    	fi[i] = *actor || *new IntStrMsg( "HIJ" );	// store future
+	fi[i] = *actor || *new IntStrMsg( "HIJ" );	// store future
     } // for
     for ( int i = 0; i < Times; i += 1 ) {		// access future values
-    	osacquire( cout ) << "futures " << fi[i]() << endl;
+	int x = fi[i]();
+	osacquire( cout ) << "futures " << x << endl;
     } // for
 
     try {						// unhandled future message
 	(*actor || *new DoubleMsg( 3.5 ))();		// throws exception from future
     } catch( uActor::Unhandled &unhdle ) {
-    	cout << "Unhandled ask message " << unhdle.msg << " to actor " << actor << endl;
+	cout << "Unhandled ask message " << unhdle.msg << " to actor " << actor << endl;
     } // try
 
     *actor | uActor::stopMsg;				// terminate actor

@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sat Sep 16 14:39:41 2017
-%% Update Count     : 7357
+%% Last Modified On : Sun Dec 10 21:16:16 2017
+%% Update Count     : 7362
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -1560,11 +1560,11 @@ class uCondition {
 };
 uCondition DiskNotIdle;
 %]
+\index{uCondition@%(uCondition%)!empty@%(empty%)}%
+\index{uCondition@%(uCondition%)!front@%(front%)}%
 \index{uCondition@%(uCondition%)!signal@%(signal%)}%
 \index{uCondition@%(uCondition%)!signalBlock@%(signalBlock%)}%
 \index{uCondition@%(uCondition%)!wait@%(wait%)}%
-\index{uCondition@%(uCondition%)!empty@%(empty%)}%
-\index{uCondition@%(uCondition%)!front@%(front%)}%
 \index{uCondition@%(uCondition%)!WaitingFailure@%(WaitingFailure%)}\index{WaitingFailure@%(WaitingFailure%)}%
 A condition variable is owned by the mutex object that performs the first wait on it\index{uCondition@%(uCondition%)!owner};
 subsequently, only the owner can wait and signal that condition variable.
@@ -1644,7 +1644,6 @@ therefore, a condition must be checked to verify that there is a blocked task, e
 %[
 if ( ! DiskNotIdle.empty() && DiskNotIdle.front() == 1 ) ...
 %]
-(This capability is discussed in detail shortly.)
 
 It is \emph{not} meaningful to read or to assign to a condition variable, or copy a condition variable (e.g., pass it as a value parameter), or use a condition variable if not its owner.
 
@@ -2510,23 +2509,27 @@ The type %(uCondLock%)\index{uCondLock@%(uCondLock%)} defines a condition lock:
 class uCondLock {
   public:
 	uCondLock();
-	bool empty();
 	void wait( uOwnerLock &lock );
+	void wait( uOwnerLock &lock, uintptr_t info );
 	bool wait( uOwnerLock &lock, uDuration duration );
+	bool wait( uOwnerLock &lock, uintptr_t info, uDuration duration );
 	bool wait( uOwnerLock &lock, uTime time );
+	bool wait( uOwnerLock &lock, uintptr_t info, uTime time );
 	bool signal();
 	bool broadcast();
+	bool empty();
+	uintptr_t front() const;
 };
 uCondLock x, y, *z;
 z = new uCondLock;
 %]
 \index{uCondLock@%(uCondLock%)!empty@%(empty%)}%
+\index{uCondLock@%(uCondLock%)!front@%(front%)}%
 \index{uCondLock@%(uCondLock%)!wait@%(wait%)}%
 \index{uCondLock@%(uCondLock%)!signal@%(signal%)}%
 \index{uCondLock@%(uCondLock%)!broadcast@%(broadcast%)}%
 The declarations create three condition locks and initializes them to closed (i.e., always block).
 
-The member routine %(empty%)\index{empty@%(empty%)} returns %(false%) if there are tasks blocked on the queue and %(true%) otherwise.
 The routines %(wait%) and %(signal%) are used to block a thread on and unblock a thread from the queue of a condition, respectively.
 The %(wait%) routine atomically blocks the calling task and releases the argument owner-lock;
 in addition, the %(wait%) routine re-acquires its argument owner-lock before returning.
@@ -2539,6 +2542,13 @@ The %(signal%) routine can be safely called without acquiring any owner lock ass
 The %(broadcast%) routine is the same as the %(signal%) routine, except all waiting tasks are unblocked.
 For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing, and returns %(false%);
 otherwise, %(true%) is returned indicating a signalled task(s).
+The member routine %(empty%)\index{empty@%(empty%)} returns %(false%) if there are tasks blocked on the queue and %(true%) otherwise.
+The member routine %(front%)\index{front@%(front%)} returns an integer value stored with the waiting task at the front of the condition queue.
+It is an error to examine the front of an empty condition-lock queue;
+therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
+%[
+if ( ! DiskNotIdle.empty() && DiskNotIdle.front() == 1 ) ...
+%]
 
 It is \emph{not} meaningful to read or to assign to a lock variable, or copy a lock variable (e.g., pass it as a value parameter).
 
@@ -2557,43 +2567,25 @@ _Mutex _Coroutine uBarrier {
 			suspend();
 		}
 	}
+	virtual void last() {
+		resume();
+	}
   public:
 	uBarrier( unsigned int total );
 	_Nomutex unsigned int total() const;
 	_Nomutex unsigned int waiters() const;
 	void reset( unsigned int total );
 	virtual void block();
-	virtual void last() {
-		resume();
-	}
 };
 uBarrier x(10), *y;
 y = new uBarrier( 20 );
 %]
+\index{uBarrier@%(uBarrier%)!last@%(last%)}%
 \index{uBarrier@%(uBarrier%)!total@%(total%)}%
 \index{uBarrier@%(uBarrier%)!waiters@%(waiters%)}%
 \index{uBarrier@%(uBarrier%)!reset@%(reset%)}%
 \index{uBarrier@%(uBarrier%)!block@%(block%)}%
-\index{uBarrier@%(uBarrier%)!last@%(last%)}%
 The declarations create two barrier variables and initializes the first to work with 10 tasks and the second to work with 20 tasks.
-
-The constructor routine %(uBarrier%) has the following form:
-\begin{prefix}
-\item[%(uBarrier( unsigned int total )%)]
--- this form specifies the total number of tasks participating in the synchronization.
-Appropriate values are $\geq$ 0.
-A 0 initialization value implies the barrier does not cause any task to wait, but each calling task runs member routine %(last%).
-\end{prefix}
-
-The member routines %(total%)\index{total@%(total%)} and %(waiters%)\index{waiters@%(waiters%)} return the total number of tasks participating in the synchronization and the total number of tasks currently waiting at the barrier, respectively.
-The member routine %(reset%)\index{reset@%(reset%)} changes the total number of tasks participating in the synchronization;
-no tasks may be waiting in the barrier when the total is changed.
-%(block%)\index{block@%(block%)} is called to synchronize with %(total%) tasks;
-tasks block until any %(total%) tasks have called %(block%).
-The virtual member routine %(last%) is called by the last task to synchronize at the barrier.
-It can be replaced by subclassing from %(uBarrier%) to provide a specific action to be executed when synchronization is complete.
-This capability is often used to reset a computation before releasing the tasks from the barrier to start the next computation.
-The default code for %(last%) is to resume the coroutine main.
 
 The \Index{coroutine main} is usually replaced by subclassing to supply the code to be executed before and after tasks synchronize.
 The general form for a barrier %(main%)\index{main@%(main%)} routine is:
@@ -2608,6 +2600,25 @@ void main() {
 %]
 Normally, the last action of the constructor for the subclass is resuming, which switches to the coroutine main to prime\index{priming!barrier} the barrier's initialization.
 When %(main%) suspends back to the constructor, the barrier is initialized and ready to synchronize the first set of tasks.
+The virtual member routine %(last%) is called by the last task to synchronize at the barrier.
+It can be replaced by subclassing from %(uBarrier%) to provide a specific action to be executed when synchronization is complete.
+This capability is often used to reset a computation before releasing the tasks from the barrier to start the next computation.
+The default code for %(last%) is to resume the coroutine main.
+
+The constructor routine %(uBarrier%) has the following form:
+\begin{prefix}
+\item[%(uBarrier( unsigned int total )%)]
+-- this form specifies the total number of tasks participating in the synchronization.
+Appropriate values are $\geq$ 0.
+A 0 initialization value implies the barrier does not cause any task to wait, but each calling task runs member routine %(last%).
+\end{prefix}
+
+The member routines %(total%)\index{total@%(total%)} and %(waiters%)\index{waiters@%(waiters%)} return the total number of tasks participating in the synchronization and the total number of tasks currently waiting at the barrier, respectively.
+The member routine %(reset%)\index{reset@%(reset%)} changes the total number of tasks participating in the synchronization;
+no tasks may be waiting in the barrier when the total is changed.
+%(block%)\index{block@%(block%)} is called to synchronize with %(total%) tasks;
+tasks block until any %(total%) tasks have called %(block%).
+It can be replaced by subclassing from %(uBarrier%) to provide a specific action to be executed before or after a task blocks on %(uBarrier::block()%).
 
 It is \emph{not} meaningful to read or to assign to a barrier variable, or copy a barrier variable (e.g., pass it as a value parameter).
 
@@ -3955,8 +3966,8 @@ class uActor {
 
 	// Administration
 	void restart();										// reset actor to initial state
-    static struct StartMsg : public uActor::Message {} startMsg; // start actor
-    static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
+	static struct StartMsg : public uActor::Message {} startMsg; // start actor
+	static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
 	static bool stop( uDuration duration = 0 );			// wait for all actors to terminate or timeout
 
 	// Error handling
@@ -9943,7 +9954,7 @@ linux-x86\_64 : Linux 2.4.x or greater, AMD 64
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
 \end{list}
-\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.8.0 or greater.
+\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.9.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)} flag.
 \Emph{\uC does NOT compile using other compilers or operating systems.}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb 16 21:20:47 2017
-// Update Count     : 794
+// Last Modified On : Fri Dec 15 23:07:27 2017
+// Update Count     : 802
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -124,7 +124,7 @@ namespace UPP {
 	// kernel.  Therefore, interrupts can legitimately occur now.
 	THREAD_GETMEM( This )->enableInterrupts();
 
-	uHeapControl::startTask();
+//	uHeapControl::startTask();
 
 #ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_postallocateMetricMemory ) {
@@ -164,7 +164,7 @@ namespace UPP {
 	    pthread_deletespecific_( This.pthreadData );
 	} // if
 
-	uHeapControl::finishTask();
+//	uHeapControl::finishTask();
 
 	This.notHalted = false;
 	This.setState( uBaseTask::Terminate );
@@ -399,7 +399,7 @@ namespace UPP {
 	    storage = malloc( cxtSize + size + 8 );
 #endif // __U_DEBUG__
 	    if ( storage == nullptr ) {
-		abort( "Attempt to allocate %d bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
+		abort( "Attempt to allocate %zd bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
 	    } // if
 #ifdef __U_DEBUG__
 	    limit = (char *)storage + pageSize;
@@ -419,7 +419,7 @@ namespace UPP {
 	} // if
 #ifdef __U_DEBUG__
 	if ( size < MinStackSize ) {			// below minimum stack size ?
-	    abort( "Stack size %d provides less than minimum of %d bytes for a stack.", size, MinStackSize );
+	    abort( "Stack size %zd provides less than minimum of %d bytes for a stack.", size, MinStackSize );
 	} // if
 #endif // __U_DEBUG__
 
@@ -428,6 +428,9 @@ namespace UPP {
 	top = (char *)context + cxtSize;
 
 	extras.allExtras = 0;
+
+//	uDebugPrt( "(uMachContext &)%p.createContext( %u ), storage:%p, limit:%p, base:%p, context:%p, size:0x%zd\n",	    
+//		   this, storageSize, storage, limit, base, context, size );
     } // uMachContext::createContext
 
 

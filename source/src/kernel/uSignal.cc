@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 13 07:59:19 2017
-// Update Count     : 850
+// Last Modified On : Mon Oct 23 13:44:10 2017
+// Update Count     : 861
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -132,7 +132,29 @@ namespace UPP {
     } // uSigHandlerModule::signal
 
 
-    void *uSigHandlerModule::signalContextPC( __U_SIGCXT__ cxt ) {
+    void uSigHandlerModule::sigTermHandler( __U_SIGTYPE__ ) {
+	// This routine handles a SIGHUP, SIGINT, or a SIGTERM signal.  The signal is delivered to the root process as
+	// the result of some action on the part of the user attempting to terminate the application.  It must be caught
+	// here so that all processes in the application may be terminated.
+
+	uDEBUGPRT(
+	    char buffer[256];
+	    uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
+			  uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
+	)
+
+#ifdef __U_STATISTICS__
+	if ( Statistics::prtSigterm ) Statistics::print();
+	if ( Statistics::prtHeapterm ) uHeapManager::print();
+#endif // __U_STATISTICS__
+
+      if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
+
+	abort( "Application interrupted by a termination signal." );
+    } // uSigHandlerModule::sigTermHandler
+
+
+    inline void * uSigHandlerModule::signalContextPC( __U_SIGCXT__ cxt ) {
 #if defined( __i386__ )
 #if defined( __linux__ )
 	return (void *)(cxt->uc_mcontext.gregs[REG_EIP]);
@@ -162,50 +184,11 @@ namespace UPP {
     } // uSigHandlerModule::signalContextPC
 
 
-    void uSigHandlerModule::sigTermHandler( __U_SIGTYPE__ ) {
-	// This routine handles a SIGHUP, SIGINT, or a SIGTERM signal.  The signal is delivered to the root process as
-	// the result of some action on the part of the user attempting to terminate the application.  It must be caught
-	// here so that all processes in the application may be terminated.
-
-	uDEBUGPRT(
-	    char buffer[256];
-	    uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
-			  uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
-	)
-
-#ifdef __U_STATISTICS__
-	if ( Statistics::prtSigterm ) Statistics::print();
-	if ( Statistics::prtHeapterm ) uHeapManager::print();
-#endif // __U_STATISTICS__
-
-      if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
-
-	abort( "Application interrupted by a termination signal." );
-    } // uSigHandlerModule::sigTermHandler
-
-
-#if 0
-    static inline
+    inline void * uSigHandlerModule::signalContextSP( __U_SIGCXT__ cxt ) {
 #if defined( __linux__ )
 
 #if ! defined( __ia64__ )
-	greg_t
-#else
-	long int
-#endif // __ia64__
-
-#elif defined( __freebsd__ )
-	__register_t
-#elif defined( __solaris__ )
-	greg_t
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif
-    getSP( __U_SIGCXT__ cxt ) {
-#if defined( __linux__ )
-
-#if ! defined( __ia64__ )
-	return cxt->uc_mcontext.gregs[
+	return (void *)cxt->uc_mcontext.gregs[
 #if __U_WORDSIZE__ == 32
 	    REG_ESP
 #else
@@ -213,11 +196,11 @@ namespace UPP {
 #endif // __U_WORDSIZE__ == 32
 	    ];
 #else
-	return cxt->uc_mcontext.sc_gr[12];
+	return (void *)cxt->uc_mcontext.sc_gr[12];
 #endif // __ia64__
 
 #elif defined( __freebsd__ )
-	return cxt->uc_mcontext.
+	return (void *)cxt->uc_mcontext.
 #if __U_WORDSIZE__ == 32
 	    mc_esp;
 #else
@@ -225,12 +208,11 @@ namespace UPP {
 #endif // __U_WORDSIZE__ == 32
 
 #elif defined( __solaris__ )
-	return cxt->uc_mcontext.gregs[REG_SP];
+	    return (void *)cxt->uc_mcontext.gregs[REG_SP];
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif // operating systems
-    } // uSigHandlerModule::getSP
-#endif // 0
+    } // uSigHandlerModule::signalContextSP
 
 
     void uSigHandlerModule::sigAlrmHandler( __U_SIGPARMS__ ) {
@@ -241,8 +223,8 @@ namespace UPP {
 
 	uDEBUGPRT(
 	    char buffer[512];
-	    uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+	    uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
+			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
 	)
 
 #ifdef __U_STATISTICS__
@@ -344,8 +326,8 @@ namespace UPP {
 #endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
 	uDEBUGPRT(
-	    uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:0x%lx, address:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), getSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+	    uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
+			  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
 	)
 
 	errno = terrno;					// reset errno and continue
