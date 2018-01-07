@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:59:56 2016
-// Update Count     : 35
+// Last Modified On : Sat Jan  6 15:59:45 2018
+// Update Count     : 37
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 
     // NB: if tryacquireInternal returns false, "spin" is held
     //     if tryacquireInternal returns true, "spin" is released
-    bool tryacquireInternal( uBaseTask &task, int spins ) {
+    bool tryacquireInternal( uBaseTask &task, int spins __attribute__(( unused )) ) {
 #ifdef __U_DEBUG__
 	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
 #endif // __U_DEBUG__

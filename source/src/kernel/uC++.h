@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 17 08:08:26 2017
-// Update Count     : 5778
+// Last Modified On : Sat Jan  6 15:53:44 2018
+// Update Count     : 5783
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,10 +40,6 @@
 // Mute g++-7
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif // __GNUC__ >= 7
-#if __clang__
-// Mute clang
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif // __clang__
 
 #pragma __U_NOT_USER_CODE__
 
@@ -354,7 +350,7 @@ extern "C" {
 // define parameter types for signal handlers
 
 #define __U_SIGCXT__ ucontext_t *
-#define __U_SIGPARMS__ int sig, siginfo_t *sfp, __U_SIGCXT__ cxt
+#define __U_SIGPARMS__ int sig __attribute__(( unused )), siginfo_t *sfp __attribute__(( unused )), __U_SIGCXT__ cxt __attribute__(( unused ))
 #define __U_SIGTYPE__ int, siginfo_t *, __U_SIGCXT__
 
 namespace UPP {
@@ -1578,7 +1574,7 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 	return list.head();
     } // uBasePrioritySeq::head
 
-    virtual int add( uBaseTaskDL *node, uBaseTask *uOwner ) {
+    virtual int add( uBaseTaskDL *node, uBaseTask * /* uOwner */ ) {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::mutex_queue, 1 );
 #endif // __U_STATISTICS__
@@ -1600,13 +1596,13 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 	list.remove( node );
     } // uBasePrioritySeq::remove
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
     } // uBasePrioritySeq::transfer
 
-    virtual void onAcquire( uBaseTask &uOwner ) {
+    virtual void onAcquire( uBaseTask & /* uOwner */ ) {
     } // uBasePrioritySeq::onAcquire
 
-    virtual void onRelease( uBaseTask &uOldOwner ) {
+    virtual void onRelease( uBaseTask & /* uOldOwner */ ) {
     } // uBasePrioritySeq::onRelease
 
     int reposition( uBaseTask &task, UPP::uSerial &sserial );
@@ -1624,7 +1620,7 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 	return list.head();
     } // uBasePriorityQueue::head
 
-    virtual int add( uBaseTaskDL *node, uBaseTask *uOwner ) {
+    virtual int add( uBaseTaskDL *node, uBaseTask * /* uOwner */ ) {
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::mutex_queue, 1 );
 #endif // __U_STATISTICS__
@@ -1639,7 +1635,7 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 	return list.drop();
     } // uBasePriorityQueue::drop
 
-    virtual void remove( uBaseTaskDL *node ) {
+    virtual void remove( uBaseTaskDL * /* node */ ) {
 	// Only used with default FIFO case, so node to remove is at the front of the list.
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::mutex_queue, -1 );
@@ -1647,13 +1643,13 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 	list.drop();
     } // uBasePriorityQueue::remove
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
     } // uBasePriorityQueue::transfer
 
-    virtual void onAcquire( uBaseTask &uOwner ) {
+    virtual void onAcquire( uBaseTask & /* uOwner */ ) {
     } // uBasePriorityQueue::onAcquire
 
-    virtual void onRelease( uBaseTask &uOldOwner ) {
+    virtual void onRelease( uBaseTask & /* uOldOwner */ ) {
     } // uBasePriorityQueue::onRelease
 }; // uBasePriorityQueue
 
@@ -1702,11 +1698,11 @@ class uDefaultScheduler : public uBaseSchedule<uBaseTaskDL> {
 	list.transfer( from );
     } // uDefaultScheduler::remove
 
-    bool checkPriority( uBaseTaskDL &owner, uBaseTaskDL &calling ) { return false; }
-    void resetPriority( uBaseTaskDL &owner, uBaseTaskDL &calling ) {}
-    void addInitialize( uBaseTaskSeq &taskList ) {};
-    void removeInitialize( uBaseTaskSeq &taskList ) {};
-    void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList ) {};
+    bool checkPriority( uBaseTaskDL & /* owner */, uBaseTaskDL & /* calling */ ) { return false; }
+    void resetPriority( uBaseTaskDL & /* owner */, uBaseTaskDL & /* calling */ ) {}
+    void addInitialize( uBaseTaskSeq & /* taskList */ ) {};
+    void removeInitialize( uBaseTaskSeq & /* taskList */ ) {};
+    void rescheduleTask( uBaseTaskDL * /* taskNode */, uBaseTaskSeq & /* taskList */ ) {};
 }; // uDefaultScheduler
 
 
@@ -2268,7 +2264,9 @@ namespace UPP {
 	UPP::uSerial &serial;
       public:
 	uSerialConstructor( uAction f, uSerial &serial );
+#ifdef __U_PROFILER__
 	uSerialConstructor( uAction f, uSerial &serial, const char *n );
+#endif // __U_PROFILER__
 	~uSerialConstructor();
     }; // uSerialConstructor
 

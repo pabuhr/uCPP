@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 22 13:51:28 2017
-// Update Count     : 60
+// Last Modified On : Sat Dec 23 09:08:11 2017
+// Update Count     : 61
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,7 +76,8 @@
 #define __U_DEFAULT_USER_PROCESSORS__ 1
 
 
-// Define the default number of executor request queues (mailboxes). Must be greater than 0.
+// Define the default number of executor request-queues (mailboxes) written to by actors and serviced by the
+// actor-executor threads. Must be greater than 0.
 
 #define __U_DEFAULT_ACTOR_MAILBOXES__ 4
 

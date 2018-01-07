@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 19 21:59:07 2017
-// Update Count     : 310
+// Last Modified On : Sat Jan  6 16:23:56 2018
+// Update Count     : 313
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -101,7 +101,7 @@ void uBaseTask::setState( uBaseTask::State s ) {
 } // uBaseTask::setState
 
 
-uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBaseTask &task, uBasePIQ &piq, const char *n, bool profile ) : f( f ), serial( serial ), task( task ) {
+uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBaseTask &task, uBasePIQ &piq, const char *n, bool profile __attribute__(( unused )) ) : f( f ), serial( serial ), task( task ) {
     uDEBUGPRT( uDebugPrt( "(uTaskConstructor &)%p.uTaskConstructor, f:%d, s:%p, t:%p, piq:%p, n:%s, profile:%d\n",
 			  this, f, &serial, &task, &piq, n, profile ); )
 

@@ -40,7 +40,7 @@ CPPNAME = cc1plus
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
-	CCFLAGS += -g -O2 -Wextra #
+	CCFLAGS += -g -O2 -Wall -Wextra #
 else
 	CCFLAGS += -O2 # -DNDEBUG
 endif

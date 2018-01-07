@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec  2 22:46:18 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 14 23:33:47 2007
-// Update Count     : 24
+// Last Modified On : Thu Jan  4 17:30:20 2018
+// Update Count     : 25
 // 
 
 #define __U_KERNEL__
@@ -28,7 +28,7 @@ extern "C" int usleep( unsigned int usec ) {
 } // usleep
 
 
-extern "C" unsigned int alarm( unsigned int sec ) __THROW {
+extern "C" unsigned int alarm( unsigned int /* sec */ ) __THROW {
     abort( "alarm : not implemented" );
     return 0;
 } // alarm

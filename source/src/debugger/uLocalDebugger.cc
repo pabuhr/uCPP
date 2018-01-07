@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 19 17:01:26 2017
-// Update Count     : 713
+// Last Modified On : Sat Jan  6 16:27:43 2018
+// Update Count     : 715
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -621,7 +621,7 @@ void uLocalDebugger::performAtomicOperation() {
 } // uLocalDebugger::performAtomicOperation
 
 
-void uLocalDebugger::attachULThread( uBaseTask *this_task, uCluster *this_cluster ) {
+void uLocalDebugger::attachULThread( uBaseTask *this_task, uCluster *this_cluster __attribute__(( unused )) ) {
     uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, task %s (%p) / cluster %p\n", __LINE__, this, this_task->getName(), this_task, this_cluster ); )
 
   if ( ! uLocalDebuggerActive ) return;

@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Feb  4 11:10:44 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 27 06:29:58 2016
-// Update Count     : 31
+// Last Modified On : Thu Jan  4 17:22:34 2018
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -142,7 +142,7 @@ int uPIHeap::drop() {
 } // uPIHeap::drop
 
 
-void uPIHeap::remove( int priority, int queueNum ) {
+void uPIHeap::remove( int /* priority */, int queueNum ) {
     //int queueNum;
 
     // As the entry lock is acquired, no other task can be manipulating this node, so lock does not need to be aquired

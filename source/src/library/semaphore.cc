@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan 20 20:34:08 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct  6 22:17:45 2016
-// Update Count     : 57
+// Last Modified On : Thu Jan  4 17:29:56 2018
+// Update Count     : 59
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,7 +34,7 @@
 
 
 extern "C" {
-    int sem_init( sem_t *sem, int pshared, unsigned int value ) __THROW {
+    int sem_init( sem_t *sem, int /* pshared */, unsigned int value ) __THROW {
 	// storage for a sem_t must be >= u_sem_t
 	static_assert( sizeof(sem_t) >= sizeof(uSemaphore), "sizeof(sem_t) < sizeof(uSemaphore)" );
 	new( sem ) uSemaphore( value );			// run constructor on supplied storage
@@ -76,17 +76,17 @@ extern "C" {
 	} // if
     } // sem_destroy
 
-    sem_t *sem_open( const char *name, int oflag, ... ) __THROW {
+    sem_t *sem_open( const char * /* name */, int /* oflag */, ... ) __THROW {
 	errno = ENOSYS;
 	return SEM_FAILED;
     } // sem_open
 
-    int sem_close( sem_t *sem ) __THROW {
+    int sem_close( sem_t * /* sem */ ) __THROW {
 	errno = ENOSYS;
 	return -1;
     } // sem_close
 
-    int sem_unlink( const char *name ) __THROW {
+    int sem_unlink( const char * /* name */ ) __THROW {
 	errno = ENOSYS;
 	return -1;
     } // sem_unlink

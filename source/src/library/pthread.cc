@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 10 21:49:52 2017
-// Update Count     : 1050
+// Last Modified On : Sat Jan  6 16:27:46 2018
+// Update Count     : 1063
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -106,7 +106,7 @@ namespace UPP {
 	    return (pthread_t)p;
 	} // PthreadPid::Impl::create
 
-	static void recycle( pthread_t threadID ) {
+	static void recycle( pthread_t /* threadID */ ) {
 	    // nothing to do
 	} // PthreadPid::Impl::recycle
 
@@ -473,8 +473,8 @@ uPthreadable::~uPthreadable() {
 
 // unwinder_cleaner gets called after each unwinding step Assumptions: memory/call stack grows DOWN !
 
-_Unwind_Reason_Code uPthreadable::unwinder_cleaner( int version, _Unwind_Action actions,_Unwind_Exception_Class exc_class,
-						    _Unwind_Exception *exc_obj, _Unwind_Context *context, void *arg ) {
+_Unwind_Reason_Code uPthreadable::unwinder_cleaner( int /* version */, _Unwind_Action /* actions */,_Unwind_Exception_Class /* exc_class */,
+						    _Unwind_Exception * /* exc_obj */, _Unwind_Context *context, void *arg ) {
     uPthreadable *p = (uPthreadable *)arg;
     void *cfa = (void *)_Unwind_GetCFA(context);	// identify the current stack frame
     uBaseCoroutine::PthreadCleanup *cst = p->cleanupStackTop(); // find the address of the top cleanup information
@@ -495,7 +495,7 @@ _Unwind_Reason_Code uPthreadable::unwinder_cleaner( int version, _Unwind_Action 
     return _URC_NO_REASON;
 } // uPthreadable::unwinder_cleaner
 
-void uPthreadable::restart_unwinding( _Unwind_Reason_Code urc, _Unwind_Exception *e ) {
+void uPthreadable::restart_unwinding( _Unwind_Reason_Code /* urc */, _Unwind_Exception * /* e */ ) {
     uPthreadable *p = dynamic_cast< uPthreadable *>(&uThisTask());
     if ( ! p->stop_unwinding ) {
 	p->do_unwind();					// unless turned off in uMachContext, continue unwinding after this exception has been caught
@@ -609,12 +609,11 @@ extern "C" {
 	return 0;
     } // pthread_attr_getstacksize
 
-    int pthread_attr_getguardsize( const pthread_attr_t *attr, size_t *guardsize ) __THROW {
-	guardsize = 0;					// guard area is not provided
+    int pthread_attr_getguardsize( const pthread_attr_t * /* attr */, size_t * /* guardsize */ ) __THROW {
 	return 0;
     } // pthread_attr_getguardsize
 
-    int pthread_attr_setguardsize( pthread_attr_t *attr, size_t guardsize ) __THROW {
+    int pthread_attr_setguardsize( pthread_attr_t * /* attr */, size_t /* guardsize */ ) __THROW {
 	return 0;
     } // pthread_attr_setguardsize
 
@@ -732,7 +731,7 @@ extern "C" {
 	return 0;
     } // pthread_tryjoin_np
 
-    int pthread_timedjoin_np( pthread_t threadID, void **status, const struct timespec *abstime ) { // GNU extension
+    int pthread_timedjoin_np( pthread_t /* threadID */, void ** /* status */, const struct timespec * /* abstime */ ) { // GNU extension
 	abort( "pthread_timedjoin_np : not implemented" );
 	return 0;
     } // pthread_timedjoin_np
@@ -924,11 +923,11 @@ extern "C" {
     //######################### Signal #########################
 
 
-    int pthread_sigmask( int how, const sigset_t *set, sigset_t *oset ) __THROW {
+    int pthread_sigmask( int /* how */, const sigset_t * /* set */, sigset_t * /* oset */ ) __THROW {
 	return 0;
     } // pthread_sigmask
 
-    int pthread_kill( pthread_t thread, int sig ) __THROW {
+    int pthread_kill( pthread_t thread __attribute__(( unused )), int sig ) __THROW {
 	uDEBUGPRT( uDebugPrt( "pthread_kill( 0x%lx, %d )\n", thread, sig ); )
 	assert( thread != NOT_A_PTHREAD );
 	if ( sig == 0 ) {
@@ -985,12 +984,12 @@ extern "C" {
     //######################### Scheduling #########################
 
 
-    int pthread_setschedparam( pthread_t thread, int policy, const struct sched_param *param ) __THROW {
+    int pthread_setschedparam( pthread_t /* thread */, int /* policy */, const struct sched_param * /* param */ ) __THROW {
 	abort( "pthread_setschedparam : not implemented" );
 	return 0;
     } // pthread_setschedparam
 
-    int pthread_getschedparam( pthread_t thread, int *policy, struct sched_param *param ) __THROW {
+    int pthread_getschedparam( pthread_t /* thread */, int */* policy */, struct sched_param * /* param */ ) __THROW {
 	abort( "pthread_getschedparam : not implemented" );
 	return 0;
     } // pthread_getschedparam
@@ -1104,7 +1103,7 @@ _getfp:\n\
 #if defined( __solaris__ )
     void __pthread_cleanup_pop( int ex, _cleanup_t *buffer ) {
 #elif defined( __linux__ )
-    void _pthread_cleanup_pop ( struct _pthread_cleanup_buffer *buffer, int ex ) __THROW {
+    void _pthread_cleanup_pop ( struct _pthread_cleanup_buffer * /* buffer */, int ex ) __THROW {
 #elif defined( __freebsd__ )
 #if defined( pthread_cleanup_pop )			// macro ?
     void __pthread_cleanup_pop_imp( int ex ) {
@@ -1156,7 +1155,7 @@ _getfp:\n\
 #endif
     } // mutex_check
 
-    int pthread_mutex_init( pthread_mutex_t *mutex, const pthread_mutexattr_t *attr ) __THROW {
+    int pthread_mutex_init( pthread_mutex_t *mutex, const pthread_mutexattr_t * /* attr */ ) __THROW {
 	uDEBUGPRT( uDebugPrt( "pthread_mutex_init(mutex:%p, attr:%p) enter task:%p\n", mutex, attr, &uThisTask() ); )
 	PthreadLock::init< uOwnerLock >( mutex );
 	return 0;
@@ -1191,23 +1190,23 @@ _getfp:\n\
     } // pthread_mutex_unlock
 
 
-    int pthread_mutexattr_init( pthread_mutexattr_t *attr ) __THROW {
+    int pthread_mutexattr_init( pthread_mutexattr_t * /* attr */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_init
 
-    int pthread_mutexattr_destroy( pthread_mutexattr_t *attr ) __THROW {
+    int pthread_mutexattr_destroy( pthread_mutexattr_t * /* attr */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_destroy
 
-    int pthread_mutexattr_setpshared( pthread_mutexattr_t *attr, int pshared ) __THROW {
+    int pthread_mutexattr_setpshared( pthread_mutexattr_t * /* attr */, int /* pshared */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_setpshared
 
-    int pthread_mutexattr_getpshared( const pthread_mutexattr_t *attr, int *pshared ) __THROW {
+    int pthread_mutexattr_getpshared( const pthread_mutexattr_t * /* attr */, int * /* pshared */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_getpshared
 
-    int pthread_mutexattr_setprotocol( pthread_mutexattr_t *attr, int protocol ) __THROW {
+    int pthread_mutexattr_setprotocol( pthread_mutexattr_t * /* attr */, int /* protocol */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_setprotocol
 
@@ -1215,11 +1214,11 @@ _getfp:\n\
 #if ! defined( __freebsd__ )
 	    const
 #endif // ! __freebsd__
-	    pthread_mutexattr_t *attr, int *protocol ) __THROW {
+	    pthread_mutexattr_t * /* attr */, int * /* protocol */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_getprotocol
 
-    int pthread_mutexattr_setprioceiling( pthread_mutexattr_t *attr, int prioceiling ) __THROW {
+    int pthread_mutexattr_setprioceiling( pthread_mutexattr_t * /* attr */, int /* prioceiling */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_setprioceiling
 
@@ -1227,11 +1226,11 @@ _getfp:\n\
 #if ! defined( __freebsd__ )
 	    const
 #endif // ! __freebsd__
-	    pthread_mutexattr_t *attr, int *ceiling ) __THROW {
+	    pthread_mutexattr_t * /* attr */, int * /* ceiling */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_getprioceiling
 
-    int pthread_mutex_setprioceiling( pthread_mutex_t *mutex, int prioceiling, int *old_ceiling ) __THROW {
+    int pthread_mutex_setprioceiling( pthread_mutex_t * /* mutex */, int /* prioceiling */, int * /* old_ceiling */ ) __THROW {
 	return 0;
     } // pthread_mutex_setprioceiling
 
@@ -1239,19 +1238,19 @@ _getfp:\n\
 #if ! defined( __freebsd__ )
 	    const
 #endif // ! __freebsd__
-	    pthread_mutex_t *mutex, int *ceiling ) __THROW {
+	    pthread_mutex_t * /* mutex */, int * /* ceiling */ ) __THROW {
 	return 0;
     } // pthread_mutex_getprioceiling
 
 #if defined( __freebsd__ )
-    int pthread_mutexattr_gettype( pthread_mutexattr_t *__attr, int *__kind ) __THROW {
+    int pthread_mutexattr_gettype( pthread_mutexattr_t * /* __attr */, int * /* __kind */ ) __THROW {
 #else
-    int pthread_mutexattr_gettype( __const pthread_mutexattr_t *__restrict __attr, int *__restrict __kind ) __THROW {
+    int pthread_mutexattr_gettype( __const pthread_mutexattr_t * __restrict /* __attr */, int * __restrict /* __kind */ ) __THROW {
 #endif // __freebsd__
 	return 0;
     } // pthread_mutexattr_gettype
 
-    int pthread_mutexattr_settype( pthread_mutexattr_t *__attr, int __kind ) __THROW {
+    int pthread_mutexattr_settype( pthread_mutexattr_t * /* __attr */, int /* __kind */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_settype
 
@@ -1259,7 +1258,7 @@ _getfp:\n\
     //######################### Condition #########################
 
 
-    static inline void cond_check( pthread_cond_t *cond ) {
+    static inline void cond_check( pthread_cond_t *cond __attribute__(( unused )) ) {
 #if defined( __solaris__ )
 	// Solaris has a magic value at byte 6 of its pthread cond locks. Check if it moved.
 	static_assert( offsetof( _pthread_cond, __pthread_cond_flags.__pthread_cond_magic ) == 6, "" );
@@ -1277,7 +1276,7 @@ _getfp:\n\
 #endif
     } // cond_check
 
-    int pthread_cond_init( pthread_cond_t *cond, const pthread_condattr_t *attr ) __THROW {
+    int pthread_cond_init( pthread_cond_t *cond, const pthread_condattr_t * /* attr */ ) __THROW {
 	PthreadLock::init< uCondLock >( cond );
 	return 0;
     } // pthread_cond_init
@@ -1318,12 +1317,12 @@ _getfp:\n\
     } // pthread_cond_broadcast
 
 
-    int pthread_condattr_init( pthread_condattr_t *attr ) __THROW {
+    int pthread_condattr_init( pthread_condattr_t * /* attr */ ) __THROW {
 	// storage for pthread_condattr_t must be >= int
 	return 0;
     } // pthread_condattr_init
 
-    int pthread_condattr_destroy( pthread_condattr_t *attr ) __THROW {
+    int pthread_condattr_destroy( pthread_condattr_t * /* attr */ ) __THROW {
 	return 0;
     } // pthread_condattr_destroy
 
@@ -1425,75 +1424,75 @@ extern "C" {
 
     //######################### Mutex #########################
 
-    int pthread_mutex_timedlock( pthread_mutex_t *__restrict __mutex, __const struct timespec *__restrict __abstime ) __THROW {
+    int pthread_mutex_timedlock( pthread_mutex_t *__restrict /* __mutex */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
 	abort( "pthread_mutex_timedlock" );
     } // pthread_mutex_timedlock
 
     //######################### Condition #########################
 
-    int pthread_condattr_getclock( __const pthread_condattr_t * __restrict __attr, __clockid_t *__restrict __clock_id ) __THROW {
+    int pthread_condattr_getclock( __const pthread_condattr_t * __restrict /* __attr */, __clockid_t *__restrict /* __clock_id */ ) __THROW {
 	abort( "pthread_condattr_getclock" );
     } // pthread_condattr_getclock
 
-    int pthread_condattr_setclock( pthread_condattr_t *__attr, __clockid_t __clock_id ) __THROW {
+    int pthread_condattr_setclock( pthread_condattr_t * /* __attr */, __clockid_t /* __clock_id */ ) __THROW {
 	abort( "pthread_condattr_setclock" );
     } // pthread_condattr_setclock
 
     //######################### Spinlock #########################
 
-    int pthread_spin_init( pthread_spinlock_t *__lock, int __pshared ) __THROW {
+    int pthread_spin_init( pthread_spinlock_t * /* __lock */, int /*__pshared */ ) __THROW {
 	abort( "pthread_spin_init" );
     } // pthread_spin_init
 
-    int pthread_spin_destroy( pthread_spinlock_t *__lock ) __THROW {
+    int pthread_spin_destroy( pthread_spinlock_t * /* __lock */ ) __THROW {
 	abort( "pthread_spin_destroy" );
     } // pthread_spin_destroy
 
-    int pthread_spin_lock( pthread_spinlock_t *__lock ) __THROW {
+    int pthread_spin_lock( pthread_spinlock_t * /* __lock */ ) __THROW {
 	abort( "pthread_spin_lock" );
     } // pthread_spin_lock
 
-    int pthread_spin_trylock( pthread_spinlock_t *__lock ) __THROW {
+    int pthread_spin_trylock( pthread_spinlock_t * /* __lock */ ) __THROW {
 	abort( "pthread_spin_trylock" );
     } // pthread_spin_trylock
 
-    int pthread_spin_unlock( pthread_spinlock_t *__lock ) __THROW {
+    int pthread_spin_unlock( pthread_spinlock_t * /* __lock */ ) __THROW {
 	abort( "pthread_spin_unlock" );
     } // pthread_spin_unlock
 
     //######################### Barrier #########################
 
-    int pthread_barrier_init( pthread_barrier_t *__restrict __barrier, __const pthread_barrierattr_t *__restrict __attr, unsigned int __count ) __THROW {
+    int pthread_barrier_init( pthread_barrier_t *__restrict /* __barrier */, __const pthread_barrierattr_t *__restrict /* __attr */, unsigned int /* __count */ ) __THROW {
 	abort( "pthread_barrier_init" );
     } // pthread_barrier_init
 
-    int pthread_barrier_destroy( pthread_barrier_t *__barrier ) __THROW {
+    int pthread_barrier_destroy( pthread_barrier_t * /* __barrier */ ) __THROW {
 	abort( "pthread_barrier_destroy" );
     } // pthread_barrier_destroy
 
-    int pthread_barrier_wait( pthread_barrier_t *__barrier ) __THROW {
+    int pthread_barrier_wait( pthread_barrier_t * /* __barrier */ ) __THROW {
 	abort( "pthread_barrier_wait" );
     } // pthread_barrier_wait
 
-    int pthread_barrierattr_init( pthread_barrierattr_t *__attr ) __THROW {
+    int pthread_barrierattr_init( pthread_barrierattr_t * /* __attr */ ) __THROW {
 	abort( "pthread_barrierattr_init" );
     } // pthread_barrierattr_init
 
-    int pthread_barrierattr_destroy( pthread_barrierattr_t *__attr ) __THROW {
+    int pthread_barrierattr_destroy( pthread_barrierattr_t * /* __attr */ ) __THROW {
 	abort( "pthread_barrierattr_destroy" );
     } // pthread_barrierattr_destroy
 
-    int pthread_barrierattr_getpshared( __const pthread_barrierattr_t * __restrict __attr, int *__restrict __pshared ) __THROW {
+    int pthread_barrierattr_getpshared( __const pthread_barrierattr_t * __restrict /* __attr */, int *__restrict /* __pshared */ ) __THROW {
 	abort( "pthread_barrierattr_getpshared" );
     } // pthread_barrierattr_getpshared
 
-    int pthread_barrierattr_setpshared( pthread_barrierattr_t *__attr, int __pshared ) __THROW {
+    int pthread_barrierattr_setpshared( pthread_barrierattr_t * /* __attr */, int /* __pshared */ ) __THROW {
 	abort( "pthread_barrierattr_setpshared" );
     } // pthread_barrierattr_setpshared
 
     //######################### Clock #########################
 
-    int pthread_getcpuclockid( pthread_t __thread_id, __clockid_t *__clock_id ) __THROW {
+    int pthread_getcpuclockid( pthread_t /* __thread_id */, __clockid_t * /* __clock_id */ ) __THROW {
 	abort( "pthread_getcpuclockid" );
     } // pthread_getcpuclockid
 
@@ -1503,65 +1502,65 @@ extern "C" {
 
     //######################### Read/Write #########################
 
-    int pthread_rwlock_init( pthread_rwlock_t *__restrict __rwlock, __const pthread_rwlockattr_t *__restrict __attr ) __THROW {
+    int pthread_rwlock_init( pthread_rwlock_t *__restrict /* __rwlock */, __const pthread_rwlockattr_t *__restrict /* __attr */ ) __THROW {
 	abort( "pthread_rwlock_init" );
     } // pthread_rwlock_init
 
-    int pthread_rwlock_destroy( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_destroy( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_destroy" );
     } // pthread_rwlock_destroy
 
-    int pthread_rwlock_rdlock( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_rdlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_rdlock" );
     } // pthread_rwlock_rdlock
 
-    int pthread_rwlock_tryrdlock( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_tryrdlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_tryrdlock" );
     } // pthread_rwlock_tryrdlock
 
-    int pthread_rwlock_wrlock( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_wrlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_wrlock" );
     } // pthread_rwlock_wrlock
 
-    int pthread_rwlock_trywrlock( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_trywrlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_trywrlock" );
     } // pthread_rwlock_trywrlock
 
-    int pthread_rwlock_unlock( pthread_rwlock_t *__rwlock ) __THROW {
+    int pthread_rwlock_unlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
 	abort( "pthread_rwlock_unlock" );
     } // pthread_rwlock_unlock
 
-    int pthread_rwlockattr_init( pthread_rwlockattr_t *__attr ) __THROW {
+    int pthread_rwlockattr_init( pthread_rwlockattr_t * /* __attr */ ) __THROW {
 	abort( "pthread_rwlockattr_init" );
     } // pthread_rwlockattr_init
 
-    int pthread_rwlockattr_destroy( pthread_rwlockattr_t *__attr ) __THROW {
+    int pthread_rwlockattr_destroy( pthread_rwlockattr_t * /*__attr */ ) __THROW {
 	abort( "pthread_rwlockattr_destroy" );
     } // pthread_rwlockattr_destroy
 
-    int pthread_rwlockattr_getpshared( __const pthread_rwlockattr_t * __restrict __attr, int *__restrict __pshared ) __THROW {
+    int pthread_rwlockattr_getpshared( __const pthread_rwlockattr_t * __restrict /* __attr */, int *__restrict /* __pshared */ ) __THROW {
 	abort( "pthread_rwlockattr_getpshared" );
     } // pthread_rwlockattr_getpshared
 
-    int pthread_rwlockattr_setpshared( pthread_rwlockattr_t *__attr, int __pshared ) __THROW {
+    int pthread_rwlockattr_setpshared( pthread_rwlockattr_t * /* __attr */, int /* __pshared */ ) __THROW {
 	abort( "pthread_rwlockattr_setpshared" );
     } // pthread_rwlockattr_setpshared
 
-    int pthread_rwlockattr_getkind_np( __const pthread_rwlockattr_t *__attr, int *__pref ) __THROW {
+    int pthread_rwlockattr_getkind_np( __const pthread_rwlockattr_t * /* __attr */, int * /* __pref */ ) __THROW {
 	abort( "pthread_rwlockattr_getkind_np" );
     } // pthread_rwlockattr_getkind_np
 
-    int pthread_rwlockattr_setkind_np( pthread_rwlockattr_t *__attr, int __pref ) __THROW {
+    int pthread_rwlockattr_setkind_np( pthread_rwlockattr_t * /* __attr */, int /* __pref */ ) __THROW {
 	abort( "pthread_rwlockattr_setkind_np" );
     } // pthread_rwlockattr_setkind_np
 
 // UNIX98 + XOPEN
 
-    int pthread_rwlock_timedrdlock( pthread_rwlock_t *__restrict __rwlock, __const struct timespec *__restrict __abstime ) __THROW {
+    int pthread_rwlock_timedrdlock( pthread_rwlock_t *__restrict  /* __rwlock */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
 	abort( "pthread_rwlock_timedrdlock" );
     } // pthread_rwlock_timedrdlock
 
-    int pthread_rwlock_timedwrlock( pthread_rwlock_t *__restrict __rwlock, __const struct timespec *__restrict __abstime ) __THROW {
+    int pthread_rwlock_timedwrlock( pthread_rwlock_t *__restrict  /* __rwlock */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
 	abort( "pthread_rwlock_timedwrlock" );
     } // pthread_rwlock_timedwrlock
 
@@ -1569,19 +1568,19 @@ extern "C" {
 
     //######################### Parallelism #########################
 
-    int pthread_setaffinity_np( pthread_t __th, size_t __cpusetsize, __const cpu_set_t *__cpuset ) __THROW {
+    int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
 	abort( "pthread_setaffinity_np" );
     } // pthread_setaffinity_np
 
-    int pthread_getaffinity_np( pthread_t __th, size_t __cpusetsize, cpu_set_t *__cpuset ) __THROW {
+    int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
 	abort( "pthread_getaffinity_np" );
     } // pthread_getaffinity_np
 
-    int pthread_attr_setaffinity_np( pthread_attr_t *__attr, size_t __cpusetsize, __const cpu_set_t *__cpuset ) __THROW {
+    int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
 	abort( "pthread_attr_setaffinity_np" );
     } // pthread_attr_setaffinity_np
 
-    int pthread_attr_getaffinity_np( __const pthread_attr_t *__attr, size_t __cpusetsize, cpu_set_t *__cpuset ) __THROW {
+    int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
 	abort( "pthread_attr_getaffinity_np" );
     } // pthread_attr_getaffinity_np
 
@@ -1590,11 +1589,11 @@ extern "C" {
 // pthread_cleanup_push_defer_np()  GNU extension
 // pthread_cleanup_pop_restore_np() GNU extension
 
-    void _pthread_cleanup_push_defer( struct _pthread_cleanup_buffer *__buffer, void( *__routine )( void * ), void *__arg ) __THROW {
+    void _pthread_cleanup_push_defer( struct _pthread_cleanup_buffer * /* __buffer */, void( * /* __routine */ )( void * ), void * /* __arg */ ) __THROW {
 	abort( "_pthread_cleanup_push_defer" );
     } // _pthread_cleanup_push_defer
 
-    void _pthread_cleanup_pop_restore( struct _pthread_cleanup_buffer *__buffer, int __execute ) __THROW {
+    void _pthread_cleanup_pop_restore( struct _pthread_cleanup_buffer * /* __buffer */, int /* __execute */ ) __THROW {
 	abort( "_pthread_cleanup_pop_restore" );
     } // _pthread_cleanup_pop_restore
 } // extern "C"

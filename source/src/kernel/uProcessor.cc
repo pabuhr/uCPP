@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 22 17:23:32 2017
-// Update Count     : 2119
+// Last Modified On : Sat Jan  6 15:50:22 2018
+// Update Count     : 2122
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -213,7 +213,7 @@ uProcessorTask::~uProcessorTask() {
 //######################### uProcessorKernel #########################
 
 
-void *uKernelModule::startThread( void *p ) {
+void * uKernelModule::startThread( void * p __attribute__(( unused )) ) {
 #if defined(__U_MULTI__)
     // Kernel thread just started so no concurrency, so safe to make direct call through TLS pointer.
     uKernelModuleBoot.ctor();

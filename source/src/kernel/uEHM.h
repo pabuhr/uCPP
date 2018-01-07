@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 22 12:33:37 2017
-// Update Count     : 508
+// Last Modified On : Fri Jan  5 15:34:32 2018
+// Update Count     : 510
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -197,7 +197,7 @@ class uRoutineHandlerAny : public uEHM::uHandlerBase {
     const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > handlerRtn; // lambda for exception handling routine
   public:
     uRoutineHandlerAny( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > &handlerRtn ) : uHandlerBase( 0, 0 ), handlerRtn( handlerRtn ) {}
-    virtual void uHandler( uBaseEvent &exn ) { handlerRtn(); }
+    virtual void uHandler( uBaseEvent & /* exn */ ) { handlerRtn(); }
 }; // uRoutineHandlerAny
 
 

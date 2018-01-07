@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Thu Dec 11 10:17:16 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:04:19 2016
-// Update Count     : 218
+// Last Modified On : Fri Jan  5 17:21:25 2018
+// Update Count     : 219
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,7 +37,7 @@ uBarrier b( 2 );
 
 const unsigned int NoOfTimes = 20;
 
-void *r1main( void *arg ) {
+void *r1main( void * ) {
     struct timeval now;
     struct timespec timeout;
     
@@ -76,7 +76,7 @@ void *r1main( void *arg ) {
     return 0;
 } // r1main
 
-void *r2main( void *arg ) {
+void *r2main( void * ) {
     // Test if timing out works.
 
     b.block();

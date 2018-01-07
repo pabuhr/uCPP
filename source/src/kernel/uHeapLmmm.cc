@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 16:27:24 2017
-// Update Count     : 1333
+// Last Modified On : Sat Jan  6 15:58:24 2018
+// Update Count     : 1343
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -152,7 +152,7 @@ namespace UPP {
 
     bool uHeapManager::setMmapStart( size_t value ) {
       if ( value < pageSize || bucketSizes[NoBucketSizes-1] < value ) return true;
-	mmapStart = value;
+	mmapStart = value;				// set global
 
 	// find the closest bucket size less than or equal to the mmapStart size
 	maxBucketsUsed = std::lower_bound( bucketSizes, bucketSizes + (NoBucketSizes-1), mmapStart ) - bucketSizes; // binary search
@@ -169,7 +169,7 @@ namespace UPP {
 	} // if
     } // checkHeader
 
-    inline void uHeapManager::fakeHeader( Storage::Header *& header, size_t & size, size_t & alignment ) {
+    inline void uHeapManager::fakeHeader( Storage::Header *& header, size_t & alignment ) {
 	if ( UNLIKELY( (header->kind.fake.alignment & 1) == 1 ) ) { // fake header ?
 	    size_t offset = header->kind.fake.offset;
 	    alignment = header->kind.fake.alignment & -2; // remove flag from value
@@ -182,11 +182,11 @@ namespace UPP {
 
 #   define headerAddr( addr ) ((UPP::uHeapManager::Storage::Header *)( (char *)addr - sizeof(UPP::uHeapManager::Storage) ))
 
-    inline bool uHeapManager::headers( const char * name, void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment ) {
+    inline bool uHeapManager::headers( const char * name __attribute__(( unused )), void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment ) {
 	header = headerAddr( addr );
 
 	if ( UNLIKELY( heapEnd < addr ) ) {		// mmapped ?
-	    fakeHeader( header, size, alignment );
+	    fakeHeader( header, alignment );
 	    size = header->kind.real.blockSize & -3;	// mmap size
 	    return true;
 	} // if
@@ -195,7 +195,7 @@ namespace UPP {
 	checkHeader( addr < heapBegin || header < heapBegin, name, addr ); // bad low address ?
 #endif // __U_DEBUG__
 	// header may be safe to dereference
-	fakeHeader( header, size, alignment );
+	fakeHeader( header, alignment );
 #ifdef __U_DEBUG__
 	checkHeader( header < heapBegin || heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
 #endif // __U_DEBUG__
@@ -545,7 +545,7 @@ namespace UPP {
 	uHeapManager::heapManagerInstance->uHeapManager::~uHeapManager();
     } // uHeapControl::finishup
 
-    void uHeapControl::prepareTask( uBaseTask * task ) {
+    void uHeapControl::prepareTask( uBaseTask * /* task */ ) {
     } // uHeapControl::prepareTask
 
     // void uHeapControl::startTask() {

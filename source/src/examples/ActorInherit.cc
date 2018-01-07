@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 23 17:05:06 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:35:02 2016
-// Update Count     : 5
+// Last Modified On : Sat Jan  6 09:36:47 2018
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,13 +30,14 @@ using namespace std;
 
 _Actor B {
     Allocation receive( Message & ) { return Delete; }
+    int i;
   protected:
     void preStart() {
 	osacquire( cout ) << "B" << endl;
     } // B::preStart
   public:
     B() {}
-    B( int i ) {}
+    B( int i ) { B::i = i; }
 }; // B
 
 _Actor D : public B {
@@ -53,6 +54,7 @@ _Actor D : public B {
 int main() {
     B *b = new B;
     D *d = new D;
+    // Output is non-deterministic because actor b or d may may run first.
     *b | uActor::stopMsg;
     *d | uActor::stopMsg;
     uActor::stop();

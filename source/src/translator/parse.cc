@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 25 12:36:50 2017
-// Update Count     : 4740
+// Last Modified On : Fri Jan  5 18:34:13 2018
+// Update Count     : 4741
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -4908,10 +4908,10 @@ static bool bound_exception_declaration( bound_t &b ) {
       if ( name == nullptr ) goto fini;			// bad type ?
 	b.extype = name->symbol;			// set the type of the exception parameter
 	b.idleft = ahead;				// start of exception parameter
-	if ( b.idleft == b.idright ) {			// no exception parameter ?
-	    // add a dummy exception parameter name to access the thrown object
-	    b.idleft = gen_code( ahead, "_U_boundParm", IDENTIFIER );
-	} // if
+	// if ( b.idleft == b.idright ) {			// no exception parameter ?
+	//     // add a dummy exception parameter name to access the thrown object
+	//     b.idleft = gen_code( ahead, "_U_boundParm", IDENTIFIER );
+	// } // if
 	ahead = b.idright->next_parse_token();		// reset the parse location to after ')'
 	return true;
     } // if

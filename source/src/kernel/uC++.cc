@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 16:20:15 2017
-// Update Count     : 3121
+// Last Modified On : Sat Jan  6 15:55:33 2018
+// Update Count     : 3127
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -361,7 +361,7 @@ int uIOFailure::errNo() const {
 //######################### uSpinLock #########################
 
 
-void uBaseSpinLock::acquire_( bool rollforward ) {
+void uBaseSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
     // No race condition exists for accessing disableIntSpin in the multiprocessor case because this variable is private
     // to each UNIX process. Also, the spin lock must be acquired after adjusting disableIntSpin because the time
     // slicing must see the attempt to access the lock first to prevent live-lock on the same processor.  For example,
@@ -1686,17 +1686,18 @@ namespace UPP {
 	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p\n", this, f, &serial ); )
     } // uSerialConstructor::uSerialConstructor
 
+
+#ifdef __U_PROFILER__
     uSerialConstructor::uSerialConstructor( uAction f, uSerial &serial, const char *n ) : f( f ), serial( serial ) {
 	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.uSerialConstructor, f:%d, s:%p, n:%s\n", this, f, &serial, n ); )
 
-#ifdef __U_PROFILER__
 	if ( f == uYes ) {
 	    if ( uThisTask().profileActive && uProfiler::uProfiler_registerMonitor ) { // task registered for profiling ?
 		(*uProfiler::uProfiler_registerMonitor)( uProfiler::profilerInstance, serial, n, uThisTask() );
 	    } // if
 	} // if
-#endif // __U_PROFILER__
     } // uSerialConstructor::uSerialConstructor
+#endif // __U_PROFILER__
 
 
     uSerialConstructor::~uSerialConstructor() {

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 26 18:23:18 2016
-// Update Count     : 14
+// Last Modified On : Fri Jan  5 17:18:17 2018
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,7 +40,7 @@
 
 #define COBEGIN uCobegin( {
 #define COEND } );
-#define BEGIN [&]( unsigned int uLid ) {
+#define BEGIN [&]( unsigned int uLid __attribute__(( unused )) ) {
 #define END } ,
 
 void uCobegin( std::initializer_list< std::function< void( unsigned int ) >> funcs ) {

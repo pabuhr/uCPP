@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 20 08:01:17 2017
-// Update Count     : 376
+// Last Modified On : Thu Jan  4 16:57:45 2018
+// Update Count     : 380
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,7 +87,7 @@ namespace UPP {
 		    struct RealHeader {
 			union {
 			    struct {			// 32-bit word => 64-bit header, 64-bit word => 128-bit header
-				#if __BYTE_ORDER == __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
+				#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
 				uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
 				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
 
@@ -99,7 +99,7 @@ namespace UPP {
 				    #endif // SPINLOCK
 				};
 
-				#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
+				#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
 				    uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
 				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
 			    };
@@ -109,15 +109,15 @@ namespace UPP {
 			};
 		    } real;
 		    struct FakeHeader {
-			#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__
+			#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
-			#endif // __BYTE_ORDER
+			#endif // __BYTE_ORDER__
 
 			uint32_t offset;
 
-			#if __BYTE_ORDER == __ORDER_BIG_ENDIAN__
+			#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
-			#endif // __BYTE_ORDER
+			#endif // __BYTE_ORDER__
 		    } fake;
 		} kind;
 		#if defined( __U_PROFILER__ )
@@ -202,7 +202,7 @@ namespace UPP {
 
 	static void boot();
 	static void noMemory();				// called by "builtin_new" when malloc returns 0
-	static void fakeHeader( Storage::Header *& header, size_t & size, size_t & alignment );
+	static void fakeHeader( Storage::Header *& header, size_t & alignment );
 	static void checkAlign( size_t alignment );
 	static bool setHeapExpand( size_t value );
 	static bool setMmapStart( size_t value );

@@ -21,7 +21,7 @@ endif
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
-    CXXFLAGS += -O2 -Wextra #
+    CXXFLAGS += -O2 -Wall -Wextra #
 else
     CXXFLAGS += -O2 #
 endif

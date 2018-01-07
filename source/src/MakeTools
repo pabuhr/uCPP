@@ -22,9 +22,9 @@ endif
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
     # When -O2 is specified, compilers can generate additional warning messages.
-    CCFLAGS += -Wextra -g -O2 #
+    CCFLAGS += -Wall -Wextra -g -O2 #
 else
-    CCFLAGS += -Wextra -g -O2 #
+    CCFLAGS += -Wall -Wextra -g -O2 #
 endif
 
 ifeq (${TOS},solaris)

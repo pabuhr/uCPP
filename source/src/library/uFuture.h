@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 22 14:18:46 2017
-// Update Count     : 793
+// Last Modified On : Thu Jan  4 16:09:33 2018
+// Update Count     : 794
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -812,7 +812,7 @@ class uExecutor {
 	// next two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1 may take
 	// the single sentinel while waiting for worker 0 to end.
 	WRequest sentinel[nworkers];
-	unsigned int reqPerWorker = nmailboxes / nworkers, extras = nmailboxes % nworkers;
+	unsigned int reqPerWorker = nmailboxes / nworkers;
 	for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
 	    requests[step].insert( &sentinel[i] );	// force eventually termination
 	} // for

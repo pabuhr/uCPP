@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:59:34 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:42:09 2012
-// Update Count     : 64
+// Last Modified On : Fri Jan  5 15:43:05 2018
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -64,7 +64,7 @@ class uPriorityQ : public uBasePrioritySeq {
     virtual uBaseTaskDL *drop();
     virtual void remove( uBaseTaskDL *node );
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /*from */, unsigned int /* n */ ) {
 	abort( "uPriorityQ::transfer, internal error, unsupported operation" );
     } // uPriorityQ::transfer
 
@@ -231,7 +231,7 @@ template<typename List, typename Node> class uPriorityScheduleQSeq : public uPri
 	}
     } // uPriorityScheduleQSeq::remove
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
 	abort( "uPriorityScheduleQSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQSeq::transfer
 }; // uPriorityScheduleQSeq

@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Dec 10 21:16:16 2017
-%% Update Count     : 7362
+%% Last Modified On : Sat Dec 23 09:08:23 2017
+%% Update Count     : 7363
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -4098,18 +4098,21 @@ the other approach is to raise an exception, which is caught by the worker threa
 
 Finally, the following routines control the actor executor by adjusting its thread pool.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorProcessors}();}\Tab{48}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0executor\0thread\-pool}}
+\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorMailboxes}();}\Tab{48}{\C{}\1\1\0executor\0request\0queues}}
 \CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorThreads}();}\Tab{48}{\C{}\1\1\0user\0threads\0servicing\0executor\0thread\-pool}}
-\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultActorOffset}();}\Tab{48}{\C{}\1\1\0affinity\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
+\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorProcessors}();}\Tab{48}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0executor\0thread\-pool}}
+\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultActorOffset}();}\Tab{48}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
 \CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultActorSepClus}();}\Tab{48}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
 \CE{}\endlgrinde\LGend
-\index{uDefaultActorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{}}%
+\index{uDefaultActorMailboxes@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{}}%
 \index{uDefaultActorThreads@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorThreads}}}\endlgrinde\LGend{}}%
+\index{uDefaultActorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{}}%
 \index{uDefaultActorOffset@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorOffset}}}\endlgrinde\LGend{}}%
 \index{uDefaultActorSepClus@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorSepClus}}}\endlgrinde\LGend{}}%
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{} returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{} returns the number of executor request-queues (mailboxes) written to by actors and serviced by the actor-executor threads.
 Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorThreads}}}\endlgrinde\LGend{} returns the number of threads per processor on the actor executor.
-Currently, the defaults are 2 processors and 4 threads and the actor executor runs in the user cluster.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{} returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
+Currently, the defaults are 4 request queues, 4 threads, 2 processors, and the actor executor runs in the user cluster.
 Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorOffset}}}\endlgrinde\LGend{} returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
 Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorSepClus}}}\endlgrinde\LGend{} returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
 

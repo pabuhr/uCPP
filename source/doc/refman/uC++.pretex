@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Dec 10 21:16:16 2017
-%% Update Count     : 7362
+%% Last Modified On : Sat Dec 23 09:08:23 2017
+%% Update Count     : 7363
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -4098,18 +4098,21 @@ the other approach is to raise an exception, which is caught by the worker threa
 
 Finally, the following routines control the actor executor by adjusting its thread pool.
 %[
-extern unsigned int uDefaultActorProcessors();	// kernel threads (processors) servicing executor thread-pool
+extern unsigned int uDefaultActorMailboxes();	// executor request queues
 extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
-extern int uDefaultActorOffset();				// affinity offset (-1 => no affinity, default)
+extern unsigned int uDefaultActorProcessors();	// kernel threads (processors) servicing executor thread-pool
+extern int uDefaultActorOffset();				// affinity and offset (-1 => no affinity, default)
 extern bool uDefaultActorSepClus();				// create processors on separate cluster
 %]
-\index{uDefaultActorProcessors@%(uDefaultActorProcessors%)}%
+\index{uDefaultActorMailboxes@%(uDefaultActorMailboxes%)}%
 \index{uDefaultActorThreads@%(uDefaultActorThreads%)}%
+\index{uDefaultActorProcessors@%(uDefaultActorProcessors%)}%
 \index{uDefaultActorOffset@%(uDefaultActorOffset%)}%
 \index{uDefaultActorSepClus@%(uDefaultActorSepClus%)}%
-Routine %(uDefaultActorProcessors%) returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
+Routine %(uDefaultActorMailboxes%) returns the number of executor request-queues (mailboxes) written to by actors and serviced by the actor-executor threads.
 Routine %(uDefaultActorThreads%) returns the number of threads per processor on the actor executor.
-Currently, the defaults are 2 processors and 4 threads and the actor executor runs in the user cluster.
+Routine %(uDefaultActorProcessors%) returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
+Currently, the defaults are 4 request queues, 4 threads, 2 processors, and the actor executor runs in the user cluster.
 Routine %(uDefaultActorOffset%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
 Routine %(uDefaultActorSepClus%) returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
 

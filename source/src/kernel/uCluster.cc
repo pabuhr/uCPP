@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 18 18:48:50 2017
-// Update Count     : 616
+// Last Modified On : Sat Jan  6 15:57:15 2018
+// Update Count     : 618
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,7 +42,7 @@ using namespace UPP;
 //######################### uCluster #########################
 
 
-void uCluster::wakeProcessor( uPid_t pid ) {
+void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
     uDEBUGPRT( uDebugPrt( "uCluster::wakeProcessor: waking processor %lu\n", (unsigned long)pid ); )
 
 #ifdef __U_STATISTICS__

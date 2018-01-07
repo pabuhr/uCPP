@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 22 22:32:16 2017
-// Update Count     : 191
+// Last Modified On : Fri Jan  5 17:20:38 2018
+// Update Count     : 192
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -121,7 +121,7 @@ void *consumer( void *arg ) {
 } // consumer
 
 
-void *Worker1( void *arg ) {
+void *Worker1( void * ) {
 #if defined( __U_CPLUSPLUS__ )
 	int stacksize = uThisTask().stackSize();
 	cout << "Worker1, stacksize:" << stacksize << endl;
@@ -131,7 +131,7 @@ void *Worker1( void *arg ) {
 	return (void *)0;
 } // Worker1
 
-void *Worker2( void *arg ) {
+void *Worker2( void * ) {
     pthread_key_t key[PTHREAD_KEYS_MAX];
     unsigned long int i;
     for ( i = 0; i < 60; i += 1 ) {
@@ -207,7 +207,7 @@ void cancel_me() {
 	} // try
 } // cancel_me
 
-void *cancellee( void *arg ) {
+void *cancellee( void * ) {
 	int i;
 	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, nullptr );
 	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, nullptr );	// guard against undefined cancellation points

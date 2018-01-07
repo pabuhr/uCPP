@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 08:28:33 2017
-// Update Count     : 983
+// Last Modified On : Sat Jan  6 16:21:52 2018
+// Update Count     : 991
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -287,8 +287,11 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	if ( symbol->data->key == COROUTINE || symbol->data->key == TASK ) {
 	    gen_code( before, "UPP :: uSerialConstructor uSerialConstructorInstance ( uConstruct , this -> uSerialInstance ) ;" );
 	} else {
-	    gen_code( before, "UPP :: uSerialConstructor uSerialConstructorInstance ( uConstruct , this -> uSerialInstance ," );
-	    gen_quote_hash( before, symbol->hash );
+	    gen_code( before, "UPP :: uSerialConstructor uSerialConstructorInstance ( uConstruct , this -> uSerialInstance" );
+	    if ( profile ) {
+		gen_code( before, "," );
+		gen_quote_hash( before, symbol->hash );
+	    } // if
 	    gen_code( before, " ) ;" );
 	} // if
     } // if
@@ -317,15 +320,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	} // if
 	gen_code( before, ") ;" );
     } else if ( symbol->data->key == ACTOR ) {
-	if ( symbol->data->table ) {			// local members ?
-	    // search for preStart routine, and create constructor to send preStart message
-	    for ( local_t *p = symbol->data->table->local; p; p = p->link ) {
-	      if ( ! p->tblsym && strcmp( p->kind.sym->hash->text, "preStart" ) == 0 ) {
-		    gen_code( before, "uActor :: uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
-		    break;
-		} // if
-	    } // for
-	} // if
+	gen_code( before, "uActor :: uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
     } // if
 } // gen_constructor_prefix
 
@@ -478,7 +473,6 @@ void gen_constructor( symbol_t *symbol ) {
     // if necessary, generate a default constructor
 
     if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT || symbol->data->key == ACTOR ) {
-
 	symbol->data->table->hasdefault = true;
 	gen_hash( table->public_area, symbol->hash );
 
@@ -614,6 +608,29 @@ void gen_class_suffix( symbol_t *symbol ) {
 	gen_hash( table->protected_area, symbol->hash );
 	gen_code( table->protected_area, "( * this ) ; }" );
 	gen_code( table->protected_area, "virtual void stackThrow ( ) const override { throw * this ; }" );
+	return;
+    } // if
+
+    if ( symbol->data->key == ACTOR ) {
+	if ( symbol->data->table ) {			// local members ?
+	    // search for preStart routine, and create constructor to send preStart message
+	    for ( local_t *p = symbol->data->table->local; p; p = p->link ) {
+		if ( ! p->tblsym && strcmp( p->kind.sym->hash->text, "preStart" ) == 0 ) {
+		    goto GenCode;
+		} // if
+	    } // for
+	    // no preStart member, so do not generate constructor/destructor
+	    return;
+	} // if
+    } // if
+  GenCode: ;
+
+    // classes (not mutex), structs, unions may not have mutex arguments
+
+    if ( ( symbol->data->key == STRUCT || symbol->data->key == CLASS || symbol->data->key == UNION ) && ! symbol->data->attribute.Mutex ) {
+	if ( symbol->data->attribute.startE != nullptr ) {
+	    gen_error( ahead, "cannot specify mutex arguments for nomutex type." );
+	} // if
     } // if
 
     // declare uSerialInstance *after* the mutex queues (uMutexList) because ~uSerial accesses these queues to check if
@@ -636,14 +653,6 @@ void gen_class_suffix( symbol_t *symbol ) {
 	       if ( ptr->data->found == root ) break;	// => not contained in template type
 	     } // for
 	 } // if
-    } // if
-
-    // classes (not mutex), structs, unions may not have mutex arguments
-
-    if ( ( symbol->data->key == STRUCT || symbol->data->key == CLASS || symbol->data->key == UNION ) && ! symbol->data->attribute.Mutex ) {
-	if ( symbol->data->attribute.startE != nullptr ) {
-	    gen_error( ahead, "cannot specify mutex arguments for nomutex type." );
-	} // if
     } // if
 
     // generate either the default destructor or the supplied destructors

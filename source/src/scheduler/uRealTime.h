@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Fri Jul 19 16:34:59 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 19 23:20:17 2017
-// Update Count     : 136
+// Last Modified On : Fri Jan  5 15:44:55 2018
+// Update Count     : 140
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -106,7 +106,7 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 	} // if
     } // uPriorityScheduleQueue::drop
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
 	abort( "uPriorityScheduleQueue::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQueue::transfer
 
@@ -198,7 +198,7 @@ class uPrioritySeq : public uBasePrioritySeq {
 	} // if
     } // uPrioritySeq::remove
 
-    void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
 	abort( "uPrioritySeq::transfer, internal error, unsupported operation" );
     } // uPrioritySeq::transfer
 
@@ -244,7 +244,7 @@ template<typename List, typename Node> class uPriorityScheduleSeq : public uPrio
 	} // if
     } // uPriorityScheduleSeq::remove
 
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n ) {
+    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
 	abort( "uPriorityScheduleSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleSeq::transfer
 }; // uPriorityScheduleSeq

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:45:30 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 18 21:58:02 2017
-// Update Count     : 48
+// Last Modified On : Fri Jan  5 15:41:01 2018
+// Update Count     : 50
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -330,7 +330,7 @@ namespace std {
 
 
     template< typename char_t, typename traits >
-    typename basic_filebuf<char_t, traits>::pos_type basic_filebuf<char_t, traits>::seekoff( off_type off, ios_base::seekdir dir, ios_base::openmode which ) {
+    typename basic_filebuf<char_t, traits>::pos_type basic_filebuf<char_t, traits>::seekoff( off_type off, ios_base::seekdir dir, ios_base::openmode /* which */ ) {
 	if ( ! is_open() ) return traits::eof();	// file open ?
 	off_t pos;
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:21:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 26 08:42:28 2017
-// Update Count     : 6
+// Last Modified On : Sat Jan  6 09:22:17 2018
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,7 +51,7 @@ _Actor Fib {
     Allocation receive2( Message &msg ) {
 	Case( NextMsg, msg ) {
 	    fibMsg.fib = 1; fn2 = fn1; fn1 = fibMsg.fib;
-	    Handler fred = become( &Fib::receive3 );
+	    become( &Fib::receive3 );
 	    *msg.sender | fibMsg;
 	} else Case( StopMsg, msg ) {
 	    return Delete;
