@@ -1,6 +1,13 @@
 \providecommand{\etalchar}[1]{$^{#1}$}
 \begin{thebibliography}{TvRvS{\etalchar{+}}90}
 
+\bibitem[Ada83]{Ada}
+Ada.
+\newblock {\em The Programming Language {Ada}: Reference Manual}.
+\newblock United States Department of Defense, {ANSI/MIL-STD-1815A-1983}
+  edition, February 1983.
+\newblock Springer, New York.
+
 \bibitem[Agh86]{Actors}
 Gul~A. Agha.
 \newblock {\em Actors: A Model of Concurrent Computation in Distributed
@@ -106,9 +113,11 @@ Alan Burns and A.~J. Wellings.
 \newblock {\em Computer Language}, 15(3):153--162, 1990.
 
 \bibitem[C++98]{ANSI98:C++}
-International Standard ISO/IEC 14882:1998 (E), www.ansi.org.
-\newblock {\em Programming Languages --
-  {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}}, 1998.
+{\em {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Programming Language
+  ISO/IEC 14882:1998}.
+\newblock
+  \href{https://www.iso.org/standard/25845.html}{https://\-www.iso.org/\-standard/\-25845.html},
+  1st edition, 1998.
 
 \bibitem[Car90]{Cargill90}
 Tom~A. Cargill.
@@ -156,7 +165,7 @@ Edsger~W. Dijkstra.
 Erlang AB.
 \newblock {\em Erlang/OTP System Documentation 8.1}, September 2016.
 \newblock
-  \href{http://erlang.org/doc/pdf/otp-system-documentation.pdf}{\textsf{http://\-erlang.org/\-doc/\-pdf/\-otp-system-documentation.pdf}}.
+  \href{http://erlang.org/doc/pdf/otp-system-documentation.pdf}{http://\-erlang.org/\-doc/\-pdf/\-otp-system-documentation.pdf}.
 
 \bibitem[Geh92]{ExceptionalC}
 N.~H. Gehani.
@@ -340,8 +349,8 @@ Robert~E. Strom, David~F. Bacon, Arthur~P. Goldberg, Andy Lowry, Daniel~M.
   New York, U.S.A., 10598, October 1990.
 
 \bibitem[Sca16]{Scala}
-\'{E}cole Polytechnique F\'{e}d\'{e}rale de Lausanne.
-\newblock {\em {Scala} Language Specification, Version 2.11}, 2016.
+{\em {S}cala Language Specification, Version 2.11}.
+\newblock \'{E}cole Polytechnique F\'{e}d\'{e}rale de Lausanne, 2016.
 \newblock
   \href{http://www.scala-lang.org/files/archive/spec/2.11}{http://\-www.scala-lang.org/\-files/\-archive/\-spec/\-2.11}.
 
@@ -396,12 +405,6 @@ Andrew~S. Tanenbaum, Robbert van Renesse, Hans van Staveren, Gregory~J. Sharp,
   Sape~J. Mullender, Jack Jansen, and Guido van Rossum.
 \newblock Experiences with the {A}moeba Distributed Operating System.
 \newblock {\em Communications of the ACM}, 33(12):46--63, December 1990.
-
-\bibitem[Uni83]{Ada}
-United States Department of Defense.
-\newblock {\em The Programming Language {Ada}: Reference Manual},
-  {ANSI/MIL-STD-1815A-1983} edition, February 1983.
-\newblock Springer, New York.
 
 \bibitem[Yea91]{Yeager91}
 Dorian~P. Yeager.

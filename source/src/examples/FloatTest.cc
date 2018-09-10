@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 11 17:30:51 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 29 23:28:15 2017
-// Update Count     : 84
+// Last Modified On : Sat Sep  8 13:17:57 2018
+// Update Count     : 85
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,7 +45,7 @@ _Task Tester {
     const int TaskId;
 
     void main() {
-	register double d;	     
+	double d;	     
 	uFloatingPointContext context;			// save/restore floating point registers during context switch
 
 	// Each task increments a counter through a range of values and calculates a trigonometric identity of each

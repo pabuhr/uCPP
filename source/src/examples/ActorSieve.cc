@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 26 08:44:04 2017
-// Update Count     : 10
+// Last Modified On : Tue Feb 27 15:33:37 2018
+// Update Count     : 11
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -105,7 +105,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ primes-up-to (> 0) ]" << endl;
-	exit( 1 );
+	exit( EXIT_FAILURE );
     } // try
 
     new Sieve( Max );

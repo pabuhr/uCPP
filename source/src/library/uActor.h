@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  1 08:15:51 2017
-// Update Count     : 342
+// Last Modified On : Sun Apr  8 07:29:38 2018
+// Update Count     : 359
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -114,7 +114,11 @@ class uActor {
 
     virtual Allocation process_( Message & msg ) = 0;	// type-safe access to subclass receivePtr
   protected:
-    virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
+    // Do NOT make pure to allow replacement by "become" in constructor.
+    virtual Allocation receive( Message & ) {		// user supplied message handler
+	abort( "must supply receive routine for actor" );
+	return Delete;
+    };
     template< typename Func > void send_( Func action ) { uActor::executor_.send( action, ticket_ ); }
     virtual void preStart() { /* default empty */ };	// user supplied actor initialization
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 23 13:44:10 2017
-// Update Count     : 861
+// Last Modified On : Tue Aug  7 21:33:00 2018
+// Update Count     : 884
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,70 +39,8 @@
 #include <sys/types.h>
 #include <ucontext.h>
 
-#if defined( __linux__ )
-#include <execinfo.h>					// backtrace, backtrace_symbols
-#include <cxxabi.h>					// __cxa_demangle
-#endif // __linux__
-
 namespace UPP {
     sigset_t uSigHandlerModule::block_mask;
-
-#if defined( __linux__ )
-    static void uBacktrace( int start ) {		// skip first N stack frames
-	enum { Frames = 50 };
-	void * array[Frames];
-	int size = ::backtrace( array, Frames );
-	char ** messages = ::backtrace_symbols( array, size ); // does not demangle names
-	char helpText[256];
-	int len;
-
-	*index( messages[0], '(' ) = '\0';		// find executable name
-	len = snprintf( helpText, 256, "Stack trace for: %s\n", messages[0] );
-	uDebugWrite( STDERR_FILENO, helpText, len );
-
-	// skip last stack frame after uMain
-	for ( int i = start; i < size - 1 && messages != nullptr; i += 1 ) {
-	    char * mangled_name = nullptr, * offset_begin = nullptr, * offset_end = nullptr;
-	    for ( char *p = messages[i]; *p; ++p ) {	// find parantheses and +offset
-		if ( *p == '(' ) {
-		    mangled_name = p;
-		} else if ( *p == '+' ) {
-		    offset_begin = p;
-		} else if ( *p == ')' ) {
-		    offset_end = p;
-		    break;
-		} // if
-	    } // for
-
-	    // if line contains symbol, attempt to demangle
-	    int frameNo = i - start;
-	    if ( mangled_name && offset_begin && offset_end && mangled_name < offset_begin ) {
-		*mangled_name++ = '\0';			// delimit strings
-		*offset_begin++ = '\0';
-		*offset_end++ = '\0';
-
-		int status;
-		char * real_name = __cxxabiv1::__cxa_demangle( mangled_name, 0, 0, &status );
-		// bug in __cxa_demangle for single-character lower-case non-mangled names
-		if ( status == 0 ) {			// demangling successful ?
-		    len = snprintf( helpText, 256, "(%d) %s %s+%s%s\n",
-				    frameNo, messages[i], real_name, offset_begin, offset_end );
-		} else {				// otherwise, output mangled name
-		    len = snprintf( helpText, 256, "(%d) %s %s(/*unknown*/)+%s%s\n",
-				    frameNo, messages[i], mangled_name, offset_begin, offset_end );
-		} // if
-
-		free( real_name );
-	    } else {					// otherwise, print the whole line
-		len = snprintf( helpText, 256, "(%d) %s\n", frameNo, messages[i] );
-	    } // if
-	    uDebugWrite( STDERR_FILENO, helpText, len );
-	} // for
-
-	free( messages );
-    } // uBacktrace
-#endif // __linux__
-
 
     void uSigHandlerModule::signal( int sig, void (*handler)(__U_SIGPARMS__), int flags ) { // name clash with uSignal statement
 	struct sigaction act;
@@ -144,8 +82,8 @@ namespace UPP {
 	)
 
 #ifdef __U_STATISTICS__
-	if ( Statistics::prtSigterm ) Statistics::print();
-	if ( Statistics::prtHeapterm ) uHeapManager::print();
+	if ( Statistics::prtStatTerm() ) Statistics::print();
+	if ( uHeapControl::prtHeapTerm() ) uHeapManager::print();
 #endif // __U_STATISTICS__
 
       if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
@@ -336,26 +274,23 @@ namespace UPP {
 
     void uSigHandlerModule::sigSegvBusHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-#if defined( __linux__ )
-	uBacktrace( 3 );				// skip first N stack frames
-#endif // __linux__
-	abort( "Attempt to address location %p.\n"
-		"Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
-		sfp->si_addr );
+	abort( "Addressing invalid memory at location %p\n"
+	       "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
+	       sfp->si_addr );
     } // uSigHandlerModule::sigSegvBusHandler
 
 
     void uSigHandlerModule::sigIllHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-	abort( "Attempt to execute code at location %p.\n"
-		"Possible cause is stack corruption.",
-		sfp->si_addr );
+	abort( "Executing illegal instruction at location %p.\n"
+	       "Possible cause is stack corruption.",
+	       sfp->si_addr );
     } // uSigHandlerModule::sigIllHandler
 
 
     void uSigHandlerModule::sigFpeHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-	const char *msg;
+	const char * msg;
 	switch ( sfp->si_code ) {
 	  case FPE_INTDIV:
 	  case FPE_FLTDIV: msg = "divide by zero"; break;
@@ -365,8 +300,7 @@ namespace UPP {
 	  case FPE_FLTINV: msg = "invalid operation"; break;
 	  default: msg = "unknown";
 	} // switch
-	abort( "Floating point error.\n"
-		"Cause is %s.", msg );
+	abort( "Computation error %s at location %p.\n", msg, sfp->si_addr );
     } // uSigHandlerModule::sigFpeHandler
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 15:55:33 2018
-// Update Count     : 3127
+// Last Modified On : Sat Sep  8 16:01:43 2018
+// Update Count     : 3139
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,8 +86,7 @@ unsigned int Statistics::wake_processor = 0;
 unsigned int Statistics::events = 0, Statistics::setitimer = 0;
 
 // Print statistics
-bool Statistics::prtSigterm = false;
-bool Statistics::prtHeapterm = false;
+bool Statistics::prtStatTerm_ = false;
 
 void UPP::Statistics::print() {
     uStatistics();					// user specified statistics
@@ -258,12 +257,14 @@ int uFloatingPointContext::uniqueKey = 0;
 #endif // __U_FLOATINGPOINTDATASIZE__
 
 bool uHeapControl::traceHeap_ = false;
+bool uHeapControl::prtHeapTerm_ = false;
+bool uHeapControl::prtFree_ = false;
 
 #define __U_TIMEOUTPOSN__ 0				// bit 0 is reserved for timeout
 #define __U_DESTRUCTORPOSN__ 1				// bit 1 is reserved for destructor
 
 #ifndef __U_MULTI__
-uNBIO *uCluster::NBIO = nullptr;
+uNBIO * uCluster::NBIO = nullptr;
 #endif // ! __U_MULTI__
 
 int UPP::uKernelBoot::count = 0;
@@ -291,7 +292,7 @@ int uCpp_real_main( int argc, char *argv[], char *env[] ) {
     // Return the program return code to the operating system.
 
     return uKernelModule::retCode;
-} // main
+} // uCpp_real_main
 
 
 //######################### Abnormal Event Handling #########################
@@ -978,10 +979,10 @@ namespace UPP {
 	return originalFunc;
     } // RealRtn::interposeSymbol
     
-    
-    __typeof__( ::exit ) *RealRtn::exit __attribute__(( noreturn ));
-    // cannot use typeof for abort here because it is now overloaded => explicitly select builtin abort
+    // cannot use typeof here because of overloading => explicitly select builtin routine
+    void (*RealRtn::exit)(int) __THROW __attribute__(( noreturn ));
     void (*RealRtn::abort)(void) __THROW __attribute__(( noreturn ));
+
     __typeof__( ::pselect ) *RealRtn::pselect;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
@@ -1702,7 +1703,7 @@ namespace UPP {
 
     uSerialConstructor::~uSerialConstructor() {
 	uDEBUGPRT( uDebugPrt( "(uSerialConstructor &)%p.~uSerialConstructor\n", this ); )
-	if ( f == uYes && ! std::uncaught_exception() ) {
+	if ( f == uYes && ! std::__U_UNCAUGHT_EXCEPTION__() ) {
 	    uBaseTask &task = uThisTask();		// optimization
 
 	    task.setSerial( *serial.prevSerial );	// reset previous serial
@@ -1742,7 +1743,7 @@ namespace UPP {
 		} // if
 		task.currSerialLevel -= 1;
 	    )
-	    if ( std::uncaught_exception() ) {
+	    if ( std::__U_UNCAUGHT_EXCEPTION__() ) {
 		serial.leave( mr );
 	    } else {
 #ifdef __U_PROFILER__
@@ -1837,7 +1838,7 @@ namespace UPP {
 	if ( acceptor ) {				// not cancelled by uRendezvousAcceptor ?
 	    acceptor->acceptedCall = nullptr;		// accepted mutex member terminates
 	    // raise a concurrent exception at the acceptor
-	    if ( std::uncaught_exception() && noUserOverride && ! serial.notAlive && acceptorSuspended ) {
+	    if ( std::__U_UNCAUGHT_EXCEPTION__() && noUserOverride && ! serial.notAlive && acceptorSuspended ) {
 		// Return the acceptor only when the acceptor remains suspended and the mutex object has yet to be
 		// destroyed, otherwise return a null reference.  Side-effect: prevent the kernel from resuming
 		// (_Resume) a concurrent exception at the suspended acceptor if the rendezvous terminates with an
@@ -2263,8 +2264,8 @@ void UPP::uKernelBoot::finishup() {
     ((uBootTask *)uKernelModule::bootTask)->uBootTask::~uBootTask();
 
     // Clean up storage associated with the boot task by pthread-like thread-specific data (see ~uTaskMain). Must occur
-    // *after* all calls that might call std::uncaught_exception, otherwise the exception data-structures are created
-    // again for the task. (Note: ~uSerialX members call std::uncaught_exception).
+    // *after* all calls that might call std::uncaught_exceptions, otherwise the exception data-structures are created
+    // again for the task. (Note: ~uSerialX members call std::uncaught_exceptions).
 
     if ( ((uBootTask *)uKernelModule::bootTask)->pthreadData != nullptr ) {
 	pthread_deletespecific_( ((uBootTask *)uKernelModule::bootTask)->pthreadData );

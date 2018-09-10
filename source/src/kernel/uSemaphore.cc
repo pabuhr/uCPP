@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 18 07:37:45 2017
-// Update Count     : 120
+// Last Modified On : Thu May 10 18:35:51 2018
+// Update Count     : 125
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -69,7 +69,7 @@ namespace UPP {
     } // uSemaphore::waitTimeout
 
 
-    void uSemaphore::P() {				// wait on a semaphore
+    void uSemaphore::P() {				// semaphore wait
 	spinLock.acquire();
 	count -= 1;
 	if ( count < 0 ) {
@@ -83,13 +83,23 @@ namespace UPP {
 	} // if
     } // uSemaphore::P
 
+    void uSemaphore::P( uintptr_t info ) {		// semaphore wait
+	uThisTask().info = info;			// store the information with this task
+	P();
+    } // uSemaphore::P
 
-    bool uSemaphore::P( uDuration duration ) {		// wait on a semaphore
+
+    bool uSemaphore::P( uDuration duration ) {		// semaphore wait
+	return P( uThisProcessor().getClock().getTime() + duration );
+    } // uSemaphore::P
+
+    bool uSemaphore::P( uintptr_t info, uDuration duration ) { // semaphore wait
+	uThisTask().info = info;			// store the information with this task
 	return P( uThisProcessor().getClock().getTime() + duration );
     } // uSemaphore::P
 
 
-    bool uSemaphore::P( uTime time ) {			// wait on a semaphore
+    bool uSemaphore::P( uTime time ) {			// semaphore wait
 	spinLock.acquire();
 	count -= 1;
 	if ( count < 0 ) {
@@ -109,8 +119,13 @@ namespace UPP {
 	} // if
     } // uSemaphore::P
 
+    bool uSemaphore::P( uintptr_t info, uTime time ) {	// semaphore wait
+	uThisTask().info = info;			// store the information with this task
+	return P( time );
+    } // uSemaphore::P
 
-    void uSemaphore::P( uSemaphore &s ) {		// wait on a semaphore and release another
+
+    void uSemaphore::P( uSemaphore & s ) {		// semaphore wait and release another
 	spinLock.acquire();
 	if ( &s == this ) {				// perform operation on self ?
 	    if ( count < 0 ) {				// V my semaphore
@@ -130,13 +145,23 @@ namespace UPP {
 	} // if
     } // uSemaphore::P
 
+    void uSemaphore::P( uSemaphore & s, uintptr_t info ) { // semaphore wait and release another
+	uThisTask().info = info;			// store the information with this task
+	P( s );
+    } // uSemaphore::P
 
-    bool uSemaphore::P( uSemaphore &s, uDuration duration ) { // wait on semaphore and release another
+
+    bool uSemaphore::P( uSemaphore & s, uDuration duration ) { // wait on semaphore and release another
+	return P( s, uThisProcessor().getClock().getTime() + duration );
+    } // uSemaphore::P
+
+    bool uSemaphore::P( uSemaphore & s, uintptr_t info, uDuration duration ) { // wait on semaphore and release another
+	uThisTask().info = info;			// store the information with this task
 	return P( s, uThisProcessor().getClock().getTime() + duration );
     } // uSemaphore::P
 
 
-    bool uSemaphore::P( uSemaphore &s, uTime time ) {	// wait on semaphore and release another
+    bool uSemaphore::P( uSemaphore & s, uTime time ) {	// wait on semaphore and release another
 	spinLock.acquire();
 	if ( &s == this ) {				// perform operation on self ?
 	    if ( count < 0 ) {				// V my semaphore
@@ -165,8 +190,13 @@ namespace UPP {
 	} // if
     } //  uSemaphore::P
 
+    bool uSemaphore::P( uSemaphore & s, uintptr_t info, uTime time ) { // wait on semaphore and release another
+	uThisTask().info = info;			// store the information with this task
+	return P( s, time );
+    } //  uSemaphore::P
 
-    bool uSemaphore::TryP() {				// conditionally wait on a semaphore
+
+    bool uSemaphore::TryP() {				// conditional semaphore wait
 	spinLock.acquire();
 	if ( count > 0 ) {
 	    count -= 1;
@@ -213,6 +243,16 @@ namespace UPP {
 	} // for
 	spinLock.release();
     } // uSemaphore::V
+
+    uintptr_t uSemaphore::front() const {		// return task information
+	uDEBUG(
+	    if ( waiting.empty() ) {			// condition queue must not be empty
+		abort( "Attempt to access user data on an empty semaphore lock.\n"
+		       "Possible cause is not checking if the condition lock is empty before reading stored data." );
+	    } // if
+	    )
+	    return waiting.head()->task().info;		// return condition information stored with blocked task
+    } // uCondition::front
 } // UPP
 
 // Local Variables: //

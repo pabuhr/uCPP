@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sat Dec 23 09:08:23 2017
-%% Update Count     : 7363
+%% Last Modified On : Sat Sep  8 17:04:07 2018
+%% Update Count     : 7385
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2344,16 +2344,29 @@ class uSemaphore {
   public:
 	uSemaphore( int count = 1 );
 	void P();
+	void P( uintptr_t info );
 	bool P( uDuration duration );
+	bool P( uintptr_t info, uDuration duration );
 	bool P( uTime time );
+	bool P( uintptr_t info, uTime time );
+%]
+%[
 	void P( uSemaphore &s );
+	void P( uSemaphore & s, uintptr_t info );
 	bool P( uSemaphore &s, uDuration duration );
+	bool P( uSemaphore & s, uintptr_t info, uDuration duration );
 	bool P( uSemaphore &s, uTime time );
+	bool P( uSemaphore & s, uintptr_t info, uTime time );
 	bool TryP();
+%]
+%[
+	uintptr_t front() const;
 	void V( int times = 1 );
 	int counter() const;
 	bool empty() const;
 };
+%]
+%[
 uSemaphore x, y(1), *z;
 z = new uSemaphore(4);
 %]
@@ -2380,6 +2393,12 @@ the two operations occur atomically.
 If %(P%) is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been %(V%)ed;
 this form of %(P%) returns %(true%) if the waiting task is %(V%)ed and %(false%) otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types %(uDuration%) and %(uTime%).)
+The member routine %(front%)\index{front@%(front%)} returns an integer value stored with the waiting task at the front of the condition queue.
+It is an error to examine the front of an empty condition-lock queue;
+therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
+%[
+if ( ! DiskNotIdle.empty() && DiskNotIdle.front() == 1 ) ...
+%]
 The member routine %(TryP%)\index{TryP@%(TryP%)} attempts to acquire the semaphore but does not block.
 %(TryP%) returns %(true%) if the semaphore is acquired and %(false%) otherwise.
 %(V%)\index{V@%(V%)} wakes up the task blocked for the longest time if there are tasks blocked on the semaphore and increments the semaphore counter.
@@ -2515,10 +2534,10 @@ class uCondLock {
 	bool wait( uOwnerLock &lock, uintptr_t info, uDuration duration );
 	bool wait( uOwnerLock &lock, uTime time );
 	bool wait( uOwnerLock &lock, uintptr_t info, uTime time );
+	uintptr_t front() const;
 	bool signal();
 	bool broadcast();
 	bool empty();
-	uintptr_t front() const;
 };
 uCondLock x, y, *z;
 z = new uCondLock;
@@ -2536,6 +2555,12 @@ in addition, the %(wait%) routine re-acquires its argument owner-lock before ret
 If %(wait%) is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled;
 this form of %(wait%) returns %(true%) if the task is signalled and %(false%) otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types %(uDuration%) and %(uTime%).)
+The member routine %(front%)\index{front@%(front%)} returns an integer value stored with the waiting task at the front of the condition queue.
+It is an error to examine the front of an empty condition-lock queue;
+therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
+%[
+if ( ! DiskNotIdle.empty() && DiskNotIdle.front() == 1 ) ...
+%]
 The %(signal%) routine checks if there is a waiting task, and if so, unblocks a waiting task from the queue of the condition lock;
 waiting tasks are released in FIFO order.
 The %(signal%) routine can be safely called without acquiring any owner lock associated with tasks waiting on the condition.
@@ -2543,12 +2568,6 @@ The %(broadcast%) routine is the same as the %(signal%) routine, except all wait
 For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing, and returns %(false%);
 otherwise, %(true%) is returned indicating a signalled task(s).
 The member routine %(empty%)\index{empty@%(empty%)} returns %(false%) if there are tasks blocked on the queue and %(true%) otherwise.
-The member routine %(front%)\index{front@%(front%)} returns an integer value stored with the waiting task at the front of the condition queue.
-It is an error to examine the front of an empty condition-lock queue;
-therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
-%[
-if ( ! DiskNotIdle.empty() && DiskNotIdle.front() == 1 ) ...
-%]
 
 It is \emph{not} meaningful to read or to assign to a lock variable, or copy a lock variable (e.g., pass it as a value parameter).
 
@@ -2563,13 +2582,9 @@ The type %(uBarrier%)\index{uBarrier@%(uBarrier%)} defines a barrier:
 _Mutex _Coroutine uBarrier {
   protected:
 	void main() {
-		for ( ;; ) {
-			suspend();
-		}
+		for ( ;; ) { suspend(); }
 	}
-	virtual void last() {
-		resume();
-	}
+	virtual void last() { resume(); }
   public:
 	uBarrier( unsigned int total );
 	_Nomutex unsigned int total() const;
@@ -3057,7 +3072,7 @@ In general, a future is generic in the type of the return value and acts as a su
 Instead of making two calls to send arguments and then retrieve the result, a single call is made and a future representing the result is returned immediately.
 The client continues execution as if the call had returned an actual result.
 The future is filled in at some later time (in the ``future''), after the server calculates the result.
-If the client tries to use the future before a result is inserted, the client implicitly blocks and is subsequently unblocked by the server after it insertions a result in the future.
+If the client tries to use the future before a result is inserted, the client implicitly blocks and is subsequently unblocked by the server after it inserts a result in the future.
 Hence, there is no explicit protocol between client and server to retrieve a result;
 the protocol is implicit within the future.
 
@@ -3068,7 +3083,7 @@ The advantage of %(Future_ESM%) is that it allows the programmer to choose the m
 The disadvantage of %(Future_ESM%) is that the client must ensure that the future is deallocated, but not before the server thread has inserted the result (or the operation has been cancelled).
 
 There is a basic set of common operations available on both types of futures.
-These consist of client operations, used by a client task to retrieve the return value, and server operations, used by a server task to fill in the value.
+These consist of client operations, used by a client task to retrieve the return value or cancel the computation, and server operations, used by a server task to fill in the value.
 
 
 \subsection{Client Operations}
@@ -3082,7 +3097,7 @@ Note, the call can complete because a result is available, because the server ha
 -- (function call) returns a copy of the future result.
 The client blocks if the future result is currently unavailable.
 If an exception is returned by the server, that exception is thrown.
-A future result can be retrieved multiple times by any task until the future is reset or destroyed.
+A future result (or exception) can be retrieved multiple times by any task until the future is reset or destroyed.
 \item[%(operator T%)]
 -- (conversion to type T) returns a copy of the future result.
 \Emph{This kind of access must be performed only after a blocking access, or after a call to %(available%) returns %(true%).}
@@ -3095,6 +3110,7 @@ As with %(operator()%), if the server returns an exception, that exception is th
 -- attempts to cancel the asynchronous call associated with the future.
 All clients waiting for the result are unblocked, and an exception of type %(uCancellation%) is thrown at any client attempting to access the result.
 Depending on the server, this operation may also have the effect of preventing the requested computation from starting, or it may interrupt the computation in progress.
+If the computation cannot be interrupted, the call may block until the computation is finished.
 \end{sloppypar}
 \end{prefix}
 
@@ -3124,7 +3140,7 @@ exception deleted by %(reset%) or when future deleted
 -- same as member %(exception%).
 \end{prefix}
 
-A server may require storage to buffer call arguments and other data needed for cancellation of futures.
+A server may require storage to buffer call arguments and other data needed for delivery or cancellation of futures.
 This storage is allocated as part of the future;
 hence, the future may also be generic in the type of server-management data.
 A server exports this type information for use with a future (see \VRef{s:Servers}).
@@ -3135,7 +3151,7 @@ In both cases, the server does not insert a result into the future.
 If the server computation cannot be interrupted, the server may deliver a result even though the future has been cancelled.
 
 An ESM future's %(cancel%) member cannot return until it is known that the server no longer references the cancelled future because the future's storage may be deallocated.
-Therefore, the server must inform the future if it will or will not not deliver a value, by supplying a member in the %(ServerData%) type with the following interface:
+Therefore, the server must inform the future if it will or will not deliver a value, by supplying a member in the %(ServerData%) type with the following interface:
 %[
 bool cancel();
 %]
@@ -6345,7 +6361,8 @@ The default unexpected-handler for each coroutine/task calls the %(terminate%) r
 
 \subsection{\texorpdfstring{\BGfont uncaught\_exception}{uncaught\_exception}}
 
-The %(uncaught_exception%)\index{uncaught_exception@%(uncaught_exception%)} routine returns true if propagation is in progress.
+The %(uncaught_exception%)\index{uncaught_exception@%(uncaught_exception%)} routine returns true if propagation is in progress.\footnote{
+\CC{17} depreciates %(uncaught_exception%) with %(uncaught_exceptions%) (notice the plural), which returns the number of uncaught exception objects, so greater than 0 implies propagation is in progress.}
 In a \uC program, the result of this routine is specific to the coroutine/task that raises the exception.
 Hence, the occurrence of propagation in one coroutine/task is independent of that occurring in any other coroutine/task.
 For example, a destructor may not raise a new exception if it is invoked during propagation;
@@ -6353,7 +6370,7 @@ if it does, the %(terminate%) routine is called.
 It is possible to use %(uncaught_exception%) to check for this case and handle it differently from normal destructor execution, e.g.:
 %[
 ~T() {	// destructor
-	if ( ... && ! uncaught_exception() ) {	// prevent propagation problem
+	if ( ... && ! uncaught_exceptions() ) {	// prevent propagation problem
 		// raise an exception because cleanup problem
 	} else {
 		// cleanup as best as possible
@@ -7102,22 +7119,24 @@ To use assertions in a \uC program, include the file:
 \subsection{Termination}
 \label{s:Termination}
 
-A \uC program can be terminated due to a failure using the UNIX routine %(abort%)\index{abort@%(abort%)}, which stops all thread execution and generates a core file for subsequent debugging (assuming the shell limits allow a core file to written).
+A \uC program can be terminated without failure using the UNIX routine %(exit%)\index{exit@%(exit%)}, which stops all thread execution and returns a status code to the invoking shell.
+To terminate a program \emph{and} print an error message, use the \uC free routine %(exit%):
+%[
+void exit( int status, const char * format, ... )
+%]
+%(format%) is a string containing text to be printed and %(printf%)\index{printf@%(printf%)} style format codes describing how to print the following variable number of arguments.
+The number of elements in the variable argument list must match with the number of format codes, as for %(printf%).
+Note, when %(exit%) is used to terminate a program, all global destructors are still executed.
+Any tasks, clusters, or processors not deleted by this point \Emph{are not flagged with an error}, unlike normal program termination.
+
+A \uC program can be terminated with a failure using the UNIX routine %(abort%)\index{abort@%(abort%)}, which stops all thread execution and generates a core file for subsequent debugging (assuming the shell limits allow a core file to written).
 To terminate a program, generate a core file, \emph{and} print an error message, use the \uC free routine %(abort%):
 %[
 void abort( const char * format, ... )
 %]
-\index{abort@%(abort%)}%
 %(format%) is a string containing text to be printed and %(printf%)\index{printf@%(printf%)} style format codes describing how to print the following variable number of arguments.
 The number of elements in the variable argument list must match with the number of format codes, as for %(printf%).
-In addition to printing the user specified message, which normally describes the error, routine %(abort%) prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call.
-
-A \uC program can be terminated using the UNIX routine %(exit%)\index{exit@%(exit%)}, which stops all thread execution and returns a status code to the invoking shell:
-%[
-void exit( int status );
-%]
-Note, when %(exit%) is used to terminate a program, all global destructors are still executed.
-Any tasks, clusters, or processors not deleted by this point \Emph{are not flagged with an error}, unlike normal program termination.
+In addition to printing the user specified message, which normally describes the error, routine %(abort%) prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call, and a back-trace of the stack.
 
 
 \subsection{Messages}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:45:30 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 15:41:01 2018
-// Update Count     : 50
+// Last Modified On : Sat Sep  8 16:02:33 2018
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -225,9 +225,9 @@ namespace std {
 	if ( is_open() ) {
 	    try {
 		delete ufileacc;
-	    } catch( uFile::FileAccess::CloseFailure ) {
+	    } catch( uFile::FileAccess::CloseFailure & ) {
 		ufileacc = 0;
-		if ( ! std::uncaught_exception() ) throw;
+		if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) throw;
 	    } // try
 	    ufileacc = 0;
 	} // if

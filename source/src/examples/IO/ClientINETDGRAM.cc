@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:04:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 17:28:30 2017
-// Update Count     : 79
+// Last Modified On : Mon Jan  8 08:58:01 2018
+// Update Count     : 80
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -119,7 +119,7 @@ int main( int argc, char *argv[] ) {
 		Writer wr( client );							// emit worker to read from input and write to server
 	}
 	if ( wcnt != rcnt ) {
-		abort( "Error: client not all data transfered, wcnt:%d rcnt:%d", wcnt, rcnt );
+		abort( "Error: client not all data transferred, wcnt:%d rcnt:%d", wcnt, rcnt );
 	} // if
 } // main
 

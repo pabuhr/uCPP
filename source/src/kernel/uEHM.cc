@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  6 22:15:48 2017
-// Update Count     : 759
+// Last Modified On : Sat Sep  8 15:59:44 2018
+// Update Count     : 761
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -244,7 +244,7 @@ class uEHM::ResumeWorkHorseInit {
     ~ResumeWorkHorseInit() {
 	uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
 	coroutine.resumedObj = prevResumption;
-	if ( ! std::uncaught_exception() ) {		// update top, unless it's a forceful unwind
+	if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) {		// update top, unless it's a forceful unwind
 	    coroutine.topResumedType = prevResumption ? &typeid(prevResumption) : nullptr;
 	} // if
 	coroutine.handlerStackVisualTop = prevVisualTop;

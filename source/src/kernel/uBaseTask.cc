@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 16:23:56 2018
-// Update Count     : 313
+// Last Modified On : Sun Sep  9 21:02:20 2018
+// Update Count     : 319
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -106,7 +106,12 @@ uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBase
 			  this, f, &serial, &task, &piq, n, profile ); )
 
     if ( f == uYes ) {
-	task.startHere( (void (*)( uMachContext & ))uMachContext::invokeTask );
+#pragma GCC diagnostic push
+#if __GNUC__ >= 8					// valid GNU compiler diagnostic ?
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif // __GNUC__ >= 8
+	task.startHere( reinterpret_cast<void (*)( uMachContext & )>(uMachContext::invokeTask) );
+#pragma GCC diagnostic pop
 	task.name = n;
 	task.serial = &serial;			// set task's serial instance
 	task.setSerial( serial );
@@ -132,7 +137,7 @@ uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBase
 
 
 uBaseTask::uTaskConstructor::~uTaskConstructor() {
-    if ( f == uYes && std::uncaught_exception() ) {
+    if ( f == uYes && std::__U_UNCAUGHT_EXCEPTION__() ) {
 	// An exception was thrown during task construction. It is necessary to clean up constructor side-effects.
 
 	// Since no task could have been accepted, the acceptor/signaller stack should only contain this task.  It

@@ -153,7 +153,7 @@
 \L{\LB{\K{void}\0\V{DiskScheduler}::\V{main}()\0\{}}
 \L{\LB{}\Tab{4}{\V{uSeqIter}\<\V{WaitingRequest}\>\0\V{iter};}\Tab{56}{\C{}\1\1\0declared\0here\0because\0of\0gcc\0compiler\0bug}}
 \CE{}\L{\LB{}}
-\L{\LB{}\Tab{4}{\V{CurrentRequest}\0=\0\V{nullptr};}\Tab{60}{\C{}\1\1\0no\0current\0request\0at\0start}}
+\L{\LB{}\Tab{4}{\V{CurrentRequest}\0=\0\K{nullptr};}\Tab{60}{\C{}\1\1\0no\0current\0request\0at\0start}}
 \CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0;;\0)\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Accept}(\0\~\V{DiskScheduler}\0)\0\{}\Tab{56}{\C{}\1\1\0request\0from\0system}}
 \CE{}\L{\LB{}\Tab{12}{\K{break};}}
@@ -202,7 +202,7 @@
 \CE{}\L{\LB{\}\0\C{}\1\1\0DiskScheduler::DiskRequest}}
 \CE{}\L{\LB{}}
 \L{\LB{\V{IORequest}\0\V{DiskScheduler}::\V{WorkRequest}(\0\V{IOStatus}\0\V{status}\0)\0\{}}
-\L{\LB{}\Tab{4}{\K{if}\0(\0\V{CurrentRequest}\0!=\0\V{nullptr}\0)\0\{}\Tab{60}{\C{}\1\1\0client\0waiting\0for\0request\0to\0complete\0?}}
+\L{\LB{}\Tab{4}{\K{if}\0(\0\V{CurrentRequest}\0!=\0\K{nullptr}\0)\0\{}\Tab{60}{\C{}\1\1\0client\0waiting\0for\0request\0to\0complete\0?}}
 \CE{}\L{\LB{}\Tab{8}{\V{CurrentRequest}\-\>\V{status}\0=\0\V{status};}\Tab{56}{\C{}\1\1\0set\0request\0status}}
 \CE{}\L{\LB{}\Tab{8}{\V{CurrentRequest}\-\>\V{block}.\V{ignal}();}\Tab{56}{\C{}\1\1\0reactivate\0waiting\0client}}
 \CE{}\L{\LB{}\Tab{4}{\}\0\C{}\1\1\0if}}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 16:57:45 2018
-// Update Count     : 380
+// Last Modified On : Thu Sep  6 08:22:51 2018
+// Update Count     : 384
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -89,7 +89,7 @@ namespace UPP {
 			    struct {			// 32-bit word => 64-bit header, 64-bit word => 128-bit header
 				#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
 				uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
-				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
+				#endif // __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
 
 				union {
 				    FreeHeader * home;	// allocated block points back to home locations (must overlay alignment)
@@ -101,7 +101,7 @@ namespace UPP {
 
 				#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
 				    uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
-				#endif // __U_WORDSIZE__ == 32 && __U_WORDSIZE__ == 32
+				#endif // __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
 			    };
 			    #if BUCKLOCK == LOCKFREE
 			    Stack<Storage>::Link next;	// freed block points next freed block of same size (double-wide)
@@ -111,13 +111,13 @@ namespace UPP {
 		    struct FakeHeader {
 			#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
-			#endif // __BYTE_ORDER__
+			#endif // __ORDER_LITTLE_ENDIAN__
 
 			uint32_t offset;
 
 			#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
-			#endif // __BYTE_ORDER__
+			#endif // __ORDER_BIG_ENDIAN__
 		    } fake;
 		} kind;
 		#if defined( __U_PROFILER__ )
@@ -186,15 +186,15 @@ namespace UPP {
 	static unsigned int cmemalign_calls;
 	static unsigned long long int realloc_storage;
 	static unsigned int realloc_calls;
-	static int statfd;
+	static int stats_fd;
 	static void print();
 	#endif // __U_STATISTICS__
 
 	// The next variables are statically allocated => zero filled.
 
 	// must be first fields for alignment
-	FreeHeader freeLists[NoBucketSizes];		// buckets for different allocation sizes
 	uSpinLock extlock;				// protects allocation-buffer extension
+	FreeHeader freeLists[NoBucketSizes];		// buckets for different allocation sizes
 
 	void * heapBegin;				// start of heap
 	void * heapEnd;					// logical end of heap
@@ -210,10 +210,10 @@ namespace UPP {
 	bool headers( const char * name, void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment );
 	void * extend( size_t size );
 	void * doMalloc( size_t size );
-	static void * malloc2( size_t size ) __THROW;
+	static void * mallocNoStats( size_t size ) __THROW;
 	static void * memalign2( size_t alignment, size_t size ) __THROW;
 	void doFree( void * addr );
-	size_t checkFree( bool prt = false );
+	size_t prtFree();
 	uHeapManager();
 	~uHeapManager();
 

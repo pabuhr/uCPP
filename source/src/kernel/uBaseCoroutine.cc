@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 07:52:05 2017
-// Update Count     : 561
+// Last Modified On : Sun Sep  9 21:02:43 2018
+// Update Count     : 571
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,7 +58,7 @@ uBaseCoroutine::UnwindStack::UnwindStack( bool e ) : exec_dtor( e ) {
 } // uBaseCoroutine::UnwindStack::UnwindStack
 
 uBaseCoroutine::UnwindStack::~UnwindStack() {
-    if ( exec_dtor && ! std::uncaught_exception() ) { 	// if executed as part of an exceptional clean-up do nothing, otherwise terminate is called
+    if ( exec_dtor && ! std::__U_UNCAUGHT_EXCEPTION__() ) { 	// if executed as part of an exceptional clean-up do nothing, otherwise terminate is called
 	__cxxabiv1::__cxa_free_exception( this );	// if handler terminates and 'safety' is off, clean up the memory for old exception
 	_Throw UnwindStack( true );			// and throw a new exception to continue unwinding
     } // if
@@ -306,7 +306,7 @@ uBaseCoroutine::UnhandledException::UnhandledException( UnhandledException *caus
 } // uBaseCoroutine::UnhandledException::UnhandledException
 
 
-uBaseCoroutine::UnhandledException::UnhandledException( const uBaseCoroutine::UnhandledException &ex ) : Failure(), origFailedCor( ex.origFailedCor ) { 
+uBaseCoroutine::UnhandledException::UnhandledException( const uBaseCoroutine::UnhandledException &ex ) : Failure(), origFailedCor( ex.origFailedCor ) {
     memcpy( (void *)this, (void *)&ex, sizeof(*this) );	// relies on all fields having trivial copy constructors
     ex.cleanup = false;					// then prevent the original from deleting the cause
 } // uBaseCoroutine::UnhandledException::UnhandledException
@@ -359,7 +359,12 @@ void uBaseCoroutine::handleUnhandled( uBaseEvent *event ) {
 
 uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor( UPP::uAction f, UPP::uSerial &serial, uBaseCoroutine &coroutine, const char *name ) {
     if ( f == UPP::uYes ) {
-	coroutine.startHere( (void (*)( uMachContext & ))uMachContext::invokeCoroutine );
+#pragma GCC diagnostic push
+#if __GNUC__ >= 8					// valid GNU compiler diagnostic ?
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif // __GNUC__ >= 8
+	coroutine.startHere( reinterpret_cast<void (*)( uMachContext & )>(uMachContext::invokeCoroutine) );
+#pragma GCC diagnostic pop
 	coroutine.name = name;
 	coroutine.serial = &serial;			// set cormonitor's serial instance
 

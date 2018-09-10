@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 26 08:43:49 2017
-// Update Count     : 15
+// Last Modified On : Tue Feb 27 15:29:56 2018
+// Update Count     : 16
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -82,7 +82,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ ring-size (> 0) [ rounds (> 0) ] ]" << endl;
-	exit( 1 );
+	exit( EXIT_FAILURE );
     } // try
 
     Passer *passers[RingSize];				// actors in cycle

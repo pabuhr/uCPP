@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 09:57:32 2017
-// Update Count     : 2
+// Last Modified On : Tue Feb 27 15:36:06 2018
+// Update Count     : 3
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -166,7 +166,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ nHost (> 0) [ nCham (> 0) ] ]" << endl;
-	exit( 1 );
+	exit( EXIT_SUCCESS );
     } // try
 
     new Mall( nHost, nCham );

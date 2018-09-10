@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:42:34 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:00:27 2017
-// Update Count     : 31
+// Last Modified On : Thu Apr 26 18:13:39 2018
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,7 +52,7 @@ void Mary::main() {
 		_Enable {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
-	} catch ( john.Fred fred ) {
+	} catch ( john.Fred & fred ) {
 		assert( &john == fred.getOriginalThrower() );
 		assert( &john == &fred.source() );
 		assert( fred.k == 84 ); 
@@ -67,7 +67,7 @@ void John::main() {
 		_Enable {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
-	} catch ( mary.Fred fred ) {
+	} catch ( mary.Fred & fred ) {
 		assert( &mary == fred.getOriginalThrower() );
 		assert( &mary == &fred.source() );
 		assert( fred.k == 42 ); 

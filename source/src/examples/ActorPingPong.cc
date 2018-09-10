@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 26 08:43:28 2017
-// Update Count     : 4
+// Last Modified On : Tue Feb 27 15:36:04 2018
+// Update Count     : 5
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,7 +86,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ cycles (> 0) ]" << endl;
-	exit( 1 );
+	exit( EXIT_SUCCESS );
     } // try
 
     Ping *ping = new Ping( Cycles );

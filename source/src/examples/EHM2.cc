@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:09 2016
-// Update Count     : 41
+// Last Modified On : Thu Apr 26 18:07:56 2018
+// Update Count     : 42
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,7 +51,7 @@ _Task fred {
 	if ( i == 0 ) {
 	    try {
 		r( 5 );
-	    } catch( xxx e ) {
+	    } catch( xxx & e ) {
 		assert( e.tid == &uThisTask() );
 		_Throw;
 	    }
@@ -64,7 +64,7 @@ _Task fred {
 	if ( i == 0 ) {
 	    try {
 		s( 5 );
-	    } catch( xxx e ) {
+	    } catch( xxx & e ) {
 		assert( e.tid == &uThisTask() );
 		_Throw yyy( &uThisTask() );
 	    }
@@ -78,7 +78,7 @@ _Task fred {
 //	for ( int i = 0; i < 5; i += 1 ) {
 	    try {
 		t( 5 );
-	    } catch( yyy e ) {
+	    } catch( yyy & e ) {
 		assert( e.tid == &uThisTask() );
 	    } // try
 	} // for

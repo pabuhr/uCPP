@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:04:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  6 07:40:34 2017
-// Update Count     : 384
+// Last Modified On : Sat Sep  8 16:02:25 2018
+// Update Count     : 386
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -341,7 +341,7 @@ _Monitor uSocketServer : public uSocketIO {
 
     virtual ~uSocketServer() {
 	if ( acceptorCnt != 0 ) {
-	    if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, EINVAL, acceptorCnt, "closing socket server with outstanding acceptor(s)" );
+	    if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw CloseFailure( *this, EINVAL, acceptorCnt, "closing socket server with outstanding acceptor(s)" );
 	} // if
 	delete saddr;
     } // uSocketServer::~uSocketServer

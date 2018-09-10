@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 16:21:52 2018
-// Update Count     : 991
+// Last Modified On : Mon Jul 30 21:09:56 2018
+// Update Count     : 1016
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -113,6 +113,17 @@ void gen_base_clause( token_t *before, symbol_t *symbol ) {
 	} else if ( symbol->data->key == ACTOR ) {
 	    gen_code( next, "public uActorType <" );
 	    gen_code( next, symbol->hash->text );
+	    // check for template arguments and add them
+	    if ( symbol->data->attribute.plate ) {
+		gen_code( next, "<" );
+		token_t *locn = next;			// reverse stack order of template names
+		for ( local_t *tnames = symbol->data->attribute.plate->endT;; tnames = tnames->link ) {
+		    locn = gen_code( locn, tnames->kind.sym->hash->text );
+		  if ( ! tnames->link ) break;
+		    locn = gen_code( locn, "," );	// separator
+		} // for
+		gen_code( next, ">" );
+	    }
 	    gen_code( next, ">" );
 	} // if
 
@@ -246,12 +257,27 @@ void gen_main_suffix( token_t *before, symbol_t *symbol ) {
 } // gen_main_suffix
 
 
+static bool gen_actor_prestart( symbol_t *symbol ) {
+    if ( symbol->data->table ) {			// local members ?
+	// search for preStart routine, and create constructor to send preStart message
+	for ( local_t *p = symbol->data->table->local; p; p = p->link ) {
+	    if ( ! p->tblsym && strcmp( p->kind.sym->hash->text, "preStart" ) == 0 ) {
+		return true;
+	    } // if
+	} // for
+	// no preStart member, so do not generate constructor/destructor
+	return false;
+    } // if
+    return false;
+} // gen_actor_prestart
+
+
 void gen_constructor_parameter( token_t *before, symbol_t *symbol, bool defarg ) {
     uassert( before != nullptr );
     uassert( before->value == ')' );
     uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || ( symbol->data->key == ACTOR && gen_actor_prestart( symbol ) ) ) {
 	token_t *prev = before->prev_parse_token();
 	uassert( prev != nullptr );
 
@@ -319,7 +345,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	    gen_code( before, ", false" );
 	} // if
 	gen_code( before, ") ;" );
-    } else if ( symbol->data->key == ACTOR ) {
+    } else if ( symbol->data->key == ACTOR && gen_actor_prestart( symbol ) ) {
 	gen_code( before, "uActor :: uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
     } // if
 } // gen_constructor_prefix

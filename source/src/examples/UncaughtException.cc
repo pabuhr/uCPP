@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:14:42 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:05:14 2017
-// Update Count     : 5
+// Last Modified On : Sat Sep  8 15:59:16 2018
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,7 +43,7 @@ _Task T2 {
     void main() {
 	for( ;; ) {
 	    _Accept( ~T2 ) break;
-	    assert( ! std::uncaught_exception() );
+	    assert( ! std::__U_UNCAUGHT_EXCEPTION__() );
 	    yield();
 	} // for
     } // T2::main

@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 22:52:49 2017
-// Update Count     : 208
+// Last Modified On : Mon Sep  3 14:49:48 2018
+// Update Count     : 222
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -66,14 +66,14 @@ void checkEnv( const char *args[], int &nargs ) {
 
     value = getenv( "__U_GCC_MACHINE__" );
     if ( value != nullptr ) {
-	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
+	args[nargs] = ( *new string( value ) ).c_str(); // pass argument along
 	uDEBUGPRT( cerr << "env arg:\"" << args[nargs] << "\"" << endl; )
 	nargs += 1;
     } // if
 
     value = getenv( "__U_GCC_VERSION__" );
     if ( value != nullptr ) {
-	args[nargs] = ( *new string( value ) ).c_str(); // pass the argument along
+	args[nargs] = ( *new string( value ) ).c_str(); // pass argument along
 	uDEBUGPRT( cerr << "env arg:\"" << args[nargs] << "\"" << endl; )
 	nargs += 1;
     } // if
@@ -99,7 +99,6 @@ void sigTermHandler( int ) {
 
 void Stage1( const int argc, const char * const argv[] ) {
     int code;
-    int i;
 
     string arg;
     string bprefix;
@@ -120,15 +119,17 @@ void Stage1( const int argc, const char * const argv[] ) {
     signal( SIGTERM, sigTermHandler );
 
     uDEBUGPRT( cerr << "Stage1" << endl; )
-
-    // process all the arguments
-
     checkEnv( args, nargs );				// arguments passed via environment variables
+    uDEBUGPRT(
+	for ( int i = 1; i < argc; i += 1 ) {
+	    cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
+	} // for
+    )
 
-    for ( i = 1; i < argc; i += 1 ) {
-	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
+    // process command-line arguments
+
+    for ( int i = 1; i < argc; i += 1 ) {
 	arg = argv[i];
-	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
 	if ( prefix( arg, "-" ) ) {
 	    // strip g++ flags that are inappropriate or cause duplicates in subsequent passes
 
@@ -172,11 +173,11 @@ void Stage1( const int argc, const char * const argv[] ) {
 	    } else if ( arg == "-D" && ( string( argv[i + 1] ) == "__U_YIELD__" || string( argv[i + 1] ) == "__U_VERIFY__" || string( argv[i + 1] ) == "__U_PROFILE__" || string( argv[i + 1] ) == "__U_STD_CPP11__" ) ) {
 		args[nargs] = argv[i];			// pass the flag along to cpp
 		nargs += 1;
-		args[nargs] = argv[i + 1];		// pass the argument along to cpp
+		args[nargs] = argv[i + 1];		// pass argument along to cpp
 		nargs += 1;
 		uargs[nuargs] = argv[i];		// pass the flag along to upp
 		nuargs += 1;
-		uargs[nuargs] = argv[i + 1];		// pass the argument along to upp
+		uargs[nuargs] = argv[i + 1];		// pass argument along to upp
 		nuargs += 1;
 		i += 1;					// and the argument
 
@@ -196,14 +197,14 @@ void Stage1( const int argc, const char * const argv[] ) {
 		     arg == "-include" || arg == "-imacros" || arg == "-idirafter" || arg == "-iprefix" ||
 		     arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ) {
 		    i += 1;
-		    args[nargs] = argv[i];		// pass the argument along
+		    args[nargs] = argv[i];		// pass argument along
 		    nargs += 1;
 		    uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 		} else if ( arg == "-MD" || arg == "-MMD" ) {
 		    args[nargs] = "-MF";		// insert before file
 		    nargs += 1;
 		    i += 1;
-		    args[nargs] = argv[i];		// pass the argument along
+		    args[nargs] = argv[i];		// pass argument along
 		    nargs += 1;
 		    uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 		} // if
@@ -224,7 +225,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
     uDEBUGPRT(
 	cerr << "args:";
-	for ( i = 1; i < nargs; i += 1 ) {
+	for ( int i = 1; i < nargs; i += 1 ) {
 	    cerr << " " << args[i];
 	} // for
 	if ( cpp_in != nullptr ) cerr << " " << cpp_in;
@@ -254,7 +255,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	uDEBUGPRT(
 	    cerr << "nargs: " << nargs << endl;
-	    for ( i = 0; args[i] != nullptr; i += 1 ) {
+	    for ( int i = 0; args[i] != nullptr; i += 1 ) {
 		cerr << args[i] << " ";
 	    } // for
 	    cerr << endl;
@@ -297,7 +298,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	uDEBUGPRT(
 	    cerr << "cpp nargs: " << nargs << endl;
-	    for ( i = 0; args[i] != nullptr; i += 1 ) {
+	    for ( int i = 0; args[i] != nullptr; i += 1 ) {
 		cerr << args[i] << " ";
 	    } // for
 	    cerr << endl;
@@ -342,7 +343,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 	uDEBUGPRT(
 	    cerr << "u++-cpp nuargs: " << o_name << " " << upp_flag << " " << nuargs << endl;
-	    for ( i = 0; uargs[i] != nullptr; i += 1 ) {
+	    for ( int i = 0; uargs[i] != nullptr; i += 1 ) {
 		cerr << uargs[i] << " ";
 	    } // for
 	    cerr << endl;
@@ -370,8 +371,6 @@ void Stage1( const int argc, const char * const argv[] ) {
 
 
 void Stage2( const int argc, const char * const * argv ) {
-    int i;
-
     string arg;
 
     const char *cpp_in = nullptr;
@@ -380,12 +379,16 @@ void Stage2( const int argc, const char * const * argv ) {
     int nargs = 1;					// number of arguments in args list; 0 => command name
 
     uDEBUGPRT( cerr << "Stage2" << endl; )
+    checkEnv( args, nargs );				// arguments passed via environment variables
+    uDEBUGPRT(
+	for ( int i = 1; i < argc; i += 1 ) {
+	    cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
+	} // for
+    )
 
     // process all the arguments
 
-    checkEnv( args, nargs );				// arguments passed via environment variables
-
-    for ( i = 1; i < argc; i += 1 ) {
+    for ( int i = 1; i < argc; i += 1 ) {
 	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	arg = argv[i];
 	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
@@ -409,7 +412,7 @@ void Stage2( const int argc, const char * const * argv ) {
 		nargs += 1;
 		if ( arg == "-o" ) {
 		    i += 1;
-		    args[nargs] = argv[i];		// pass the argument along
+		    args[nargs] = argv[i];		// pass argument along
 		    nargs += 1;
 		    uDEBUGPRT( cerr << "arg:\"" << argv[i] << "\"" << endl; )
 		} // if
@@ -427,7 +430,7 @@ void Stage2( const int argc, const char * const * argv ) {
 
     uDEBUGPRT(
 	cerr << "args:";
-	for ( i = 1; i < nargs; i += 1 ) {
+	for ( int i = 1; i < nargs; i += 1 ) {
 	    cerr << " " << args[i];
 	} // for
 	cerr << endl;
@@ -449,7 +452,7 @@ void Stage2( const int argc, const char * const * argv ) {
 
     uDEBUGPRT(
 	cerr << "stage2 nargs: " << nargs << endl;
-	for ( i = 0; args[i] != nullptr; i += 1 ) {
+	for ( int i = 0; args[i] != nullptr; i += 1 ) {
 	    cerr << args[i] << " ";
 	} // for
 	cerr << endl;

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:06:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep  6 09:16:08 2017
-// Update Count     : 1087
+// Last Modified On : Sat Sep  8 16:01:17 2018
+// Update Count     : 1089
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,7 +86,7 @@ uSocket::~uSocket() {
       if ( retcode != -1 || errno != EINTR ) break;	// timer interrupt ?
     } // for
     if ( retcode == -1 ) {
-        if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, "unable to close socket" );
+        if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw CloseFailure( *this, errno, "unable to close socket" );
     } // if
 } // uSocket::~uSocket
 
@@ -693,7 +693,7 @@ void uSocketAccept::close() {
     openAccept = false;
     if ( retcode == -1 ) {
 	// called from ~uSocketAccept()
-	if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, "unable to close socket acceptor" );
+	if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw CloseFailure( *this, errno, "unable to close socket acceptor" );
     } // if
 
     uDEBUGPRT( uDebugPrt( "(uSocketAccept &)%p.close, exit fd:%d\n", this, access.fd ); )
@@ -886,7 +886,7 @@ void uSocketClient::openTimeout( const char *const name, const unsigned short po
 void uSocketClient::closeTempFile( const char * msg ) {
     delete tmpnm;
     delete saddr;
-    if ( ! std::uncaught_exception() ) _Throw CloseFailure( *this, errno, msg );
+    if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw CloseFailure( *this, errno, msg );
 } // uSocketClient::closeTempFile
 
 

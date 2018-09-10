@@ -49,6 +49,10 @@ TMPDIR ?= /tmp
 CCBUILD ?= g++
 CCAPP ?= ${CCBUILD}
 
+## Define version of C++11 (-std=): c++11 (minimum), c++14, c++17, c++1y
+
+CPP11 ?= c++14
+
 ## Define name of the uC++ translator so multiple u++ versions can coexist.
 
 UPP ?= u++
@@ -62,10 +66,6 @@ MAXENTRYBITS ?= 128
 ## Define if the kernel is build with statistical counters
 
 STATISTICS ?= TRUE
-
-## Define version of C++11 (-std=): c++11 (minimum), c++14, c++17, c++1y
-
-CPP11 ?= c++14
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -218,7 +218,7 @@ configure :
 			exit 1 ; \
 		fi ; \
 		rm -f a.out $${tmpname} ; \
-		printf "found compiler ${CCAPP}\n" ; \
+		printf "found compiler ${CCAPP} and using -std=${CPP11}\n" ; \
 	else \
 		printf "compiler ${CCAPP} not found; possible cause compiler not installed\n" ; \
 		rm -f CONFIG ; \

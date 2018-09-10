@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 16:27:46 2018
-// Update Count     : 1063
+// Last Modified On : Thu Apr 26 18:16:01 2018
+// Update Count     : 1064
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -292,7 +292,7 @@ namespace UPP {
     inline int PthreadPid::create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg ) {
 	try {
 	    new Pthread( new_thread_id, start_func, attr, arg );
-	} catch ( ::uPthreadable::CreationFailure ) {
+	} catch ( ::uPthreadable::CreationFailure & ) {
 	    return EAGAIN;				// Pthread creation can only fail due to too many pthread instances
 	} // try
 

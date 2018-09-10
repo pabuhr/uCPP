@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:34:43 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:25 2016
-// Update Count     : 17
+// Last Modified On : Thu Apr 26 18:12:28 2018
+// Update Count     : 18
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -63,12 +63,12 @@ int main() {
 
     try {
 		m.foo();
-    } catch ( m.fred f ) {
+    } catch ( m.fred & f ) {
 		cout << "thrower: m " << f.k << endl;
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
 		abort( "wrong binding matched, should have been m" );
-    } catch ( fred f ) {
+    } catch ( fred & f ) {
 		cout << "unbound " << f.k << endl;
 		abort( "binding did not match, execution should have never reached here" );
     }
@@ -77,12 +77,12 @@ int main() {
 
     try {
 		j.bar();
-    } catch ( m.fred f ) {
+    } catch ( m.fred & f ) {
 		cout << "thrower: m " << f.k << endl;
 		abort( "wrong binding matched, should have been j" );
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
-    } catch ( fred f ) {
+    } catch ( fred & f ) {
 		cout << "unbound " << f.k << endl;
 		abort( "binding did not match, execution should have never reached here" );
     }
@@ -91,13 +91,13 @@ int main() {
 
     try {
 		foo();
-    } catch ( m.fred f ) {
+    } catch ( m.fred & f ) {
 		cout << "thrower: m " << f.k << endl;
 		abort( "wrong binding matched, should have been unbound" );
     } catch ( j.fred f ) {
 		cout << "thrower: j " << f.k << endl;
 		abort( "wrong binding matched, should have been unbound" );
-    } catch ( fred f ) {
+    } catch ( fred & f ) {
 		cout << "unbound " << f.k << endl;
     }
 
@@ -105,7 +105,7 @@ int main() {
 
 	try {
 		b.bar();
-    } catch ( j.fred f ) {
+    } catch ( j.fred & f ) {
 		cout << "thrower: j  " << f.k << endl;
 		abort( "wrong binding matched, should have been b" );
     } catch ( m.fred f ) {

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 08:54:13 2017
-// Update Count     : 51
+// Last Modified On : Thu Apr 26 18:09:36 2018
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -96,14 +96,14 @@ _Task T2 {
 				try {
 					_Resume D() _At uThisTask();
 					_Enable;
-				} catch( D ) {
+				} catch( D & ) {
 					osacquire( cout ) << "first" << endl;
 					_Resume _At uThisTask();
 					_Enable;
 				} catch (...) {
 					assert( false );
 				} // try
-			} catch( D ) {
+			} catch( D & ) {
 				osacquire( cout ) << "second" << endl;
 			}
 		}
@@ -111,7 +111,7 @@ _Task T2 {
 		{
 			try {
 				_Enable;
-			} catch( D ) {
+			} catch( D & ) {
 				osacquire( cout ) << "first" << endl;
 				_Resume _At partner;
 			}
@@ -186,7 +186,7 @@ int main() {
 				_Resume D() _At t;
 				uBaseTask::yield();						// let t run
 			}
-		} catch( D ) {
+		} catch( D & ) {
 			osacquire( cout ) << "second" << endl;
 		} // try
 	}

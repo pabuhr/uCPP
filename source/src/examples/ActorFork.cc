@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:05 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul  5 08:49:25 2017
-// Update Count     : 21
+// Last Modified On : Tue Feb 27 15:29:40 2018
+// Update Count     : 22
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -71,7 +71,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ maximum level (> 0) ]" << endl;
-	exit( 1 );
+	exit( EXIT_FAILURE );
     } // try
 
     PRT( cout << "MaxLevel " << MaxLevel << endl; )

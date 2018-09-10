@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 18:34:13 2018
-// Update Count     : 4741
+// Last Modified On : Sun Sep  9 12:00:25 2018
+// Update Count     : 4854
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -221,7 +221,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 	 prev2->value == CONST_CAST || prev2->value == DYNAMIC_CAST || prev2->value == REINTERPRET_CAST || prev2->value == STATIC_CAST ||
 	 ( prev2->value == IDENTIFIER && prev2->symbol != nullptr &&
 	   // This check may generate false positives because the translator does not always find all declarations.
-	   ( prev2->prev_parse_token()->value == TEMPLATE || prev2->symbol->data->key == MEMBER || prev2->symbol->data->key == ROUTINE ) ) ) {
+	   ( prev2->prev_parse_token()->value == TEMPLATE || prev2->symbol->data->key == TEMPLATEVAR || prev2->symbol->data->key == MEMBER || prev2->symbol->data->key == ROUTINE ) ) ) {
 	for ( ;; ) {
 	    if ( eof() ) break;
 	    if ( ! semicolon && check( ';' ) ) break;	// stop at end of statement (except "for" control clause and block/expression "{...)")
@@ -240,7 +240,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 		if ( ! match_closing( LB, RB ) ) break;
 	    } else if ( match( LA ) ) {
 		if ( ! match_closing( LA, RA, false, true, Type ) ) break; // set LessThan to true
-	    } else if ( stdcpp11 && left == LA && check( RSH ) ) {   // C++11 allows right-shift as closing delimiter for nested template
+	    } else if ( stdcpp11 && left == LA && check( RSH ) ) { // C++11 allows right-shift as closing delimiter for nested template
 		token_t *curr = ahead;
 		ahead = ahead->prev_parse_token();	// backup before >>
 		curr->remove_token();			// remove >>
@@ -313,8 +313,8 @@ static token_t *nested_name_specifier() {
 	    template_key();
 
 	    uassert( token->symbol != nullptr );
-	    uassert( token->symbol->data != nullptr );
-	    if ( check( COLON_COLON ) && ( token->symbol->typname || token->symbol->data->key != 0 ) ) { // type must have substructure
+	    // uassert( token->symbol->data != nullptr );
+	    if ( check( COLON_COLON ) && ( token->symbol->typname || ( token->symbol->data != nullptr && token->symbol->data->key != 0 ) ) ) { // type must have substructure
 		if ( token->symbol->data->key != 0 ) {
 		    uDEBUGPRT( print_focus_change( "nested_name_specifier3", focus, token->symbol->data->table ); )
 		    focus = token->symbol->data->table;
@@ -1640,18 +1640,19 @@ static bool select_statement( symbol_t *symbol ) {
 
 
 struct bound_t {
-    token_t *oleft, *oright;
-    token_t *exbegin;
-    symbol_t *extype;
-    token_t *idleft, *idright;
+    token_t *oleft = nullptr, *oright = nullptr;
+    token_t *exbegin = nullptr;
+    symbol_t *extype = nullptr;
+    token_t *idleft = nullptr, *idright = nullptr;
+    bool pointer = false;
 }; // bound_t
 
 
 typedef std::set<symbol_t *> symbolset;
 typedef std::list<token_t *> tokenlist;
 
-static bool exception_declaration( attribute_t &attribute, bound_t &bound );
-static bool bound_exception_declaration( bound_t &bound );
+static bool exception_declaration( attribute_t & attribute, bound_t & bound );
+static bool bound_exception_declaration( bound_t & bound, int kind );
 
 static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry, unsigned int handler, bound_t &bound, bool dotdotdot = false ) {
     char buffer[128];
@@ -1708,7 +1709,7 @@ static bool catchResume_clause( symbol_t *symbol, token_t *startTry, unsigned in
 	if ( match( LP ) ) {
 	    attribute_t attribute;
 	    token_t *dotdotdot = ahead;
-	    bound_t bound = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+	    bound_t bound;
 
 	    if ( exception_declaration( attribute, bound ) ) {
 		return catchResume_body( symbol, back, startTry, handler, bound );
@@ -1716,7 +1717,7 @@ static bool catchResume_clause( symbol_t *symbol, token_t *startTry, unsigned in
 		if ( catchany == UINT_MAX ) catchany = handler;
 		dotdotdot->remove_token();		// unnecessary in generated code
 		return catchResume_body( symbol, back, startTry, handler, bound, true );
-	    } else if ( bound_exception_declaration( bound ) ) {
+	    } else if ( bound_exception_declaration( bound, CATCHRESUME ) ) {
 		return catchResume_body( symbol, back, startTry, handler, bound );
 	    } // if
 	} else {
@@ -1761,7 +1762,7 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 		    return true;
 		} // if
 //		para_name = nullptr;			// prevent optimization
-	    } else if ( bound_exception_declaration( bound ) ) {
+	    } else if ( bound_exception_declaration( bound, CATCH ) ) {
 		token_t *p, *next;
 		token_t *start_catch;
 		hash_t *local_param_name = nullptr;
@@ -1780,7 +1781,9 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 			    break;
 			} // exit
 		    } // for
-		    gen_code( prefix, ") . getOriginalThrower ( ) ;" ); // >= & ( );
+		    gen_code( prefix, ")" );
+		    gen_code( prefix, bound.pointer ? "->" : "." );
+		    gen_code( prefix, "getOriginalThrower ( ) ;" );
 		    token_t *realend = prefix->prev_parse_token(); // remember for optimization part
 		    gen_code( prefix, "if ( _U_bindingVal == & (" );
 		    // Move the tokens for the bound object expression from the catch clause argument to the if
@@ -2090,7 +2093,7 @@ static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
 		    sprintf( helpText, "uEHM :: %s (", kindstr );
 		    gen_code( prefix, helpText );
 		    prefix = prefix->prev_parse_token();
-		    if ( symbol->data->found->symbol && ! symbol->data->attribute.dclqual.qual.STATIC ) { // not static member?
+		    if ( symbol->data->found != nullptr && symbol->data->found->symbol && ! symbol->data->attribute.dclqual.qual.STATIC ) { // not static member?
 			gen_code( suffix, ", this )" );	// object for bound
 		    } else {
 			gen_code( suffix, ")" );	// no object for bound
@@ -2322,9 +2325,7 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 	while ( statement( symbol ) );
 	prefix_labels( before, ahead, label, cnt, false );
 	delete pop_table();
-	if ( match( RC ) ) {
-	    return true;
-	} // if
+	if ( match( RC ) ) return true;
     } // if
 
     ahead = back; return false;
@@ -2662,9 +2663,8 @@ static void make_type( token_t *token, symbol_t *&symbol, table_t *locn = focus 
 } // make_type
 
 
-static bool template_qualifier( attribute_t &attribute );
-static token_t *declarator( attribute_t &attribute );
-static bool initializer();
+static bool template_qualifier( attribute_t & attribute );
+static token_t *declarator( attribute_t & attribute );
 
 // template-parameter:
 //    type-parameter
@@ -2723,7 +2723,7 @@ static bool template_parameter( attribute_t &attribute ) {
 	    symbol = token->symbol;
 	    uassert( symbol != nullptr );
 
-	    if ( symbol->data->found == attribute.plate ) {
+	    if ( symbol->data && symbol->data->found == attribute.plate ) {
 		// if the symbol already exists in the current symbol table as a type, verify that its kind is the same
 		// as the previous definition
 
@@ -2808,7 +2808,7 @@ static bool template_parameter( attribute_t &attribute ) {
  	declarator( attribute );
 	if ( attribute.startI != nullptr ) {		// named parameter ?
 	    uassert( attribute.startI->symbol != nullptr );
-	    if ( attribute.startI->symbol->data->found != focus ) {
+	    if ( attribute.startI->symbol->data != nullptr && attribute.startI->symbol->data->found != focus ) {
 		attribute.plate->insert_table( attribute.startI->symbol ); // insert the symbol into the template symbol
 	    } // if
 	} // if
@@ -3187,7 +3187,7 @@ static bool class_specifier( attribute_t &attribute ) {
 	    // specialization simply drops all local declarations from the previous one and starts again.  This hack
 	    // does not handle non-inline definitions of specialization members, as uC++ does not track the
 	    // specialization name that prefixes the non-inline definition.
-	    clss->symbol->data->attribute.plate = nullptr;	// free old storage ?
+	    clss->symbol->data->attribute.plate = nullptr; // free old storage ?
 	    clss->symbol->data->index = 1;		// reset mutex member counter
 	} // if
 
@@ -3903,7 +3903,7 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
     ahead = back; return false;
 } // copy_constructor
 
-
+static bool function_return_type( attribute_t &attribute );
 static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
@@ -3917,6 +3917,7 @@ static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
 	    rp = ahead->prev_parse_token();
 	    uassert( rp->value == ')' );
 	    cv_qualifier_list();			// optional post qualifiers
+	    function_return_type( attribute );		// optional user-defined deduction guide
 	    return token;
 	} // if
     } // if
@@ -4333,7 +4334,7 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 			} // if
 			gen_code( suffix->prev_parse_token(), "return 0 ;" ); // add return to prevent warning
 			function->hash = hash_table->lookup( "uCpp_main" ); // change routine name
-			gen_code( suffix, "void uMain :: main ( ) { uCpp_main (" ); // generate uMain::main
+			gen_code( suffix, "void uMain :: main ( ) { uRetCode = uCpp_main (" ); // generate uMain::main
 
 			if ( commas >= 1 ) {		// has argc, argv ?
 			    gen_code( suffix, "(" );
@@ -4563,9 +4564,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 
 		uassert( table != nullptr );
 
-		if ( table->defined ) {
-		    gen_constructor_parameter( rp, symbol, true );
-		} else {
+		if ( ! table->defined ) {
 		    // inline definition, do not know if mutex
 		    structor_t *structor = new structor_t;
 		    uassert( structor != nullptr );
@@ -4789,6 +4788,53 @@ static bool specifier_list( attribute_t &attribute ) {
 } // specifier_list
 
 
+static bool lambda() {
+    token_t *back = ahead;
+
+    if ( stdcpp11 && match( LB ) && match_closing( LB, RB ) ) {	// C++11 lambda
+	if ( match( LP ) && ! match_closing( LP, RP ) ) goto fini; // optional
+	for ( ;; ) {					// scan off return type
+	    if ( eof() ) break;
+	    if ( check( LC ) )  break;
+	    scan();
+	} // for
+	symbol_t symbol( IDENTIFIER, hash_table->lookup( "" ) ); // fake symbol
+	if ( compound_statement( &symbol, nullptr, 0 ) ) return true;
+    } // if
+  fini:
+    ahead = back; return false;
+} // lambda
+
+
+static bool initexpr() {
+    token_t *back = ahead;
+
+    lambda();
+    for ( ;; ) {					// scan off the expression
+	if ( eof() ) break;
+	if ( match( LP ) ) {
+	    if ( match_closing( LP, RP ) ) continue;
+	    goto fini;
+	} else if ( match( LA ) ) {
+	    if ( match_closing( LA, RA ) ) continue;
+	    goto fini;
+	} else if ( match( LC ) ) {
+	    if ( match_closing( LC, RC, true ) ) continue;
+	    goto fini;
+	} // if
+	if ( check( ',' ) ) return true;		// separator
+	if ( check( ';' ) ) return true;		// terminator
+	if ( check( RC ) ) return false;		// terminator
+	// must correctly parse type-names to allow the above match_closing check
+	if ( type() == nullptr ) {
+	    scan();
+	} // if
+    } // for
+  fini: ;
+    ahead = back; return false;
+} // initexpr
+
+
 // initializer:
 //    = initializerclause
 //    ( expressionlist )
@@ -4798,34 +4844,16 @@ static bool initializer() {
     token_t *back = ahead;
 
     if ( match( '=' ) ) {
-	for ( ;; ) {					// scan off the expression
-	  if ( eof() ) break;
-	  if ( match( LP ) ) {
-	      if ( match_closing( LP, RP ) ) continue;
-	      goto fini;
-	  } else if ( match( LA ) ) {
-	      if ( match_closing( LA, RA ) ) continue;
-	      goto fini;
-	  } else if ( match( LC ) ) {
-	      if ( match_closing( LC, RC, true ) ) continue;
-	      goto fini;
-	  } else if ( stdcpp11 && match( LB ) ) {	// lambda, C++11
-	      if ( match_closing( LB, RB ) ) continue;
-	      goto fini;
-	  } // if
-	  if ( check( ',' ) ) return true;		// separator
-	  if ( check( ';' ) ) return true;		// terminator
-	    // must correctly parse type-names to allow the above match_closing check
-	    if ( type() == nullptr ) {
-		scan();
-	    } // if
-	} // for
+	if ( match( LC ) ) {
+	    while ( initexpr() && match( ',' ) );
+	    if ( match( RC ) ) return true;
+	} else if ( initexpr() ) return true;
     } else if ( match( LP ) && match_closing( LP, RP ) ) { // constructor argument
 	return true;
-    } else if ( stdcpp11 && match( LC ) && match_closing( LC, RC ) ) { // C++11 uniform initialization
-	return true;
+    } else if ( stdcpp11 && match( LC ) ) {		// C++11 uniform initialization
+	while ( initexpr() && match( ',' ) );
+	if ( match( RC ) ) return true;
     } // if
-  fini: ;
     ahead = back; return false;
 } // initializer
 
@@ -4839,8 +4867,7 @@ static void declarator_list( attribute_t &attribute ) {
 	symbol = token->symbol;
 	// There is no separate namespace for structures so if target symbol of the typedef is already defined, assume
 	// it is a type, which is sufficient to parse declarations.
-	if ( attribute.dclkind.kind.TYPEDEF &&
-	     ( symbol->data->key == 0 || symbol->data->found != nullptr ) ) {
+	if ( attribute.dclkind.kind.TYPEDEF && ( symbol->data->key == 0 || symbol->data->found != nullptr ) ) {
 	    make_type( token, symbol );
 
 	    if ( attribute.typedef_base != nullptr ) {	// null => base type without substructure (e.g., "int")
@@ -4878,7 +4905,7 @@ static bool exception_declaration( attribute_t &attribute, bound_t &bound ) {
 } // exception_declaration
 
 
-static bool bound_exception_declaration( bound_t &b ) {
+static bool bound_exception_declaration( bound_t & bound, int kind ) {
     token_t *back = ahead;
     token_t *prefix;
 
@@ -4896,23 +4923,25 @@ static bool bound_exception_declaration( bound_t &b ) {
 	    // "identifier" with null symbols, and looked up again correctly in exception_declaration.
 	  if ( p->value == TYPE ) { p->value = IDENTIFIER; p->symbol = nullptr; }
 	} // for
-	b.idright = ahead;				// end of exception parameter (')')
+	bound.idright = ahead;				// end of exception parameter (')')
 	ahead = prefix;					// backup to the start of the exception declaration, excluding '('
 	attribute_t attribute;
 	while ( type_qualifier( attribute ) );		// scan off initial type qualifiers
-	b.oleft = ahead;				// start of bound object
-	b.oright = p->prev_parse_token();		// end of bound object, including dot
-	b.exbegin = p;					// start of exception type
-	ahead = b.exbegin;				// backup to the start of the exception type
-	token_t *name = type();				// properly parse the exception type (could contain '::')
-      if ( name == nullptr ) goto fini;			// bad type ?
-	b.extype = name->symbol;			// set the type of the exception parameter
-	b.idleft = ahead;				// start of exception parameter
-	// if ( b.idleft == b.idright ) {			// no exception parameter ?
-	//     // add a dummy exception parameter name to access the thrown object
-	//     b.idleft = gen_code( ahead, "_U_boundParm", IDENTIFIER );
-	// } // if
-	ahead = b.idright->next_parse_token();		// reset the parse location to after ')'
+	bound.oleft = ahead;				// start of bound object
+	bound.oright = p->prev_parse_token();		// end of bound object, including dot
+	bound.exbegin = p;				// start of exception type
+	ahead = bound.exbegin;				// backup to the start of the exception type
+	token_t * typ = type();				// properly parse the exception type (could contain '::')
+      if ( typ == nullptr ) goto fini;			// bad type ?
+	bound.extype = typ->symbol;			// set the type of the exception parameter
+	if ( match( '*' ) ) bound.pointer = true;	// scan off pointer/reference
+	else match( '&' );
+	bound.idleft = ahead;				// start of exception parameter
+	if ( bound.idleft == bound.idright && kind == CATCH ) {	// no exception parameter in catch clause ?
+	    // add a dummy exception parameter name to access the thrown object
+	    bound.idleft = gen_code( ahead, "_U_boundParm", IDENTIFIER );
+	} // if
+	ahead = bound.idright->next_parse_token();	// reset the parse location to after ')'
 	return true;
     } // if
   fini:
@@ -4942,10 +4971,18 @@ static bool object_declaration() {
     bool explict = specifier_list( attribute );
     if ( function_declaration( explict, attribute ) ) return true;
 
+    if ( ahead->value == IDENTIFIER && ahead->symbol && attribute.plate ) { // template variable ?
+	// SKULLDUGGERY: function_declaration (above) created a symbol table for this identifier, so use it.
+	// Template variable must be put in the symbol table to handle parsing of the template closing delimiter.
+	ahead->symbol->data->key = TEMPLATEVAR;
+	focus->lexical->insert_table( ahead->symbol );
+    } // if
+
     if ( attribute.typedef_base == nullptr ) {		// => not aggregate specifier, e.g., struct, class, etc.
 	if ( attribute.dclmutex.qual.mutex ) gen_error( ahead, "_Mutex must qualify a class or member routine." );
 	if ( attribute.dclmutex.qual.nomutex ) gen_error( ahead, "_Nomutex must qualify a class or member routine." );
     } // if
+
     declarator_list( attribute );
     if ( match( ';' ) ) {
 	if ( attribute.plate != nullptr ) {
@@ -5140,7 +5177,7 @@ static bool using_alias( attribute_t &attribute ) {
 	    specifier_list( attribute );
 	    uassert( token->symbol != nullptr );
 	    token->symbol->typname = typname;
-	    if ( function_declarator( attribute ) == ABSTRACT ) return true; // function prototype ?
+	    if ( formal_parameter( false, token, attribute ) ) return true; // function prototype ?
 
 	    if ( attribute.typedef_base == nullptr ) {	// => not aggregate specifier, e.g., struct, class, etc.
 		if ( attribute.dclmutex.qual.mutex ) gen_error( ahead, "_Mutex must qualify a class or member routine." );
@@ -5148,6 +5185,8 @@ static bool using_alias( attribute_t &attribute ) {
 	    } // if
 
 	    declarator( attribute );			// abstract
+	    match( '&' ) || match( AND_AND );		// optional
+
 	    if ( attribute.typedef_base != nullptr ) {	// null => base type without substructure (e.g., "int")
 		symbol->data = attribute.typedef_base->data;
 		symbol->copied = true;

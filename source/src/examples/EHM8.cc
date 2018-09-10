@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  1 17:36:50 2017
-// Update Count     : 82
+// Last Modified On : Sat Sep  8 15:50:51 2018
+// Update Count     : 86
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -87,6 +87,7 @@ void T3() {
     _Throw E2();
 }
 
+#if __cplusplus < 201703L // c++17
 // For backwards compatibility, keep testing dynamic-exception-specifiers until they are no longer supported.
 #pragma GCC diagnostic ignored "-Wdeprecated"
 
@@ -106,22 +107,23 @@ _Task mary {
     void main() {
 	try {
 	    _Accept( mem );
-	} catch( uMutexFailure::RendezvousFailure ) {
+	} catch( uMutexFailure::RendezvousFailure & ) {
 	    osacquire( cout ) << "mary::main 0 caught uRendezvousFailure" << endl;
 	}
 	try {
 	    m1();
-	} catch( E2 ) {
+	} catch( E2 & ) {
 	    osacquire( cout ) << "mary::main 1 caught E2" << endl;
 	}
 	std::set_unexpected( T1 );
 	try {
 	    m2();
-	} catch( E2 ) {
+	} catch( E2 & ) {
 	    osacquire( cout ) << "mary::main 2 caught E2" << endl;
 	}
     }
 };
+#endif // __cplusplus <= 201703L
 
 int main() {
     uProcessor processors[NP - 1] __attribute__(( unused )); // more than one processor
@@ -135,11 +137,13 @@ int main() {
 	delete f[i];
     } // for
 
+#if __cplusplus < 201703L // c++17
     mary m;
     std::set_unexpected( T2 );
     try {
 	m.mem();
-    } catch( E2 ) {
+    } catch( E2 & ) {
 	osacquire( cout ) << "main caught E2" << endl;
     } // try
+#endif // __cplusplus <= 201703L
 } // main

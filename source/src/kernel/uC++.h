@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 15:53:44 2018
-// Update Count     : 5783
+// Last Modified On : Sat Sep  8 16:03:35 2018
+// Update Count     : 5807
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,9 +37,15 @@
 #define __U_CPLUSPLUS_H__
 
 #if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
-// Mute g++-7
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// Mute g++-7
 #endif // __GNUC__ >= 7
+
+#if __cplusplus >= 201703L				// c++17 ?
+#define __U_UNCAUGHT_EXCEPTION__ uncaught_exceptions
+#else
+#define __U_UNCAUGHT_EXCEPTION__ uncaught_exception
+#endif // __cplusplus >= 201703L
+
 
 #pragma __U_NOT_USER_CODE__
 
@@ -174,9 +180,10 @@ namespace UPP {
 } // UPP
 
 
-//######################### abort #########################
+//######################### abnormal exit #########################
 
 
+void exit( int retcode, const char *fmt, ... ) __THROW __attribute__(( format (printf, 2, 3), noreturn ));
 // uAbort is deprecated
 extern void uAbort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn )) __attribute__(( deprecated( "uAbort is deprecated, use abort instead" ) ));
 extern void abort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn ));
@@ -261,9 +268,24 @@ namespace UPP {
 	static unsigned int kernel_thread_yields, kernel_thread_pause;
 	static unsigned int wake_processor;
 	static unsigned int events, setitimer;
+      private:
+	static bool prtStatTerm_;			// print statistics on termination
+      public:
+	static bool prtStatTerm() {
+	    return prtStatTerm_;
+	} // prtStatTerm
 
-	static bool prtSigterm;
-	static bool prtHeapterm;
+	static bool prtStatTermOn() {
+	    bool temp = prtStatTerm_;
+	    prtStatTerm_ = true;
+	    return temp;
+	} // prtStatTermOn
+
+	static bool prtStatTermOff() {
+	    bool temp = prtStatTerm_;
+	    prtStatTerm_ = false;
+	    return temp;
+	} // prtStatTermOff
 
 	static void print();
     }; // Statistics
@@ -954,6 +976,7 @@ class uCondLock {
     bool empty() const {
 	return waiting.empty();
     } // uCondLock::empty
+
     uintptr_t front() const;
 
     void *operator new( size_t size ) {
@@ -1004,15 +1027,23 @@ namespace UPP {
 	    )
 	} // uSemaphore::uSemaphore
 
-	void P();					// wait on semaphore
-	bool P( uDuration duration );			// wait on semaphore or timeout
-	bool P( uTime time );				// wait on semaphore or timeout
-	void P( uSemaphore &s );			// wait on semaphore and release another
-	bool P( uSemaphore &s, uDuration duration );	// wait on semaphore and release another or timeout
-	bool P( uSemaphore &s, uTime time );		// wait on semaphore and release another or timeout
-	bool TryP();					// conditionally wait on a semaphore
+	void P();					// semaphore wait
+	void P( uintptr_t info );			// semaphore wait
+	bool P( uDuration duration );			// semaphore wait or timeout
+	bool P( uintptr_t info, uDuration duration );	// semaphore wait or timeout
+	bool P( uTime time );				// semaphore wait or timeout
+	bool P( uintptr_t info, uTime time );		// semaphore wait or timeout
+	void P( uSemaphore & s );			// semaphore wait and release another
+	void P( uSemaphore & s, uintptr_t info );	// semaphore wait and release another
+	bool P( uSemaphore & s, uDuration duration );	// semaphore wait and release another or timeout
+	bool P( uSemaphore & s, uintptr_t info, uDuration duration ); // semaphore wait and release another or timeout
+	bool P( uSemaphore & s, uTime time );		// semaphore wait and release another or timeout
+	bool P( uSemaphore & s, uintptr_t info, uTime time ); // semaphore wait and release another or timeout
+	bool TryP();					// conditional semaphore wait
 	void V();					// signal semaphore
 	void V( int inc );				// signal semaphore
+
+	uintptr_t front() const;			// return task information
 
 	int counter() const {				// semaphore counter
 	    return count;
@@ -1022,11 +1053,11 @@ namespace UPP {
 	    return count >= 0;
 	} // uSemaphore::empty
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 	    return ::operator new( size );
 	} // uSemaphore::operator new
 
-	void *operator new( size_t, void *storage ) {	// used in sem_t
+	void * operator new( size_t, void *storage ) {	// used in sem_t
 	    return storage;
 	} // uSemaphore::operator new
     }; // uSemaphore
@@ -1737,7 +1768,7 @@ class uBaseTask : public uBaseCoroutine {
     template< int, int, int > friend class uAdaptiveLock; // access: entryRef, profileActive, wake
     friend class uCondLock;				// access: entryRef, ownerLock, profileActive, wake
     friend class uBaseSpinLock;				// access: profileActive
-    friend class UPP::uSemaphore;			// access: entryRef, wake
+    friend class UPP::uSemaphore;			// access: entryRef, wake, info
     friend class uRWLock;				// access: entryRef, wake, info
     friend class uCondition;				// access: currCoroutine, mutexRef, info, profileActive
     friend _Coroutine UPP::uProcessorKernel;		// access: currCoroutine, setState, wake
@@ -2400,7 +2431,7 @@ namespace UPP {
 
 	struct NBIOnode : public uSeqable {
 	    uSemaphore pending;				// wait for I/O completion
-	    uBaseTask *pendingTask;			// name of waiting task in case nominated to IOPoller
+	    uBaseTask * pendingTask;			// name of waiting task in case nominated to IOPoller
 	    int nfds;					// return value
 	    enum { singleFd, multipleFds } fdType;
 	    bool timedout;				// has timeout
@@ -3065,13 +3096,13 @@ namespace UPP {
 	friend class ::uBaseTask;			// access: prepareTask
 	friend class UPP::PthreadLock;			// access: startup
 
-	static bool traceHeap_;				// trace allocations and deallocations
-
 	static void finishup();
 	static void prepareTask( uBaseTask *task );
 	static void startTask();
 	static void finishTask();
 	static void startup();
+
+	static bool traceHeap_;				// trace allocations and deallocations
       public:
 	static bool initialized();
 
@@ -3090,6 +3121,44 @@ namespace UPP {
 	    uHeapControl::traceHeap_ = false;
 	    return temp;
 	} // uHeapControl::traceHeapOff
+
+      private:
+	static bool prtHeapTerm_;			// print heap on termination
+      public:
+	static bool prtHeapTerm() {
+	    return prtHeapTerm_;
+	} // prtHeapTerm
+
+	static bool prtHeapTermOn() {
+	    bool temp = prtHeapTerm_;
+	    prtHeapTerm_ = true;
+	    return temp;
+	} // prtHeapTermOn
+
+	static bool prtHeapTermOff() {
+	    bool temp = prtHeapTerm_;
+	    prtHeapTerm_ = false;
+	    return temp;
+	} // prtHeapTermOff
+
+      private:
+	static bool prtFree_;				// print free lists
+      public:
+	static bool prtFree() {
+	    return prtFree_;
+	} // prtFree
+
+	static bool prtFreeOn() {
+	    bool temp = prtFree_;
+	    prtFree_ = true;
+	    return temp;
+	} // prtFreeOn
+
+	static bool prtFreeOff() {
+	    bool temp = prtFree_;
+	    prtFree_ = false;
+	    return temp;
+	} // prtFreeOff
     }; // uHeapControl
 } // UPP
 

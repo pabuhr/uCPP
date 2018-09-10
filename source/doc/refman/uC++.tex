@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sat Dec 23 09:08:23 2017
-%% Update Count     : 7363
+%% Last Modified On : Sat Sep  8 17:04:07 2018
+%% Update Count     : 7385
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -895,7 +895,7 @@ The amount of storage for the coroutine's stack is always greater than this stac
 -- creates a coroutine on the current cluster using the specified storage and \emph{maximum} storage size (in bytes) for the coroutine's stack.
 The amount of storage for the coroutine's stack is always less than actual storage size, as extra information is stored on the stack.
 \Emph{This storage is NOT freed at coroutine deallocation}.
-If the specified storage address is zero ( \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}), the storage size becomes a stack size, as in the previous constructor.
+If the specified storage address is zero ( \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}), the storage size becomes a stack size, as in the previous constructor.
 \end{prefix}
 A coroutine type can be designed to allow declarations to specify the stack storage and size by doing the following:
 \LGinlinefalse\LGbegin\lgrinde
@@ -2344,16 +2344,29 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{uSemaphore}(\0\K{int}\0\V{count}\0=\01\0);}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{P}();}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{P}(\0\V{uintptr\_t}\0\V{info}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uDuration}\0\V{duration}\0);}}
+\L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uintptr\_t}\0\V{info},\0\V{uDuration}\0\V{duration}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uTime}\0\V{time}\0);}}
+\L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uintptr\_t}\0\V{info},\0\V{uTime}\0\V{time}\0);}}
+\endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
 \L{\LB{}\Tab{4}{\K{void}\0\V{P}(\0\V{uSemaphore}\0\&\V{s}\0);}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{P}(\0\V{uSemaphore}\0\&\0\V{s},\0\V{uintptr\_t}\0\V{info}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uSemaphore}\0\&\V{s},\0\V{uDuration}\0\V{duration}\0);}}
+\L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uSemaphore}\0\&\0\V{s},\0\V{uintptr\_t}\0\V{info},\0\V{uDuration}\0\V{duration}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uSemaphore}\0\&\V{s},\0\V{uTime}\0\V{time}\0);}}
+\L{\LB{}\Tab{4}{\K{bool}\0\V{P}(\0\V{uSemaphore}\0\&\0\V{s},\0\V{uintptr\_t}\0\V{info},\0\V{uTime}\0\V{time}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{TryP}();}}
+\endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{}\Tab{4}{\V{uintptr\_t}\0\V{front}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{V}(\0\K{int}\0\V{times}\0=\01\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{counter}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{empty}()\0\K{const};}}
 \L{\LB{\};}}
+\endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{uSemaphore}\0\V{x},\0\V{y}(1),\0\*\V{z};}}
 \L{\LB{\V{z}\0=\0\K{new}\0\V{uSemaphore}(4);}}
 \endlgrinde\LGend
@@ -2380,6 +2393,12 @@ the two operations occur atomically.
 If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{P}}}\endlgrinde\LGend{} is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{V}}}\endlgrinde\LGend{}ed;
 this form of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{P}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the waiting task is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{V}}}\endlgrinde\LGend{}ed and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}.)
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}\index{front@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}} returns an integer value stored with the waiting task at the front of the condition queue.
+It is an error to examine the front of an empty condition-lock queue;
+therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{if}\0(\0!\0\V{DiskNotIdle}.\V{empty}()\0\&\&\0\V{DiskNotIdle}.\V{front}()\0==\01\0)\0.\,.\,.}}
+\endlgrinde\LGend
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TryP}}}\endlgrinde\LGend{}\index{TryP@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TryP}}}\endlgrinde\LGend{}} attempts to acquire the semaphore but does not block.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TryP}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the semaphore is acquired and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{V}}}\endlgrinde\LGend{}\index{V@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{V}}}\endlgrinde\LGend{}} wakes up the task blocked for the longest time if there are tasks blocked on the semaphore and increments the semaphore counter.
@@ -2515,10 +2534,10 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCondLock}}}\endlgrinde\LGend{}\
 \L{\LB{}\Tab{4}{\K{bool}\0\V{wait}(\0\V{uOwnerLock}\0\&\V{lock},\0\V{uintptr\_t}\0\V{info},\0\V{uDuration}\0\V{duration}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{wait}(\0\V{uOwnerLock}\0\&\V{lock},\0\V{uTime}\0\V{time}\0);}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{wait}(\0\V{uOwnerLock}\0\&\V{lock},\0\V{uintptr\_t}\0\V{info},\0\V{uTime}\0\V{time}\0);}}
+\L{\LB{}\Tab{4}{\V{uintptr\_t}\0\V{front}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{signal}();}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{broadcast}();}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{empty}();}}
-\L{\LB{}\Tab{4}{\V{uintptr\_t}\0\V{front}()\0\K{const};}}
 \L{\LB{\};}}
 \L{\LB{\V{uCondLock}\0\V{x},\0\V{y},\0\*\V{z};}}
 \L{\LB{\V{z}\0=\0\K{new}\0\V{uCondLock};}}
@@ -2536,6 +2555,12 @@ in addition, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend
 If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled;
 this form of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the task is signalled and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}.)
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}\index{front@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}} returns an integer value stored with the waiting task at the front of the condition queue.
+It is an error to examine the front of an empty condition-lock queue;
+therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{if}\0(\0!\0\V{DiskNotIdle}.\V{empty}()\0\&\&\0\V{DiskNotIdle}.\V{front}()\0==\01\0)\0.\,.\,.}}
+\endlgrinde\LGend
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{} routine checks if there is a waiting task, and if so, unblocks a waiting task from the queue of the condition lock;
 waiting tasks are released in FIFO order.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{} routine can be safely called without acquiring any owner lock associated with tasks waiting on the condition.
@@ -2543,12 +2568,6 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{broadcast}}}\endlgrinde\LGend{} routi
 For either kind of signal, signalling an empty condition just continues executions, i.e., it does nothing, and returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{};
 otherwise, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} is returned indicating a signalled task(s).
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}\index{empty@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if there are tasks blocked on the queue and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} otherwise.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}\index{front@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}} returns an integer value stored with the waiting task at the front of the condition queue.
-It is an error to examine the front of an empty condition-lock queue;
-therefore, a condition lock must be checked to verify that there is a blocked task, e.g.:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{if}\0(\0!\0\V{DiskNotIdle}.\V{empty}()\0\&\&\0\V{DiskNotIdle}.\V{front}()\0==\01\0)\0.\,.\,.}}
-\endlgrinde\LGend
 
 It is \emph{not} meaningful to read or to assign to a lock variable, or copy a lock variable (e.g., pass it as a value parameter).
 
@@ -2563,13 +2582,9 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}\i
 \L{\LB{\K{\_Mutex}\0\K{\_Coroutine}\0\V{uBarrier}\0\{}}
 \L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{8}{\K{for}\0(\0;;\0)\0\{}}
-\L{\LB{}\Tab{12}{\V{suspend}();}}
-\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{8}{\K{for}\0(\0;;\0)\0\{\0\V{suspend}();\0\}}}
 \L{\LB{}\Tab{4}{\}}}
-\L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{last}()\0\{}}
-\L{\LB{}\Tab{8}{\V{resume}();}}
-\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{last}()\0\{\0\V{resume}();\0\}}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{uBarrier}(\0\K{unsigned}\0\K{int}\0\V{total}\0);}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{unsigned}\0\K{int}\0\V{total}()\0\K{const};}}
@@ -3057,7 +3072,7 @@ In general, a future is generic in the type of the return value and acts as a su
 Instead of making two calls to send arguments and then retrieve the result, a single call is made and a future representing the result is returned immediately.
 The client continues execution as if the call had returned an actual result.
 The future is filled in at some later time (in the ``future''), after the server calculates the result.
-If the client tries to use the future before a result is inserted, the client implicitly blocks and is subsequently unblocked by the server after it insertions a result in the future.
+If the client tries to use the future before a result is inserted, the client implicitly blocks and is subsequently unblocked by the server after it inserts a result in the future.
 Hence, there is no explicit protocol between client and server to retrieve a result;
 the protocol is implicit within the future.
 
@@ -3068,7 +3083,7 @@ The advantage of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrind
 The disadvantage of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{} is that the client must ensure that the future is deallocated, but not before the server thread has inserted the result (or the operation has been cancelled).
 
 There is a basic set of common operations available on both types of futures.
-These consist of client operations, used by a client task to retrieve the return value, and server operations, used by a server task to fill in the value.
+These consist of client operations, used by a client task to retrieve the return value or cancel the computation, and server operations, used by a server task to fill in the value.
 
 
 \subsection{Client Operations}
@@ -3082,7 +3097,7 @@ Note, the call can complete because a result is available, because the server ha
 -- (function call) returns a copy of the future result.
 The client blocks if the future result is currently unavailable.
 If an exception is returned by the server, that exception is thrown.
-A future result can be retrieved multiple times by any task until the future is reset or destroyed.
+A future result (or exception) can be retrieved multiple times by any task until the future is reset or destroyed.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}\0\V{T}}}\endlgrinde\LGend{}]
 -- (conversion to type T) returns a copy of the future result.
 \Emph{This kind of access must be performed only after a blocking access, or after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}.}
@@ -3095,6 +3110,7 @@ As with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()}}\endlgrinde\LGend{},
 -- attempts to cancel the asynchronous call associated with the future.
 All clients waiting for the result are unblocked, and an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancellation}}}\endlgrinde\LGend{} is thrown at any client attempting to access the result.
 Depending on the server, this operation may also have the effect of preventing the requested computation from starting, or it may interrupt the computation in progress.
+If the computation cannot be interrupted, the call may block until the computation is finished.
 \end{sloppypar}
 \end{prefix}
 
@@ -3124,7 +3140,7 @@ exception deleted by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\
 -- same as member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exception}}}\endlgrinde\LGend{}.
 \end{prefix}
 
-A server may require storage to buffer call arguments and other data needed for cancellation of futures.
+A server may require storage to buffer call arguments and other data needed for delivery or cancellation of futures.
 This storage is allocated as part of the future;
 hence, the future may also be generic in the type of server-management data.
 A server exports this type information for use with a future (see \VRef{s:Servers}).
@@ -3135,7 +3151,7 @@ In both cases, the server does not insert a result into the future.
 If the server computation cannot be interrupted, the server may deliver a result even though the future has been cancelled.
 
 An ESM future's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{} member cannot return until it is known that the server no longer references the cancelled future because the future's storage may be deallocated.
-Therefore, the server must inform the future if it will or will not not deliver a value, by supplying a member in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ServerData}}}\endlgrinde\LGend{} type with the following interface:
+Therefore, the server must inform the future if it will or will not deliver a value, by supplying a member in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ServerData}}}\endlgrinde\LGend{} type with the following interface:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{bool}\0\V{cancel}();}}
 \endlgrinde\LGend
@@ -3509,7 +3525,7 @@ The client blocks if there is no available future.
 If multiple futures are available, one is chosen arbitrarily to return;
 other available futures can be obtained by further calls to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}.
 Calling drop on an empty ISM queue is an error;
-calling drop on an empty ESM queue returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}.
+calling drop on an empty ESM queue returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}.
 \end{prefix}
 
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{} method is an example of ``\Index{wait-any}'' semantics in homogeneous selection:
@@ -3610,7 +3626,7 @@ In this case, the administrator may spend most of its time blocked waiting for c
 \L{\LB{}\Tab{8}{\K{int}\0\V{requested};}}
 \L{\LB{}}
 \L{\LB{}\Tab{8}{\K{bool}\0\V{cancel}()\0\{}}
-\L{\LB{}\Tab{12}{\V{server}\-\>\V{requests}[\V{requested}]\0=\0\V{nullptr};}}
+\L{\LB{}\Tab{12}{\V{server}\-\>\V{requests}[\V{requested}]\0=\0\K{nullptr};}}
 \L{\LB{}\Tab{12}{\K{return}\0\K{true};}}
 \L{\LB{}\Tab{8}{\}\0\C{}\1\1\0ServerData::cancel}}
 \CE{}\L{\LB{}\Tab{8}{\V{ServerData}()\0\{\}}}
@@ -3640,7 +3656,7 @@ In this case, the administrator may spend most of its time blocked waiting for c
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{void}\0\V{input}(\0\K{int}\0\V{value},\0\V{string}\0\V{text}\0)\0\{}}
 \L{\LB{}\Tab{8}{\K{if}\0(\0\V{requests}.\V{size}()\0\>\0\V{value}\0)\0\{}}
-\L{\LB{\Proc{if}}\Tab{12}{\K{if}\0(\0\V{requests}[\V{value}]\0!=\0\V{nullptr}\0)\0\{}}
+\L{\LB{\Proc{if}}\Tab{12}{\K{if}\0(\0\V{requests}[\V{value}]\0!=\0\K{nullptr}\0)\0\{}}
 \L{\LB{}\Tab{16}{\V{requests}[\V{value}]\-\>\V{delivery}(\0\V{text}\0);}}
 \L{\LB{}\Tab{12}{\}}}
 \L{\LB{}\Tab{8}{\}}}
@@ -3727,7 +3743,7 @@ Each server has server-specific data, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Ser
 When a client cancels a future associated with this server, member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ServerData}::\V{cancel}}}\endlgrinde\LGend{} is called, and both servers mark the position in the request queue to indicate that future is cancelled.
 The worker-task type, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{InputWorker}}}\endlgrinde\LGend{}, and an instance of it, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{is}}}\endlgrinde\LGend{}, are local to the server for abstraction and encapsulation reasons.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{InputWorker}}}\endlgrinde\LGend{} reads an $<integer, string>$ tuple and communicates the tuple to the server via a synchronous call to the private mutex-member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{input}}}\endlgrinde\LGend{}, which checks if a future exists with a matching integer key, and if so, places the string into that future as its result value.
-The ESM server conditionally inserts the string into the future by checking if the future at position \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{value}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} indicating it has been cancelled.
+The ESM server conditionally inserts the string into the future by checking if the future at position \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{value}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} indicating it has been cancelled.
 The ISM server does not conditionally insert the string because an empty future is inserted at position \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{value}}}\endlgrinde\LGend{} to hold the string if the original future is cancelled.
 Asynchronous calls from clients are made by calling mutex member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{request}}}\endlgrinde\LGend{}, specifying an integer key and a future to return the associated string read by the input worker.
 The ESM server resets the future passed to it as it reuses the future, and the ISM server creates a new future.
@@ -3752,7 +3768,7 @@ No work sharing or stealing is performed among the work queues.
 \L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nworkers},\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\V{Cluster}\0\V{clus}\0=\0\V{Same}\0);}}
 \L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nworkers},\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{int}\0\V{affOffset},\0\V{Cluster}\0\V{clus}\0=\0\V{Same}\0);}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{void}\0\V{send}(\0\V{Func}\0\V{action}\0);}}
-\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{auto}\0\V{sendrecv}(\0\V{Func}\0\V{action}\0)\0\-\>\0\V{Future\_ISM}\<\0\V{decltype}(\V{action}())\0\>;}}
+\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{auto}\0\V{sendrecv}(\0\V{Func}\0\V{action}\0)\0\-\>\0\V{Future\_ISM}\<\0\K{decltype}(\V{action}())\0\>;}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uExecutor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}}}\endlgrinde\LGend{}!send@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{send}}}\endlgrinde\LGend{}}%
@@ -3874,7 +3890,7 @@ In \uC, actor messages inherit from base-type \LGinlinetrue\LGbegin\lgrinde\L{\L
 \L{\LB{\K{struct}\0\V{Message}\0\{}}
 \L{\LB{}\Tab{4}{\V{uActor}\0\*\V{sender};}\Tab{56}{\C{}\1\1\0delegated\0sender}}
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation};}\Tab{56}{\C{}\1\1\0allocation\0status}}
-\CE{}\L{\LB{}\Tab{4}{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0);}}
+\CE{}\L{\LB{}\Tab{4}{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\V{Message}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
 \CE{}\L{\LB{\};}\Tab{4}{}}
 \endlgrinde\LGend
@@ -3885,20 +3901,20 @@ In \uC, actor messages inherit from base-type \LGinlinetrue\LGbegin\lgrinde\L{\L
 
 The overloaded constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}\index{Message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}} has the following forms:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)}}\endlgrinde\LGend{}]
 -- creates a message with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}, and specifies the actor that sent the message or an actor delegated as the message sender.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{uActor}\0\*\0\V{sender}\0)}}\endlgrinde\LGend{}]
 -- creates a message with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}, and specifies the actor that sent the message or an actor delegated as the message sender.
 \end{prefix}
 Note, the default constructor assumes the message persists, while specifying the sender constructor assumes the message is deleted.
 
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{} member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}\index{sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}} is a pointer to the actor delegated as the message sender or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}.
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{} member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}\index{sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}} is a pointer to the actor delegated as the message sender or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{} member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}\index{allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}} is the message allocation status.
 
 The message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{ReplyMsg}}}\endlgrinde\LGend{} inherits from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{Message}}}\endlgrinde\LGend{} and is used to discriminate if a message type requires a reply, and if so, all non-type specific operations are accessible on the generic future in the future message.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{struct}\0\V{ReplyMsg}\0:\0\K{public}\0\V{Message}\0\{}\Tab{56}{\C{}\1\1\0untyped\0future\0message}}
-\CE{}\L{\LB{}\Tab{4}{\V{ReplyMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0);}}
+\CE{}\L{\LB{}\Tab{4}{\V{ReplyMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\V{ReplyMsg}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
 \CE{}\L{\LB{}\Tab{4}{\K{virtual}\0\K{bool}\0\V{available}()\0=\00;}\Tab{56}{\C{}\1\1\0untyped\0future\0operations}}
 \CE{}\L{\LB{}\Tab{4}{\K{virtual}\0\K{bool}\0\V{cancelled}()\0=\00;}}
@@ -3916,7 +3932,7 @@ The generic future message inherits from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\K{struct}\0\V{FutureMessage}\0:\0\K{public}\0\V{ReplyMsg}\0\{\0\C{}\1\1\0typed\0future\0message}}
 \CE{}\L{\LB{}\Tab{4}{\V{Future\_ISM}\<\0\V{Result}\0\>\0\V{result};}\Tab{56}{\C{}\1\1\0delivered\0future}}
-\CE{}\L{\LB{}\Tab{4}{\V{FutureMessage}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0);}}
+\CE{}\L{\LB{}\Tab{4}{\V{FutureMessage}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\V{FutureMessage}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
 \CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0available,\0cancelled,\0cancel,\0delivery,\0reset\0from\0ReplyMsg}}
 \CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{delivery}(\0\V{Result}\0\V{res}\0);}}
@@ -3958,10 +3974,10 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{} send has th
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\K{struct}\0\V{FutureMessage}\0:\0\K{public}\0\V{ReplyMsg}\0\{\0.\,.\,.\0\}}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0);\0\C{}\1\1\0async\0call,\0no\0return}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);\0\C{}\1\1\0async\0call,\0no\0return}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\|(\0\V{Message}\0\&\0\V{msg}\0);}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Future\_ISM}\<\0\V{Result}\0\>\0\V{ask}(\0\V{FutureMessage}\<\0\V{Result}\0\>\0\&\0\V{msg},}}
-\L{\LB{}\Tab{12}{\V{uActor}\0\*\0\V{sender}\0=\0\V{nullptr}\0)\0\{}\Tab{56}{\C{}\1\1\0async\0call,\0return\0future}}
+\L{\LB{}\Tab{12}{\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0\{}\Tab{56}{\C{}\1\1\0async\0call,\0return\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Future\_ISM}\<\0\V{Result}\0\>\K{operator}\|\,\|(\0\V{FutureMessage}\<\0\V{Result}\0\>\0\&\V{msg}\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Administration}}
@@ -4533,7 +4549,7 @@ normally, these steps are performed by a single task.
 However, it is reasonable for different tasks to be using \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cin}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{} but not need implicit flushing.
 In this case, the best solution is to remove the tie between \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cin}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{}, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{cin}.\V{tie}(\0\V{nullptr}\0);}\Tab{20}{\C{}\1\1\0set\0tie\0partner\0to\0null}}
+\L{\LB{\V{cin}.\V{tie}(\0\K{nullptr}\0);}\Tab{20}{\C{}\1\1\0set\0tie\0partner\0to\0null}}
 \CE{}\endlgrinde\LGend
 eliminating the implicit flushing and the race condition (see examples in \VRef[Sections]{s:ClientUNIXDatagram} and \VRef[]{s:ClientINETStream}).
 
@@ -4582,10 +4598,10 @@ The operations available on a file object are listed in \VRef[Figure]{f:FileInte
 \L{\LB{}\Tab{8}{\V{FileAccess}(\0\K{const}\0\K{char}\0\*\V{name},\0\K{int}\0\V{flags},\0\K{int}\0\V{mode}\0=\00644\0);}}
 \L{\LB{}\Tab{8}{\~\V{FileAccess}();}}
 \L{\LB{}\Tab{4}{}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{8}{\K{void}\0\V{open}(\0\V{uFile}\0\&\V{f},\0\K{int}\0\V{flags},\0\K{int}\0\V{mode}\0=\00644\0);}}
 \L{\LB{}\Tab{8}{\V{off\_t}\0\V{lseek}(\0\V{off\_t}\0\V{offset},\0\K{int}\0\V{whence}\0);}}
 \L{\LB{}\Tab{8}{\K{int}\0\V{fsync}();}}
@@ -4715,10 +4731,10 @@ This relationship is represented in a \uC program by a declaration for a file an
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{class}\0\V{End}\0:\0\K{public}\0\V{uFileIO}\0\{}}
 \L{\LB{}\Tab{4}{\0\0\K{public}:}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{8}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{8}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{8}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
 \L{\LB{}\Tab{8}{\K{\_Event}\0\V{Failure};}}
@@ -4903,20 +4919,20 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}
 \CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{getsockname}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{getpeername}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{from},\0\V{socklen\_t}\0\*\V{fromlen},\0\K{int}\0\V{flags}\0=\00,}}
-\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
@@ -4963,7 +4979,7 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}
 The first two constructors of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}}}\endlgrinde\LGend{} are for use with the UNIX address family.
 The parameters for the constructors are as follows.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{name}}}\endlgrinde\LGend{} parameter is the name of an existing UNIX stream that the client is connecting to.
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{name}}}\endlgrinde\LGend{} parameter can be \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} for type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SOCK\_DGRAM}}}\endlgrinde\LGend{}, if there is no initial server address.
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{name}}}\endlgrinde\LGend{} parameter can be \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} for type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SOCK\_DGRAM}}}\endlgrinde\LGend{}, if there is no initial server address.
 The optional default \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{type}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{protocol}}}\endlgrinde\LGend{} parameters are explained in the UNIX manual entry for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{socket}}}\endlgrinde\LGend{}.
 Only types \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SOCK\_STREAM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SOCK\_DGRAM}}}\endlgrinde\LGend{} communication can be specified, and any protocol appropriate for the specified communication type (usually 0).
 The optional \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeout}}}\endlgrinde\LGend{} parameter is a pointer to a maximum waiting time for completion of a connection for type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SOCK\_STREAM}}}\endlgrinde\LGend{} before aborting the operation by raising an exception (see \VRef{s:IOTimeout});
@@ -5045,20 +5061,20 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketServer}
 \CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{getsockname}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{getpeername}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{from},\0\V{socklen\_t}\0\*\V{fromlen},\0\K{int}\0\V{flags}\0=\00,}}
-\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
@@ -5167,11 +5183,11 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketAccept}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Monitor}\0\V{uSocketAccept}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\V{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\V{uDuration}\0\*\V{timeout},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\V{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\K{bool}\0\V{doAccept},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\V{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\V{uDuration}\0\*\V{timeout},\0\K{bool}\0\V{doAccept},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\V{nullptr},}}
-\L{\LB{}\Tab{20}{\V{socklen\_t}\0\*\V{len}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\K{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\V{uDuration}\0\*\V{timeout},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\K{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\K{bool}\0\V{doAccept},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\K{nullptr},\0\V{socklen\_t}\0\*\V{len}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uSocketAccept}(\0\V{uSocketServer}\0\&\V{s},\0\V{uDuration}\0\*\V{timeout},\0\K{bool}\0\V{doAccept},\0\K{struct}\0\V{sockaddr}\0\*\V{adr}\0=\0\K{nullptr},}}
+\L{\LB{}\Tab{20}{\V{socklen\_t}\0\*\V{len}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\~\V{uSocketAccept}();}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{accept}();}}
@@ -5182,20 +5198,20 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketAccept}
 \CE{}\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{getsockname}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{getpeername}(\0\K{struct}\0\V{sockaddr}\0\*\V{name},\0\V{socklen\_t}\0\*\V{len}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{read}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{readv}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{\_Mutex}\0\K{int}\0\V{write}(\0\K{const}\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{send}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendto}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{to},\0\V{socklen\_t}\0\V{tolen},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{sendmsg}(\0\K{const}\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recv}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{recvfrom}(\0\K{char}\0\*\V{buf},\0\K{int}\0\V{len},\0\K{struct}\0\V{sockaddr}\0\*\V{from},\0\V{socklen\_t}\0\*\V{fromlen},\0\K{int}\0\V{flags}\0=\00,}}
-\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{20}{\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{recvmsg}(\0\K{struct}\0\V{msghdr}\0\*\V{msg},\0\K{int}\0\V{flags}\0=\00,\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\V{file},\0\V{off\_t}\0\*\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
@@ -5438,7 +5454,7 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\L
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{} returns the string message associated with an exception.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{source}}}\endlgrinde\LGend{} returns the coroutine/task that raised the exception;
-if the exception has been raised locally, the value \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} is returned.
+if the exception has been raised locally, the value \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} is returned.
 In some cases, the coroutine or task may be deleted when the exception is caught so this reference may be undefined.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sourceName}}}\endlgrinde\LGend{} returns the name of the coroutine/task that raised the exception;
 if the exception has been raised locally, the value \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\"\*unknown\*\"\SE{}}}\endlgrinde\LGend{} is returned.
@@ -6345,7 +6361,8 @@ The default unexpected-handler for each coroutine/task calls the \LGinlinetrue\L
 
 \subsection{\texorpdfstring{\BGfont uncaught\_exception}{uncaught\_exception}}
 
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{}\index{uncaught_exception@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{}} routine returns true if propagation is in progress.
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{}\index{uncaught_exception@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{}} routine returns true if propagation is in progress.\footnote{
+\CC{17} depreciates \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{} with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exceptions}}}\endlgrinde\LGend{} (notice the plural), which returns the number of uncaught exception objects, so greater than 0 implies propagation is in progress.}
 In a \uC program, the result of this routine is specific to the coroutine/task that raises the exception.
 Hence, the occurrence of propagation in one coroutine/task is independent of that occurring in any other coroutine/task.
 For example, a destructor may not raise a new exception if it is invoked during propagation;
@@ -6353,7 +6370,7 @@ if it does, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{terminate}}}\endlgrinde\L
 It is possible to use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uncaught\_exception}}}\endlgrinde\LGend{} to check for this case and handle it differently from normal destructor execution, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\~\V{T}()\0\{}\Tab{8}{\C{}\1\1\0destructor}}
-\CE{}\L{\LB{}\Tab{4}{\K{if}\0(\0.\,.\,.\0\&\&\0!\0\V{uncaught\_exception}()\0)\0\{}\Tab{44}{\C{}\1\1\0prevent\0propagation\0problem}}
+\CE{}\L{\LB{}\Tab{4}{\K{if}\0(\0.\,.\,.\0\&\&\0!\0\V{uncaught\_exceptions}()\0)\0\{}\Tab{44}{\C{}\1\1\0prevent\0propagation\0problem}}
 \CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0raise\0an\0exception\0because\0cleanup\0problem}}
 \CE{}\L{\LB{}\Tab{4}{\}\0\K{else}\0\{}}
 \L{\LB{}\Tab{8}{\C{}\1\1\0cleanup\0as\0best\0as\0possible}}
@@ -6669,7 +6686,7 @@ The macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uRendezvousAcceptor}}}\endlgrin
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{uBaseCoroutine}\0\*\V{uRendezvousAcceptor}();}}
 \endlgrinde\LGend
-It returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the rendezvous is ended;
+It returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the rendezvous is ended;
 otherwise it returns the address of the rendezvous partner.
 In addition, calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uRendezvousAcceptor}}}\endlgrinde\LGend{} has the side effect of cancelling the implicit resume of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{} at the acceptor.
 This capability allows a mutex member to terminate with an exception without informing the acceptor.
@@ -7102,22 +7119,24 @@ To use assertions in a \uC program, include the file:
 \subsection{Termination}
 \label{s:Termination}
 
-A \uC program can be terminated due to a failure using the UNIX routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}\index{abort@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}}, which stops all thread execution and generates a core file for subsequent debugging (assuming the shell limits allow a core file to written).
+A \uC program can be terminated without failure using the UNIX routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}\index{exit@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}}, which stops all thread execution and returns a status code to the invoking shell.
+To terminate a program \emph{and} print an error message, use the \uC free routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{void}\0\V{exit}(\0\K{int}\0\V{status},\0\K{const}\0\K{char}\0\*\0\V{format},\0.\,.\,.\0)}}
+\endlgrinde\LGend
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{format}}}\endlgrinde\LGend{} is a string containing text to be printed and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}\index{printf@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}} style format codes describing how to print the following variable number of arguments.
+The number of elements in the variable argument list must match with the number of format codes, as for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}.
+Note, when \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{} is used to terminate a program, all global destructors are still executed.
+Any tasks, clusters, or processors not deleted by this point \Emph{are not flagged with an error}, unlike normal program termination.
+
+A \uC program can be terminated with a failure using the UNIX routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}\index{abort@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}}, which stops all thread execution and generates a core file for subsequent debugging (assuming the shell limits allow a core file to written).
 To terminate a program, generate a core file, \emph{and} print an error message, use the \uC free routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{void}\0\V{abort}(\0\K{const}\0\K{char}\0\*\0\V{format},\0.\,.\,.\0)}}
 \endlgrinde\LGend
-\index{abort@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{}}%
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{format}}}\endlgrinde\LGend{} is a string containing text to be printed and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}\index{printf@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}} style format codes describing how to print the following variable number of arguments.
 The number of elements in the variable argument list must match with the number of format codes, as for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}.
-In addition to printing the user specified message, which normally describes the error, routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{} prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call.
-
-A \uC program can be terminated using the UNIX routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}\index{exit@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}}, which stops all thread execution and returns a status code to the invoking shell:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{void}\0\V{exit}(\0\K{int}\0\V{status}\0);}}
-\endlgrinde\LGend
-Note, when \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{} is used to terminate a program, all global destructors are still executed.
-Any tasks, clusters, or processors not deleted by this point \Emph{are not flagged with an error}, unlike normal program termination.
+In addition to printing the user specified message, which normally describes the error, routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abort}}}\endlgrinde\LGend{} prints the name of the currently executing task type, possibly naming the type of the currently executing coroutine if the task's thread is not executing on its own execution state at the time of the call, and a back-trace of the stack.
 
 
 \subsection{Messages}
@@ -8221,7 +8240,7 @@ only those related to the \uC kernel are discussed.
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\V{uThisCluster}().\V{select}(\0\-1,\00,\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uThisCluster}().\V{select}(\0\-1,\00,\0\K{nullptr}\0);}}
 \L{\LB{\}}}
 \endlgrinde\LGend
 generates this error:
@@ -8234,7 +8253,7 @@ Error occurred while executing task main (0x7fff904723d0).
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\V{uThisCluster}().\V{select}(\0\-1,\0\V{nullptr},\0\V{nullptr},\0\V{nullptr},\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{uThisCluster}().\V{select}(\0\-1,\0\K{nullptr},\0\K{nullptr},\0\K{nullptr},\0\K{nullptr}\0);}}
 \L{\LB{\}}}
 \endlgrinde\LGend
 generates this error:
@@ -8277,7 +8296,7 @@ This situation can arise because of an incorrect pointer calculation, such as an
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\K{int}\0\*\V{ip}\0=\0\V{nullptr};}\Tab{32}{\C{}\1\1\0set\0address\0to\00}}
+\L{\LB{}\Tab{4}{\K{int}\0\*\V{ip}\0=\0\K{nullptr};}\Tab{32}{\C{}\1\1\0set\0address\0to\00}}
 \CE{}\L{\LB{}\Tab{4}{\*\V{ip}\0+=\01;}\Tab{28}{\C{}\1\1\0use\0the\0bad\0address}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
@@ -8374,8 +8393,8 @@ The cluster interface is the following:
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{enum}\0\{\0\V{ReadSelect}\0=\01,\0\V{WriteSelect}\0=\02,\0\0\V{ExceptSelect}\0=\04\0\};}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{select}(\0\K{int}\0\V{fd},\0\K{int}\0\V{rwe},\0\V{timeval}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\K{int}\0\V{select}(\0\K{int}\0\V{nfds},\0\V{fd\_set}\0\*\V{rfd},\0\V{fd\_set}\0\*\V{wfd},\0\V{fd\_set}\0\*\V{efd},\0\V{timeval}\0\*\V{timeout}\0=\0\V{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{select}(\0\K{int}\0\V{fd},\0\K{int}\0\V{rwe},\0\V{timeval}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\K{int}\0\V{select}(\0\K{int}\0\V{nfds},\0\V{fd\_set}\0\*\V{rfd},\0\V{fd\_set}\0\*\V{wfd},\0\V{fd\_set}\0\*\V{efd},\0\V{timeval}\0\*\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{const}\0\V{uBaseTaskSeq}\0\&\V{getTasksOnCluster}();}}
 \L{\LB{}\Tab{4}{\K{unsigned}\0\K{int}\0\V{getProcessors}()\0\K{const};}}
@@ -8421,13 +8440,13 @@ That is, all I/O performed on a cluster is managed by a \Index{poller task} for 
 In general, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{select}}}\endlgrinde\LGend{} is used only in esoteric situations, e.g., when \uC file objects are mixed with standard UNIX file objects on the same cluster.
 These members return the total number of file descriptors set in all file descriptor masks, and each routine has the following form:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{select}(\0\K{int}\0\V{fd},\0\K{int}\0\V{rwe},\0\V{timeval}\0\*\V{timeout}\0=\0\V{nullptr}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{select}(\0\K{int}\0\V{fd},\0\K{int}\0\V{rwe},\0\V{timeval}\0\*\V{timeout}\0=\0\K{nullptr}\0)}}\endlgrinde\LGend{}]
 -- this form is a shorthand select for a single file descriptor.
 The mask, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{rwe}}}\endlgrinde\LGend{}, is composed of logically ``or''ing flags \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ReadSelect}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{WriteSelect}}}\endlgrinde\LGend{}, and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ExceptSelect}}}\endlgrinde\LGend{}.
 The timeout value points to a maximum delay value, specified as a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{}, to wait for the I/O to complete.
 If the timeout pointer is null, the select blocks until the I/O operation completes or fails.
 This form is more efficient than the next forms with complete file descriptor sets, but handles only a single file.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{select}(\0\K{int}\0\V{nfds},\0\V{fd\_set}\0\*\V{rfd},\0\V{fd\_set}\0\*\V{wfd},\0\V{fd\_set}\0\*\V{efd},\0\V{timeval}\0\*\V{timeout}\0=\0\V{nullptr}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{select}(\0\K{int}\0\V{nfds},\0\V{fd\_set}\0\*\V{rfd},\0\V{fd\_set}\0\*\V{wfd},\0\V{fd\_set}\0\*\V{efd},\0\V{timeval}\0\*\V{timeout}\0=\0\K{nullptr}\0)}}\endlgrinde\LGend{}]
 -- this form examines the first \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nfds}}}\endlgrinde\LGend{} I/O file descriptors in the sets pointed to by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{rfd}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wfd}}}\endlgrinde\LGend{}, and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{efd}}}\endlgrinde\LGend{}, respectively, to see if any of their file descriptors are ready for reading, or writing, or have exceptional conditions pending.
 The timeout value points to a maximum delay value, specified as a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{}, to wait for an I/O to complete.
 If the timeout pointer is null, the select blocks until one of the I/O operations completes or fails.
@@ -9165,7 +9184,7 @@ any excess is accumulative, e.g., the following declarations are valid:
 A UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{} value can be used to initialize or assign to a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} value, and a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} value may be cast into a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{} value, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{timeval}\0\V{t1};}}
-\L{\LB{\V{gettimeofday}(\0\&\V{t1},\0\V{nullptr}\0);}\Tab{32}{\C{}\1\1\0current\0time\0(seconds\0\1\0microseconds)}}
+\L{\LB{\V{gettimeofday}(\0\&\V{t1},\0\K{nullptr}\0);}\Tab{32}{\C{}\1\1\0current\0time\0(seconds\0\1\0microseconds)}}
 \CE{}\L{\LB{\V{uTime}\0\V{t2}\0=\0\V{t1},\0\V{t3};}\Tab{28}{\C{}\1\1\0convert\0from\0timeval\0to\0uTime\0(initialization)}}
 \CE{}\L{\LB{\V{timespec}\0\V{t4}\0=\0\V{t2};}\Tab{28}{\C{}\1\1\0convert\0from\0uTime\0to\0timespec\0(seconds\0\1\0nanoseconds)\0(implicit\0cast)}}
 \CE{}\L{\LB{\V{t3}\0=\0\V{t1};}\Tab{28}{\C{}\1\1\0convert\0from\0timeval\0to\0uTime\0(assignment)}}
@@ -10231,7 +10250,7 @@ Therefore, the semantics of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}}}\en
 \begin{description}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{size}\0)}}\endlgrinde\LGend{}] same semantics as before with the addition that zero fill and alignment properties are preserved if a new allocation is made.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_alignment}(\0\V{ptr}\0)}}\endlgrinde\LGend{}] returns the alignment of the memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{}.
-If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}, the minimal alignment for any allocation is returned, e.g., multiple of 8.
+If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}, the minimal alignment for any allocation is returned, e.g., multiple of 8.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_zero\_fill}(\0\V{ptr}\0)}}\endlgrinde\LGend{}] returns a boolean result indicating if memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} was allocated with zero fill (i.e., by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cmemalign}}}\endlgrinde\LGend{}).
 \end{description}
 
@@ -10314,12 +10333,12 @@ A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uStack}}}\endlgrinde\LGend{}\index{uSta
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T}}}\endlgrinde\LGend{} must be a public descendant of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uColable}}}\endlgrinde\LGend{}.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}\index{empty@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the stack has no nodes and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the top node of the stack without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the stack has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the top node of the stack without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the stack has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{top}}}\endlgrinde\LGend{}\index{top@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{top}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}\index{addHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}} adds a node to the top of the stack.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}\index{add@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{push}}}\endlgrinde\LGend{}\index{push@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{push}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}\index{drop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}} removes a node from the top of the stack and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the stack has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}\index{drop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}} removes a node from the top of the stack and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the stack has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pop}}}\endlgrinde\LGend{}\index{pop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pop}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}.
 
 
@@ -10353,7 +10372,7 @@ the association can be changed subsequently with member \LGinlinetrue\LGbegin\lg
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}\index{over@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}} resets the iterator to the top of the specified stack.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}\index{>>@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}} attempts to move the iterator's internal cursor to the next node.
 If the bottom (end) of the stack has not been reached, the argument is set to the address of the next node and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} is returned;
-otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
+otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
 
 \VRef[Figure]{f:DSLStack} illustrates creating and using a stack and stack iterator.
 
@@ -10426,15 +10445,15 @@ A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uQueue}}}\endlgrinde\LGend{} is a colle
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T}}}\endlgrinde\LGend{} must be a public descendant of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uColable}}}\endlgrinde\LGend{}.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}\index{empty@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the queue has no nodes and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the head or first node of the queue without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the head or first node of the queue without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}\index{tail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}} returns a pointer to the tail or last node of the queue without removing it.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}\index{succ@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}} returns a pointer to the successor node after the specified node (toward the tail) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the specified node is the last node in the sequence.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}\index{succ@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}} returns a pointer to the successor node after the specified node (toward the tail) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the specified node is the last node in the sequence.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}\index{addHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}} adds a node to the head or front of the queue.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}\index{addTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}} adds a node to the tail or end of the queue.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}\index{add@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}\index{dropHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}} removes a node from the head or front of the queue and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}\index{dropHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}} removes a node from the head or front of the queue and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}\index{drop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}\index{dropTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}} removes a node from the tail or end of the queue and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}\index{dropTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}} removes a node from the tail or end of the queue and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the queue has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}\index{remove@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}} removes the specified node from the queue (any location).
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{transfer}}}\endlgrinde\LGend{}\index{transfer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{transfer}}}\endlgrinde\LGend{}} transfers all nodes from the ``from'' list to the tail or end of the specified queue;
 the ``from'' list is empty after the transfer.
@@ -10470,7 +10489,7 @@ the association can be changed subsequently with member \LGinlinetrue\LGbegin\lg
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}\index{over@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}} resets the iterator to the head of the specified queue.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}\index{>>@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}} attempts to move the iterator's internal cursor to the next node.
 If the tail (end) of the queue has not been reached, the argument is set to the address of the next node and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} is returned;
-otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
+otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
 
 \VRef[Figure]{f:DSLQueue} illustrates creating and using a queue and queue iterator.
 
@@ -10550,18 +10569,18 @@ furthermore, nodes can be inserted and removed anywhere in the collection.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T}}}\endlgrinde\LGend{} must be a public descendant of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqable}}}\endlgrinde\LGend{}.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}\index{empty@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the sequence has no nodes and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the head or first node of the sequence without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}\index{tail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}} returns a pointer to the tail or last node of the sequence without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}\index{succ@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}} returns a pointer to the successor node after the specified node (toward the tail) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the specified node is the last node in the sequence.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pred}}}\endlgrinde\LGend{}\index{pred@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pred}}}\endlgrinde\LGend{}} returns a pointer to the predecessor node before the specified node (toward the head) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the specified node is the first node in the sequence.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertBef}}}\endlgrinde\LGend{}\index{insertBef@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertBef}}}\endlgrinde\LGend{}} adds a node before the specified node or at the end (tail) if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{bef}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertAft}}}\endlgrinde\LGend{}\index{insertAft@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertAft}}}\endlgrinde\LGend{}} adds a node after the specified node or at the beginning (head) if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{aft}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}\index{head@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}} returns a pointer to the head or first node of the sequence without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}\index{tail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}} returns a pointer to the tail or last node of the sequence without removing it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}\index{succ@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}} returns a pointer to the successor node after the specified node (toward the tail) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the specified node is the last node in the sequence.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pred}}}\endlgrinde\LGend{}\index{pred@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pred}}}\endlgrinde\LGend{}} returns a pointer to the predecessor node before the specified node (toward the head) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the specified node is the first node in the sequence.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertBef}}}\endlgrinde\LGend{}\index{insertBef@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertBef}}}\endlgrinde\LGend{}} adds a node before the specified node or at the end (tail) if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{bef}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertAft}}}\endlgrinde\LGend{}\index{insertAft@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{insertAft}}}\endlgrinde\LGend{}} adds a node after the specified node or at the beginning (head) if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{aft}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}\index{addHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addHead}}}\endlgrinde\LGend{}} adds a node to the head or front of the sequence.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}\index{addTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}} adds a node to the tail or end of the sequence.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}\index{add@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addTail}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}\index{dropHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}} removes a node from the head or front of the sequence and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}\index{dropHead@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}} removes a node from the head or front of the sequence and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}\index{drop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{drop}}}\endlgrinde\LGend{}} is a synonym for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropHead}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}\index{dropTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}} removes a node from the tail or end of the sequence and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}\index{dropTail@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dropTail}}}\endlgrinde\LGend{}} removes a node from the tail or end of the sequence and returns a pointer to it or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} if the sequence has no nodes.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}\index{remove@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}} removes the specified node from the sequence (any location).
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{transfer}}}\endlgrinde\LGend{}\index{transfer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{transfer}}}\endlgrinde\LGend{}} transfers all nodes from the ``from'' list to the tail or end of the specified sequence;
 the ``from'' list is empty after the transfer.
@@ -10614,7 +10633,7 @@ the association can be changed subsequently with member \LGinlinetrue\LGbegin\lg
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}\index{over@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}} resets the iterator to the head or tail of the specified sequence depending on which iterator is used.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}\index{>>@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}} attempts to move the iterator's internal cursor to the next node.
 If the head (front) or tail (end) of the sequence has not been reached depending on which iterator is used, the argument is set to the address of the next node and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} is returned;
-otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
+otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} is returned.
 
 \VRef[Figure]{f:DSLSeq} illustrates creating and using a sequence and sequence iterator.
 

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 22 22:18:09 2016
-// Update Count     : 96
+// Last Modified On : Sat Sep  8 11:27:26 2018
+// Update Count     : 97
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -207,6 +207,7 @@ enum key_value_t {
     SELECT_RP,
     MEMBER,
     ROUTINE,
+    TEMPLATEVAR,
 };
 
 #endif // __KEY_H__

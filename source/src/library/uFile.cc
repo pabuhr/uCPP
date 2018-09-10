@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:42:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec  6 00:34:39 2012
-// Update Count     : 481
+// Last Modified On : Sat Sep  8 16:00:50 2018
+// Update Count     : 483
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -371,7 +371,7 @@ uFile::FileAccess::~FileAccess() {
 	  if ( retcode != -1 || errno != EINTR ) break;	// timer interrupt ?
 	} // for
 	if ( retcode == -1 ) {
-	    if ( ! std::uncaught_exception() ) _Throw uFile::FileAccess::CloseFailure( *this, errno, "unable to terminate access to file" );
+	    if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw uFile::FileAccess::CloseFailure( *this, errno, "unable to terminate access to file" );
 	} // if
     } // if
     if ( own ) delete file;
@@ -446,7 +446,7 @@ void uFile::StatusFailure::defaultTerminate() const {
 
 
 uFile::~uFile() {
-    if ( accessCnt != 0 && ! std::uncaught_exception() ) {
+    if ( accessCnt != 0 && ! std::__U_UNCAUGHT_EXCEPTION__() ) {
 	TerminateFailure temp( *this, EINVAL, accessCnt, "terminating access with outstanding accessor(s)" );
 	if ( name != 0 ) delete name;			// safe to delete name as the name is copied in the exception object
 	_Throw temp;
@@ -603,7 +603,7 @@ uPipe::~uPipe() {
 	  if ( retcode != -1 || errno != EINTR ) break;	// timer interrupt ?
 	} // for
 	if ( retcode == -1 ) {
-	    if ( ! std::uncaught_exception() ) _Throw uPipe::CloseFailure( *this, errno, "unable to close pipe" );
+	    if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) _Throw uPipe::CloseFailure( *this, errno, "unable to close pipe" );
 	} // if
     } // for
 } // uPipe::~uPipe

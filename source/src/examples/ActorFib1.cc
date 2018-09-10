@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 26 08:42:02 2017
-// Update Count     : 7
+// Last Modified On : Sat Apr  7 09:58:11 2018
+// Update Count     : 9
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,7 +32,7 @@ unsigned int uDefaultActorThreads() { return 1; }
 unsigned int uDefaultActorProcessors() { return 0; }
 
 struct NextMsg : public uActor::Message {} nextMsg;
-struct FibMsg : public uActor::Message { long long int fib; } fibMsg;
+struct FibMsg : public uActor::Message { long long int fn; } fibMsg;
 
 _Actor Fib {
     long long int fn1, fn2;
@@ -42,15 +42,15 @@ _Actor Fib {
 	Case( NextMsg, msg ) {
 	    switch( state ) {
 	      case 1:
-		fibMsg.fib = 0; fn1 = fibMsg.fib;
+		fibMsg.fn = 0; fn1 = fibMsg.fn;
 		state = 2;
 		break;
 	      case 2:
-		fibMsg.fib = 1; fn2 = fn1; fn1 = fibMsg.fib;
+		fibMsg.fn = 1; fn2 = fn1; fn1 = fibMsg.fn;
 		state = 3;
 		break;
 	      case 3:
-		fibMsg.fib = fn1 + fn2; fn2 = fn1; fn1 = fibMsg.fib;
+		fibMsg.fn = fn1 + fn2; fn2 = fn1; fn1 = fibMsg.fn;
 		break;
 	    } // switch
 	    *msg.sender | fibMsg;
@@ -75,7 +75,7 @@ _Actor Generator {
     Allocation receive( Message &msg ) {
 	if ( i < Times ) {
 	    Case( FibMsg, msg ) {
-		cout << msg_t->fib << endl;
+		cout << msg_t->fn << endl;
 		fib->tell( nextMsg, this );
 	    } // Case
 	    i += 1;
@@ -100,7 +100,7 @@ int main( int argc, char *argv[] ) {
 	} // switch
     } catch( ... ) {
 	cout << "Usage: " << argv[0] << " [ numbers (> 0) ]" << endl;
-	exit( 1 );
+	exit( EXIT_SUCCESS );
     } // try
 
     new Generator;

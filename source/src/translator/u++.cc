@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 19:10:21 2017
-// Update Count     : 947
+// Last Modified On : Mon Sep  3 14:43:47 2018
+// Update Count     : 961
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -110,7 +110,8 @@ int main( int argc, char *argv[] ) {
     bool debugging = false;				// -g flag
     bool openmp = false;				// -openmp flag
     bool nouinc = false;				// -no-u++-include: avoid "inc" directory
-    bool cpp11 = false;					// C++11 version
+    bool std_flag = false;				// -std= flag
+    bool x_flag = false;				// -x flag
 
     const char *args[argc + 100];			// u++ command line values, plus some space for additional flags
     int sargs = 1;					// starting location for arguments in args list
@@ -137,22 +138,25 @@ int main( int argc, char *argv[] ) {
     string uAlloc;
 
     uDEBUGPRT( cerr << "u++:" << endl; )
+    uDEBUGPRT(
+	for ( int i = 1; i < argc; i += 1 ) {
+	    cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
+	} // for
+    )
 
     // process command-line arguments
 
     for ( int i = 1; i < argc; i += 1 ) {
-	uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; )
 	arg = argv[i];					// convert to string value
-	uDEBUGPRT( cerr << "arg:\"" << arg << "\"" << endl; )
 	if ( prefix( arg, "-" ) ) {
 	    // pass through arguments
 
 	    if ( arg == "-Xlinker" || arg == "-o" ) {
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 		i += 1;
 		if ( i == argc ) continue;		// next argument available ?
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 
 	    // uC++ specific arguments
@@ -210,15 +214,23 @@ int main( int argc, char *argv[] ) {
 
 	    } else if ( arg == "-v" ) {
 		verbose = true;				// verbosity required
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 	    } else if ( arg == "-g" ) {
 		debugging = true;			// symbolic debugging required
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
+		nargs += 1;
+	    } else if ( arg == "-x" ) {			// language
+		args[nargs] = argv[i];			// pass argument along
+		nargs += 1;
+		i += 1;
+		if ( i == argc ) continue;		// next argument available ?
+		if ( ! prefix( argv[i], "c++" ) ) x_flag = true;
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-std=" ) || prefix( arg, "--std=" ) ) {
-		cpp11 = true;
-		args[nargs] = argv[i];			// pass the argument along
+		std_flag = true;			// -std=XX provided
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 	    } else if ( prefix( arg, "-B" ) ) {
 		Bprefix = arg.substr(2);		// strip the -B flag
@@ -232,7 +244,7 @@ int main( int argc, char *argv[] ) {
 		} // if
 		// later versions of gcc require the -b option to appear at the start of the command line
 		shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-		args[sargs] = ( *new string( arg ) ).c_str(); // pass the argument along
+		args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
 		if ( putenv( (char *)( *new string( string( "__U_GCC_MACHINE__=" ) + arg ) ).c_str() ) != 0 ) {
 		    cerr << argv[0] << " error, cannot set environment variable." << endl;
 		    exit( EXIT_FAILURE );
@@ -247,7 +259,7 @@ int main( int argc, char *argv[] ) {
 		} // if
 		// later versions of gcc require the -V option to appear at the start of the command line
 		shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-		args[sargs] = ( *new string( arg ) ).c_str(); // pass the argument along
+		args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
 		if ( putenv( (char *)( *new string( string( "__U_GCC_VERSION__=" ) + arg ) ).c_str() ) != 0 ) {
 		    cerr << argv[0] << " error, cannot set environment variable." << endl;
 		    exit( EXIT_FAILURE );
@@ -255,7 +267,7 @@ int main( int argc, char *argv[] ) {
 		sargs += 1;
 		nargs += 1;
 	    } else if ( arg == "-c" || arg == "-S" || arg == "-E" || arg == "-M" || arg == "-MM" ) {
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 		if ( arg == "-E" || arg == "-M" || arg == "-MM" ) {
 		    cpp_flag = true;			// cpp only
@@ -270,7 +282,7 @@ int main( int argc, char *argv[] ) {
 		nlibs += 1;
 	    } else if ( arg == "-openmp" ) {
 		openmp = true;				// openmp mode
-		args[nargs] = argv[i];			// pass the argument along
+		args[nargs] = argv[i];			// pass argument along
 		nargs += 1;
 	    } else {
 		// concatenate any other arguments
@@ -284,6 +296,11 @@ int main( int argc, char *argv[] ) {
 	    nonoptarg = true;
 	} // if
     } // for
+
+    args[nargs] = "-x";					// turn off language
+    nargs += 1;
+    args[nargs] = "none";
+    nargs += 1;
 
     if ( tcpu == "x86_64" ) {
 	args[nargs] = "-mcx16";				// allow double-wide CAA
@@ -575,7 +592,7 @@ int main( int argc, char *argv[] ) {
     // Note, when testing using -no-u++-include, the "inc" file is not present so special include files to adjust text
     // do not occur. Hence, other errors may occur. See the "library" directory special include files.
 
-    if ( ! nouinc ) {
+    if ( ! nouinc && ! x_flag ) {
 	// add the directory that contains the include files to the list of arguments after any user specified include
 	// directives
 
@@ -737,7 +754,7 @@ int main( int argc, char *argv[] ) {
 	    nargs += 1;
 	} // if
 
-	if ( ! cpp11 ) {
+	if ( ! std_flag && ! x_flag ) {
 	    args[nargs] = ( *new string( string("-std=") + CPP11 ) ).c_str(); // default
 	    nargs += 1;
 	} // if
