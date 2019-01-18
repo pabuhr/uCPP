@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:37 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  1 08:54:49 2017
-// Update Count     : 38
+// Last Modified On : Wed Jan  2 21:31:39 2019
+// Update Count     : 42
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,16 +57,16 @@ struct DoubleMsg : public uActor::FutureMessage< double > {
 _Actor Actor {
     Allocation receive( uActor::Message &msg ) {
 	Case( IntMsgV, msg ) {				// tell message
-	    osacquire( cout ) << "Actor " << msg_t->val << endl;
+	    osacquire( cout ) << "Actor " << msg_d->val << endl;
 	} else Case( IntMsg, msg ) {			// ask messages
-	    osacquire( cout ) << "Actor " << msg_t->val << endl;
-	    msg_t->delivery( 7 );
+	    osacquire( cout ) << "Actor " << msg_d->val << endl;
+	    msg_d->delivery( 7 );
 	} else Case( StrMsg, msg ) {
-	    osacquire( cout ) << "Actor " << msg_t->val << endl;
-	    msg_t->delivery( "XYZ" );
+	    osacquire( cout ) << "Actor " << msg_d->val << endl;
+	    msg_d->delivery( "XYZ" );
 	} else Case( IntStrMsg, msg ) {
-	    osacquire( cout ) << "Actor " << msg_t->val << endl;
-	    msg_t->delivery( 12 );
+	    osacquire( cout ) << "Actor " << msg_d->val << endl;
+	    msg_d->delivery( 12 );
 	} else Case( StopMsg, msg ) {
 	    return Delete;				// delete actor
 
@@ -75,8 +74,8 @@ _Actor Actor {
 	} else Case( UnhandledMsg, msg ) {		// receiver complained
 	    abort( "sent unknown message to %p", msg.sender );
 	} else Case( uActor::ReplyMsg, msg ) {		// unknown future message
-	    _Throw uActor::Unhandled( msg_t );		// complain in future
-	    // msg_t->delivery( new uActor::Unhandled( msg_t ) ); // alternative
+	    _Throw uActor::Unhandled( msg_d );		// complain in future
+	    // msg_d->delivery( new uActor::Unhandled( msg_d ) ); // alternative
 	} else {					// unknown void message
 	    *msg.sender | uActor::unhandledMsg;		// complain to sender
 	} // Case
@@ -89,6 +88,8 @@ int main() {
     enum { Times = 5 };
     Future_ISM< int > fi[Times];
     Future_ISM< string > fs[Times];
+
+    uActorStart();					// start actor system
     Actor * actor = new Actor;
 
     for ( int i = 0; i < Times; i += 1 ) {		// tell messages
@@ -122,7 +123,7 @@ int main() {
     } // try
 
     *actor | uActor::stopMsg;				// terminate actor
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

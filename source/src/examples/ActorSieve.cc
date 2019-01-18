@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:33:37 2018
-// Update Count     : 11
+// Last Modified On : Wed Jan  2 21:29:26 2019
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,11 +48,11 @@ _Actor Filter {
 
     Allocation receive( Message &msg ) {
 	Case( Number, msg ) {				// determine message kind
-	    if ( msg_t->n % myprime != 0 ) {
+	    if ( msg_d->n % myprime != 0 ) {
 		if ( ! next ) {
-		    next = new Filter( msg_t->n, root );
+		    next = new Filter( msg_d->n, root );
 		} else {
-		    *next | *new Number( msg_t->n );
+		    *next | *new Number( msg_d->n );
 		} // if
 	    } // if
 	} else Case( StopMsg, msg ) {
@@ -79,7 +78,7 @@ _Actor Sieve {
 
     Allocation receive( Message &msg ) {
 	Case( Number, msg ) {				// determine message kind
-	    osacquire( cout ) << msg_t->n << endl;	// print reported prime
+	    osacquire( cout ) << msg_d->n << endl;	// print reported prime
 	} else Case( StopMsg, msg ) {
 	    osacquire( cout ) << "all done" << endl;
 	    return Delete;				// delete actor
@@ -108,8 +107,9 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_FAILURE );
     } // try
 
+    uActorStart();					// start actor system
     new Sieve( Max );
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  1 08:59:46 2017
-// Update Count     : 7
+// Last Modified On : Wed Jan  2 21:42:01 2019
+// Update Count     : 11
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,9 +48,9 @@ _Actor Restart {
 
     Allocation receive( Message & msg ) {
 	Case( DummyMsg, msg ) {				// determine message kind
-	    PRT( osacquire( cout ) << "receive " << msg_t->id << endl; )
+	    PRT( osacquire( cout ) << "receive " << msg_d->id << endl; )
 	    cnt += 1;
-	    msg_t->delivery( 12 );
+	    msg_d->delivery( 12 );
 	} // Case
 	become( &Restart::receive2 );
 	return Nodelete;				// reuse actor
@@ -59,9 +58,9 @@ _Actor Restart {
 
     Allocation receive2( Message & msg ) {
 	Case( DummyMsg, msg ) {				// determine message kind
-	    PRT( osacquire( cout ) << "receive2 " << msg_t->id << endl; )
+	    PRT( osacquire( cout ) << "receive2 " << msg_d->id << endl; )
 	    cnt += 1;
-	    msg_t->delivery( 12 );
+	    msg_d->delivery( 12 );
 	} else Case( StopMsg, msg ) {
 	    PRT( osacquire( cout ) << "stop" << endl; )
 	    return Delete;				// delete actor
@@ -73,6 +72,8 @@ _Actor Restart {
 int main() {
     enum { NoOfMsgs = 10 };
     Future_ISM< int > fi[NoOfMsgs];
+
+    uActorStart();					// start actor system
     Restart *restart = new Restart;			// create actor
 
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {
@@ -96,7 +97,7 @@ int main() {
     } // for
 
     *restart | uActor::stopMsg;				// stop restart actor
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

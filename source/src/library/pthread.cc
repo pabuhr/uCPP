@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 26 18:16:01 2018
-// Update Count     : 1064
+// Last Modified On : Sat Nov 24 16:21:55 2018
+// Update Count     : 1070
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -237,11 +237,11 @@ namespace UPP {
     //######################### Pthread #########################
 
 
-    _Task Pthread : public ::uPthreadable {		// private type
+    _Task uPthread : public ::uPthreadable {		// private type
 	void main() {
 	    CancelSafeFinish dummy( *this );
 	    joinval = (*start_func)( arg );
-	} // Pthread::main
+	} // uPthread::main
 
 	void *(*start_func)( void * );			// thread starting routine
 	void *arg;					// thread parameter
@@ -249,18 +249,18 @@ namespace UPP {
 	static unsigned int pthreadCount;
 	static uOwnerLock pthreadCountLock;
       public:
-	Pthread( pthread_t *threadId, void * (*start_func)( void * ), const pthread_attr_t *attr, void *arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
+	uPthread( pthread_t *threadId, void * (*start_func)( void * ), const pthread_attr_t *attr, void *arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
 	    pthreadCountLock.acquire();
 	    pthreadCount += 1;
 	    pthreadCountLock.release();
 	    *threadId = pthreadId();			// publish thread id
-	} // Pthread::Pthread
+	} // uPthread::uPthread
 
-	~Pthread() {
+	~uPthread() {
 	    pthreadCountLock.acquire();
 	    pthreadCount -= 1;
 	    pthreadCountLock.release();
-	} // Pthread::~Pthread
+	} // uPthread::~uPthread
 
 	_Nomutex void finishUp() {
 	    int detachstate;
@@ -268,22 +268,22 @@ namespace UPP {
 	    if ( detachstate == PTHREAD_CREATE_DETACHED ) {
 		uKernelModule::systemTask->pthreadDetachEnd( *this );
 	    } // if
-	} // Pthread::finishUp
+	} // uPthread::finishUp
 
-	// execute some Pthread finalizations even if cancellation/exit/exception happens    
+	// execute some uPthread finalizations even if cancellation/exit/exception happens    
 	class CancelSafeFinish {
-	    Pthread &p;
+	    uPthread &p;
 	  public:
-	    CancelSafeFinish( Pthread &p ) : p( p ) {}
+	    CancelSafeFinish( uPthread &p ) : p( p ) {}
 	    ~CancelSafeFinish() {
 		p.finishUp();
 	    } // CancelSafeFinish::~CancelSafeFinish
 	}; // CancelSafeFinish
-    }; // Pthread
+    }; // uPthread
 
 
-    unsigned int Pthread::pthreadCount;
-    uOwnerLock Pthread::pthreadCountLock;
+    unsigned int uPthread::pthreadCount;
+    uOwnerLock uPthread::pthreadCountLock;
 
 
     //######################### PthreadPid (cont.) ##################
@@ -291,7 +291,7 @@ namespace UPP {
 
     inline int PthreadPid::create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg ) {
 	try {
-	    new Pthread( new_thread_id, start_func, attr, arg );
+	    new uPthread( new_thread_id, start_func, attr, arg );
 	} catch ( ::uPthreadable::CreationFailure & ) {
 	    return EAGAIN;				// Pthread creation can only fail due to too many pthread instances
 	} // try
@@ -300,7 +300,7 @@ namespace UPP {
     } // PthreadPid::create
 
     inline void PthreadPid::join( pthread_t threadID ) {
-	delete dynamic_cast< Pthread *>( lookup( threadID ) ); // delete Pthreads but not uPthreadables
+	delete dynamic_cast< uPthread *>( lookup( threadID ) ); // delete Pthreads but not uPthreadables
     } // PthreadPid::join
 
     inline ::uPthreadable *PthreadPid::lookup( pthread_t threadID ) {

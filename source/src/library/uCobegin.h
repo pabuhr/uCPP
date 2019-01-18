@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2014
+// uC++ Version 7.0.0, Copyright (C) Aaron Moss and Peter A. Buhr 2014
 // 
 // uCobegin.h -- 
 // 
-// Author           : Peter A. Buhr
+// Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 17:18:17 2018
-// Update Count     : 15
+// Last Modified On : Mon Jan  7 18:03:14 2019
+// Update Count     : 52
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -65,27 +65,47 @@ void uCobegin( std::initializer_list< std::function< void( unsigned int ) >> fun
 
 // COFOR
 
-#define COFOR( lidname, low, high, body ) uCofor( low, high, [&]( unsigned int lidname ){ body } );
+#define COFOR( lidname, low, high, body ) uCofor( low, high, [&]( decltype(high) lidname ){ body } );
 
 template<typename Low, typename High>			// allow bounds to have different types (needed for constants)
-void uCofor( Low low, High high, std::function<void ( unsigned int )> f ) {
-    unsigned int lid = 0;
+void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
     _Task Runner {
-	typedef std::function<void( unsigned int )> Func; // function type
-	unsigned int parm;				// local thread lid
+	typedef std::function<void( High )> Func;	// function type
+	const Low low;					// work subrange
+	const High high;
 	Func f;						// function to run for each lid
 
-	void main() { f( parm ); }
+	void main() {
+	    for ( High i = low; i < high; i += 1 ) f( i );
+	} // Runner::main
       public:
-	Runner( unsigned int parm, Func f ) : parm( parm ), f( f ) {}
+	Runner( Low low, High high, Func f ) : low( low ), high( high ), f( f ) {}
     }; // Runner
 
-    assert( 0 <= high - low );
-    const decltype(lid) size = high - low;
-    Runner **runners = new Runner *[size];		// do not use up task stack
-
-    for ( unsigned int lid = 0; lid < size; lid += 1 ) runners[lid] = new Runner( lid + low, f );
-    for ( unsigned int lid = 0; lid < size; lid += 1 ) delete runners[lid];
+    static_assert(std::is_integral<Low>::value, "Integral required.");
+    static_assert(std::is_integral<High>::value, "Integral required.");
+    assert( (High)low <= high );
+    const long int range = high - low;			// number of iterations
+    if ( range == 0 ) return;				// no work ? skip otherwise zero divide
+    const unsigned int nprocs = uThisCluster().getProcessors();	// parallelism
+    if ( nprocs == 0 ) return;				// no processors ? skip otherwise zero divide
+    const unsigned int threads = range < nprocs ? range : nprocs; // (min) may not need all processors
+    Runner **runners = new Runner *[threads];		// do not use up task stack
+    // distribute extras among threads by increasing stride by 1
+    unsigned int stride = range / threads + 1, extras = range % threads;
+    // chunk the iterations across the user-threads
+    // range 0-23, 3 threads: 23/3=7 stride, 23%3=2 extras => ranges across threads:, 0-8 (8), 8-16 (8), 16-23 (7)
+    // range 0-12, 3 threads: 12/3=4 stride, 12%3=0 extras => ranges across threads:, 0-4 (4), 4-8 (4), 8-12 (4)
+    unsigned int i = 0;
+    High s = low;
+    for ( i = 0; i < extras; i += 1, s += stride ) {	// create threads with subranges
+	runners[i] = new Runner( s, s + stride, f );
+    } // for
+    stride -= 1;					// remove extras from stride
+    for ( ; i < threads; i += 1, s += stride ) {	// create threads with subranges
+	runners[i] = new Runner( s, s + stride, f );
+    } // for
+    for ( unsigned int i = 0; i < threads; i += 1 ) delete runners[i];
     delete [] runners;
 } // uCofor
 

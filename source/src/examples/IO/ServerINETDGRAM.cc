@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:02:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 17:10:10 2017
-// Update Count     : 46
+// Last Modified On : Sun Jan 13 09:07:22 2019
+// Update Count     : 47
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ _Task Reader {
 			  if ( len == 0 ) abort( "server %d : EOF ecountered before timeout", getpid() );
 				server.sendto( buf, len );				// write byte back to client
 			} // for
-		} catch( uSocketServer::ReadTimeout ) {
+		} catch( uSocketServer::ReadTimeout & ) {
 		} // try
 	} // Reader::main
   public:

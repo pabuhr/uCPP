@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:36:04 2018
-// Update Count     : 5
+// Last Modified On : Wed Jan  2 21:27:40 2019
+// Update Count     : 9
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -89,10 +88,11 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_SUCCESS );
     } // try
 
+    uActorStart();					// start actor system
     Ping *ping = new Ping( Cycles );
     Pong *pong = new Pong;
     ping->tell( pongMsg, pong );			// start cycling
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 23 09:08:11 2017
-// Update Count     : 61
+// Last Modified On : Wed Jan  2 21:07:11 2019
+// Update Count     : 62
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -91,7 +91,7 @@
 
 // Define affinity for actor executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
 
-#define __U_DEFAULT_ACTOR_OFFSET__ -1
+#define __U_DEFAULT_ACTOR_AFFINITY__ -1
 
 // Define if actor executor is created in a separate cluster
 
@@ -109,7 +109,7 @@ extern unsigned int uDefaultBlockingIOProcessors();	// number of blocking I/O pr
 extern unsigned int uDefaultActorMailboxes();		// executor request queues
 extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
 extern unsigned int uDefaultActorProcessors();		// kernel threads (processors) servicing executor thread-pool
-extern int uDefaultActorOffset();			// affinity and offset (-1 => no affinity, default)
+extern int uDefaultActorAffinity();			// affinity and offset (-1 => no affinity, default)
 extern bool uDefaultActorSepClus();			// create processors on separate cluster
 
 extern void uStatistics();				// print user defined statistics on interrupt

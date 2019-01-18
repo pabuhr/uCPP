@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun 22 15:23:25 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 21 10:22:40 2007
-// Update Count     : 20
+// Last Modified On : Sat Nov 24 13:55:46 2018
+// Update Count     : 21
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@
 
 
 _Task uSystemTask {
-    friend _Task UPP::Pthread;				// access: pthreadDetachEnd
+    friend _Task UPP::uPthread;				// access: pthreadDetachEnd
 
     uBaseTask *victim;					// communication
 

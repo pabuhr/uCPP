@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 23 17:05:06 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 09:36:47 2018
-// Update Count     : 7
+// Last Modified On : Wed Jan  2 21:26:52 2019
+// Update Count     : 9
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,12 +51,13 @@ _Actor D : public B {
 }; // D
 
 int main() {
+    uActorStart();					// start actor system
     B *b = new B;
     D *d = new D;
     // Output is non-deterministic because actor b or d may may run first.
     *b | uActor::stopMsg;
     *d | uActor::stopMsg;
-    uActor::stop();
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

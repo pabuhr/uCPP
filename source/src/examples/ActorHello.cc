@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:23:31 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 08:29:22 2016
-// Update Count     : 6
+// Last Modified On : Wed Jan  2 21:26:29 2019
+// Update Count     : 12
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,16 +34,16 @@ struct StrMsg : public uActor::Message {
 }; // StrMsg
 
 _Actor Hello {
-    Allocation receive( Message &msg ) {
-	Case( StrMsg, msg ) {				// determine message kind
+    Allocation receive( Message & str ) {
+	Case( StrMsg, str ) {				// determine message kind
 	    osacquire acq( cout );
-	    cout << msg_t->val;				// access message value
-	    if ( msg_t->val == "hello" ) {
+	    cout << str_d->val;				// access message value
+	    if ( str_d->val == "hello" ) {
 		cout << ", hello back at you!" << endl;
 	    } else {
 		cout << ", do not understand?" << endl;
 	    } // if
-	} else Case( StopMsg, msg ) {
+	} else Case( StopMsg, str ) {
 	    return Delete;				// delete actor
 	} // Case
 	return Nodelete;				// reuse actor
@@ -52,10 +51,11 @@ _Actor Hello {
 }; // Hello
 
 int main() {
+    uActorStart();					// start actor system
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
     *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "你好" ) | uActor::stopMsg;
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

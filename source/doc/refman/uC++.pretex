@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sat Sep  8 17:04:07 2018
-%% Update Count     : 7385
+%% Last Modified On : Tue Jan  8 13:21:58 2019
+%% Update Count     : 7408
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -578,7 +578,7 @@ While \CC provides %(continue%) and %(break%) statements for altering control fl
 Unfortunately, this restriction forces programmers to use %(goto%) to achieve the equivalent control-flow for more than one level of nesting.
 To prevent having to switch to the %(goto%), \uC extends the %(continue%)\index{continue@%(continue%)}\index{continue@%(continue%)!labelled}\index{labelled!continue@%(continue%)} and %(break%)\index{break@%(break%)}\index{break@%(break%)!labelled}\index{labelled!break@%(break%)} with a target label to support static multi-level exit\index{multi-level exit}\index{static multi-level exit}~\cite{Buhr85,Java}.
 For both %(continue%) and %(break%), the target label must be directly associated with a %(for%), %(while%) or %(do%) statement;
-for %(break%), the target label can also be associated with a %(switch%), %(if%) or compound (%({\(\,\)}%)) statement.
+for %(break%), the target label can also be associated with a %(switch%), %(if%), %(try%) or compound (%({\(\,\)}%)) statement.
 
 The following example shows the labelled %(continue%) specifying which control structure is the target for the next loop iteration:
 \begin{flushleft}
@@ -800,6 +800,8 @@ A consequence of this semantics is that the destructor may not resume a coroutin
 Like\label{p:AutoUnwindCoroutine} a class object, a coroutine may be deleted at any time \emph{even if the coroutine's %(main%) routine is started but not terminated}, i.e., the coroutine is still suspended in its %(main%) routine.
 Before the coroutine's destructor is run, the coroutine's stack is unwound via the cancellation mechanism (see \VRef{s:Cancellation}), to ensure cleanup of resources allocated on the coroutine's stack.
 This unwinding involves an implicit %(resume%) of the coroutine being deleted. 
+\Textbf{Warning}, do not use %(catch(...)%) in a coroutine, if it may be deleted before terminating, because a cleanup exception is raised to force stack unwinding (implementation issue).
+The reason is that the catch-any catches the cleanup exception so the coroutine does not terminate and is left in an undefined state.
 
 Like a routine or class, a coroutine can access all the \Index{external variables} of a \CC program and the \Index{heap area}.
 Also, any %(static%)\index{static@%(static%) storage} member variables declared within a coroutine are shared among all instances of that coroutine type.
@@ -3759,14 +3761,14 @@ Each worker thread has its own work queue and arriving work requests are demulti
 No work sharing or stealing is performed among the work queues.
 %[
 class uExecutor {
-	enum { DefaultWorkers = 8, DefaultProcessors = 4 };
   public:
-	enum Cluster { Same, Sep };				// use same or separate cluster
-	uExecutor();
-	uExecutor( Cluster clus );
-	uExecutor( unsigned int nworkers, Cluster clus = Same );
-	uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same );
-	uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, Cluster clus = Same );
+    uExecutor(); // special for current cluster
+    uExecutor( unsigned int nprocessors,
+		 bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
+    uExecutor( unsigned int nprocessors, unsigned int nworkers,
+		 bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
+    uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes,
+		bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
 	template< typename Func > void send( Func action );
 	template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
 };
@@ -3775,22 +3777,23 @@ class uExecutor {
 \index{uExecutor@%(uExecutor%)!sendrecv@%(sendrecv%)}%
 The constructor routines have the following form:
 \begin{prefix}
-\item[%(uExecutor()%)]
 \begin{sloppypar}
--- creates an executor containing %(DefaultWorkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( Cluster clus )%)]
--- creates an executor containing %(DefaultWorkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nworkers, Cluster clus = Same )%)]
--- creates an executor containing %(nworkers%) worker threads and queues, running on %(DefaultProcessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, Cluster clus = Same )%)]
--- creates an executor containing %(nworkers%) worker threads and queues, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, Cluster clus = Same )%)]
--- creates an executor containing %(nworkers%) worker threads and queues, running on %(nprocessors%) processors, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-If %(affOffset%) is positive, the %(nprocessors%) processors are locked (affinity) on the CPUs starting at the specified starting value;
-e.g., for %(nprocessors%) of 4 and %(affOffset%) of 16, the processors are locked on CPUS 16, 17, 18, 19.
-Otherwise, the processors are run on any CPUs selected by the operating system.
+\item[%(uExecutor()%)]
+-- creates an executor containing 0 processors, %(uThisCluster().getProcessors()%) worker threads and queues, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nprocessors, bool sepClus, int affAffinity)%)]
+-- creates an executor containing %(nprocessors%) processors (with default affinity), worker threads, and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nprocessors, unsigned int nworkers, bool sepClus, int affAffinity)%)]
+-- creates an executor containing %(nprocessors%) processors (with default affinity), and %(nworkers%) worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes, bool sepClus,%)]
+%(int affAffinity )%)
+-- creates an executor containing %(nprocessors%) processors (with default affinity), %(nworkers%) worker threads and %(nmailboxes%) queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \end{sloppypar}
 \end{prefix}
+If %(affOffset%) is zero or positive, the %(nprocessors%) processors are locked (affinity) on the CPUs starting at the specified starting value;
+e.g., for %(nprocessors%) of 4 and %(affOffset%) of 16, the processors are locked on CPUS 16, 17, 18, 19.
+Otherwise, the processors are run on any CPUs selected by the operating system.
+Note, when using the default constructor the processors on the current cluster are used.
+Therefore, it is necessary to explicitly populate the current cluster with the appropriate number of processors, e.g., %(uProcessors p[3]%) to get 4 processors, as each cluster usually gets an initial processor.
 
 The member routine %(send%) queues a unit of work %(action%), with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
 The member routine %(sendrecv%) queues a unit of work %(action%), with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
@@ -3859,12 +3862,13 @@ Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\c
 \VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (worker) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
 A mailbox contains heterogeneous typed messages.
 Actors do not have a thread;
-instead they are executed by an underlying thread-pool, which calls an actor's %(receive%) member with each message from its mailbox.
+instead they are executed by an underlying thread-pool (executor, see \VRef{s:Executors}), which calls an actor's %(receive%) member with each message from its mailbox.
 Actor execution guarantees messages are executed sequentially and in FIFO order from the mailbox (i.e., messages are never executed concurrently for a specific actor).
 Actors also create other other actors and communicate with these new actors by sending messages to their mailbox.
 Messages are divided into those that do and do not require a response.
 Responses are handled asynchronously through \Index{future}s, where the actor processing the message deliveries the future result.
 Actor references, futures, and routines/functors/lambdas can be passed in messages.
+
 Most actor systems leverage \Index{garbage collection} to manage actors and messages, and the actor system terminates when all actors terminate.
 Since \CC does not have implicit garbage collection, \uC actors and messages involve explicit storage management, so programmers need to deal with actor/message life-time by returning an allocation status after processing a message.
 %[
@@ -4019,14 +4023,14 @@ An actor receive-member begins by discriminating the kind of message passed to i
 %[
 Allocation \(\BF{\)receive\(}\)( Message &msg ) {		// deliver message from mailbox
 	\(\BF{\)Case\(}\)( MsgInt, msg ) {					// msg of type MsgInt ?
-		msg\(\BF{\)_t\(}\)->i = msg_t->i + ... ;		// msg_t is MsgInt pointer to message
+		msg\(\BF{\)_d\(}\)->i = msg_d->i + ... ;		// msg_d is MsgInt pointer to message
 	} else Case( MsgFloat, msg ) {						// msg of type MsgFloat ?
-		... msg_t + 5.6 ... ;							// msg_t is MsgFloat ponter to message
+		... msg_d + 5.6 ... ;							// msg_d is MsgFloat ponter to message
 	} else // unknown message type
 	return \(\BF{\)...\(}\) ;							// Nodelete or Delete
 }
 %]
-Within each %(Case%) clause, a new pointer variable is created with name \emph{message-name}%(_t%) and type specified in the %(Case%) clause.
+Within each %(Case%) clause, a new pointer variable to the \emph{derived} message type is created with name \emph{message-name}%(_d%) and type specified in the %(Case%) clause.
 This local variable is used to access the specific fields associated with the kind of received message.
 Finally, a receive member ends by returning whether the actor is to persist (%(Nodelete%)) or be deleted (%(Delete%)).
 
@@ -4034,10 +4038,10 @@ For messages derived from %(FutureMessage%)\index{FutureMessage@%(FutureMessage%
 %[
 	Case( FMsg, msg ) {									// FutureMessage FMsg ?
 		// compute val
-		msg_t->\(\BF{\)delivery\(}\)( val );			// deliver value into future
+		msg_d->\(\BF{\)delivery\(}\)( val );			// deliver value into future
 	} ...
 %]
-All future operations are available through the variable %(msg_t%).
+All future operations are available through the variable %(msg_d%).
 
 An actor is create from an actor type, which has all the properties of a %(class%) and implicitly inherits from %(uActor%).
 %[
@@ -4102,8 +4106,8 @@ Allocation receive( Message &msg ) {
 		...
 	// error cases
 	} else Case( \(\BF{\)uActor::ReplyMsg\(}\), msg ) {\(}\Tab{56}{\)// unknown future message
-		msg_t->delivery( \(\BF{\)new MyEvent( ... )\(}\) );\(}\Tab{56}{\)// future complain
-		// _Throw uActor::Unhandled( msg_t );			// alternative
+		msg_d->delivery( \(\BF{\)new MyEvent( ... )\(}\) );\(}\Tab{56}{\)// future complain
+		// _Throw uActor::Unhandled( msg_d );			// alternative
 	...													// unknown tell message
 }
 %]
@@ -4117,19 +4121,19 @@ Finally, the following routines control the actor executor by adjusting its thre
 extern unsigned int uDefaultActorMailboxes();	// executor request queues
 extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
 extern unsigned int uDefaultActorProcessors();	// kernel threads (processors) servicing executor thread-pool
-extern int uDefaultActorOffset();				// affinity and offset (-1 => no affinity, default)
+extern int uDefaultActorAffinity();				// affinity and offset (-1 => no affinity, default)
 extern bool uDefaultActorSepClus();				// create processors on separate cluster
 %]
 \index{uDefaultActorMailboxes@%(uDefaultActorMailboxes%)}%
 \index{uDefaultActorThreads@%(uDefaultActorThreads%)}%
 \index{uDefaultActorProcessors@%(uDefaultActorProcessors%)}%
-\index{uDefaultActorOffset@%(uDefaultActorOffset%)}%
+\index{uDefaultActorAffinity@%(uDefaultActorAffinity%)}%
 \index{uDefaultActorSepClus@%(uDefaultActorSepClus%)}%
 Routine %(uDefaultActorMailboxes%) returns the number of executor request-queues (mailboxes) written to by actors and serviced by the actor-executor threads.
 Routine %(uDefaultActorThreads%) returns the number of threads per processor on the actor executor.
 Routine %(uDefaultActorProcessors%) returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
 Currently, the defaults are 4 request queues, 4 threads, 2 processors, and the actor executor runs in the user cluster.
-Routine %(uDefaultActorOffset%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
+Routine %(uDefaultActorAffinity%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
 Routine %(uDefaultActorSepClus%) returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
 
 Actors may inherit from other actors\index{actor!inheritance}:
@@ -4142,6 +4146,8 @@ _Actor B {
 	B() {}
 	B( int i ) {}
 };
+%]
+%[
 _Actor D : public B {
 	void preStart() { B::preStart(); }					// call base member
 	Allocation receive( Message & ) { return Delete; }
@@ -4172,8 +4178,8 @@ _Actor Hello {
 	Allocation receive( Message &msg ) {
 		Case( StrMsg, msg ) {							// determine message kind
 			osacquire acq( cout );
-			cout << msg_t->val;
-			if ( msg_t->val == "hello" ) {
+			cout << msg_d->val;
+			if ( msg_d->val == "hello" ) {
 				cout << ", hello back at you!" << endl;
 			} else {
 				cout << ", do not understand?" << endl;
@@ -4197,7 +4203,7 @@ int main() {
 \VRef[Figure]{f:HelloActor} shows a simple actor that receives a number of messages and then stops.
 There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
 The %(receive%) routine discriminates the kind of message and then examines the string within the message to print an appropriate message.
-Once in a discrimination clause, the variable %(msg_t%) is used to access the string in the message.
+Once in a discrimination clause, the variable %(msg_d%) is used to access the string in the message.
 For a %(StrMsg%), the actor continues to exist by returning %(Nodelete%);
 for a %(StopMsg%), the actor terminates by returning %(Delete%).
 The %(main%)\index{main@%(main%)} member creates two actors and passes each actor three messages, two string messages and a stop message.
@@ -4331,14 +4337,14 @@ struct IntStrMsg : public uActor::FutureMessage< int > {
 _Actor Actor {
 	Allocation receive( uActor::Message &msg ) {
 		Case( IntMsg, msg ) {							// ask messages
-			osacquire( cout ) << "Actor " << msg_t->val << endl;
-			msg_t->delivery( 7 );						// insert value into future
+			osacquire( cout ) << "Actor " << msg_d->val << endl;
+			msg_d->delivery( 7 );						// insert value into future
 		} else Case( StrMsg, msg ) {
-			osacquire( cout ) << "Actor " << msg_t->val << endl;
-			msg_t->delivery( "XYZ" );					// insert value into future
+			osacquire( cout ) << "Actor " << msg_d->val << endl;
+			msg_d->delivery( "XYZ" );					// insert value into future
 		} else Case( IntStrMsg, msg ) {
-			osacquire( cout ) << "Actor " << msg_t->val << endl;
-			msg_t->delivery( 12 );						// insert value into future
+			osacquire( cout ) << "Actor " << msg_d->val << endl;
+			msg_d->delivery( 12 );						// insert value into future
 		} else Case( StopMsg, msg ) {
 			return Delete;								// delete actor
 		} // Case
@@ -5619,7 +5625,8 @@ Several of the predefined kernel exception-types are implicitly enabled in certa
 The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptions (and cancellation, see \VRef{s:Cancellation}) at these points:
 \begin{list}{$\bullet$}{\topsep=3pt\parsep=0pt\itemsep=0pt}
 \item after a call to %(uBaseTask::yield%),
-\item when an %(_Enable%) statement is encountered,
+\item when an %(_Enable%) statement begins,
+\item when a %(_Disable%) statement ends,
 \item when a %(uEnableCancel%) object is instantiated (see \VRef{s:EnablingDisablingCancellation}) 
 \item after a task migrates to another cluster,
 \item after a task unblocks if it blocked when trying to enter a monitor,

@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:40:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 14:39:20 2017
-// Update Count     : 192
+// Last Modified On : Sun Jan 13 09:06:26 2019
+// Update Count     : 193
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -105,7 +105,7 @@ void Acceptor::main() {
 			abort( "server %d : failed to read EOT", getpid() );
 		} // if
 		server.complete( this, false );					// terminate
-	} catch( uSocketAccept::OpenTimeout ) {
+	} catch( uSocketAccept::OpenTimeout & ) {
 		server.complete( this, true );					// terminate
 	} // try
 } // Acceptor::main

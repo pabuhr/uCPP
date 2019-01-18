@@ -164,7 +164,7 @@ actor :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in ActorHello ActorFib1 ActorFib2 ActorFork ActorFork2 ActorChameneos ActorInherit ActorFuture ActorPingPong ActorRestart ActorRing ActorSieve ; do \
+	for filename in ActorHello ActorFib1 ActorFib2 ActorFork ActorFork2 ActorChameneos ActorInherit ActorFuture ActorPingPong ActorRestart ActorRing ActorSieve ActorMatrixSum ActorProdCons ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \

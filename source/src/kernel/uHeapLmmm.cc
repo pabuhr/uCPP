@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep  6 08:22:49 2018
-// Update Count     : 1367
+// Last Modified On : Wed Oct  3 17:11:59 2018
+// Update Count     : 1382
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,11 +58,12 @@ namespace UPP {
     size_t uHeapManager::mmapStart;			// cross over point for mmap
     unsigned int uHeapManager::maxBucketsUsed;		// maximum number of buckets in use
 
+    // Bucket size must be multiple of 16.
     // Powers of 2 are common allocation sizes, so make powers of 2 generate the minimum required size.
     unsigned int uHeapManager::bucketSizes[uHeapManager::NoBucketSizes] = {
-	16, 32, 48, 64,
-	64 + sizeof(uHeapManager::Storage), 96, 112, 128, 128 + sizeof(uHeapManager::Storage), 160, 192, 224,
-	256 + sizeof(uHeapManager::Storage), 320, 384, 448, 512 + sizeof(uHeapManager::Storage), 640, 768, 896,
+	16, 32, 48, 64 + sizeof(uHeapManager::Storage),
+	96, 112, 128 + sizeof(uHeapManager::Storage), 160, 192, 224, 256 + sizeof(uHeapManager::Storage), 288,
+	320, 352, 384, 448, 512 + sizeof(uHeapManager::Storage), 640, 768, 896,
 	1024 + sizeof(uHeapManager::Storage), 1536, 2048 + sizeof(uHeapManager::Storage), 2560, 3072, 3584, 4096 + sizeof(uHeapManager::Storage), 6144,
 	8192 + sizeof(uHeapManager::Storage), 9216, 10240, 11264, 12288, 13312, 14336, 15360,
 	16384 + sizeof(uHeapManager::Storage), 18432, 20480, 22528, 24576, 26624, 28672, 30720,

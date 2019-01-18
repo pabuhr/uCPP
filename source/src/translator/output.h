@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:41:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:13:33 2011
-// Update Count     : 13
+// Last Modified On : Sat Jan 12 12:55:25 2019
+// Update Count     : 20
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,10 +29,11 @@
 
 #include <token.h>
 
-extern char *file;
-extern token_t *file_token;
-extern unsigned int line;
-void parse_directive( char *text, char *&file, unsigned int &line );
+extern token_t * file_token;
+extern char file[];
+extern unsigned int line, flag;
+extern const char * flags[];
+void parse_directive( char * text, char file[], unsigned int & line, unsigned int & flag );
 
 void write_all_output();
 

@@ -439,7 +439,7 @@
 
   \indexspace
 
-  \item garbage collection, \hyperpage{58}
+  \item garbage collection, \hyperpage{59}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}, 
 		\hyperpage{150}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getActivePriority}}}\endlgrinde\LGend{}, 
@@ -1281,9 +1281,9 @@
 		\hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uContext}}}\endlgrinde\LGend{}, 
 		\hyperpage{43}
-  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{}, 
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorAffinity}}}\endlgrinde\LGend{}, 
 		\hyperpage{62}
-  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorOffset}}}\endlgrinde\LGend{}, 
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{}, 
 		\hyperpage{62}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{}, 
 		\hyperpage{62}

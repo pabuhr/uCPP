@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 16:03:35 2018
-// Update Count     : 5807
+// Last Modified On : Sun Jan 13 09:12:42 2019
+// Update Count     : 5811
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -269,7 +269,7 @@ namespace UPP {
 	static unsigned int wake_processor;
 	static unsigned int events, setitimer;
       private:
-	static bool prtStatTerm_;			// print statistics on termination
+	static bool prtStatTerm_;			// print statistics on termination signal
       public:
 	static bool prtStatTerm() {
 	    return prtStatTerm_;
@@ -330,7 +330,7 @@ namespace UPP {
     class uSerialDestructor;				// forward declaration
     class uSerialMember;				// forward declaration
     class uMachContext;					// forward declaration
-    _Task Pthread;					// forward declaration
+    _Task uPthread;					// forward declaration
     class PthreadLock;					// forward declaration
     _Coroutine uProcessorKernel;			// forward declaration
     class uNBIO;					// forward declaration
@@ -1326,7 +1326,7 @@ class uBaseCoroutine : public UPP::uMachContext {
     _Event UnwindStack {
 	friend class uBaseCoroutine;
 	friend class UPP::uMachContext;			// access: exec_dtor
-	friend _Task Pthread;				// access: exec_dtor
+	friend _Task uPthread;				// access: exec_dtor
 
 	bool exec_dtor;
 
@@ -1524,8 +1524,7 @@ class uBaseCoroutine : public UPP::uMachContext {
     void handleUnhandled( UnhandledException *ex );
     void handleUnhandled( uBaseEvent *ex = nullptr );
   public:
-    // These members should be private but cannot be because they are
-    // referenced from user code.
+    // These members should be private but cannot be because they are referenced from user code.
 
     void setCancelState( CancellationState state );
     CancellationState getCancelState() { return cancelState; }
@@ -3068,7 +3067,7 @@ _Task uPthreadable {					// abstract class (inheritance only)
 
 
 _Task uMain : public uPthreadable {
-    friend _Task Pthread;				// access: cleanup_handlers
+    friend _Task uPthread;				// access: cleanup_handlers
 
     int argc;
     char **argv, **env;

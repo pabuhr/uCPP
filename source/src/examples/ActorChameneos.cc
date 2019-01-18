@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:36:06 2018
-// Update Count     : 3
+// Last Modified On : Wed Jan  2 21:24:02 2019
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,7 +86,7 @@ _Actor Mall {
 		    PRT( osacquire( cout ) << ((Chameneos *)(msg.sender))->cid << " arrived at mall and matched with " << waitingChameneo->cid << endl; )
 		    n -= 1;
 		    assert( ((void)"mall, MeetMsg waitingChameneo == nullptr", waitingChameneo) );
-		    waitingChameneo->tell( *new MeetMsg( msg_t->colour ), msg.sender );
+		    waitingChameneo->tell( *new MeetMsg( msg_d->colour ), msg.sender );
 		    waitingChameneo = nullptr;
 		} else {
 		    waitingChameneo = dynamic_cast<Chameneos *>(msg.sender);
@@ -99,7 +99,7 @@ _Actor Mall {
 	    } // if
 	} else Case( MeetingCountMsg, msg ) {
 	    numFaded += 1;
-	    sumMeetings += msg_t->count;
+	    sumMeetings += msg_d->count;
 	    if ( numFaded == numChameneos ) {
 		osacquire( cout ) << "meetings " << sumMeetings << " check " << check << endl;
 		return Delete;
@@ -125,17 +125,17 @@ void Chameneos::preStart() {
 uActor::Allocation Chameneos::receive( Message &msg ) {
     Case( MeetMsg, msg ) {
 	Colour prev = colour;
-	colour = complement( colour, msg_t->colour);
-	assert( ((void)"Chameneos, sender == nullptr", msg_t->sender) );
-	assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg_t->sender)) );
-	PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg.sender))->cid << " " << ColourNames[msg_t->colour]
+	colour = complement( colour, msg_d->colour);
+	assert( ((void)"Chameneos, sender == nullptr", msg_d->sender) );
+	assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg_d->sender)) );
+	PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg.sender))->cid << " " << ColourNames[msg_d->colour]
 	     << " and changes to " << ColourNames[colour] << endl; )
 	meetings += 1;
-	msg_t->sender->tell( *new ChangeMsg( colour ), this );
+	msg_d->sender->tell( *new ChangeMsg( colour ), this );
 	mall->tell( *new MeetMsg( colour ), this );
     } else Case( ChangeMsg, msg ) {
-	PRT( osacquire( cout ) << cid << " change from " << ColourNames[colour] << " to " << ColourNames[msg_t->colour] << endl; )
-	colour = msg_t->colour;
+	PRT( osacquire( cout ) << cid << " change from " << ColourNames[colour] << " to " << ColourNames[msg_d->colour] << endl; )
+	colour = msg_d->colour;
 	meetings += 1;
 	mall->tell( *new MeetMsg( colour ), this );
     } else Case( ExitMsg, msg ) {
@@ -169,8 +169,9 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_SUCCESS );
     } // try
 
+    uActorStart();					// start actor system
     new Mall( nHost, nCham );
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

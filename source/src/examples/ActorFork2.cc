@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2017
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jan 11 08:18:18 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:36:05 2018
-// Update Count     : 11
+// Last Modified On : Wed Jan  2 21:25:52 2019
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -102,9 +101,10 @@ int main( int argc, char *argv[] ) {
 
     PRT( cout << "MaxLevel " << MaxLevel << endl; )
     MaxLevel -= 1;					// decrement to handle created leaves
+    uActorStart();					// start actor system
     root = new Fork();
     *root | uActor::startMsg;
-    uActor::stop();
+    uActorStop();					// wait for all actors to terminate
     cout << ((2 << MaxLevel) - 1) << " actors created" << endl;
 } // main
 

@@ -112,7 +112,7 @@ _Task Reader {
 #endif // __U_STATISTICS__
 		} // if
 	    } // for
-	} catch( uPipe::End::ReadTimeout ) {
+	} catch( uPipe::End::ReadTimeout & ) {
 	} // try
 
 	cout << "Reader:" << &uThisTask() << endl;

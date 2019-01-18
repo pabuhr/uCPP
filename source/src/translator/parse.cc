@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  9 12:00:25 2018
-// Update Count     : 4854
+// Last Modified On : Sun Jan 13 17:20:47 2019
+// Update Count     : 4899
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -815,7 +815,7 @@ static bool break_statement() {
 		sprintf( name, "_U_B_%.256s", label->hash->text );
 		label->hash = hash_table->lookup( name ); // change label
 	    } else {
-		gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\", \"if\" or compound \"{}\" statement." );
+		gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\", \"if\", \"try\" or compound \"{}\" statement." );
 	    } // if
 	} // if
 	if ( match( ';' ) ) return true;		// must end with semi-colon
@@ -1660,7 +1660,7 @@ static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry
     // line-number directive for the hoisted _CatchResume clause
 
     char linedir[32 + strlen( file )];
-    sprintf( linedir, "# %d \"%s\"\n", line, file );
+    sprintf( linedir, "# %d \"%s\"%s\n", line, file, flags[flag] );
 
     token_t *startblock = ahead;
 
@@ -1837,7 +1837,7 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 } // catch_clause
 
 
-static bool split_tryblock( symbol_t *sym, symbolset &parents, symbolset &extypes ) {
+static bool split_try_statement( symbol_t *sym, symbolset &parents, symbolset &extypes ) {
     // given a symbol sym, and the two sets parents and extypes, decides whether a try-block splitting is necessary or
     // not, by checking if sym is in the parents, or any of its parents have catch clauses in the try block already
 
@@ -1859,7 +1859,7 @@ static bool split_tryblock( symbol_t *sym, symbolset &parents, symbolset &extype
     } //for
 
     return false;
-} // split_try_block
+} // split_try_statement
 
 
 static void register_extype( symbol_t *sym, symbolset &parents, symbolset &extypes ) {
@@ -1882,7 +1882,7 @@ static bool finally_clause( symbol_t *symbol, token_t *start ) {
 	// line-number directive for the hoisted finally clause
 
 	char linedir[32 + strlen( file )];
-	sprintf( linedir, "# %d \"%s\"\n", line, file );
+	sprintf( linedir, "# %d \"%s%s\"\n", line, file, flags[flag] );
 
       if ( ! compound_statement( symbol, nullptr, 0 ) ) return false; // parse finally body
 
@@ -1905,7 +1905,7 @@ static bool finally_clause( symbol_t *symbol, token_t *start ) {
 } // finally_clause
 
 
-static bool try_block( symbol_t *symbol ) {
+static bool try_statement( symbol_t *symbol, token_t *label[], int cnt ) {
     token_t *back = ahead;
     token_t *start, *prefix;
 
@@ -1920,7 +1920,7 @@ static bool try_block( symbol_t *symbol ) {
 
 	// line-number directive for the try clause
 
-	sprintf( linedir, "# %d \"%s\"\n", line, file );
+	sprintf( linedir, "# %d \"%s\"%s\n", line, file, flags[flag] );
 	prefix = gen_code( ahead, '\n' );
 	gen_code( ahead, linedir, '#' );
 
@@ -1964,7 +1964,7 @@ static bool try_block( symbol_t *symbol ) {
 
 		// line-number directive for catch clauses after _CatchResume clauses in a try-block
 		if ( check( CATCH ) ) {
-		    sprintf( linedir, "# %d \"%s\"\n", line, file );
+		    sprintf( linedir, "# %d \"%s\"%s\n", line, file, flags[flag] );
 		    gen_code( ahead, '\n' );
 		    gen_code( ahead, linedir, '#' );
 		} // if
@@ -1972,7 +1972,7 @@ static bool try_block( symbol_t *symbol ) {
 
 	    while ( catch_clause( symbol, bound, optimized, para_name, exception_type, try_catches, if_rethrow ) ) {
 		catch_clauses += 1;
-		if ( split_tryblock( exception_type, parents, extypes ) && ! optimized ) {
+		if ( split_try_statement( exception_type, parents, extypes ) && ! optimized ) {
 		    split = true;                       // indicate following catch clauses are split off
 		    try_catches.clear();                // split => forget about removing the additional try/catch tokens
 		    parents.clear();
@@ -2013,7 +2013,7 @@ static bool try_block( symbol_t *symbol ) {
 
 	    // line-number directive for code after try-block
 
-	    sprintf( linedir, "# %d \"%s\"\n", line, file );
+	    sprintf( linedir, "# %d \"%s\"%s\n", line, file, flags[flag] );
 	    gen_code( ahead, '\n' );
 	    gen_code( ahead, linedir, '#' );
 
@@ -2023,12 +2023,13 @@ static bool try_block( symbol_t *symbol ) {
 		start->remove_token();
 	    } // if
 
+	    prefix_labels( start, ahead, label, cnt, false );
 	    return true;
 	} // if
     } // if
 
     ahead = back; return false;
-} // try_block
+} // try_statement
 
 
 static bool throw_expression() {
@@ -2165,9 +2166,9 @@ static bool enable_statement( symbol_t *symbol ) {
 	} else {
 	    gen_code( ahead, "uEHM :: uDeliverEStack uNoName ( true ) ;" );
 	} // if
-	gen_code( ahead, "uEHM :: poll();" );		// poll after enabling as there may be pending exceptions
+	gen_code( ahead, "uEHM :: poll( ) ;" );		// poll after enabling as there may be pending exceptions
 	if ( null_statement() ) {			// optimize empty statement body
-	    gen_code( befEnable, "if ( uEHM :: pollCheck() ) {" );
+	    gen_code( befEnable, "if ( uEHM :: pollCheck( ) ) {" );
 	    gen_code( ahead, "} }" );
 	    return true;
 	} else if ( statement( symbol ) ) {
@@ -2204,6 +2205,7 @@ static bool disable_statement( symbol_t *symbol ) {
 	} // if
 	if ( statement( symbol ) ) {
 	    gen_code( ahead, "}" );
+	    gen_code( ahead, "uEHM :: poll( ) ;" );	// poll after disabling as there may be pending exceptions
 	    return true;
 	} // if
     } // if
@@ -2217,7 +2219,7 @@ static bool disable_statement( symbol_t *symbol ) {
 //   "case" constant-expression ":" statement
 //   "default" ":" statement
 
-static bool labelled_statement( symbol_t *symbol ) {
+static bool labelled_statement( symbol_t * symbol ) {
     token_t *back = ahead;
     const int labprefix = 32;				// maximum number of labels prefixing a statement
     token_t *label[labprefix + 1];			// n+1 element holds the error case
@@ -2236,9 +2238,9 @@ static bool labelled_statement( symbol_t *symbol ) {
 	} // if
     } // for
     if ( cnt > 0 ) {					// any labels ?
-	if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( IF ) || check( LC ) ) {
+	if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( IF ) || check( TRY ) || check( LC ) ) {
 	    int targetype;
-	    if ( check( SWITCH ) || check( IF ) || check( LC ) ) targetype = 2;
+	    if ( check( SWITCH ) || check( IF ) || check( TRY ) || check( LC ) ) targetype = 2;
 	    else targetype = 1;
 	    token_t *l;
 	    for ( int i = 0; i < cnt; i += 1 ) {
@@ -2259,6 +2261,7 @@ static bool labelled_statement( symbol_t *symbol ) {
 	    if ( do_statement( symbol, label, cnt ) ) return true;
 	    if ( switch_statement( symbol, label, cnt ) ) return true;
 	    if ( if_statement( symbol, label, cnt ) ) return true;
+	    if ( try_statement( symbol, label, cnt ) ) return true;
 	    if ( compound_statement( symbol, label, cnt ) ) return true;
 	} else if ( statement( symbol ) ) {
 	    return true;
@@ -2374,7 +2377,7 @@ static bool statement( symbol_t *symbol ) {
 
 	if ( select_statement( symbol ) ) return true;	// MUST APPEAR AFTER ACCEPT STATEMENT, which handles simple timeout
 
-	if ( try_block( symbol ) ) return true;
+	if ( try_statement( symbol, nullptr, 0 ) ) return true;
 	if ( throw_expression() ) return true;
 	if ( raise_expression( UTHROW, symbol ) ) return true;
 	if ( raise_expression( RESUME, symbol ) ) return true;
@@ -3902,6 +3905,7 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
     if ( pushflag ) pop_table();
     ahead = back; return false;
 } // copy_constructor
+
 
 static bool function_return_type( attribute_t &attribute );
 static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {

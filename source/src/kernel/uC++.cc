@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 16:01:43 2018
-// Update Count     : 3139
+// Last Modified On : Mon Oct 29 10:51:08 2018
+// Update Count     : 3142
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -504,7 +504,7 @@ void uOwnerLock::release_() {				// used by uCondLock::wait
 	count = 1;
 	owner_->wake();					// restart new owner
     } else {
-	owner_ = nullptr;					// release, no owner
+	owner_ = nullptr;				// release, no owner
 	count = 0;
     } // if
     spinLock.release();
@@ -515,7 +515,7 @@ uDEBUG(
     uOwnerLock::~uOwnerLock() {
 	spinLock.acquire();
 	if ( ! waiting.empty() ) {
-	    uBaseTask *task = &(waiting.head()->task());	// waiting list could change as soon as spin lock released
+	    uBaseTask *task = &(waiting.head()->task()); // waiting list could change as soon as spin lock released
 	    spinLock.release();
 	    abort( "Attempt to delete owner lock with task %.256s (%p) still on it.", task->getName(), task );
 	} // if
@@ -533,7 +533,7 @@ void uOwnerLock::acquire() {
     task.setActivePriority( task.getActivePriorityValue() + 1 );
 #endif // KNOT
     if ( owner_ != &task ) {				// don't own lock yet
-	if ( owner_ != nullptr ) {				// but if lock in use
+	if ( owner_ != nullptr ) {			// but if lock in use
 	    waiting.addTail( &(task.entryRef) );	// suspend current task
 #ifdef __U_STATISTICS__
 	    uFetchAdd( Statistics::owner_lock_queue, 1 );
@@ -566,7 +566,7 @@ bool uOwnerLock::tryacquire() {
     task.setActivePriority( task.getActivePriorityValue() + 1 );
 #endif // KNOT
     if ( owner_ != &task ) {				// don't own lock yet
-	if ( owner_ != nullptr ) {				// but if lock in use
+	if ( owner_ != nullptr ) {			// but if lock in use
 	    spinLock.release();
 	    return false;				// don't wait for the lock
 	} // if
@@ -1824,6 +1824,7 @@ namespace UPP {
     // the acceptor, which allows a mutex member to terminate with an exception without informing the acceptor.
 
     uBaseTask *uSerialMember::uAcceptor() {
+	if ( acceptor == nullptr ) return acceptor;
 	uBaseTask *temp = acceptor;
 	acceptor->acceptedCall = nullptr;
 	acceptor = nullptr;

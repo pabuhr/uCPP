@@ -2,13 +2,13 @@
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2017
 // 
-// uDefaultActorOffset.cc -- 
+// uDefaultActorAffinity.cc -- 
 // 
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul 10 14:43:50 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 10 21:27:11 2017
-// Update Count     : 5
+// Last Modified On : Wed Jan  2 21:08:52 2019
+// Update Count     : 6
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,9 +32,9 @@
 // this routine from the uC++ standard library.
 
 
-int uDefaultActorOffset() {
-    return __U_DEFAULT_ACTOR_OFFSET__;			// affinity and CPU offset (-1 => no affinity, default)
-} // uDefaultActorOffset
+int uDefaultActorAffinity() {
+    return __U_DEFAULT_ACTOR_AFFINITY__;		// affinity and CPU offset (-1 => no affinity, default)
+} // uDefaultActorAffinity
 
 
 // Local Variables: //

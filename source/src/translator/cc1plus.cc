@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  3 14:49:48 2018
-// Update Count     : 222
+// Last Modified On : Fri Jan  4 08:55:00 2019
+// Update Count     : 235
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -230,6 +230,7 @@ void Stage1( const int argc, const char * const argv[] ) {
 	} // for
 	if ( cpp_in != nullptr ) cerr << " " << cpp_in;
 	if ( cpp_out != nullptr ) cerr << " " << cpp_out;
+	else if ( o_name != nullptr ) cerr << " -o " << o_name;
 	cerr << endl;
     )
 

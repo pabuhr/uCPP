@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr  7 09:58:11 2018
-// Update Count     : 9
+// Last Modified On : Wed Jan  2 21:24:37 2019
+// Update Count     : 12
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -75,7 +74,7 @@ _Actor Generator {
     Allocation receive( Message &msg ) {
 	if ( i < Times ) {
 	    Case( FibMsg, msg ) {
-		cout << msg_t->fn << endl;
+		cout << msg_d->fn << endl;
 		fib->tell( nextMsg, this );
 	    } // Case
 	    i += 1;
@@ -103,8 +102,9 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_SUCCESS );
     } // try
 
+    uActorStart();					// start actor system
     new Generator;
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

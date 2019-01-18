@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:46:35 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 17:12:16 2017
-// Update Count     : 21
+// Last Modified On : Sun Jan 13 09:07:31 2019
+// Update Count     : 22
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -105,7 +105,7 @@ void Acceptor::main() {
 		assert( wlen == size );
 
 		server.complete( this, false );					// terminate
-	} catch( uSocketAccept::OpenTimeout ) {
+	} catch( uSocketAccept::OpenTimeout & ) {
 		server.complete( this, true );					// terminate
 	} // try
 } // Acceptor::main

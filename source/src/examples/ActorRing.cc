@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:29:56 2018
-// Update Count     : 16
+// Last Modified On : Wed Jan  2 21:29:11 2019
+// Update Count     : 19
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,13 +45,13 @@ _Actor Passer {
 
     Allocation receive( Message &msg ) {
 	Case( Token, msg ) {				// determine message kind
-	    // msg_t is an implicit new variable of type "Token *"
-	    PRT( osacquire( cout ) << id << " " << msg_t->cnt << endl; )
-	    msg_t->cnt += 1;
-	    if ( msg_t->cnt >= (unsigned int)Times ) {
+	    // msg_d is an implicit new variable of type "Token *"
+	    PRT( osacquire( cout ) << id << " " << msg_d->cnt << endl; )
+	    msg_d->cnt += 1;
+	    if ( msg_d->cnt >= (unsigned int)Times ) {
 		// force token completely around the cycle so all actors stop
-		if ( msg_t->cnt < (unsigned int)Times + RingSize - 1 ) *partner | msg;
-		PRT( osacquire( cout ) << id << " stopping " << msg_t->cnt << endl; )
+		if ( msg_d->cnt < (unsigned int)Times + RingSize - 1 ) *partner | msg;
+		PRT( osacquire( cout ) << id << " stopping " << msg_d->cnt << endl; )
 		return Delete;				// delete actor
 	    } else {
 		*partner | msg;				// pass token to partner
@@ -87,6 +86,7 @@ int main( int argc, char *argv[] ) {
 
     Passer *passers[RingSize];				// actors in cycle
 
+    uActorStart();					// start actor system
     // create cycle of actor; special case to close cycle
     passers[RingSize - 1] = new Passer( RingSize - 1 );	// player without partner
     for ( int p = RingSize - 2; 0 <= p; p -= 1 ) {	// link all but one player
@@ -95,7 +95,7 @@ int main( int argc, char *argv[] ) {
     passers[RingSize - 1]->close( passers[0] );		// close cycle by linking head to tail
     
     *passers[0] | token;				// start cycling token
-    uActor::stop();					// wait for all actors to terminate
+    uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 16:28:03 2017
-// Update Count     : 207
+// Last Modified On : Sun Jan 13 18:18:13 2019
+// Update Count     : 243
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,9 +35,13 @@
 
 #include <cstring>					// strcpy, strlen
 
-char *file = nullptr;
-token_t *file_token = nullptr;
-unsigned int line = 1;
+#define xstr(s) str(s)
+#define str(s) #s
+
+token_t * file_token = nullptr;
+char file[FILENAME_MAX];
+unsigned int line = 1, flag;
+const char * flags[] = { "", " 3", " 4", " 3 4" };
 
 void context() {
     token_t *p;
@@ -68,36 +72,42 @@ void sigSegvBusHandler( int ) {
     exit( EXIT_SUCCESS );
 } // sigSegvBusHandler
 
-void parse_directive( char *text, char *&file, unsigned int &line ) {
-    char *c = text + 1;					// get past '#'
-    while ( *c == ' ' || *c == '\t' ) c += 1;		// skip whitespace
-    if ( isdigit( *c ) ) {				// must be a line directive
-	line = 0;
-	while ( isdigit( *c ) ) {
-	    line = line * 10 + ( *c - '0' );
-	    c += 1;
-	} // while
-	while ( *c == ' ' || *c == '\t' ) c += 1;	// skip whitespace
-	if ( *c == '\"' ) {				// must be a file directive
-	    char *s = c + 1;				// remember where the string begins
-	    c = s;
-	    while ( *c != '\"' ) c += 1;		// look for the end of the file name
-	    *c = '\0';					// terminate the string containing the file name
-	    if ( file != nullptr ) delete [] file;		// deallocate old string
-	    file = new char[ strlen( s ) + 1 ];		// allocate new string
-	    strcpy( file, s );				// copy the file name into this string
-	    *c = '\"';					// fill in the end quote again
-	} // if
-    } else {
-	line += 1;					// it was a normal directive, increment the line number
-    } // if
+void parse_directive( char * text, char file[], unsigned int & line, unsigned int & flag ) {
+    char d;
+    unsigned int flag1, flag2, flag3;
+    int len = sscanf( text, " %[#] %d %[\"]%" xstr(FILENAME_MAX) "[^\"]%[\"] %d%d%d",
+		      &d, &line, &d, &file[0], &d, &flag1, &flag2, &flag3 );
+    if ( len == 1 ) { line += 1; return; }		// normal directive, increment line number
+    uassert( ((void)"internal error, bad line number directive", len >= 5 ) );
+    // https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
+    // 3 indicates the following text comes from a system header file, so certain warnings should be suppressed.
+    // 4 indicates that the following text should be treated as being wrapped in an implicit extern "C" block.
+    switch ( len ) {
+      case 5:
+	flag = 0;
+	break;
+      case 6:
+	if ( flag1 == 3 ) flag = 1;
+	if ( flag1 == 4 ) flag = 2;
+	break;
+      case 7:
+	if ( flag1 == 3 && flag2 == 4 ) flag = 3;
+	else if ( flag1 == 3 ) flag = 1;
+	else if ( flag2 == 4 ) flag = 2;
+	break;
+      case 8:
+	if ( flag2 == 3 && flag3 == 4 ) flag = 3;
+	else if ( flag2 == 3 ) flag = 1;
+	else if ( flag3 == 4 ) flag = 2;
+	break;
+    } // switch      
 } // parse_directive
 
 // The routine 'output' converts a token value into text.  A considerable amount of effort is taken to keep track of the
 // current file name and line number so that when error and warning messages appear, the exact origin of those messages
 // can be displayed.
 
-void putoutput( token_t *token ) {
+void putoutput( token_t * token ) {
     uassert( token != nullptr );
     uassert( token->hash != nullptr );
     uassert( token->hash->text != nullptr );
@@ -109,7 +119,7 @@ void putoutput( token_t *token ) {
 	*yyout << token->hash->text;
 	break;
       case '#':
-	parse_directive( token->hash->text, file, line );
+	parse_directive( token->hash->text, file, line, flag );
 	file_token = token;
 	*yyout << token->hash->text;
 	break;

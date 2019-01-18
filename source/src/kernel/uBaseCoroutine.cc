@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  9 21:02:43 2018
-// Update Count     : 571
+// Last Modified On : Sat Nov 24 16:19:10 2018
+// Update Count     : 572
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -100,7 +100,7 @@ void uBaseCoroutine::createCoroutine() {
     cancelled_ = false;
     cancelInProgress_ = false;
     cancelState = CancelEnabled;
-    cancelType = CancelPoll;				// not used yet, but makes Pthread cancellation easier
+    cancelType = CancelPoll;				// not used yet, but makes uPthread cancellation easier
 
 #ifdef __U_PROFILER__
     // profiling

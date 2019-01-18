@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Apr 30 16:36:18 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 14:37:55 2017
-// Update Count     : 47
+// Last Modified On : Sun Jan 13 09:05:58 2019
+// Update Count     : 48
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -53,7 +53,7 @@ _Task Reader {
 				server.sendto( buf, len );				// write byte back to client
 				//server.sendto( buf, len, (sockaddr *)&to, tolen ); // write byte back to client
 			} // for
-		} catch( uSocketServer::ReadTimeout ) {
+		} catch( uSocketServer::ReadTimeout & ) {
 		} // try
     } // Reader::main
   public:

@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:04:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  8 08:58:01 2018
-// Update Count     : 80
+// Last Modified On : Sun Jan 13 09:07:04 2019
+// Update Count     : 81
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -70,7 +70,7 @@ _Task Reader {
 				} // exit
 				cout.write( buf, len );
 			} // for
-		} catch( uSocketServer::ReadTimeout ) {
+		} catch( uSocketServer::ReadTimeout & ) {
 			cout << "Warning: client timeout, possible cause lost data on datagram socket" << endl;
 		} // try
 	} // Reader::main

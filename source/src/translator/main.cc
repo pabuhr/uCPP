@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 22 23:13:43 2017
-// Update Count     : 167
+// Last Modified On : Sat Jan 12 15:21:41 2019
+// Update Count     : 169
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -77,13 +77,10 @@ void check( string arg ) {
     } // if
 } // check
 
-#define FILE_NAME "no file name"
-
 int main( int argc, char *argv[] ) {
     char *infile = nullptr;
     char *outfile = nullptr;
-    file = new char[sizeof(FILE_NAME)];
-    strcpy( file, FILE_NAME );
+    strcpy( file, "no file name" );
 
     // The translator can receive 2 types of arguments.
     //

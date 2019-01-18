@@ -23,7 +23,7 @@ uSocket \
 uDefaultActorMailboxes \
 uDefaultActorThreads \
 uDefaultActorProcessors \
-uDefaultActorOffset \
+uDefaultActorAffinity \
 uDefaultActorSepClus \
 uActor \
 pthread \

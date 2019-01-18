@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 27 18:20:07 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:49:49 2016
-// Update Count     : 32
+// Last Modified On : Sat Dec 29 10:29:23 2018
+// Update Count     : 38
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -70,8 +70,8 @@ int main() {
 	} // for
     } // for
 
-    COFOR( row, 0, rows,	// for row = 0 to rows { loop body }
-	int &subtotal = subtotals[row];			// concurrent
+    COFOR( row, 0, rows,				// for row = 0 to rows { loop body }
+	int & subtotal = subtotals[row];		// concurrent
 	subtotal = 0;
 	for ( unsigned int c = 0; c < cols; c += 1 ) {
 	    subtotal += matrix[row][c];

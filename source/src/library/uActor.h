@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  8 07:29:38 2018
-// Update Count     : 359
+// Last Modified On : Wed Jan  2 21:47:40 2019
+// Update Count     : 380
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,7 +31,7 @@
 #include <uSemaphore.h>
 
 #ifndef Case
-    #define Case( type, msg ) if ( type *msg##_t __attribute__(( unused )) = dynamic_cast< type * >( &msg ) )
+    #define Case( type, msg ) if ( type *msg##_d __attribute__(( unused )) = dynamic_cast< type * >( &msg ) )
 #else
     #error actor provides a "Case" macro and macro name "Case" already in use.
 #endif // ! Case
@@ -40,8 +40,9 @@
 
 
 // Does not support parentage: all actors exist in flatland.
+
 class uActor {
-    static uExecutor executor_;				// singleton
+    static uExecutor * executor;			// executor for all actors
     static uSemaphore wait_;				// wait for all actors to delete
     static unsigned long int alive_;			// number of actor objects in system
 
@@ -94,14 +95,14 @@ class uActor {
 		else if ( ret == Destroy ) actor.~uActor();
 	    } catch ( uBaseEvent &ex ) {
 		Case( uActor::ReplyMsg, msg ) {		// unknown future message
-		    msg_t->delivery( ex.duplicate() );	// complain in future
+		    msg_d->delivery( ex.duplicate() );	// complain in future
 		} else {
 		    _Throw;				// fail to worker thread
 		} // Case
 	    } catch ( ... ) {
 		abort( "C++ exceptions unsupported from throw in actor for future message" );
 		// Case( uActor::ReplyMsg, msg ) {	// unknown future message
-		//     //msg_t->reply( std::current_exception() ); // complain in future
+		//     //msg_d->reply( std::current_exception() ); // complain in future
 		// } else {
 		//     _Throw;
 		// } // Case
@@ -119,7 +120,7 @@ class uActor {
 	abort( "must supply receive routine for actor" );
 	return Delete;
     };
-    template< typename Func > void send_( Func action ) { uActor::executor_.send( action, ticket_ ); }
+    template< typename Func > void send_( Func action ) { executor->send( action, ticket_ ); }
     virtual void preStart() { /* default empty */ };	// user supplied actor initialization
 
     struct uActorConstructor {				// translator creates instance in actor constructor
@@ -132,7 +133,8 @@ class uActor {
   public:
     uActor() {
 	uFetchAdd( alive_, 1 );				// number of actors in system
-	ticket_ = executor_.tickets();			// get executor queue handle
+	uDEBUG( if ( ! executor ) { abort( "Attempt to create actor but no actor executor exists.\nPossible cause is not calling uActorStart() or calling it to late." ); } );
+	ticket_ = executor->tickets();			// get executor queue handle
     } // uActor::uActor
 
     virtual ~uActor() {					// check for last actor
@@ -143,7 +145,7 @@ class uActor {
 
     uActor & tell( Message & msg, uActor * sender = nullptr ) { // async call, no return
 	msg.sender = sender;
-	executor_.send( Deliver_( *this, msg ), ticket_ ); // copy functor
+	executor->send( Deliver_( *this, msg ), ticket_ ); // copy functor
 	return *this;
     } // uActor::tell
 
@@ -153,7 +155,7 @@ class uActor {
 
     template< typename Result > Future_ISM< Result > ask( FutureMessage< Result > & msg, uActor * sender = nullptr ) { // async call, return future
 	msg.sender = sender;
-	executor_.send( Deliver_( *this, msg ), ticket_ );
+	executor->send( Deliver_( *this, msg ), ticket_ );
 	return msg.result;
     } // uActor::ask
 
@@ -163,6 +165,13 @@ class uActor {
 
     // Administration
 
+#   define uActorStart() uExecutor __uExecutor__; uActor::start( __uExecutor__ )
+    static void start( uExecutor & executor ) {		// wait for all actors to terminate or timeout
+	assert( ! uActor::executor );
+	uActor::executor = &executor;
+    } // uActor::start
+
+#   define uActorStop() uActor::stop()
     static bool stop( uDuration duration = 0 ) {	// wait for all actors to terminate or timeout
 	if ( duration == 0 ) {				// optimization
 	    uActor::wait_.P();

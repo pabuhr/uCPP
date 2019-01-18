@@ -1,0 +1,17 @@
+These instructions and associated files assume uC++ is installed in
+/usr/local/u++-7.0.0. Modify the path in .gdbinit, if installed elsewhere.
+
+Copy /usr/local/u++-7.0.0/.gdbinit to your home directory. Thereafter, gdb will
+load the .gdbinit file and the associated uC++ macro extensions.
+
+New commands:
+
+    clusters                        : print all clusters
+    processors  <clusterName>       : print all processors on cluster
+    task                            : print userCluster tasks, application tasks only
+    task <clusterName>              : print cluster tasks, application tasks only
+    task all                        : print all clusters, all tasks
+    task <id>                       : switch stack to task id on userCluster
+    task 0x<address>	            : switch stack to task on any cluster
+    task <id> <clusterName>         : switch stack to task on specified cluster
+    prevtask                        : return to last switched task

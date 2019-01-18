@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 16:09:33 2018
-// Update Count     : 794
+// Last Modified On : Tue Jan  8 13:05:01 2019
+// Update Count     : 852
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -755,12 +755,11 @@ class uExecutor {
 	    uBaseTask( wc ), requests( requests ), start( start ), range( range ) {}
     }; // Worker
 
-    enum { DefaultWorkers = 8, DefaultProcessors = 4 };
     uCluster *cluster;					// if workers execute on separate cluster
     uProcessor **processors;				// array of virtual processors adding parallelism for workers
     Buffer< WRequest > *requests;			// list of work requests
     Worker< WRequest > **workers;			// array of workers executing work requests
-    const unsigned int nmailboxes, nworkers, nprocessors; // number of mailboxes/workers/processor tasks
+    const unsigned int nprocessors, nworkers, nmailboxes; // number of mailboxes/workers/processor tasks
     const bool sepClus;					// use same or separate cluster for executor
     unsigned int next = 0;				// demultiplexed across workers buffers
 
@@ -781,7 +780,8 @@ class uExecutor {
 	return result;
     } // uExecutor::sendrecv
   public:
-    uExecutor( unsigned int nmailboxes, unsigned int nworkers, unsigned int nprocessors, int affOffset, bool sepClus = false ) : nmailboxes( nmailboxes ), nworkers( nworkers ), nprocessors( nprocessors ), sepClus( sepClus ) {
+    uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) :
+	    nprocessors( nprocessors ), nworkers( nworkers ), nmailboxes( nmailboxes ), sepClus( sepClus ) {
 	assert( nmailboxes >= nworkers );
 	cluster = sepClus ? new uCluster( "uExecutor" ) : &uThisCluster();
 	processors = new uProcessor *[ nprocessors ];
@@ -790,8 +790,8 @@ class uExecutor {
 
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    processors[ i ] = new uProcessor( *cluster );
-	    if ( affOffset != -1 ) {
-		processors[ i ]->setAffinity( i + affOffset );
+	    if ( affAffinity != -1 ) {
+		processors[ i ]->setAffinity( i + affAffinity );
 	    } // if
 	} // for
 
@@ -801,11 +801,9 @@ class uExecutor {
 	} // for
     } // uExecutor::uExecutor
 
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, int affOffset, bool sepClus = false ) : uExecutor( nworkers, nworkers, nprocessors, affOffset, sepClus ) {}
-    uExecutor( unsigned int nworkers, unsigned int nprocessors, bool sepClus = false ) : uExecutor( nworkers, nworkers, nprocessors, -1, sepClus ) {}
-    uExecutor( unsigned int nworkers, bool sepClus = false ) : uExecutor( nworkers, DefaultProcessors, sepClus ) {}
-    uExecutor( bool sepClus ) : uExecutor( DefaultWorkers, DefaultProcessors, sepClus ) {}
-    uExecutor() : uExecutor( DefaultWorkers, DefaultProcessors, false ) {}
+    uExecutor( unsigned int nprocessors, unsigned int nworkers, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) : uExecutor( nprocessors, nworkers, nworkers, sepClus, affAffinity ) {}
+    uExecutor( unsigned int nprocessors, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) : uExecutor( nprocessors, nprocessors, nprocessors, sepClus, affAffinity ) {}
+    uExecutor() : uExecutor( 0, uThisCluster().getProcessors(), false, -1 ) {} // special for current cluster
 
     ~uExecutor() {
 	// Add one sentinel per worker to stop them. Since in destructor, no new work should be queued.  Cannot combine

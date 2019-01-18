@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 21 22:17:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  8 15:51:24 2017
-// Update Count     : 2
+// Last Modified On : Sun Jan 13 09:12:46 2019
+// Update Count     : 4
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -204,7 +204,7 @@ unsigned int uMainStackSize() {
 int main() {
     unsigned int i;
 #ifdef __U_STATISTICS__
-    UPP::Statistics::prtSigterm = true;
+    UPP::Statistics::prtStatTermOn();			// print statistics on termination signal
 #endif // __U_STATISTICS__
 
     for ( i = 0; i < sizeof(buffer); i += 1 ) {		// data to written/read

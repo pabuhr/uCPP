@@ -55,7 +55,7 @@ P.~A. Buhr, Glen Ditchfield, R.~A. Stroobosscher, B.~M. Younger, and C.~R.
 \newblock $\mu${C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}: Concurrency
   in the Object-Oriented Language
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}.
-\newblock {\em Softw. Pract. Exp.}, 22(2):137--172, February 1992.
+\newblock {\em Softw. Pract. Exper.}, 22(2):137--172, February 1992.
 
 \bibitem[BDZ89]{Buhr89b}
 P.~A. Buhr, Glen Ditchfield, and C.~R. Zarnke.
@@ -73,13 +73,13 @@ Peter~A. Buhr, Michel Fortier, and Michael~H. Coffin.
 \bibitem[BLL88]{PRESTO}
 B.~N. Bershad, E.~D. Lazowska, and H.~M. Levy.
 \newblock {PRESTO}: A System for Object-oriented Parallel Programming.
-\newblock {\em Softw. Pract. Exp.}, 18(8):713--732, August 1988.
+\newblock {\em Softw. Pract. Exper.}, 18(8):713--732, August 1988.
 
 \bibitem[BMZ92]{Buhr92b}
 Peter~A. Buhr, Hamish~I. Macdonald, and C.~Robert Zarnke.
 \newblock Synchronous and Asynchronous Handling of Abnormal Events in the
   $\mu${S}ystem.
-\newblock {\em Softw. Pract. Exp.}, 22(9):735--776, September 1992.
+\newblock {\em Softw. Pract. Exper.}, 22(9):735--776, September 1992.
 
 \bibitem[BP91]{Baker91a}
 T.~Baker and O.~Pazy.
@@ -170,7 +170,7 @@ Erlang AB.
 \bibitem[Geh92]{ExceptionalC}
 N.~H. Gehani.
 \newblock Exceptional {C} or {C} with Exceptions.
-\newblock {\em Softw. Pract. Exp.}, 22(10):827--848, October 1992.
+\newblock {\em Softw. Pract. Exper.}, 22(10):827--848, October 1992.
 
 \bibitem[Gen68]{Genuys68}
 F.~Genuys, editor.
@@ -182,7 +182,7 @@ F.~Genuys, editor.
 W.~Morven Gentleman.
 \newblock Message Passing between Sequential Processes: the Reply Primitive and
   the Administrator Concept.
-\newblock {\em Softw. Pract. Exp.}, 11(5):435--466, May 1981.
+\newblock {\em Softw. Pract. Exper.}, 11(5):435--466, May 1981.
 
 \bibitem[GJSB00]{Java}
 James Gosling, Bill Joy, Guy Steele, and Gilad Bracha.
@@ -199,7 +199,7 @@ David~B. Golub.
 N.~H. Gehani and W.~D. Roome.
 \newblock Concurrent {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}:
   Concurrent Programming with Class(es).
-\newblock {\em Softw. Pract. Exp.}, 18(12):1157--1177, December 1988.
+\newblock {\em Softw. Pract. Exper.}, 18(12):1157--1177, December 1988.
 
 \bibitem[GR91]{Gehani91}
 N.~Gehani and K.~Ramamritham.

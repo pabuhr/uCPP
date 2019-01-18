@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:19:14 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 16:29:44 2017
-// Update Count     : 96
+// Last Modified On : Sun Jan 13 18:16:47 2019
+// Update Count     : 108
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -110,8 +110,7 @@ void token_t::remove_token() {
     aft->fore = fore;
 } // token_t::remove_token
 
-// the following member routine returns the next token that is not
-// white space or directive.
+// the following member routine returns the next token that is not white space or directive.
 
 token_t *token_t::next_parse_token() {
     token_t *next = fore;
@@ -123,25 +122,25 @@ token_t *token_t::next_parse_token() {
 		// now in user code
 		user = true;
 		// remove the pragma
-		next->hash = hash_table->lookup( "\n" );
+		next->hash = hash_table->lookup( "#\n" );
 	    } else if ( strcmp( next->hash->text, "#pragma __U_USER_CODE__\r" ) == 0 ) {
 		// now in user code
 		user = true;
 		// remove the pragma
-		next->hash = hash_table->lookup( "\r" );
+		next->hash = hash_table->lookup( "#\r" );
 	    } else if ( strcmp( next->hash->text, "#pragma __U_NOT_USER_CODE__\n" ) == 0 ) {
 		// now not in user code
 		user = false;
 		// remove the pragma
-		next->hash = hash_table->lookup( "\n" );
+		next->hash = hash_table->lookup( "#\n" );
 	    } else if ( strcmp( next->hash->text, "#pragma __U_NOT_USER_CODE__\r" ) == 0 ) {
 		// now not in user code
 		user = false;
 		// remove the pragma
-		next->hash = hash_table->lookup( "\r" );
+		next->hash = hash_table->lookup( "#\r" );
 	    } else {
 		file_token = next;
-		parse_directive( next->hash->text, file, line );
+		parse_directive( next->hash->text, file, line, flag );
 	    } // if
 	} else {
 	    // SKULLDUGGERY: prevent backtracking from incrementing line number multiple times by marking the "left"
