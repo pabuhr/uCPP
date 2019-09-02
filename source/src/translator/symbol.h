@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:47:21 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 12 23:17:41 2016
-// Update Count     : 72
+// Last Modified On : Mon Jan 21 09:18:50 2019
+// Update Count     : 73
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 //
 
-#ifndef __SYMBOL_H__
-#define __SYMBOL_H__
+
+#pragma once
+
 
 #include "attribute.h"
 #include <list>
@@ -68,7 +69,6 @@ struct symbol_t {
     ~symbol_t();
 };
 
-#endif // __SYMBOL_H__
 
 // Local Variables: //
 // compile-command: "make install" //

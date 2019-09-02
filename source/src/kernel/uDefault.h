@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:07:11 2019
-// Update Count     : 62
+// Last Modified On : Fri Apr 12 17:49:12 2019
+// Update Count     : 66
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_DEFAULT_H__
-#define __U_DEFAULT_H__
+#pragma once
 
 
 // Define the default extension heap amount in units of bytes. When the uC++ supplied heap reaches the brk address, the
@@ -58,14 +57,8 @@
 // Define the default stack size in bytes.  Change the implicit default stack size for a task or coroutine created on a
 // particular cluster.
 
-#if defined( __ia64__ ) || defined( __sparc__ )
-// needed by IA64 unwind library and by SPARC for large stack-frames
-//#define __U_DEFAULT_STACK_SIZE__ 60000
-#define __U_DEFAULT_STACK_SIZE__ 240000
-#else
 //#define __U_DEFAULT_STACK_SIZE__ 30000
 #define __U_DEFAULT_STACK_SIZE__ 240000
-#endif
 
 // often large automatic arrays for setting up the program
 #define __U_DEFAULT_MAIN_STACK_SIZE__ 500000
@@ -113,9 +106,6 @@ extern int uDefaultActorAffinity();			// affinity and offset (-1 => no affinity,
 extern bool uDefaultActorSepClus();			// create processors on separate cluster
 
 extern void uStatistics();				// print user defined statistics on interrupt
-
-
-#endif // __U_DEFAULT_H__
 
 
 // Local Variables: //

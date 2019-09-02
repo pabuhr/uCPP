@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr  4 22:46:32 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  4 23:06:30 2017
-// Update Count     : 5
+// Last Modified On : Mon Jan 21 07:58:21 2019
+// Update Count     : 6
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __U_STACKLF_H__
-#define __U_STACKLF_H__
+
+#pragma once
 
 
 template<typename T> class StackLF {
@@ -69,9 +69,6 @@ template<typename T> class StackLF {
 
     StackLF() { link.atom = 0; }
 }; // StackLF
-
-
-#endif // __U_STACKLF_H__
 
 
 // Local Variables: //

@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct  3 17:11:59 2018
-// Update Count     : 1382
+// Last Modified On : Tue Jul 23 14:12:14 2019
+// Update Count     : 1395
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -75,6 +75,8 @@ namespace UPP {
 	1572864, 1703936, 1835008, 1966080, 2097152 + sizeof(uHeapManager::Storage), 2621440, 3145728, 3670016,
 	4194304 + sizeof(uHeapManager::Storage)
     };
+    // FIX ME
+    //static_assert( uHeapManager::NoBucketSizes == sizeof(uHeapManager::bucketSizes) / sizeof(uHeapManager::bucketSizes[0]), "size of bucket array wrong" );
 #ifdef FASTLOOKUP
     unsigned char uHeapManager::lookup[];		// array size defined in .h
 #endif // FASTLOOKUP
@@ -304,12 +306,7 @@ namespace UPP {
 	    uFetchAdd( mmap_calls, 1 );
 	    uFetchAdd( mmap_storage, tsize );
 #endif // __U_STATISTICS__
-	    int mmapFlags = MAP_PRIVATE |
-#if defined( __freebsd__ )
-		MAP_ANON;
-#else
-		MAP_ANONYMOUS;
-#endif
+	    int mmapFlags = MAP_PRIVATE | MAP_ANONYMOUS;
 	    block = (Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, mmapFlags, mmapFd, 0 );
 	    if ( block == MAP_FAILED ) {
 		// Do not call strerror( errno ) as it may call malloc.
@@ -575,7 +572,7 @@ namespace UPP {
     } // mallocNoStats
 
 
-    inline void * uHeapManager::memalign2( size_t alignment, size_t size ) __THROW {
+    inline void * uHeapManager::memalignNoStats( size_t alignment, size_t size ) __THROW {
 #ifdef __U_DEBUG__
 	UPP::uHeapManager::checkAlign( alignment );	// check alignment
 #endif // __U_DEBUG__
@@ -614,7 +611,7 @@ namespace UPP {
 #endif // __U_PROFILER__
 
 	return user;
-    } // memalign2
+    } // memalignNoStats
 } // UPP
 
 
@@ -665,7 +662,7 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::cmemalign_storage, size );
 #endif // __U_STATISTICS__
 
-	char * area = (char *)UPP::uHeapManager::memalign2( alignment, size );
+	char * area = (char *)UPP::uHeapManager::memalignNoStats( alignment, size );
       if ( UNLIKELY( area == nullptr ) ) return nullptr;
 	UPP::uHeapManager::Storage::Header * header;
 	UPP::uHeapManager::FreeHeader * freeElem;
@@ -688,13 +685,21 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
 #endif // __U_STATISTICS__
 
-      if ( UNLIKELY( addr == nullptr ) ) return UPP::uHeapManager::mallocNoStats( size ); // special cases
-      if ( UNLIKELY( size == 0 ) ) { free( addr ); return nullptr; }
+      if ( UNLIKELY( size == 0 ) ) { free( addr ); return nullptr; } // special cases
+      if ( UNLIKELY( addr == nullptr ) ) return UPP::uHeapManager::mallocNoStats( size );
 
 	UPP::uHeapManager::Storage::Header * header;
 	UPP::uHeapManager::FreeHeader * freeElem;
 	size_t asize, alignment = 0;
 	UPP::uHeapManager::heapManagerInstance->headers( "realloc", addr, header, freeElem, asize, alignment );
+
+      if ( UNLIKELY( addr == nullptr ) ) {		// special case
+	    if ( UNLIKELY( alignment != 0 ) ) {		// previous request memalign?
+		return memalign( alignment, size );	// create new aligned area
+	    } else {
+		return UPP::uHeapManager::mallocNoStats( size ); // create new area
+	    } // if
+	} // exit
 
 	size_t usize = asize - ( (char *)addr - (char *)header ); // compute the amount of user storage in the block
       if ( usize >= size ) {				// already sufficient storage
@@ -709,9 +714,9 @@ extern "C" {
 
 	void * area;
 	if ( UNLIKELY( alignment != 0 ) ) {		// previous request memalign?
-	    area = memalign( alignment, size );		// create new area
+	    area = memalign( alignment, size );		// create new aligned area
 	} else {
-	    area = UPP::uHeapManager::mallocNoStats( size );	// create new area
+	    area = UPP::uHeapManager::mallocNoStats( size ); // create new area
 	} // if
       if ( UNLIKELY( area == nullptr ) ) return nullptr;
 	if ( UNLIKELY( header->kind.real.blockSize & 2 ) ) { // previous request zero fill (calloc/cmemalign) ?
@@ -737,7 +742,7 @@ extern "C" {
 	uFetchAdd( UPP::uHeapManager::memalign_storage, size );
 #endif // __U_STATISTICS__
 
-	void * area = UPP::uHeapManager::memalign2( alignment, size );
+	void * area = UPP::uHeapManager::memalignNoStats( alignment, size );
 
 	uDEBUGPRT( uDebugPrt( "%p = memalign( %zu, %zu )\n", area, alignment, size ); )
 	return area;
@@ -825,7 +830,7 @@ extern "C" {
     } // malloc_stats
 
 
-    int malloc_stats_fd( int fd ) __THROW {
+    int malloc_stats_fd( int fd __attribute__(( unused )) ) __THROW {
 #ifdef __U_STATISTICS__
 	int temp = UPP::uHeapManager::stats_fd;
 	UPP::uHeapManager::stats_fd = fd;

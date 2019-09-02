@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Dec 21 14:01:24 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr  6 10:12:50 2012
-// Update Count     : 188
+// Last Modified On : Mon Jan 21 08:41:24 2019
+// Update Count     : 189
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_ALARM_H__
-#define __U_ALARM_H__
+#pragma once
 
 
 class uSignalHandler;					// forward declarations
@@ -116,9 +115,6 @@ class uEventListPop {
     void over( uEventList &events, bool inKernel );	// initialize iterator
     bool operator>>( uEventNode *&node );		// traverse each event on list
 }; // uEventListPop
-
-
-#endif // __U_ALARM_H__
 
 
 // Local Variables: //

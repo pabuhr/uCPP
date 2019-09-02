@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 30 21:09:56 2018
-// Update Count     : 1016
+// Last Modified On : Wed Jul 10 15:03:46 2019
+// Update Count     : 1020
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -328,13 +328,13 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	if ( symbol->data->attribute.Mutex ) {		// is it a coroutine monitor?
 	    gen_code( before, "uBaseCoroutine :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , this -> uSerialInstance , * this ," );
 	} else {
-	    gen_code( before, "uBaseCoroutine :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * ( UPP :: uSerial * ) 0, * this ," );
+	    gen_code( before, "uBaseCoroutine :: uCoroutineConstructor uCoroutineConstructorInstance ( uConstruct , * reinterpret_cast < UPP :: uSerial * > ( 0 ), * this ," );
 	} // if
 	gen_quote_hash( before, symbol->hash );
 	gen_code( before, ") ;" );
     } else if ( symbol->data->key == TASK ) {
 	if ( symbol->data->attribute.startP == nullptr ) {
-	    gen_code( before, "uBaseTask :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * ( uBasePIQ * ) 0 ," );
+	    gen_code( before, "uBaseTask :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , * reinterpret_cast < uBasePIQ * > ( 0 ) ," );
 	} else {
 	    gen_code( before, "uBaseTask :: uTaskConstructor uTaskConstructorInstance ( uConstruct , this -> uSerialInstance , * this , uPIQInstance ," );
 	} // if
@@ -548,9 +548,9 @@ void gen_destructor_prefix( token_t *before, symbol_t *symbol ) {
 	if ( profile ) {
 	    gen_code( before, "uDestruct ," );
 	} // if
-	gen_code( before, "( uBaseCoroutine & ) * this ) ;" );
+	gen_code( before, "reinterpret_cast < uBaseCoroutine & > ( * this ) ) ;" );
     } else if ( symbol->data->key == TASK ) {
-	gen_code( before, "uBaseTask :: uTaskDestructor uTaskDestructorInstance ( uDestruct , ( uBaseTask & ) * this ) ;" );
+	gen_code( before, "uBaseTask :: uTaskDestructor uTaskDestructorInstance ( uDestruct , reinterpret_cast < uBaseTask & > ( * this ) ) ;" );
     } // if
 } // gen_destructor_prefix
 
@@ -756,16 +756,6 @@ void gen_with( token_t *before, token_t *after ) {
 void gen_wait_suffix( token_t *before ) {
     gen_code( before, ")" );
 } // gen_wait_suffix
-
-
-void gen_verify( token_t *before ) {
-    gen_code( before, "uThisCoroutine ( ) . verify ( ) ;" );
-} // gen_verify
-
-
-void gen_yield( token_t *before ) {
-    gen_code( before, "uThisTask ( ) . uYieldYield ( rand () % 3 ) ;" );
-} // gen_yield
 
 
 // Local Variables: //

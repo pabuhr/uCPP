@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 14:18:43 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:58:10 2016
-// Update Count     : 106
+// Last Modified On : Mon Jan 21 07:58:58 2019
+// Update Count     : 108
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,12 +25,10 @@
 // 
 
 
-#ifndef __U_COLLECTION_H__
-#define __U_COLLECTION_H__
+#pragma once
 
 
-// Class that collection elements inherit from.  A uColable can only be in
-// one collection at a time.
+// Class that collection elements inherit from.  A uColable can only be in one collection at a time.
 
 class uColable {
     friend class uCFriend;
@@ -61,14 +59,12 @@ class uCFriend {
 };
 
 
-// A uCollection<T> contains elements of class T, which must be a public
-// descendant of uColable.  No particular ordering of elements is specified;
-// descendants of uCollection<T> specify orderings.  uCollection<T> is an
-// abstract class: instances cannot be declared.
+// A uCollection<T> contains elements of class T, which must be a public descendant of uColable.  No particular ordering
+// of elements is specified; descendants of uCollection<T> specify orderings.  uCollection<T> is an abstract class:
+// instances cannot be declared.
 
-// The default implementation of head() returns root, since it must point at
-// some collection element if the collection is not empty.  drop() and add()
-// are left to descendants, since they define the order of elements.
+// The default implementation of head() returns root, since it must point at some collection element if the collection
+// is not empty.  drop() and add() are left to descendants, since they define the order of elements.
 
 template<typename T> class uCollection : protected uCFriend {
   protected:
@@ -128,9 +124,6 @@ template<typename T> class uColIter : protected uCFriend {
     }
     // post: elts == null & !operator>>(tp) | elts != null & *tp' in elts & elts' == elts - *tp & operator>>(tp)
 };
-
-
-#endif // __U_COLLECTION_H__
 
 
 // Local Variables: //

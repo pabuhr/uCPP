@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 31 20:58:14 2017
-// Update Count     : 48
+// Last Modified On : Mon Jan 21 09:06:42 2019
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 // 
 
 
-#ifndef __U_BARRIER_H__
-#define __U_BARRIER_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 _Mutex _Coroutine uBarrier {
@@ -88,11 +85,6 @@ _Mutex _Coroutine uBarrier {
 	Count -= 1;
     } // uBarrier::block
 }; // uBarrier
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_BARRIER_H__
 
 
 // Local Variables: //

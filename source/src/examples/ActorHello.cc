@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:23:31 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:26:29 2019
-// Update Count     : 12
+// Last Modified On : Sun Feb 10 15:46:33 2019
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,7 @@ using namespace std;
 #include <uActor.h>
 
 
-struct StrMsg : public uActor::Message {
+struct StrMsg : public uActor::Message {		// actor message
     string val;
     StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
 }; // StrMsg
@@ -52,9 +52,9 @@ _Actor Hello {
 
 int main() {
     uActorStart();					// start actor system
-    *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
-    *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
-    *(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "你好" ) | uActor::stopMsg;
+    *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
+    *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
+    *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "你好" ) | uActor::stopMsg;
     uActorStop();					// wait for all actors to terminate
 } // main
 

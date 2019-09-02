@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Sat May 13 14:54:59 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 22 14:18:38 2011
-// Update Count     : 14
+// Last Modified On : Sun Jan 20 11:30:58 2019
+// Update Count     : 17
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,68 +27,8 @@
 #ifndef _ArchBasics_h_
 #define _ArchBasics_h_ 1
 
-#if defined( __sparc__ ) && defined( __solaris__ ) /* Solaris 2.x */
+#if defined( __i386__ )
 
-#include <sys/procfs.h>
-
-typedef long*			CodeAddress;
-typedef long			Instruction;
-typedef	long*			DataAddress;
-typedef long			DataField;
-typedef	char*			InternalAddress;
-typedef unsigned long	CalcAddress;
-typedef	prgreg_t		Register;
-
-// this is the minimal set of registers needed to reconstruct a frame backtrace
-struct MinimalRegisterSet {
-	Register	sp;
-	Register	fp;
-	Register	pc;
-}; // struct MinimalRegisterSet
-
-// I don't want to use a function call in any case, hence this is a macro
-#define CREATE_MINIMAL_REGISTER_SET(regs)\
-	asm(" st %%sp,%0" : "=m" (regs.sp) : );\
-	asm(" st %%fp,%0" : "=m" (regs.fp) : );\
-	asm(" st %%i7,%0" : "=m" (regs.pc) : );
-
-#elif defined( __sparc__ )	/* SunOS 4.1 */
-
-#include <machine/reg.h>
-
-typedef long*			CodeAddress;
-typedef long			Instruction;
-typedef	long*			DataAddress;
-typedef long			DataField;
-typedef	char*			InternalAddress;
-typedef unsigned long	CalcAddress;
-typedef	int				Register;
-
-// This is kind of a hack. Usually only 19 registers are supported,
-// but I just extend it to also store the FP register at the last position
-typedef int				prgregset_t[20];
-typedef int				prgreg_t;
-
-#define R_SP    O6
-#define R_PC    PC
-#define R_nPC   nPC
-#define R_Y     Y
-#define R_FP	19
-
-// this is the minimal set of registers needed to reconstruct a frame backtrace
-struct MinimalRegisterSet {
-	Register	sp;
-	Register	fp;
-	Register	pc;
-}; // struct MinimalRegisterSet
-
-// I don't want to use a function call in any case, hence this is a macro
-#define CREATE_MINIMAL_REGISTER_SET(regs)\
-	asm(" st %%sp,%0" : "=m" (regs.sp) : );\
-	asm(" st %%fp,%0" : "=m" (regs.fp) : );\
-	asm(" st %%i7,%0" : "=m" (regs.pc) : );
-
-#elif defined( __i386__ )
 #include <sys/ptrace.h>
 #define NUM_REGS 16			// from gdb/config/i386/tm-i386v.h
 typedef int				prgregset_t[NUM_REGS+1]; // to hold ORIG_EAX
@@ -136,7 +76,7 @@ struct MinimalRegisterSet {
 	regs.fp = 0;\
 	regs.pc = 0;
 
-#endif // __sparc__ && __solaris__
+#endif // __i386__
 
 // once for all
 #include <string.h>

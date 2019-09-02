@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 19 13:24:20 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 25 15:01:07 2011
-// Update Count     : 16
+// Last Modified On : Mon Jan 21 09:06:14 2019
+// Update Count     : 19
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __FSTREAM_H__
-#define __FSTREAM_H__
+#pragma once
 
 
 #include <iosfwd>
@@ -34,8 +33,6 @@
 #include <ostream>
 
 #include <uFilebuf.h>
-
-#pragma __U_NOT_USER_CODE__
 
 
 namespace std {
@@ -189,11 +186,6 @@ namespace std {
 
 
 } // namespace std
-
-
-#pragma __U_USER_CODE__
-
-#endif // __FSTREAM_H__
 
 
 // Local Variables: //

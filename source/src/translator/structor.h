@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:46:34 1992
-// Last Modified By : 
-// Last Modified On : Sat Jun  1 16:55:01 2013
-// Update Count     : 31
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Jan 21 09:17:49 2019
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 //
 
 
-#ifndef __STRUCTOR_H__
-#define __STRUCTOR_H__
+#pragma once
+
 
 #include "attribute.h"
 
@@ -56,7 +56,7 @@ class structor_list_t {
     int empty_structor_list();
 };
 
-#endif // __STRUCTOR_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

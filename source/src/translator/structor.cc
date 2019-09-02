@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:17:01 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:08:47 2011
-// Update Count     : 30
+// Last Modified On : Mon Jul  8 19:10:19 2019
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,6 @@
 //
 
 #include "structor.h"
-
-#include <cstddef>					// size_t
 
 structor_t::structor_t() {
     prefix = nullptr;

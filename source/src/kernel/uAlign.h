@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 22:08:40 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  5 08:31:45 2017
-// Update Count     : 51
+// Last Modified On : Mon Jan 21 08:49:40 2019
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_ALIGN_H__
-#define __U_ALIGN_H__
+#pragma once
 
 
 // Minimum size used to align memory boundaries for memory allocations. Minimum size must be >=
@@ -60,9 +59,6 @@ static inline unsigned long int uCeiling( unsigned long int value, unsigned long
     // "negate, round down, negate" is the same as round up
     return -uFloor( -value, align );
 } // uCeiling
-
-
-#endif // __U_ALIGN_H__
 
 
 // Local Variables: //

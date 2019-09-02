@@ -6,8 +6,8 @@
 # Author           : Lynn Tran
 # Created On       : Mon Oct 1 22:06:09 2018
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Fri Jan 18 09:02:22 2019
-# Update Count     : 10
+# Last Modified On : Sat Jan 19 14:16:10 2019
+# Update Count     : 11
 # 
 
 """
@@ -653,7 +653,7 @@ class Task(gdb.Command):
 
 class PrevTask(gdb.Command):
     """Switch back to previous task on the stack"""
-    usage_msg = 'prevtask <task_address>'
+    usage_msg = 'prevtask'
 
     def __init__(self):
         super(PrevTask, self).__init__('prevtask', gdb.COMMAND_USER)

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 10 08:30:46 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep 12 21:42:10 2009
-// Update Count     : 38
+// Last Modified On : Fri Apr 12 17:42:31 2019
+// Update Count     : 41
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,22 +34,11 @@ uFloatingPointContext::uFloatingPointContext() : uContext( &uniqueKey ) {
 } // uFloatingPointContext::uFloatingPointContext
 #endif // __U_FLOATINGPOINTDATASIZE__
 
-#if defined( __ia64__ )
-extern "C" void uIA64FPsave( double cxt[] );
-extern "C" void uIA64FPrestore( double cxt[] );
-#endif // __ia64__
-
 void uFloatingPointContext::save() {
     
 #if defined( __i386__ )
     // saved by caller
 #elif defined( __x86_64__ )
-    // saved by caller
-#elif defined( __ia64__ )
-#   if ! defined( __U_SWAPCONTEXT__ )
-	uIA64FPsave( floatingPointData );
-#   endif // ! __U_SWAPCONTEXT__
-#elif defined( __sparc__ )
     // saved by caller
 #else
     #error uC++ : internal error, unsupported architecture
@@ -63,12 +52,6 @@ void uFloatingPointContext::restore() {
 #if defined( __i386__ )
     // restored by caller
 #elif defined( __x86_64__ )
-    // restored by caller
-#elif defined( __ia64__ )
-#if ! defined( __U_SWAPCONTEXT__ )
-    uIA64FPrestore( floatingPointData );
-#endif // ! __U_SWAPCONTEXT__
-#elif defined( __sparc__ )
     // restored by caller
 #else
     #error uC++ : internal error, unsupported architecture

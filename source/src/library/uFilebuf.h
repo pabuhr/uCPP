@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:45:30 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 16:02:33 2018
-// Update Count     : 53
+// Last Modified On : Mon Jan 21 09:06:29 2019
+// Update Count     : 56
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,8 @@
 // 
 
 
-#ifndef __U_FILEBUF_H__
-#define __U_FILEBUF_H__
+#pragma once
 
-#pragma __U_NOT_USER_CODE__
 
 #include <iosfwd>					// basic_ios
 #include <streambuf>
@@ -401,11 +399,6 @@ namespace std {
 */
 
 } // namespace std
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_FILEBUF_H__
 
 
 // Local Variables: //

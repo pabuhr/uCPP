@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 15 23:07:27 2017
-// Update Count     : 802
+// Last Modified On : Fri Apr 12 17:18:37 2019
+// Update Count     : 821
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,19 +39,9 @@
 #include <cerrno>
 #include <unistd.h>					// write
 
-#if defined( __sparc__ ) || defined( __x86_64__ ) || defined( __ia64__ )
+#if defined( __x86_64__ )
 extern "C" void uInvokeStub( UPP::uMachContext * );
 #endif
-
-#if defined( __sparc__ )
-#if defined(  __solaris__ )
-#include <sys/stack.h>
-#else
-#include <machine/trap.h>
-#include <machine/asm_linkage.h>
-#include <machine/psl.h>
-#endif // __solaris__
-#endif // __sparc__
 
 
 using namespace UPP;
@@ -190,8 +180,6 @@ namespace UPP {
 
 
     void uMachContext::extraSave() {
-	// Don't need to test extras bit, it is sufficent to check context list
-
 	uContext *context;
 	for ( uSeqIter<uContext> iter(additionalContexts); iter >> context; ) {
 	    context->save();
@@ -200,8 +188,6 @@ namespace UPP {
 
 
     void uMachContext::extraRestore() {
-	// Don't need to test extras bit, it is sufficent to check context list
-
 	uContext *context;
 	for ( uSeqIter<uContext> iter(additionalContexts); iter >> context; ) {
 	    context->restore();
@@ -219,7 +205,6 @@ namespace UPP {
 // Bits 16 through 31 of the MXCSR register are reserved and are cleared on a power-up or reset of the processor;
 // attempting to write a non-zero value to these bits, using either the FXRSTOR or LDMXCSR instructions, will result in
 // a general-protection exception (#GP) being generated.
-#if ! defined( __U_SWAPCONTEXT__ )
 	struct FakeStack {
 	    void *fixedRegisters[3];			// fixed registers ebx, edi, esi (popped on 1st uSwitch, values unimportant)
 	    uint32_t mxcsr;				// MXCSR control and status register
@@ -238,21 +223,9 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvoke );
 	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
 	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
-#else
-	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    abort( "internal error, getcontext failed" );
-	} // if
-	((ucontext *)context)->uc_stack.ss_sp = (char *)limit;
-	((ucontext *)context)->uc_stack.ss_size = size; 
-	((ucontext *)context)->uc_stack.ss_flags = 0;
-	::makecontext( (ucontext *)context, (void (*)())uInvoke, 2, this );
-	// TEMPORARY: stack is incorrectly initialized to allow stack walking
-	((ucontext *)context)->uc_mcontext.gregs[ REG_EBP ] = 0; // terminate stack with null fp
-#endif
 
 #elif defined( __x86_64__ )
 
-#if ! defined( __U_SWAPCONTEXT__ )
 	struct FakeStack {
 	    void *fixedRegisters[5];			// fixed registers rbx, r12, r13, r14, r15
 	    uint32_t mxcsr;				// MXCSR control and status register
@@ -270,93 +243,6 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[1] = rtnAdr( (void (*)())uInvoke );
 	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
 	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
-#else
-	// makecontext is difficult to support.  See http://sources.redhat.com/bugzilla/show_bug.cgi?id=404
-	#error uC++ : internal error, swapcontext cannot be used on the x86_64 architecture
-#endif
-
-#elif defined( __ia64__ )
-
-#if ! defined( __U_SWAPCONTEXT__ )
-
-	struct FakeStack {
-	    void *scratch1[2];				// abi-mandated scratch area
-	    struct preservedState {
-		void *b5;
-		void *b4;
-		void *b3;
-		void *b2;
-		void *b1;
-		void *b0;
-		void *pr;
-		void *lc;
-		void *pfs;
-		void *fpsr;
-		void *unat;
-		void *spill_unat;
-		void *rnat;
-		void *r7;
-		void *r6;
-		void *r5;
-		void *r4;
-		void *r1;
-	    } preserved;
-	    void *scratch2[2];				// abi-mandated scratch area
-	}; // FakeStack
-
-	((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
-	((uContext_t *)context)->BSP = (char*)limit + 16;
-	sigemptyset( &((uContext_t *)context)->sigMask );
-#ifdef __U_MULTI__
-	sigaddset( &((uContext_t *)context)->sigMask, SIGALRM );
-#endif // __U_MULTI__
-	memset( ((uContext_t *)context)->SP, 0, sizeof( FakeStack ) );
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b0 = rtnAdr( (void (*)())uInvokeStub );
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.r1 = gpAdr( (void (*)())uInvokeStub );
-	asm ( "mov.m %0 = ar.fpsr" : "=r" (((FakeStack *)(((uContext_t *)context)->SP))->preserved.fpsr) );
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.r4 = this;
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b1 = rtnAdr( (void (*)())uInvoke );
-	((FakeStack *)(((uContext_t *)context)->SP))->preserved.b2 = nullptr; // null terminate for stack walking
-#else
-	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    abort( "internal error, getcontext failed" );
-	} // if
-	((ucontext *)context)->uc_stack.ss_sp = (char *)limit;
-	((ucontext *)context)->uc_stack.ss_size = size;
-	((ucontext *)context)->uc_stack.ss_flags = 0;
-	::makecontext( (ucontext *)context, (void (*)())uInvoke, 2, this );
-#endif
-
-#elif defined( __sparc__ )
-
-#if ! defined( __U_SWAPCONTEXT__ )
-	struct FakeStack {
-	    void *localRegs[8];
-	    void *inRegs[8];
-#if __U_WORDSIZE__ == 32
-	    void *structRetAddress;
-#endif // __U_WORDSIZE__ == 32
-	    void *calleeRegArgs[6];
-	}; // FakeStack
-
-	((uContext_t *)context)->FP = (char *)(SA( (unsigned long)base - STACK_ALIGN + 1 ) - SA( MINFRAME ) - STACK_BIAS );
-	((uContext_t *)context)->SP = (char *)((uContext_t *)context)->FP - SA( MINFRAME );
-	((uContext_t *)context)->PC = (char *)rtnAdr( (void (*)())uInvokeStub ) - 8;
-
-	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[0] = this; // argument to uInvoke
-	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[1] = (void *)uInvoke; // uInvoke routine
-	((FakeStack *)((char *)((uContext_t *)context)->FP + STACK_BIAS))->inRegs[6] = nullptr; // terminate stack with null fp
-#else
-	if ( ::getcontext( (ucontext *)context ) == -1 ) { // initialize ucontext area
-	    abort( " : internal error, getcontext failed" );
-	} // if
-	((ucontext *)context)->uc_stack.ss_sp = (char *)base - 8;	// TEMPORARY: -8 for bug in Solaris (fixed in Solaris 4.10)
-	((ucontext *)context)->uc_stack.ss_size = size; 
-	((ucontext *)context)->uc_stack.ss_flags = 0;
-	::makecontext( (ucontext *)context, (void (*)(...))uInvoke, 2, this );
-	// TEMPORARY: stack is incorrectly initialized to allow stack walking
-	*((int *)base - 8) = 0;				// terminate stack with null fp
-#endif
 
 #else
 	#error uC++ : internal error, unsupported architecture
@@ -365,28 +251,28 @@ namespace UPP {
 
 
     /**************************************************************
-	,-----------------. \
-	|                 | |
-	| __U_CONTEXT_T__ | } (multiple of 8)
-	|                 | |
-	`-----------------' / <--- context (16 byte align)
-	,-----------------. \ <--- base (stack grows down)
-	|                 | |
-	|    task stack   | } size (multiple of 16)
-	|                 | |
-	`-----------------' / <--- limit (16 byte align)
-	0/8                   <--- storage
-	,-----------------.
-	|   guard page    |   debug only
-	| write protected |
-	`-----------------'   <--- 4/8/16K alignment
+	s  |  ,-----------------. \
+	t  |  |                 | |
+	a  |  | __U_CONTEXT_T__ | } (multiple of 8)
+	c  |  |                 | |
+	k  |  `-----------------' / <--- context (16 byte align)
+	   |  ,-----------------. \ <--- base (stack grows down)
+	g  |  |                 | |
+	r  |  |    task stack   | } size (multiple of 16)
+	o  |  |                 | |
+	w  |  `-----------------' / <--- limit (16 byte align)
+	t  |  0/8                   <--- storage
+	h  V  ,-----------------.
+	      |   guard page    |   debug only
+	      | write protected |
+	      `-----------------'   <--- 4/8/16K page alignment
     **************************************************************/
 
     void uMachContext::createContext( unsigned int storageSize ) { // used by all constructors
 	size_t cxtSize = uCeiling( sizeof(__U_CONTEXT_T__), 8 ); // minimum alignment
+	size_t size;
 
 	if ( storage == nullptr ) {
-	    userStack = false;
 	    size = uCeiling( storageSize, 16 );
 	    // use malloc/memalign because "new" raises an exception for out-of-memory
 #ifdef __U_DEBUG__
@@ -412,10 +298,10 @@ namespace UPP {
 		abort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage, (int)uAlign() );
 	    } // if
 #endif // __U_DEBUG__
-	    userStack = true;
 	    size = storageSize - cxtSize;
 	    if ( size % 16 != 0 ) size -= 8;
-	    limit = (char *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
+	    limit = (void *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
+	    storage = (void *)((uintptr_t)storage | 1);	// add user stack storage mark
 	} // if
 #ifdef __U_DEBUG__
 	if ( size < MinStackSize ) {			// below minimum stack size ?
@@ -425,7 +311,6 @@ namespace UPP {
 
 	base = (char *)limit + size;
 	context = base;
-	top = (char *)context + cxtSize;
 
 	extras.allExtras = 0;
 
@@ -441,79 +326,14 @@ namespace UPP {
 	    asm( "movl %%esp,%0" : "=m" (sp) : );
 #elif defined( __x86_64__ )
 	    asm( "movq %%rsp,%0" : "=m" (sp) : );
-#elif defined( __ia64__ )
-	    asm( "mov %0 = r12" : "=r" (sp) : );
-#elif defined( __sparc__ )
-	    asm( "mov %%sp,%0" : "=r" (sp) : );
-	    sp = (void*)((char*)sp + STACK_BIAS);
 #else
 	    #error uC++ : internal error, unsupported architecture
 #endif
 	    return sp;
 	} else {					// accessing another coroutine
-
-#if ! defined( __U_SWAPCONTEXT__ )
-
-#if defined( __sparc__ )
-	    return (void*)((char*)((uContext_t *)context)->SP + STACK_BIAS);
-#else
 	    return ((uContext_t *)context)->SP;
-#endif // __sparc__
-
-#else  // __U_SWAPCONTEXT__
-	    return (void *)(((ucontext_t *)context)->uc_mcontext.
-#if defined( __linux__ )
-
-#if defined( __i386__ )
-		    gregs[REG_ESP]);
-#elif defined( __x86_64__ )
-		    gregs[REG_RSP]);
-#elif defined( __ia64__ )
-		    sc_gr[12]);
-#else
-		    #error uC++ : internal error, unsupported architecture
-#endif // architectures
-
-#elif defined( __freebsd__ )
-
-#if defined( __i386__ )
-		    mc_esp;
-#elif defined( __x86_64__ )
-		    gregs[REG_RSP]);
-#else
-		    #error uC++ : internal error, unsupported architecture
-#endif // architectures
-
-#elif defined( __solaris__ )
-
-#if defined( __sparc__ )
-		    (void*)((char*)gregs[REG_SP] + STACK_BIAS));
-#else
-		    #error uC++ : internal error, unsupported architecture
-#endif // architectures
-
-#endif // operating system
-
-#endif // __U_SWAPCONTEXT__
 	} // if
     } // uMachContext::stackPointer
-
-
-#if defined( __ia64__ )
-    void *uMachContext::registerStackPointer() const {
-#if defined( __U_SWAPCONTEXT__ )
-	if ( &uThisCoroutine() == this ) {		// accessing myself ?
-	    void *bsp;					// use my current stack value
-	    asm( "mov %0 = ar.bsp" : "=r" (bsp) : );
-	    return bsp;
-	} else {					// accessing another coroutine
-	    return (void *)(((ucontext_t *)context)->uc_mcontext.sc_ar_bsp);
-	} // if
-#else
-	return ((uContext_t *)context)->BSP;
-#endif
-    } // uMachContext::registerStackPointer
-#endif // __ia64__
 
 
     ptrdiff_t uMachContext::stackFree() const {
@@ -547,45 +367,13 @@ namespace UPP {
 	    abort( "Stack underflow detected: stack pointer %p above base %p.\n"
 		    "Possible cause is corrupted stack frame via overwriting memory.",
 		    sp, base );
-#if defined( __ia64__ )
-	} else if ( registerStackPointer() >= sp ) {
-	    // on ia64 the stack grows from both ends; when the two stack pointers cross, we have overflow
-	    abort( "Stack overflow detected: stack pointer %p at or below register stack pointer %p.\n"
-		    "Possible cause is allocation of large stack frame(s) and/or deep call stack.",
-		    sp, registerStackPointer() );
-#endif // __ia64__
 	} // if
     } // uMachContext::verify
 
 
     void *uMachContext::rtnAdr( void (*rtn)() ) {
-#if defined( __linux__ ) && defined( __ia64__ )
-	if ( ! rtn ) return nullptr;
-
-	struct TOC {
-	    void *rtn;
-	    void *toc;
-	};
-
-	return ((TOC *)rtn)->rtn;
-#else
 	return (void *)rtn;
-#endif
     } // uMachContext::rtnAdr
-
-
-#if defined( __linux__ ) && defined( __ia64__ )
-    void *uMachContext::gpAdr( void (*rtn)() ) {
-	if ( ! rtn ) return nullptr;
-
-	struct TOC {
-	    void *rtn;
-	    void *toc;
-	};
-
-	return ((TOC *)rtn)->toc;
-    } // uMachContext::gpAdr
-#endif
 } // UPP
 
 

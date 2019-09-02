@@ -25,15 +25,11 @@ uDefaultActorThreads \
 uDefaultActorProcessors \
 uDefaultActorAffinity \
 uDefaultActorSepClus \
+uFuture \
 uActor \
 pthread \
 Unix \
 } }
-
-#TEMPORARY, not sure if needed for freebsd
-ifneq (${TOS},freebsd)
-	LIBSRC += ${SRCDIR}/semaphore.cc
-endif
 
 LIBSRC-D = ${LIBSRC}
 ifeq (${MULTI},TRUE)

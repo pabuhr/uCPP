@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:59:11 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:44:00 2016
-// Update Count     : 67
+// Last Modified On : Mon Jan 21 09:18:32 2019
+// Update Count     : 68
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 //
 
 
-#ifndef __TABLE_H__
-#define __TABLE_H__
+#pragma once
+
 
 struct table_t;
 
@@ -90,7 +90,6 @@ extern lexical_t *top;					// pointer to current top table
 extern table_t *root;					// root table for global definitions
 extern table_t *focus;					// pointer to current lookup table
 
-#endif // __TABLE_H__
 
 // Local Variables: //
 // compile-command: "make install" //

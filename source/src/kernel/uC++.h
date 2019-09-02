@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:12:42 2019
-// Update Count     : 5811
+// Last Modified On : Sun Sep  1 16:52:09 2019
+// Update Count     : 5882
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,12 +33,22 @@
 // that are sensitive to the registration of processors.
 // ***************************************************************************
 
-#ifndef __U_CPLUSPLUS_H__
-#define __U_CPLUSPLUS_H__
+
+#pragma once
+
+
+// #pragma clang diagnostic push
+// #pragma clang diagnostic ignored "-Wnull-dereference"
 
 #if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// Mute g++-7
 #endif // __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+
 
 #if __cplusplus >= 201703L				// c++17 ?
 #define __U_UNCAUGHT_EXCEPTION__ uncaught_exceptions
@@ -47,13 +57,20 @@
 #endif // __cplusplus >= 201703L
 
 
-#pragma __U_NOT_USER_CODE__
-
 #ifdef KNOT
 // remove select FD checking
 #undef _FORTIFY_SOURCE
 #define _FORTIFY_SOURCE 0
 #endif // KNOT
+
+// see uDebug.h to activate
+#define uDEBUGPRT( stmt )
+
+#ifdef __U_DEBUG__
+#define uDEBUG( stmt ) stmt
+#else
+#define uDEBUG( stmt )
+#endif // __U_DEBUG__
 
 #if defined( __U_MULTI__ )
 #   define __U_THREAD__ __thread
@@ -61,80 +78,27 @@
 #   define __U_THREAD__
 #endif // __U_MULTI__
 
-#if defined( __solaris__ )				// simulate Linux CPU set
-#   include <uBitSet.h>
-#   define CPU_SETSIZE 1024
-    typedef uBitSet< CPU_SETSIZE > cpu_set_t;		// maximum CPUs in set
-#   define CPU_SET( cpu, cpuset ) (cpuset)->set( cpu )
-#   define CPU_CLR( cpu, cpuset ) (cpuset)->clr( cpu )
-#   define CPU_ISSET( cpu, cpuset ) (cpuset)->isSet( cpu )
-#   define CPU_ZERO( cpuset ) (cpuset)->clrAll()
-#endif // __solaris__
-
-#if defined( __freebsd__ )
-#define cpu_set_t cpuset_t
-#include <sys/param.h>
-#include <sys/cpuset.h>
-#include <pthread_np.h>
-#endif // __freebsd__
-
-#if defined( __solaris__ ) || defined( __freebsd__ )
-#   include <sys/select.h>				// select, fd_set
-#else
-#   include <sys/types.h>				// select, fd_set
-#endif // __solaris__ || __freebsd__
+#include <sys/types.h>					// select, fd_set
 
 // The GNU Libc defines C library functions with throw () when compiled under C++, to enable optimizations.  When uC++
 // overrides these functions, it must provide identical exception specifications.
-#if defined( __linux__ )
-#   define __THROW throw ()
+
+#define __THROW throw ()
     // Certain library functions have had __THROW removed from their prototypes to support the NPTL implementation of
     // pthread cancellation. To compile with a pre-NPTL version of the header files use
     //
     //   #define __OLD_THROW throw ()
-#   define __OLD_THROW
-#else
-#   define __OLD_THROW
-#   define __THROW
-#endif // __linux__
+#define __OLD_THROW
 
-#if defined( __solaris__ )
-#   if ! defined( _REENTRANT )
-#       define _REENTRANT
-#   endif
-#elif defined( __linux__ )
-#   if ! defined( _LIBC_REENTRANT )
-#       define _LIBC_REENTRANT
-#   endif
+#if ! defined( _LIBC_REENTRANT )
+#   define _LIBC_REENTRANT
 #endif
 #include <cerrno>
 
-#ifdef __U_ERRNO_FUNC__
-    extern "C" int *__U_ERRNO_FUNC__ __THROW __attribute__(( used ));
-#endif // __U_ERRNO_FUNC__
-
-#if defined( __i386__ )
-    // #define __U_SWAPCONTEXT__			// use builtin swapcontext
-#elif defined( __x86_64__ )
-    // no usable swapcontext on this platform
-#elif defined( __ia64__ )
-#    define __U_SWAPCONTEXT__				// use builtin swapcontext
-#elif defined( __sparc__ )
-    // #define __U_SWAPCONTEXT__			// use builtin swapcontext
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
-
 #include <cstddef>					// ptrdiff_t
 #include <cstdlib>					// malloc, calloc, realloc, free
-#if defined( __linux__ )
 #include <malloc.h>					// memalign
 #include <link.h>					// dl_iterate_phdr
-#endif // __linux__
-#if defined( __freebsd__ )
-#include <link.h>					// dl_iterate_phdr
-    extern "C" void *memalign( size_t alignment, size_t size );
-#endif // __freebsd__
 #include <csignal>					// signal, etc.
 #include <sys/mman.h>					// mmap
 #include <ucontext.h>					// ucontext_t
@@ -145,7 +109,6 @@
 #include <unwind-cxx.h>					// struct __cxa_eh_globals
 
 #include <assert.h>
-//#include <uDebug.h>
 
 
 //######################### InterposeSymbol #########################
@@ -162,9 +125,7 @@ namespace UPP {
 	static __typeof__( ::pselect ) *pselect;
 	static __typeof__( std::set_terminate ) *set_terminate;
 	static __typeof__( std::set_unexpected ) *set_unexpected;
-#if defined( __linux__ ) || defined( __freebsd__ )
 	static __typeof__( ::dl_iterate_phdr ) *dl_iterate_phdr;
-#endif // __linux__ || __freebsd__
 	static __typeof__( ::pthread_create ) *pthread_create;
 //	static __typeof__( ::pthread_exit ) *pthread_exit;
 	static __typeof__( ::pthread_attr_init ) *pthread_attr_init;
@@ -172,10 +133,8 @@ namespace UPP {
 	static __typeof__( ::pthread_kill ) *pthread_kill;
 	static __typeof__( ::pthread_join ) *pthread_join;
 	static __typeof__( ::pthread_self ) *pthread_self;
-#if defined( __linux__ ) || defined( __freebsd__ )
 	static __typeof__( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
 	static __typeof__( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
-#endif // __linux__ || __freebsd__
     }; // RealRtn
 } // UPP
 
@@ -193,19 +152,6 @@ namespace std {
 
 
 //######################### start uC++ code #########################
-
-
-#ifdef __U_DEBUG__
-#define uDEBUG( stmt ) stmt
-#else
-#define uDEBUG( stmt )
-#endif // __U_DEBUG__
-
-#ifdef __U_DEBUG_H__
-#define uDEBUGPRT( stmt ) stmt
-#else
-#define uDEBUGPRT( stmt )
-#endif // __U_DEBUG_H__
 
 
 #include <uAlign.h>
@@ -247,27 +193,28 @@ extern "C" {
 namespace UPP {
     struct Statistics {
 	// Kernel, signed because of the atomic inc/dec
-	static int ready_queue, spins, spin_sched, mutex_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
-	static int uSpinLocks, uLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
+	static long int ready_queue, spins, spin_sched, mutex_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
+	static long int uSpinLocks, uLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
 
 	// I/O statistics
-	static unsigned int select_syscalls, select_errors, select_eintr;
-	static unsigned int select_events, select_nothing, select_blocking, select_pending;
-	static unsigned int select_maxFD;
-	static unsigned int accept_syscalls, accept_errors;
-	static unsigned int read_syscalls, read_errors, read_eagain, read_chunking, read_bytes;
-	static unsigned int write_syscalls, write_errors, write_eagain, write_bytes;
-	static unsigned int sendfile_syscalls, sendfile_errors, sendfile_eagain, first_sendfile, sendfile_yields;
+	static unsigned long int select_syscalls, select_errors, select_eintr;
+	static unsigned long int select_events, select_nothing, select_blocking, select_pending;
+	static unsigned long int select_maxFD;
+	static unsigned long int accept_syscalls, accept_errors;
+	static unsigned long int read_syscalls, read_errors, read_eagain, read_chunking, read_bytes;
+	static unsigned long int write_syscalls, write_errors, write_eagain, write_bytes;
+	static unsigned long int sendfile_syscalls, sendfile_errors, sendfile_eagain, first_sendfile, sendfile_yields;
 
-	static unsigned int iopoller_exchange, iopoller_spin;
-	static unsigned int signal_alarm, signal_usr1;
+	static unsigned long int iopoller_exchange, iopoller_spin;
+	static unsigned long int signal_alarm, signal_usr1;
 
 	// Scheduling statistics
-	static unsigned int roll_forward;
-	static unsigned int user_context_switches;
-	static unsigned int kernel_thread_yields, kernel_thread_pause;
-	static unsigned int wake_processor;
-	static unsigned int events, setitimer;
+	static unsigned long int coroutine_context_switches;
+	static unsigned long int roll_forward;
+	static unsigned long int user_context_switches;
+	static unsigned long int kernel_thread_yields, kernel_thread_pause;
+	static unsigned long int wake_processor;
+	static unsigned long int events, setitimer;
       private:
 	static bool prtStatTerm_;			// print statistics on termination signal
       public:
@@ -358,11 +305,7 @@ extern "C" {
 } // extern "C"
 
 #ifdef __U_PROFILER__
-#if defined( __solaris__ )
-#define __U_HW_OVFL_SIG__ SIGEMT                        // hardware-counter overflow signal
-#elif defined( __linux__ )
 #define __U_HW_OVFL_SIG__ SIGIO
-#endif // __solaris__
 #endif // __U_PROFILER__
 
 
@@ -489,9 +432,6 @@ class uKernelModule {
 
     friend class uEventList;                            // access: uKernelModuleBoot
     friend class uEventListPop;				// access: uKernelModuleBoot
-#if defined( __freebsd__ )
-    friend class uCxtSwtchHndlr;
-#endif // __freebsd__
 
     // debugging
 
@@ -515,9 +455,7 @@ class uKernelModule {
 
     friend class uKernelSampler;			// access: globalClusters
     friend class uClusterSampler;			// access: globalClusters
-#if defined( __linux__ ) || defined( __freebsd__ )
     friend __typeof__( ::dl_iterate_phdr ) dl_iterate_phdr; // access: disableInterrupts, enableInterrupts
-#endif // __linux__ || __freebsd__
 
     struct uKernelModuleData {
 	volatile uKernelModuleData *This;
@@ -889,8 +827,6 @@ class uOwnerLock {
     uBaseSpinLock spinLock;				// must be first field for alignment
     unsigned int count;					// number of recursive entries; no overflow checking
 
-    // Solaris has a magic value in its pthread locks, so place the spin lock in that position as it cannot take on the
-    // magic value (see library/pthread.cc).
     uBaseTask *owner_;					// owner with respect to recursive entry
     uSequence<uBaseTaskDL> waiting;			// sequence versus queue to reduce size to 24 bytes => more expensive
 
@@ -1099,12 +1035,6 @@ typedef uSequence<uContext> uContextSeq;
 // saved by caller
 #elif defined( __x86_64__ )
 // saved by caller
-#elif defined( __ia64__ )
-#if ! defined( __U_SWAPCONTEXT__ )
-#define __U_FLOATINGPOINTDATASIZE__ 40			// 20 16-byte registers
-#endif // ! __U_SWAPCONTEXT__
-#elif defined( __sparc__ )
-// saved by caller
 #else
     #error uC++ : internal error, unsupported architecture
 #endif
@@ -1131,13 +1061,8 @@ class uFloatingPointContext {
 //######################### uMachContext #########################
 
 
-#if defined( __U_SWAPCONTEXT__ )
-#define uSwitch( from, to ) swapcontext( (ucontext_t *)(from), (ucontext_t *)(to) )
-#define __U_CONTEXT_T__ ucontext_t
-#else
 #define __U_CONTEXT_T__ uContext_t
 extern "C" void uSwitch( void *from, void *to ) asm ("uSwitch"); // assembler routine that performs the context switch
-#endif
 
 
 // Contains the machine dependent context and routines that initialize and switch between contexts.
@@ -1154,14 +1079,7 @@ namespace UPP {
 	friend void *uKernelModule::startThread( void *p ); // acesss: invokeCoroutine
 
 	struct uContext_t {				// name mimics ucontext_t from Linux headers
-	    void *SP;
-#if ! defined( __ia64__ )
-	    void *FP;
-	    void *PC;
-#else
-//	    void *BSP;					// register backing store pointer
-//	    sigset_t sigMask;
-#endif
+	    void * SP, * FP;
 	};
 
 	static size_t pageSize;				// architecture pagesize
@@ -1170,19 +1088,16 @@ namespace UPP {
 	static uint32_t mxcsr;
 #endif // __i386__ || __x86_64__
 
-	void *storage;					// pointer to stack
-	void *limit;					// stack grows towards stack limit
-	void *base;					// base of stack
-	void *context;					// address of uContext_t
-	void *top;					// address of top of storage
-	size_t size;					// size of stack
+	void * storage;					// stack pointer
+	void * limit;					// stack grows towards stack limit
+	void * base;					// stack base
+	void * context;					// uContext_t pointer
 	union {
 	    long int allExtras;				// allow access to all extra flags
 	    struct {					// put all extra flags in this structure
 		unsigned int usercxts : 1;		// user defined contexts
 	    } is;
 	} extras;					// indicates extra work during the context switch
-	bool userStack;					// use specified stack storage ?
 
 	void createContext( unsigned int stackSize );	// used by all constructors
 
@@ -1219,7 +1134,7 @@ namespace UPP {
       public:
 	uMachContext( const uMachContext & ) = delete;	// no copy
 	uMachContext( uMachContext && ) = delete;
-	uMachContext &operator=( uMachContext & );	// no assignment
+	uMachContext &operator=( uMachContext & ) = delete; // no assignment
 
 	uMachContext( unsigned int stackSize ) {
 	    // stack storage provides a minimum of stackSize memory for the stack plus ancillary storage
@@ -1234,7 +1149,7 @@ namespace UPP {
 	} // uMachContext::uMachContext
 
 	virtual ~uMachContext() {
-	    if ( ! userStack ) {
+	    if ( ! ((uintptr_t)storage & 1) ) {		// check user stack storage mark
 		uDEBUG(
 		    if ( ::mprotect( storage, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
 			abort( "(uMachContext &)%p.~uMachContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
@@ -1245,16 +1160,13 @@ namespace UPP {
 	} // uMachContext::~uMachContext
 
 	void *stackPointer() const;
-#if defined( __ia64__ )
-	void *registerStackPointer() const;
-#endif // __ia64__
 
 	unsigned int stackSize() const {
-	    return size;
+	    return (char *)base - (char *)limit;
 	} // uMachContext::stackSize
 
 	void *stackStorage() const {
-	    return storage;
+	    return (void *)((uintptr_t)storage & 1);	// remove user stack storage mark
 	} // uMachContext::stackStorage
 
 	ptrdiff_t stackFree() const;
@@ -1264,9 +1176,6 @@ namespace UPP {
 	// These members should be private but cannot be because they are referenced from user code.
 
 	static void *rtnAdr( void (*rtn)() );		// access: see profiler
-#if defined( __ia64__ )
-	static void *gpAdr( void (*rtn)() );
-#endif // __ia64__
     }; // uMachContext
 } // UPP
 
@@ -1282,9 +1191,6 @@ class uBaseCoroutine : public UPP::uMachContext {
     friend class UPP::uKernelBoot;			// access: last
     friend _Task UPP::uBootTask;			// access: notHalted
     friend _Coroutine UPP::uProcessorKernel;		// access: taskCxtSw
-#ifdef __U_ERRNO_FUNC__
-    friend int *__U_ERRNO_FUNC__ __THROW;		// access: errno_
-#endif // __U_ERRNO_FUNC__
 
     // cancellation
 
@@ -1343,17 +1249,9 @@ class uBaseCoroutine : public UPP::uMachContext {
     struct PthreadCleanup : uColable {
 	void (* routine )(void *);
 	void * args;
-#if defined( __freebsd__ ) && ! defined( pthread_cleanup_push )
-	void * sp;
-
-	void *operator new( size_t size ) {
-	    return ::operator new( size );
-	} // Pthread_cleanup::operator new
-#else
 	void *operator new( size_t, void *storage ) {
 	    return storage;
 	} // Pthread_cleanup::operator new
-#endif // __freebsd__
     }; // PthreadCleanup
 
     typedef uStack<PthreadCleanup> Cleanup;
@@ -1577,7 +1475,7 @@ template<typename Node> class uBaseSchedule : protected uBaseScheduleFriend {
     virtual void add( Node *node ) = 0;
     virtual Node *drop() = 0;
     virtual void remove( uBaseTaskDL *node ) = 0;
-    virtual void transfer( uBaseTaskSeq &from, unsigned int n = 0 ) = 0;
+    virtual void transfer( uBaseTaskSeq &from ) = 0;
     virtual bool checkPriority( Node &owner, Node &calling ) = 0;
     virtual void resetPriority( Node &owner, Node &calling ) = 0;
     virtual void addInitialize( uBaseTaskSeq &taskList ) = 0;
@@ -1626,7 +1524,7 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 	list.remove( node );
     } // uBasePrioritySeq::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
     } // uBasePrioritySeq::transfer
 
     virtual void onAcquire( uBaseTask & /* uOwner */ ) {
@@ -1673,7 +1571,7 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 	list.drop();
     } // uBasePriorityQueue::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
     } // uBasePriorityQueue::transfer
 
     virtual void onAcquire( uBaseTask & /* uOwner */ ) {
@@ -1721,10 +1619,7 @@ class uDefaultScheduler : public uBaseSchedule<uBaseTaskDL> {
 	list.remove( node );
     } // uDefaultScheduler::remove
 
-    void transfer( uBaseTaskSeq &from, unsigned int n ) {
-#ifdef __U_STATISTICS__
-	uFetchAdd( UPP::Statistics::ready_queue, n );
-#endif // __U_STATISTICS__
+    void transfer( uBaseTaskSeq &from ) {
 	list.transfer( from );
     } // uDefaultScheduler::remove
 
@@ -2062,15 +1957,6 @@ class uWakeupHndlr : public uSignalHandler {		// real-time
 inline uBaseCoroutine &uThisCoroutine() {
     return *uThisTask().currCoroutine;
 } // uThisCoroutine
-
-
-#if defined( __U_ERRNO_FUNC__ )
-// ___errno on solaris, __errno_location on linux, __error on freebsd
-extern "C" inline int *__U_ERRNO_FUNC__ __THROW;
-extern "C" inline int *__U_ERRNO_FUNC__ __THROW {
-    return &uThisCoroutine().errno_;
-} // __U_ERRNO_FUNC__
-#endif // __U_ERRNO_FUNC__
 
 
 namespace UPP {
@@ -2585,9 +2471,9 @@ class uProcessor {
     friend class uEventListPop;                         // access: contextSwitchHandler
     friend void *uKernelModule::startThread( void *p ); // acesss: everything
     friend class UPP::uMachContext;			// access: procTask
-#if defined( __i386__ ) || defined( __ia64__ ) && ! defined( __old_perfmon__ )
-    friend class HWCounters;				// access: uPerfctrContext (i386) or uPerfmon_fd (ia64)
-#endif
+//#if defined( __i386__ ) && ! defined( __old_perfmon__ )
+//    friend class HWCounters;				// access: uPerfctrContext (i386) or uPerfmon_fd (ia64)
+//#endif
 
     // debugging
 
@@ -2632,9 +2518,6 @@ class uProcessor {
     uClock *processorClock;				// clock bound to processor
 
     uPid_t pid;
-#if defined( __U_AFFINITY__ ) && defined( __solaris__ )
-    cpu_set_t cpuId;
-#endif // __U_AFFINITY__
 
     unsigned int preemption;
     unsigned int spin;
@@ -2917,10 +2800,8 @@ inline uBaseCoroutine::uBaseCoroutine() : UPP::uMachContext( uThisCluster().getS
 
 
 extern "C" {						// not all prototypes in pthread.h
-#if defined( __linux__ )
     void _pthread_cleanup_push( _pthread_cleanup_buffer *, void (*) (void *), void * ) __THROW;
     void _pthread_cleanup_pop( _pthread_cleanup_buffer *, int ) __THROW;  
-#endif
     int pthread_tryjoin_np( pthread_t, void **) __THROW;
     int pthread_getattr_np(pthread_t, pthread_attr_t*) __THROW;
     int pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stackSize ) __THROW;
@@ -2956,24 +2837,8 @@ _Task uPthreadable {					// abstract class (inheritance only)
     friend int pthread_join( pthread_t, void **);	// access: attr
     friend int pthread_tryjoin_np( pthread_t, void **) __THROW;
     friend int pthread_detach( pthread_t ) __THROW;
-#if defined( __solaris__ )
-    friend void __pthread_cleanup_push( void (*)(void *), void *, caddr_t, _cleanup_t *);
-    friend void __pthread_cleanup_pop( int, _cleanup_t *);
-#elif defined( __linux__ )
     friend void _pthread_cleanup_push( _pthread_cleanup_buffer *, void (*) (void *), void *) __THROW;
     friend void _pthread_cleanup_pop ( _pthread_cleanup_buffer *, int) __THROW;
-#elif defined( __freebsd__ )
-#if defined( pthread_cleanup_push )			// macro ?
-    friend void __pthread_cleanup_push_imp( void (*) (void *), void *, struct _pthread_cleanup_info * );
-#else
-    friend void pthread_cleanup_push( void (*) (void *), void * );
-#endif // pthread_cleanup_push
-#if defined( pthread_cleanup_pop )			// macro ?
-    friend void __pthread_cleanup_pop_imp( int ex );
-#else    
-    friend void pthread_cleanup_pop( int ex );
-#endif // pthread_cleanup_pop
-#endif
     struct Pthread_attr_t {				// thread attributes
 	int contentionscope;
 	int detachstate;
@@ -3165,6 +3030,9 @@ namespace UPP {
 //######################### Kernel Boot #########################
 
 
+//#define __U_DEBUG_H__
+//#include <uDebug.h>
+
 namespace UPP {
     class uKernelBoot {
 	static int count;
@@ -3250,10 +3118,9 @@ static UPP::uInitProcessorsBoot uBootProcessorsInit;
 #endif // __U_KERNEL__
 
 
-#pragma __U_USER_CODE__
-
-
-#endif // __U_CPLUSPLUS_H__
+#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+#endif // __GNUC__ >= 7
+#pragma GCC diagnostic pop
 
 
 // Local Variables: //

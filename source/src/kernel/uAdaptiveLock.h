@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 15:59:45 2018
-// Update Count     : 37
+// Last Modified On : Mon Jan 21 08:42:00 2019
+// Update Count     : 40
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,10 +24,9 @@
 // along  with this library.
 // 
 
-#ifndef __U_ADAPTIVELOCK_H__
-#define __U_ADAPTIVELOCK_H__
 
-#pragma __U_NOT_USER_CODE__
+#pragma once
+
 
 template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class uAdaptiveLock {
     unsigned int count;					// number of recursive entries; no overflow checking
@@ -252,10 +251,6 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 #endif // KNOT
     } // release
 }; // uAdaptiveLock
-
-#pragma __U_USER_CODE__
-
-#endif // __U_ADAPTIVELOCK_H__
 
 
 // Local Variables: //

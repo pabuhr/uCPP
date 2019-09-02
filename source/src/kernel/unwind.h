@@ -168,26 +168,8 @@ extern void _Unwind_SjLj_Resume (struct _Unwind_Exception *);
    and data-relative addressing in the LDSA.  In order to stay link
    compatible with the standard ABI for IA-64, we inline these.  */
 
-#ifdef __ia64__
-#include <stdlib.h>
-
-static inline _Unwind_Ptr
-_Unwind_GetDataRelBase (struct _Unwind_Context *_C)
-{
-  /* The GP is stored in R1.  */
-  return _Unwind_GetGR (_C, 1);
-}
-
-static inline _Unwind_Ptr
-_Unwind_GetTextRelBase (struct _Unwind_Context *_C)
-{
-  abort ();
-  return 0;
-}
-#else
 extern _Unwind_Ptr _Unwind_GetDataRelBase (struct _Unwind_Context *);
 extern _Unwind_Ptr _Unwind_GetTextRelBase (struct _Unwind_Context *);
-#endif
 
 #ifdef __cplusplus
 }

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  5 12:53:33 2009
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Sep 13 10:54:24 2016
-// Update Count     : 9
+// Last Modified On : Mon Jan 21 09:09:09 2019
+// Update Count     : 12
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,8 @@
 // 
 
 
-#ifndef __U_RWLOCK_H__
-#define __U_RWLOCK_H__
+#pragma once
 
-#pragma __U_NOT_USER_CODE__
 
 class uRWLock {
     enum RW { READER, WRITER };				// kinds of tasks
@@ -126,9 +124,6 @@ class uRWLock {
 	} // if
     } // uRWLock::wrrelease
 }; // uRWLock
-
-
-#endif // __U_RWLOCK_H__
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:19:14 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 18:16:47 2019
-// Update Count     : 108
+// Last Modified On : Sat Jan 19 10:49:44 2019
+// Update Count     : 110
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -116,32 +116,9 @@ token_t *token_t::next_parse_token() {
     token_t *next = fore;
     uassert( next != nullptr );
     while ( next->value == '\n' || next->value == '\r' || next->value == '#' ) {
-	// this is an ugly hack
 	if ( next->value == '#' ) {
-	    if ( strcmp( next->hash->text, "#pragma __U_USER_CODE__\n" ) == 0 ) {
-		// now in user code
-		user = true;
-		// remove the pragma
-		next->hash = hash_table->lookup( "#\n" );
-	    } else if ( strcmp( next->hash->text, "#pragma __U_USER_CODE__\r" ) == 0 ) {
-		// now in user code
-		user = true;
-		// remove the pragma
-		next->hash = hash_table->lookup( "#\r" );
-	    } else if ( strcmp( next->hash->text, "#pragma __U_NOT_USER_CODE__\n" ) == 0 ) {
-		// now not in user code
-		user = false;
-		// remove the pragma
-		next->hash = hash_table->lookup( "#\n" );
-	    } else if ( strcmp( next->hash->text, "#pragma __U_NOT_USER_CODE__\r" ) == 0 ) {
-		// now not in user code
-		user = false;
-		// remove the pragma
-		next->hash = hash_table->lookup( "#\r" );
-	    } else {
-		file_token = next;
-		parse_directive( next->hash->text, file, line, flag );
-	    } // if
+	    file_token = next;
+	    parse_directive( next->hash->text, file, line, flag );
 	} else {
 	    // SKULLDUGGERY: prevent backtracking from incrementing line number multiple times by marking the "left"
 	    // variable, which is not used for token "#".

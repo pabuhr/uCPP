@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 19:56:07 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:57:48 2016
-// Update Count     : 165
+// Last Modified On : Mon Jan 21 07:58:02 2019
+// Update Count     : 166
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __U_SEQUENCE_H__
-#define __U_SEQUENCE_H__
+
+#pragma once
 
 
 #include "uCollection.h"
@@ -291,9 +291,6 @@ template<typename T> class uSeqIterRev: public uColIter<T>, protected uSFriend {
 	return tp != 0;
     }
 };
-
-
-#endif // __U_SEQUENCE_H__
 
 
 // Local Variables: //

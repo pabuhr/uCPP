@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:38:54 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 12 13:08:09 2017
-// Update Count     : 205
+// Last Modified On : Mon Jan 21 09:08:27 2019
+// Update Count     : 208
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,14 +25,10 @@
 // 
 
 
-#ifndef __U_FILE_H__
-#define __U_FILE_H__
+#pragma once
 
 
 #include <uIOcntl.h>
-
-
-#pragma __U_NOT_USER_CODE__
 
 
 #include <fcntl.h>					// open, mode flags
@@ -331,11 +327,6 @@ class uPipe {
     uPipe();
     ~uPipe();
 }; // uPipe
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_FILE_H__
 
 
 // Local Variables: //

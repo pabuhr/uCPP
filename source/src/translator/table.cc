@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 20 10:11:09 2017
-// Update Count     : 406
+// Last Modified On : Mon Jul  8 19:12:42 2019
+// Update Count     : 407
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -137,7 +137,7 @@ void table_t::display_table( int blank ) {
 
 	symbol_t *sym = cur->kind.sym;
 
-	cerr << sym << " \"" << sym->hash->text << "\" table " << sym->data->table;
+	cerr << sym << " \"" << sym->hash->text << "\" table " << (sym->data ? sym->data->table : nullptr);
 	switch ( sym->value ) {
 	  case TYPE:
 	    cerr << " TYPE";

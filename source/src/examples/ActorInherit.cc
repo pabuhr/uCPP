@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 23 17:05:06 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:26:52 2019
-// Update Count     : 9
+// Last Modified On : Tue Feb  5 12:48:25 2019
+// Update Count     : 11
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,7 @@ using namespace std;
 #include <uActor.h>
 
 _Actor B {
-    Allocation receive( Message & ) { return Delete; }
+    Allocation receive( Message & ) { return Finished; }
     int i;
   protected:
     void preStart() {
@@ -44,7 +44,7 @@ _Actor D : public B {
 	B::preStart();					// call base member
 	osacquire( cout ) << "D" << endl;
     } // D::preStart
-    Allocation receive( Message & ) { return Delete; }
+    Allocation receive( Message & ) { return Finished; }
   public:
     D() {}
     D( int i ) : B( i ) {}
@@ -52,11 +52,11 @@ _Actor D : public B {
 
 int main() {
     uActorStart();					// start actor system
-    B *b = new B;
-    D *d = new D;
-    // Output is non-deterministic because actor b or d may may run first.
-    *b | uActor::stopMsg;
-    *d | uActor::stopMsg;
+    B b;
+    D d;
+    // Output is non-deterministic because actor b or d may run first.
+    b | uActor::stopMsg;
+    d | uActor::stopMsg;
     uActorStop();					// wait for all actors to terminate
 } // main
 

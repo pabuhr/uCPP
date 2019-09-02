@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Tue Jun 20 11:12:58 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 15 16:31:50 2017
-// Update Count     : 60
+// Last Modified On : Mon Jan 21 07:57:15 2019
+// Update Count     : 64
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,10 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __HEAP_H__
-#define __HEAP_H__
 
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 #include <uC++.h>
@@ -86,10 +84,8 @@ template<typename Elt> class uDynamicHeapArray {
 }; // uDynamicHeapArray
 
 
-// Heap is generic in the type of elements stored in the heap, the maximum
-// number of elements that can be stored in the heap, the array-like
-// data structure used to represent the heap, and the comparison and exchange
-// functions
+// Heap is generic in the type of elements stored in the heap, the maximum number of elements that can be stored in the
+// heap, the array-like data structure used to represent the heap, and the comparison and exchange functions
 
 template<typename KeyType, typename DataType, template<typename Elt> class Array> class uGenericHeap {
   protected:
@@ -364,12 +360,10 @@ template<typename KeyType, typename DataType, int MaxSize> class uHeapPtrSort {
 	sortRecs( h, DataRecords, tempRecPtr );
     } // uHeapPtrSort::uHeapPtrSort
     
-    // assumes DataType is a pointer to records and that the heap is already sorted
-    // arranges the data records pointed to by DataType in the same order as that in
-    // the heap...
-    // IMPORTANT: this is destructive - wipes out the Data fields in the heap...
-    // The records are assumed to be to stored in array DataRecords.
-    // Algorithm based on discussions with Anna Lubiw/Ian Munro - akg
+    // assumes DataType is a pointer to records and that the heap is already sorted arranges the data records pointed to
+    // by DataType in the same order as that in the heap...
+    // IMPORTANT: this is destructive - wipes out the Data fields in the heap...  The records are assumed to be to
+    // stored in array DataRecords.  Algorithm based on discussions with Anna Lubiw/Ian Munro - akg
     
     void sortRecs( uHeap<KeyType,DataType,MaxSize> *h, DataType DataRecords, DataType tempRecPtr ) {
 #ifdef DEBUG_SHOW_COUNT
@@ -413,8 +407,6 @@ template<typename KeyType, typename DataType, int MaxSize> class uHeapPtrSort {
 #endif
     } // uHeapPtrSort::sortRecs
 };
-
-#endif
 
 
 // Local Variables: //

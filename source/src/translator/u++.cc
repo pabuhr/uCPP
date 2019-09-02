@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  3 14:43:47 2018
-// Update Count     : 961
+// Last Modified On : Thu Aug 15 12:02:44 2019
+// Update Count     : 975
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,12 +46,12 @@ using std::string;
 #define VSTRINGIFY(s) STRINGIFY(s)
 
 
-bool prefix( string arg, string pre ) {
+bool prefix( const string & arg, const string & pre ) {
     return arg.substr( 0, pre.size() ) == pre;
 } // prefix
 
 
-void shuffle( const char *args[], int S, int E, int N ) {
+void shuffle( const char * args[], int S, int E, int N ) {
     // S & E index 1 passed the end so adjust with -1
     uDEBUGPRT( cerr << "shuffle:" << S << " " << E << " " << N << endl; )
     for ( int j = E-1 + N; j > S-1 + N; j -=1 ) {
@@ -61,7 +61,7 @@ void shuffle( const char *args[], int S, int E, int N ) {
 } // shuffle
 
 
-int main( int argc, char *argv[] ) {
+int main( int argc, char * argv[] ) {
     string Version( VERSION );				// current version number from CONFIG
     string Major( "0" ), Minor( "0" ), Patch( "0" );	// default version numbers
     int posn1 = Version.find( "." );			// find the divider between major and minor version numbers
@@ -103,8 +103,6 @@ int main( int argc, char *argv[] ) {
     bool multi = false;					// -multi flag
     bool upp_flag = false;				// -U++ flag
     bool cpp_flag = false;				// -E or -M flag, preprocessor only
-    bool Yield = false;					// -yield flag (name "yield" already taken)
-    bool verify = false;				// -verify flag
     bool profile = false;				// -profile flag
     bool exact = true;					// profile type: exact | statistical
     bool debugging = false;				// -g flag
@@ -113,11 +111,11 @@ int main( int argc, char *argv[] ) {
     bool std_flag = false;				// -std= flag
     bool x_flag = false;				// -x flag
 
-    const char *args[argc + 100];			// u++ command line values, plus some space for additional flags
+    const char * args[argc + 100];			// u++ command line values, plus some space for additional flags
     int sargs = 1;					// starting location for arguments in args list
     int nargs = sargs;					// number of arguments in args list; 0 => command name
 
-    const char *libs[argc + 20];			// non-user libraries must come separately, plus some added libraries and flags
+    const char * libs[argc + 20];			// non-user libraries must come separately, plus some added libraries and flags
     int nlibs = 0;
 
     string tmppath;
@@ -152,20 +150,17 @@ int main( int argc, char *argv[] ) {
 	    // pass through arguments
 
 	    if ( arg == "-Xlinker" || arg == "-o" ) {
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 		i += 1;
 		if ( i == argc ) continue;		// next argument available ?
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 
 	    // uC++ specific arguments
 
 	    } else if ( arg == "-U++" ) {
 		upp_flag = true;			// strip the -U++ flag
 		link = false;
-		args[nargs] = "-E";			// replace the argument with -E
-		nargs += 1;
+		args[nargs++] = "-E";			// replace the argument with -E
 	    } else if ( arg == "-multi" ) {
 		multi = true;				// strip the multi flag
 	    } else if ( arg == "-nomulti" ) {
@@ -178,14 +173,6 @@ int main( int argc, char *argv[] ) {
 		quiet = true;				// strip the quiet flag
 	    } else if ( arg == "-noquiet" ) {
 		quiet = false;				// strip the noquiet flag
-	    } else if ( arg == "-yield" ) {
-		Yield = true;				// strip the yield flag
-	    } else if ( arg == "-noyield" ) {
-		Yield = false;				// strip the noyield flag
-	    } else if ( arg == "-verify" ) {
-		verify = true;				// strip the verify flag
-	    } else if ( arg == "-noverify" ) {
-		verify = false;				// strip the noverify flag
 	    } else if ( arg == "-profile" ) {
                 profile = true;                         // strip the profile flag
 		if ( i + 1 < argc ) {			// check next argument, if available
@@ -214,61 +201,60 @@ int main( int argc, char *argv[] ) {
 
 	    } else if ( arg == "-v" ) {
 		verbose = true;				// verbosity required
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 	    } else if ( arg == "-g" ) {
 		debugging = true;			// symbolic debugging required
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
-	    } else if ( arg == "-x" ) {			// language
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
-		i += 1;
-		if ( i == argc ) continue;		// next argument available ?
-		if ( ! prefix( argv[i], "c++" ) ) x_flag = true;
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
+	    } else if ( prefix( arg, "-x" ) ) {		// file suffix ?
+		string lang;
+		args[nargs++] = argv[i];		// pass argument along
+		if ( arg.length() == 2 ) {		// separate argument ?
+		    i += 1;
+		    if ( i == argc ) continue;		// next argument available ?
+		    lang = argv[i];
+		    args[nargs++] = argv[i];		// pass argument along
+		} else {
+		    lang = arg.substr( 2 );
+		} // if
+		x_flag = lang != "c++";
 	    } else if ( prefix( arg, "-std=" ) || prefix( arg, "--std=" ) ) {
 		std_flag = true;			// -std=XX provided
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 	    } else if ( prefix( arg, "-B" ) ) {
 		Bprefix = arg.substr(2);		// strip the -B flag
-		args[nargs] = ( *new string( string("-D__U_GCC_BPREFIX__=") + Bprefix ) ).c_str();
-		nargs += 1;
-	    } else if ( prefix( arg, "-b" ) ) {
-		if ( arg.length() == 2 ) {		// separate argument ?
-		    i += 1;
-		    if ( i == argc ) continue;		// next argument available ?
-		    arg += argv[i];			// concatenate argument
-		} // if
-		// later versions of gcc require the -b option to appear at the start of the command line
-		shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-		args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
-		if ( putenv( (char *)( *new string( string( "__U_GCC_MACHINE__=" ) + arg ) ).c_str() ) != 0 ) {
-		    cerr << argv[0] << " error, cannot set environment variable." << endl;
-		    exit( EXIT_FAILURE );
-		} // if
-		sargs += 1;
-		nargs += 1;
-	    } else if ( prefix( arg, "-V" ) ) {
-		if ( arg.length() == 2 ) {		// separate argument ?
-		    i += 1;
-		    if ( i == argc ) continue;		// next argument available ?
-		    arg += argv[i];			// concatenate argument
-		} // if
-		// later versions of gcc require the -V option to appear at the start of the command line
-		shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-		args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
-		if ( putenv( (char *)( *new string( string( "__U_GCC_VERSION__=" ) + arg ) ).c_str() ) != 0 ) {
-		    cerr << argv[0] << " error, cannot set environment variable." << endl;
-		    exit( EXIT_FAILURE );
-		} // if
-		sargs += 1;
-		nargs += 1;
+		args[nargs++] = ( *new string( string("-D__U_GCC_BPREFIX__=") + Bprefix ) ).c_str();
+	    // } else if ( prefix( arg, "-b" ) ) {
+	    // 	if ( arg.length() == 2 ) {		// separate argument ?
+	    // 	    i += 1;
+	    // 	    if ( i == argc ) continue;		// next argument available ?
+	    // 	    arg += argv[i];			// concatenate argument
+	    // 	} // if
+	    // 	// later versions of gcc require the -b option to appear at the start of the command line
+	    // 	shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
+	    // 	args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
+	    // 	if ( putenv( (char *)( *new string( string( "__U_GCC_MACHINE__=" ) + arg ) ).c_str() ) != 0 ) {
+	    // 	    cerr << argv[0] << " error, cannot set environment variable." << endl;
+	    // 	    exit( EXIT_FAILURE );
+	    // 	} // if
+	    // 	sargs += 1;
+	    // 	nargs += 1;
+	    // } else if ( prefix( arg, "-V" ) ) {
+	    // 	if ( arg.length() == 2 ) {		// separate argument ?
+	    // 	    i += 1;
+	    // 	    if ( i == argc ) continue;		// next argument available ?
+	    // 	    arg += argv[i];			// concatenate argument
+	    // 	} // if
+	    // 	// later versions of gcc require the -V option to appear at the start of the command line
+	    // 	shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
+	    // 	args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
+	    // 	if ( putenv( (char *)( *new string( string( "__U_GCC_VERSION__=" ) + arg ) ).c_str() ) != 0 ) {
+	    // 	    cerr << argv[0] << " error, cannot set environment variable." << endl;
+	    // 	    exit( EXIT_FAILURE );
+	    // 	} // if
+	    // 	sargs += 1;
+	    // 	nargs += 1;
 	    } else if ( arg == "-c" || arg == "-S" || arg == "-E" || arg == "-M" || arg == "-MM" ) {
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 		if ( arg == "-E" || arg == "-M" || arg == "-MM" ) {
 		    cpp_flag = true;			// cpp only
 		} // if
@@ -278,33 +264,22 @@ int main( int argc, char *argv[] ) {
 		uAlloc = &argv[i][1];
 	    } else if ( arg[1] == 'l' ) {
 		// if the user specifies a library, load it after user code
-		libs[nlibs] = argv[i];
-		nlibs += 1;
+		libs[nlibs++] = argv[i];
 	    } else if ( arg == "-openmp" ) {
 		openmp = true;				// openmp mode
-		args[nargs] = argv[i];			// pass argument along
-		nargs += 1;
+		args[nargs++] = argv[i];		// pass argument along
 	    } else {
 		// concatenate any other arguments
-		args[nargs] = argv[i];
-		nargs += 1;
+		args[nargs++] = argv[i];
 	    } // if
 	} else {
-	    // concatenate other arguments
-	    args[nargs] = argv[i];
-	    nargs += 1;
+	    args[nargs++] = argv[i];			// concatenate files
 	    nonoptarg = true;
 	} // if
     } // for
 
-    args[nargs] = "-x";					// turn off language
-    nargs += 1;
-    args[nargs] = "none";
-    nargs += 1;
-
     if ( tcpu == "x86_64" ) {
-	args[nargs] = "-mcx16";				// allow double-wide CAA
-	nargs += 1;
+	args[nargs++] = "-mcx16";			// allow double-wide CAA
     } // if
 
     uDEBUGPRT(
@@ -337,7 +312,7 @@ int main( int argc, char *argv[] ) {
     // profiling
 
     if ( profile ) {					// read MVD configuration information needed for compilation and/or linking.
-	char *mvdpathname = getenv( "MVDPATH" );	// get MVDPATH environment variable
+	char * mvdpathname = getenv( "MVDPATH" );	// get MVDPATH environment variable
 
 	if ( mvdpathname == nullptr ) {
 	    cerr << argv[0] << ": Warning environment variable MVDPATH not set. Profiling disabled." << endl;
@@ -363,9 +338,9 @@ int main( int argc, char *argv[] ) {
 	    } else {
 		const int dirnum = 11;
 		struct {
-		    const char *dirkind;
+		    const char * dirkind;
 		    int used;
-		    string *dirname;
+		    string * dirname;
 		} dirs[dirnum] = {
 		    { "INSTALLINCDIR", 1, &mvdincdir },
 		    { "INSTALLLIBDIR", 1, &mvdlibdir },
@@ -424,163 +399,100 @@ int main( int argc, char *argv[] ) {
 
 	if ( profile ) {
 	    // link the profiling library before the user code
-	    args[sargs] = "-u";
-	    sargs += 1;
-	    args[sargs] = "U_SMEXACTMENUWD";		// force profiler start-up widgets to be loaded
-	    sargs += 1;
-	    args[sargs] = "-u";
-	    sargs += 1;
-	    args[sargs] = "U_SMSTATSMENUWD";		// force profiler start-up widgets to be loaded
-	    sargs += 1;
-	    args[sargs] = "-u";
-	    sargs += 1;
-	    args[sargs] = "U_SMOTHERMENUWD";		// force profiler start-up widgets to be loaded
-	    sargs += 1;
+	    args[sargs++] = "-u";
+	    args[sargs++] = "U_SMEXACTMENUWD";		// force profiler start-up widgets to be loaded
+	    args[sargs++] = "-u";
+	    args[sargs++] = "U_SMSTATSMENUWD";		// force profiler start-up widgets to be loaded
+	    args[sargs++] = "-u";
+	    args[sargs++] = "U_SMOTHERMENUWD";		// force profiler start-up widgets to be loaded
 	    // SKULLDUGGERY: Put the profiler library before the user code to force the linker to include the
 	    // no-profiled versions of compiled inlined routines from uC++.h.
-	    args[sargs] = ( *new string( mvdlibdir + "/uProfile"  + m + d + ".a" ) ).c_str();
-	    sargs += 1;
+	    args[sargs++] = ( *new string( mvdlibdir + "/uProfile"  + m + d + ".a" ) ).c_str();
 	    // SKULLDUGGERY: Put the profiler library after the user code to force the linker to include the
 	    // -finstrument-functions, if there is any reference to them in the user code.
-	    args[nargs] = ( *new string( mvdlibdir + "/uProfile"  + m + d + ".a" ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( mvdlibdir + "/uProfile"  + m + d + ".a" ) ).c_str();
 	    if ( ! debugging ) {			// add -g if not specified
-		args[nargs] = "-g";
-		nargs += 1;
+		args[nargs++] = "-g";
 	    } // if
 	} // if
 
 	// override uDefaultProcessors for OpenMP -- must come before uKernel
 
 	if ( openmp ) {
-	    args[nargs] = ( *new string( installlibdir + "/uDefaultProcessors-OpenMP.o" ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( installlibdir + "/uDefaultProcessors-OpenMP.o" ) ).c_str();
 	} // if
 
 	if ( uAlloc != "" ) {
- 	    args[nargs] = "-u";
- 	    nargs += 1;
- 	    args[nargs] = "malloc";			// force heap to be loaded
- 	    nargs += 1;
- 	    args[nargs] = "-u";
- 	    nargs += 1;
- 	    args[nargs] = "_ZN12uHeapControl11prepareTaskEP9uBaseTask";
- 	    nargs += 1;
-	    args[nargs] = ( *new string( installlibdir + "/" + uAlloc + m + d + ".a" ) ).c_str();
-	    nargs += 1;
+ 	    args[nargs++] = "-u";
+ 	    args[nargs++] = "malloc";			// force heap to be loaded
+ 	    args[nargs++] = "-u";
+ 	    args[nargs++] = "_ZN12uHeapControl11prepareTaskEP9uBaseTask";
+	    args[nargs++] = ( *new string( installlibdir + "/" + uAlloc + m + d + ".a" ) ).c_str();
 	} // if
 
 	// link with the correct version of the kernel module
 
-	args[nargs] = ( *new string( installlibdir + "/uKernel" + m + d + ".a" ) ).c_str();
-	nargs += 1;
-	args[nargs] = ( *new string( installlibdir + "/uScheduler" + m + d + ".a" ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( installlibdir + "/uKernel" + m + d + ".a" ) ).c_str();
+	args[nargs++] = ( *new string( installlibdir + "/uScheduler" + m + d + ".a" ) ).c_str();
 
 	// link with the correct version of the local debugger module
 
-	args[nargs] = ( *new string( installlibdir + "/uLocalDebugger" + m + "-d.a" ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( installlibdir + "/uLocalDebugger" + m + "-d.a" ) ).c_str();
 
 	// link with the correct version of the library module
 
-	args[nargs] = ( *new string( installlibdir + "/uLibrary" + m + d + ".a" ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( installlibdir + "/uLibrary" + m + d + ".a" ) ).c_str();
 
 	// link with the correct version of the profiler module
 
-	args[nargs] = ( *new string( installlibdir + "/uProfilerFunctionPointers" + ".o" ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( installlibdir + "/uProfilerFunctionPointers" + ".o" ) ).c_str();
 
 	// any machine specific libraries
 
-	if ( tos != "freebsd" ) {			// not on freebsd at all
-	    libs[nlibs] = "-ldl";			// calls to dlsym/dlerror
-	    nlibs += 1;
-	} // if
+	libs[nlibs++] = "-ldl";				// calls to dlsym/dlerror
 
 	if ( profile ) {
-	    args[nargs] = ( *new string( string("-L") + mvdlibdir ) ).c_str();
-	    nargs += 1;
-	    args[nargs] = ( *new string( string("-L") + uxlibdir ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( string("-L") + mvdlibdir ) ).c_str();
+	    args[nargs++] = ( *new string( string("-L") + uxlibdir ) ).c_str();
 	    if ( motiflibdir.length() != 0 ) {
-		args[nargs] = ( *new string( string("-L") + motiflibdir ) ).c_str();
-		nargs += 1;
+		args[nargs++] = ( *new string( string("-L") + motiflibdir ) ).c_str();
 	    } // if
-	    args[nargs] = "-L/usr/X11R6/lib";
-	    nargs += 1;
-	    args[nargs] = ( *new string( string("-Wl,-R,") + uxlibdir + ( motiflibdir.length() != 0 ? string(":") + motiflibdir : "" ) ) ).c_str();
-	    nargs += 1;
-	    libs[nlibs] = "-lXm";
-	    nlibs += 1;
-	    libs[nlibs] = "-lX11";
-	    nlibs += 1;
-	    libs[nlibs] = "-lXt";
-	    nlibs += 1;
-	    libs[nlibs] = "-lSM";
-	    nlibs += 1;
-	    libs[nlibs] = "-lICE";
-//	    nlibs += 1;
-//	    libs[nlibs] = "-lXpm";
-	    nlibs += 1;
-	    libs[nlibs] = "-lXext";
-	    nlibs += 1;
-	    libs[nlibs] = ( *new string( string( "-luX" ) + m + d ) ).c_str();
-	    nlibs += 1;
-	    libs[nlibs] = "-lm";
-	    nlibs += 1;
-	    libs[nlibs] = "-lbfd";
-	    nlibs += 1;
-	    libs[nlibs] = "-liberty";
-	    nlibs += 1;
+	    args[nargs++] = "-L/usr/X11R6/lib";
+	    args[nargs++] = ( *new string( string("-Wl,-R,") + uxlibdir + ( motiflibdir.length() != 0 ? string(":") + motiflibdir : "" ) ) ).c_str();
+	    libs[nlibs++] = "-lXm";
+	    libs[nlibs++] = "-lX11";
+	    libs[nlibs++] = "-lXt";
+	    libs[nlibs++] = "-lSM";
+	    libs[nlibs++] = "-lICE";
+//	    libs[nlibs++] = "-lXpm";
+	    libs[nlibs++] = "-lXext";
+	    libs[nlibs++] = ( *new string( string( "-luX" ) + m + d ) ).c_str();
+	    libs[nlibs++] = "-lm";
+	    libs[nlibs++] = "-lbfd";
+	    libs[nlibs++] = "-liberty";
 
-	    if ( tos == "solaris" ) {			// link in performance counter
-                libs[nlibs] = "-lcpc";
-                nlibs += 1;
-	    } // if
 	    if ( perfmonlibdir.length() != 0 ) {
-		args[nargs] = ( *new string( string( "-L" ) + perfmonlibdir ) ).c_str();
-		nargs += 1;
-		args[nargs] = ( *new string( string("-Wl,-R,") + perfmonlibdir ) ).c_str();
-		nargs += 1;
+		args[nargs++] = ( *new string( string( "-L" ) + perfmonlibdir ) ).c_str();
+		args[nargs++] = ( *new string( string("-Wl,-R,") + perfmonlibdir ) ).c_str();
 	    } // if
 	    if ( unwindlibdir.length() != 0 ) {
-		args[nargs] = ( *new string( string( "-L" ) + unwindlibdir ) ).c_str();
-		nargs += 1;
-		args[nargs] = ( *new string( string("-Wl,-R,") + unwindlibdir ) ).c_str();
-		nargs += 1;
+		args[nargs++] = ( *new string( string( "-L" ) + unwindlibdir ) ).c_str();
+		args[nargs++] = ( *new string( string("-Wl,-R,") + unwindlibdir ) ).c_str();
 	    } // if
 	    if ( useperfmonstr == "PERFMON" ) {		// link in performance counter
-                libs[nlibs] = "-lpfm";
-                nlibs += 1;
+                libs[nlibs++] = "-lpfm";
 	    } else if ( useperfmonstr == "PERFMON3" ) {
-                libs[nlibs] = "-lpfm3";
-                nlibs += 1;
+                libs[nlibs++] = "-lpfm3";
 	    } else if ( useperfmonstr == "PERFCTR" ) {
-                libs[nlibs] = "-lperfctr";
-                nlibs += 1;
+                libs[nlibs++] = "-lperfctr";
 	    } // if
-	    if ( tos == "linux" && ( tcpu == "ia64" || tcpu == "x86_64" ) ) {
-                libs[nlibs] = "-lunwind";		// link in libunwind for backtraces
-                nlibs += 1;
+	    if ( tos == "linux" && tcpu == "x86_64" ) {
+                libs[nlibs++] = "-lunwind";		// link in libunwind for backtraces
 	    } // if
-	} // if
-
-	if ( tos == "solaris" ) {
-	    libs[nlibs] = "-lnsl";
-	    nlibs += 1;
-	    libs[nlibs] = "-lsocket";
-	    nlibs += 1;
-	    libs[nlibs] = "-lsendfile";
-	    nlibs += 1;
-	    libs[nlibs] = "-lrt";			// sched_yield
-	    nlibs += 1;
 	} // if
 
 	if ( multi ) {
-	    libs[nlibs] = "-lpthread";
-	    nlibs += 1;
+	    libs[nlibs++] = "-lpthread";
 	} // if
     } // if
 
@@ -596,55 +508,42 @@ int main( int argc, char *argv[] ) {
 	// add the directory that contains the include files to the list of arguments after any user specified include
 	// directives
 
-	args[nargs] = ( *new string( string("-I") + installincdir ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( string("-I") + installincdir ) ).c_str();
 
 	// automagically add uC++.h as the first include to each translation unit so users do not have to remember to do
 	// this
 
-	args[nargs] = "-include";
-	nargs += 1;
-	args[nargs] = ( *new string( installincdir + string("/uC++.h") ) ).c_str();
-	nargs += 1;
+	args[nargs++] = "-include";
+	args[nargs++] = ( *new string( installincdir + string("/uC++.h") ) ).c_str();
     } // if
 
     if ( profile ) {
-	args[nargs] = ( *new string( string( "-I" ) + mvdincdir ) ).c_str();
-	nargs += 1;
-	args[nargs] = ( *new string( string( "-I" ) + uxincdir ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( string( "-I" ) + mvdincdir ) ).c_str();
+	args[nargs++] = ( *new string( string( "-I" ) + uxincdir ) ).c_str();
 	if ( motifincdir.length() != 0 ) {
-	    args[nargs] = ( *new string( string( "-I" ) + motifincdir ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( string( "-I" ) + motifincdir ) ).c_str();
 	} // if
 	if ( bfdincdir.length() != 0 ) {
-	    args[nargs] = ( *new string( string( "-I" ) + bfdincdir ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( string( "-I" ) + bfdincdir ) ).c_str();
 	} // if
     } // if
 
     // add the correct set of flags based on the type of compile this is
 
-    args[nargs] = ( *new string( string("-D__U_CPLUSPLUS__=") + Major ) ).c_str();
-    nargs += 1;
-    args[nargs] = ( *new string( string("-D__U_CPLUSPLUS_MINOR__=") + Minor ) ).c_str();
-    nargs += 1;
-    args[nargs] = ( *new string( string("-D__U_CPLUSPLUS_PATCH__=") + Patch ) ).c_str();
-    nargs += 1;
+    args[nargs++] = ( *new string( string("-D__U_CPLUSPLUS__=") + Major ) ).c_str();
+    args[nargs++] = ( *new string( string("-D__U_CPLUSPLUS_MINOR__=") + Minor ) ).c_str();
+    args[nargs++] = ( *new string( string("-D__U_CPLUSPLUS_PATCH__=") + Patch ) ).c_str();
 
     if ( cpp_flag ) {
-	args[nargs] = "-D__U_CPP__";
-	nargs += 1;
+	args[nargs++] = "-D__U_CPP__";
     } // if
 
     if ( upp_flag ) {
-	args[nargs] = "-D__U_UPP__";
-	nargs += 1;
+	args[nargs++] = "-D__U_UPP__";
     } // if
 
     if ( multi ) {
-	args[nargs] = "-D__U_MULTI__";
-	nargs += 1;
+	args[nargs++] = "-D__U_MULTI__";
 	heading += " (multiple processor)";
     } else {
 	heading += " (single processor)";
@@ -652,84 +551,48 @@ int main( int argc, char *argv[] ) {
 
     if ( debug ) {
 	heading += " (debug)";
-	args[nargs] = "-D__U_DEBUG__";
-	nargs += 1;
+	args[nargs++] = "-D__U_DEBUG__";
     } else {
 	heading += " (no debug)";
-    } // if
-
-    if ( Yield ) {
-	heading += " (yield)";
-	args[nargs] = "-D__U_YIELD__";
-	nargs += 1;
-    } else {
-	heading += " (no yield)";
-    } // if
-
-    if ( verify ) {
-	heading += " (verify)";
-	args[nargs] = "-D__U_VERIFY__";
-	nargs += 1;
-    } else {
-	heading += " (no verify)";
     } // if
 
     if ( profile ) {
         heading += " (profile)";
 	if ( exact ) {
-	    args[nargs] = ( *new string( "-finstrument-functions" ) ).c_str();
-	    nargs += 1;
+	    args[nargs++] = ( *new string( "-finstrument-functions" ) ).c_str();
 	} // if
-        args[nargs] = "-D__U_PROFILE__";
-        nargs += 1;
+        args[nargs++] = "-D__U_PROFILE__";
     } else {
         heading += " (no profile)";
     } // if
 
     if ( openmp ) {
-	args[nargs] = "-D__U_OPENMP__";
-	nargs += 1;
+	args[nargs++] = "-D__U_OPENMP__";
     } // if
 
-    args[nargs] = "-D__U_MAXENTRYBITS__=" VSTRINGIFY(__U_MAXENTRYBITS__); // has underscores because it is used to build translator
-    nargs += 1;
+    args[nargs++] = "-D__U_MAXENTRYBITS__=" VSTRINGIFY(__U_MAXENTRYBITS__); // has underscores because it is used to build translator
 
-    args[nargs] = "-D__U_WORDSIZE__=" VSTRINGIFY(WORDSIZE);
-    nargs += 1;
+    args[nargs++] = "-D__U_WORDSIZE__=" VSTRINGIFY(WORDSIZE);
 
 #if defined( STATISTICS )				// Kernel Statistics ?
-    args[nargs] = "-D__U_STATISTICS__";
-    nargs += 1;
+    args[nargs++] = "-D__U_STATISTICS__";
 #endif // STATISTICS
 
 #if defined( AFFINITY )					// Thread Local Storage ?
-    args[nargs] = "-D__U_AFFINITY__";
-    nargs += 1;
+    args[nargs++] = "-D__U_AFFINITY__";
 #endif // AFFINITY
 
 #if defined( BROKEN_CANCEL )				// TEMPORARY: old glibc has pthread_testcancel as throw()
-    args[nargs] = "-D__U_BROKEN_CANCEL__";
-    nargs += 1;
+    args[nargs++] = "-D__U_BROKEN_CANCEL__";
 #endif // BROKEN_CANCEL
 
     if ( Bprefix.length() == 0 ) {
 	Bprefix = installlibdir;
-	args[nargs] = ( *new string( string("-D__U_GCC_BPREFIX__=") + Bprefix ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( string("-D__U_GCC_BPREFIX__=") + Bprefix ) ).c_str();
     } // if
 
-    if ( tcpu == "sparc" && tos == "solaris" && string(VSTRINGIFY(WORDSIZE)) == "32" ) {
-	// tell assembler it's ok to use cas for 32-bit architecture; 64-bit architecture => -xarch=v9, which allows cas
-	args[nargs] = "-Wa,-xarch=v8plusa";
-	nargs += 1;
-    } // if
-
-#ifdef __linux__
-    args[nargs] = "-Xlinker";				// used by backtrace
-    nargs += 1;
-    args[nargs] = "-export-dynamic";
-    nargs += 1;
-#endif // __linux__
+    args[nargs++] = "-Xlinker";				// used by backtrace
+    args[nargs++] = "-export-dynamic";
 
     // execute the compilation command
 
@@ -743,27 +606,12 @@ int main( int argc, char *argv[] ) {
     } // if
 
     if ( prefix( compiler_name, "g++" ) ) {		// allow suffix on g++ name
-	if ( tcpu == "ia64" ) {
-	    args[nargs] = "-fno-optimize-sibling-calls"; // TEMPORARY: gcc 3 code gen problem on ia64
-	    nargs += 1;
-//	} else if ( tcpu == "i386" ) {
-//	    args[nargs] = "-march=i586";		// minimum architecture level for __sync_fetch_and_add
-//	    nargs += 1;
-	} else if ( tcpu == "sparc" ) {
-	    args[nargs] = "-mcpu=v9";			// minimum architecture level for __sync_fetch_and_add
-	    nargs += 1;
-	} // if
-
 	if ( ! std_flag && ! x_flag ) {
-	    args[nargs] = ( *new string( string("-std=") + CPP11 ) ).c_str(); // default
-	    nargs += 1;
+	    args[nargs++] = ( *new string( string("-std=") + CPP11 ) ).c_str(); // default
 	} // if
-	args[nargs] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
-	nargs += 1;
-	args[nargs] = "-no-integrated-cpp";
-	nargs += 1;
-	args[nargs] = ( *new string( string("-B") + Bprefix + "/" ) ).c_str();
-	nargs += 1;
+	args[nargs++] = ( *new string( string("-D__U_STD_CPP11__") ) ).c_str();
+	args[nargs++] = "-no-integrated-cpp";
+	args[nargs++] = ( *new string( string("-B") + Bprefix + "/" ) ).c_str();
     } else {
 	cerr << argv[0] << " error, compiler \"" << compiler_name << "\" unsupported." << endl;
 	exit( EXIT_FAILURE );
@@ -771,19 +619,15 @@ int main( int argc, char *argv[] ) {
 
     // Add the uC++ definitions of vendor, cpu and os names to the compilation command.
 
-    args[nargs] = ( *new string( string("-D__") + TVENDOR + "__" ) ).c_str();
-    nargs += 1;
-    args[nargs] = ( *new string( string("-D__") + TCPU + "__" ) ).c_str();
-    nargs += 1;
-    args[nargs] = ( *new string( string("-D__") + TOS + "__" ) ).c_str();
-    nargs += 1;
+    args[nargs++] = ( *new string( string("-D__") + TVENDOR + "__" ) ).c_str();
+    args[nargs++] = ( *new string( string("-D__") + TCPU + "__" ) ).c_str();
+    args[nargs++] = ( *new string( string("-D__") + TOS + "__" ) ).c_str();
 
     for ( int i = 0; i < nlibs; i += 1 ) {		// copy non-user libraries after all user libraries
-	args[nargs] = libs[i];
-	nargs += 1;
+	args[nargs++] = libs[i];
     } // for
 
-    args[nargs] = nullptr;				// terminate with null
+    args[nargs] = nullptr;				// terminate
 
     uDEBUGPRT(
 	cerr << "nargs: " << nargs << endl;
@@ -813,7 +657,7 @@ int main( int argc, char *argv[] ) {
 
     // execute the command and return the result
 
-    execvp( args[0], (char *const *)args );		// should not return
+    execvp( args[0], (char * const *)args );		// should not return
     perror( "uC++ Translator error: u++ level, execvp" );
     exit( EXIT_FAILURE );
 } // main

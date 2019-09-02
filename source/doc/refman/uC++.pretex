@@ -7,14 +7,15 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Jan  8 13:21:58 2019
-%% Update Count     : 7408
+%% Last Modified On : Fri Aug 16 10:52:45 2019
+%% Update Count     : 7501
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
 \usepackage{fullpage,times,lgrind,epic,eepic,comment}
 \usepackage[usenames]{color}
 \usepackage{subfig}
+\usepackage{enumitem}
 \usepackage{latexsym}				% \Box
 \usepackage{mathptmx}				% better math font with "times"
 \usepackage[dvips]{graphics}
@@ -54,7 +55,7 @@
 \large Peter A. Buhr \copyright\thanks{\normalsize
 Permission is granted to redistribute this manual unmodified in any form;
 permission is granted to redistribute modified versions of this	manual in any form, provided the modified version explicitly attributes said modifications to their respective authors, and provided that no modification is made to these terms of redistribution.
-} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016 \\
+} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019 \\
 Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
 } % author
 
@@ -303,12 +304,12 @@ each is used to affect control in objects created by the new types.
 \begin{table}[htb]
 \center
 \begin{tabular}{c|c||l|l}
-\multicolumn{2}{c||}{object properties}	& \multicolumn{2}{c}{object's member routine properties}					\\
+\multicolumn{2}{c||}{object properties}	& \multicolumn{2}{c}{object's member routine properties}				\\
 \hline
 thread	& execution state				& \multicolumn{1}{c|}{no mutual exclusion}	&\multicolumn{1}{c}{mutual exclusion}\\
 \hline
 \hline
-no		& no							& [\,%(_Nomutex%)]$\dagger$ %(class%)	& %(_Mutex class%)					\\
+no		& no							& [\,%(_Nomutex%)]$\dagger$ %(class%)	& %(_Mutex class%)				\\
 \hline
 no		& yes							& [\,%(_Nomutex%)] %(_Coroutine%)		& %(_Mutex _Coroutine%)			\\
 \hline
@@ -465,28 +466,6 @@ The runtime checks should only be removed after the program is completely debugg
 The program is linked with the non-debugging version of the unikernel or multikernel, so the execution of the program is faster.
 \Emph{However, no runtime checks or %(assert%)s are performed so errors usually result in abnormal program termination.}
 
-\item[%(-yield%)]
-\index{-yield@%(-yield%) option}\index{yield!compilation option}\index{compilation option!-yield@%(-yield%)}%
-When a program is translated, a random number of context switches occur at the beginning of each member routine so that during execution on a uniprocessor there is a better simulation of parallelism.
-(This non-determinism in execution is in addition to random context switching due to pre-emptive scheduling\index{pre-emptive!scheduling}, see \VRef{s:ImplicitTaskScheduling}).
-The extra yields of execution can help during the debugging phase of a \uC program, but substantially slows the execution of the program.
-
-\item[%(-noyield%)]
-\index{-noyield@%(-noyield%) option}\index{compilation option!-noyield@%(-noyield%)}%
-Additional context switches are not inserted in member routines.
-\textbf{This option is the default.}
-
-\item[%(-verify%)]
-\index{-verify@%(-verify%) option}\index{compilation option!-verify@%(-verify%)}%
-When a program is translated, a check to verify that the stack has not overflowed occurs at the beginning of each member routine.
-(This checking is in addition to checks on each context switch provided by the %(-debug%) option.)
-Verifying the stack has not overflowed is important during the debugging phase of a \uC program, but slows the execution of the program.
-
-\item[%(-noverify%)]
-\index{-noverify@%(-noverify%) option}\index{compilation option!-noverify@%(-noverify%)}%
-Stack-overflow checking is not inserted in member routines.
-\textbf{This option is the default.}
-
 \item[%(-multi%)]
 \index{-multi@%(-multi%) option}\index{compilation option!-multi@%(-multi%)}%
 The program is linked with the multikernel.
@@ -495,16 +474,6 @@ The program is linked with the multikernel.
 \index{-nomulti@%(-nomulti%) option}\index{compilation option!-nomulti@%(-nomulti%)}%
 The program is linked with the unikernel.
 \textbf{This option is the default.}
-
-% \item[%(-unixrc%)]
-% \index{-unixrc@%(-unixrc%) option}\index{compilation option!-unixrc@%(-unixrc%)}
-% The program is linked with a version of UNIX I/O cover routines that return standard UNIX return codes.
-% \textbf{This is the default.}
-% 
-% \item[%(-nounixrc%)]
-% \index{-nounixrc@%(-nounixrc%) option}\index{compilation option!-nounixrc@%(-nounixrc%)}
-% The program is linked with a version of UNIX I/O cover routines that do \emph{not} return standard UNIX return codes;
-% instead, the UNIX I/O cover routines raise exceptions.
 
 \item[%(-quiet%)]
 \index{-quiet@%(-quiet%) option}\index{compilation option!-quiet@%(-quiet%)}%
@@ -525,10 +494,6 @@ The path-name of the compiler used to compile a \uC program(s).
 The default is the compiler used to compile the \uC runtime library.
 It is unsafe to use a different compiler unless the generated code is binary compatible.
 (See \VRef{s:InstallationRequirements} for supported compilers.)
-
-% \item[%(-cpp%) path-name]
-% \index{-cpp@%(-cpp%) option}\index{compilation option!-cpp@%(-cpp%)}%
-% The name of the C preprocessor used to preprocess the \uC program.
 \end{prefix}
 When multiple conflicting options appear on the command line, e.g., %(-debug%) followed by %(-nodebug%), the last option takes precedence.
 
@@ -555,14 +520,6 @@ is always available during preprocessing and its value is the current patch \Ind
 \item[%(__U_DEBUG__%)]
 \index{__U_DEBUG__@%(__U_DEBUG__%)}\index{preprocessor variables!__U_DEBUG__@%(__U_DEBUG__%)}
 is available during preprocessing if the %(-debug%) compilation option is specified.
-
-\item[%(__U_YIELD__%)]
-\index{__U_YIELD__@%(__U_YIELD__%)}\index{yield!preprocessor}\index{preprocessor variables!__U_YIELD__@%(__U_YIELD__%)}
-is available during preprocessing if the %(-yield%) compilation option is specified.
-
-\item[%(__U_VERIFY__%)]
-\index{__U_VERIFY__@%(__U_VERIFY__%)}\index{preprocessor variables!__U_VERIFY__@%(__U_VERIFY__%)}
-is available during preprocessing if the %(-verify%) compilation option is specified.
 
 \item[%(__U_MULTI__%)]
 \index{__U_MULTI__@%(__U_MULTI__%)}\index{preprocessor variables!__U_MULTI__@%(__U_MULTI__%)}
@@ -945,10 +902,6 @@ void main() {
 %]
 Thus, after a coroutine has allocated its local variables, a check is made that its stack has not overflowed.
 Clearly, this technique is not ideal and requires additional work for the programmer, but it does handle complex cases where the stack depth is difficult to determine and can be used to help debug possible stack overflow situations.
-
-\begin{annotation}
-When the %(-verify%)\index{-verify@%(-verify%) option}\index{compilation option!-verify@%(-verify%)} option is used, calls to %(verify%) are automatically inserted at the beginning of each member routine, but not after each set of declarations.
-\end{annotation}
 
 The member routine %(setName%)\index{setName@%(setName%)} associates a name with a coroutine and returns the previous name.
 The name is not copied so its storage must persist for the duration of the coroutine.
@@ -2088,10 +2041,6 @@ If after the creation of several tasks the creator yields control, some created 
 This facility is not a mechanism to control the exact order of execution of tasks;
 pre-emptive scheduling\index{pre-emptive!scheduling} and/or multiple processors make this impossible.
 
-\begin{annotation}
-When the %(-yield%)\index{-yield@%(-yield%) option}\index{yield!compilation option}\index{compilation option!-yield@%(-yield%)} option is used, calls to %(yield( rand() % 3 )%) are automatically inserted at the beginning of each member routine.
-\end{annotation}
-
 The member routine %(sleep%)\index{sleep@%(sleep%)} blocks the task for the specified duration or until the specified time.
 %(sleep%) is a static member-routine that always sleeps the calling thread;
 use %(uBaseTask::sleep(...)%) for a call outside of a task type.
@@ -2666,7 +2615,7 @@ The counters are \emph{not} synchronized among processor, so there is significan
 void uPause()
 %]
 }%
-For x86 and SPARC, the routine causes a hardware \Index{pause}, which is a hint to the processor of a busy loop in progress.
+For x86, the routine causes a hardware \Index{pause}, which is a hint to the processor of a busy loop in progress.
 The pause prevents the processor pipeline filling with load/compare instructions, which takes resources (CPU), space (instruction cache), and power (heat).
 The \Index{test-and-set}\index{atomic instruction!test/set}\index{critical section!hardware!test/set} routine performs an atomic read and fixed assignment.
 The routine sets some location within the parameter to an implementation defined nonzero value (often the value 1) and the return value is true if and only if the previous contents had the same nonzero value.
@@ -2917,10 +2866,9 @@ Only a coroutine's or task's %(main%) routine and the routines called by %(main%
 \end{annotation}
 
 \begin{annotation}
-\Textbf{WARNING:} Some processors, like the SPARC, implicitly save both fixed and floating-point registers, which means it is unnecessary to create instances of %(uFloatingPointContext%) in tasks performing floating-point operations.
+\Textbf{WARNING:} Some processors, implicitly save both fixed and floating-point registers, which means it is unnecessary to create instances of %(uFloatingPointContext%) in tasks performing floating-point operations.
 However, leaving out %(uFloatingPointContext%) is dangerous because the program is not portable to other processors.
 Therefore, it is important to always include an instance of %(uFloatingPointContext%) in tasks performing floating-point operations.
-For processors like the SPARC, %(uFloatingPointContext%) does nothing, so there is no cost.
 \end{annotation}
 
 Additional context can be associated with a coroutine or task in a free routine, member routine, or as part of a class object to temporarily save a particular context.
@@ -3110,7 +3058,7 @@ As with %(operator()%), if the server returns an exception, that exception is th
 \item[%(cancel%)]
 \begin{sloppypar}
 -- attempts to cancel the asynchronous call associated with the future.
-All clients waiting for the result are unblocked, and an exception of type %(uCancellation%) is thrown at any client attempting to access the result.
+All clients waiting for the result are unblocked, and an exception of type %(uCancelled%) is thrown at any client attempting to access the result.
 Depending on the server, this operation may also have the effect of preventing the requested computation from starting, or it may interrupt the computation in progress.
 If the computation cannot be interrupted, the call may block until the computation is finished.
 \end{sloppypar}
@@ -3125,13 +3073,13 @@ The future operations available to a server are:
 \item[%(delivery( T result )%)]
 -- copy the server-generated result into the future, unblocking any clients that are waiting for the result.
 This result is the value returned to the client.
-Returns %(true%) if the result is copied and %(false%) if the asynchronous call has already completed.
+If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the result.
 \item[%(reset%)]
 -- mark the future as empty so it can be reused, after which the current future value is no longer available.
 \item[%(exception( uBaseEvent *cause )%)]
 -- copy a server-generated exception into the future.
 All clients waiting for the result are unblocked, and the exception %(cause%) is thrown at any client attempting to access the result.
-Returns %(true%) if the exception is copied and %(false%) if the asynchronous call has already completed.
+If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the exception.
 %[
 _Event E {};
 Future_ISM<int> result;
@@ -3185,9 +3133,9 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 	// used by server
 	ServerData serverData;					// information needed by server
 
-	bool delivery( T result );				// make result available in the future
+	void delivery( T result );				// make result available in the future
 	void reset();							// mark future as empty (for reuse)
-	bool exception( uBaseEvent *ex );		// make exception available in the future
+	void exception( uBaseEvent *ex );		// make exception available in the future
 };
 %]
 \index{Future_ESM@%(Future_ESM%)!available@%(available%)}%
@@ -3226,8 +3174,8 @@ for ( int i = 0; i < 10; i += 1 ) {			// start a number of calls
 }
 // work asynchronously while server processes requests
 for ( int i = 0; i < 10; i += 1 ) {			// retrieve async results
-	osacquire( cout ) << f[i]() << " " <<	// may block on first attempt to retrieve value
-						f[i] << endl;		// use value again (cheap access)
+	int v = f[i]() + 7;						// may block on first attempt to retrieve value
+	osacquire( cout ) << f[i] << " " << f[i] << endl; // use value again (cheap access)
 }
 %]
 The client creates an array of $N$ futures for %(int%) values.
@@ -3236,6 +3184,11 @@ For each call to %(server.mem%), a future is passed, in which the server returns
 The client then proceeds asynchronously with the server to perform other work, possibly in parallel with the server (if running multiprocessor).
 Finally, the client retrieves the results from the server by first performing a blocking access to each future.
 After that future is retrieved, it can be retrieved again using the cheap nonblocking-form (or the expensive blocking-form, but there is no point in synchronizing more than once for each asynchronous call.)
+Warning, combining blocking and non-blocking future access in an expression is dangerous:
+%[
+osacquire( cout ) << f[i]() << " " << f[i] << endl;
+%]
+because the order of expression evaluation is not left to right, so the non-blocking access may be executed first.
 
 The key point for explicit futures is that the client preallocates the future storage so the server does not perform any dynamic memory-allocation for the futures, which can provided a substantial performance benefit.
 In the example, the client is able to use low-cost stack storage for the futures needed to interact with the server.
@@ -3263,9 +3216,9 @@ template<typename T> class Future_ISM {
 	bool equals( const Future_ISM<T> &other ); // equality of reference
 
 	// used by server
-	bool delivery( T result );				// make result available in the future
+	void delivery( T result );				// make result available in the future
 	void reset();							// mark future as empty (for reuse)
-	bool exception( uBaseEvent *ex );		// make exception available in the future
+	void exception( uBaseEvent *ex );		// make exception available in the future
 };
 %]
 \index{Future_ISM@%(Future_ISM%)!available@%(available%)}%
@@ -3306,8 +3259,8 @@ for ( int i = 0; i < 10; i += 1 ) {			// start a number of calls
 }
 // work asynchronously while server processes requests
 for ( int i = 0; i < 10; i += 1 ) {			// retrieve async results
-	osacquire( cout ) << f[i]() << " " <<	// may block on first attempt to retrieve value
-						f[i] << endl;		// use value again (cheap access)
+	int v = f[i]() + 7;						// may block on first attempt to retrieve value
+	osacquire( cout ) << f[i] << " " <<	f[i] << endl; // use value again (cheap access)
 }
 %]
 Note that the asynchronous call to the server has the future as its return value, resembling a traditional return call, unlike the ESM future.
@@ -3859,12 +3812,12 @@ int main() {
 
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
 Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
-\VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (worker) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
+\VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (work) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
 A mailbox contains heterogeneous typed messages.
 Actors do not have a thread;
 instead they are executed by an underlying thread-pool (executor, see \VRef{s:Executors}), which calls an actor's %(receive%) member with each message from its mailbox.
 Actor execution guarantees messages are executed sequentially and in FIFO order from the mailbox (i.e., messages are never executed concurrently for a specific actor).
-Actors also create other other actors and communicate with these new actors by sending messages to their mailbox.
+Actors also create other actors and communicate with these new actors by sending messages to their mailbox.
 Messages are divided into those that do and do not require a response.
 Responses are handled asynchronously through \Index{future}s, where the actor processing the message deliveries the future result.
 Actor references, futures, and routines/functors/lambdas can be passed in messages.
@@ -3873,14 +3826,26 @@ Most actor systems leverage \Index{garbage collection} to manage actors and mess
 Since \CC does not have implicit garbage collection, \uC actors and messages involve explicit storage management, so programmers need to deal with actor/message life-time by returning an allocation status after processing a message.
 %[
 class uActor {
-	enum Allocation { Nodelete, Delete };				// allocation status
+  public:
+	enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation actions
 	...
 };
 %]
 \index{uActor@%(uActor%)!Nodelete@%(Nodelete%)}%
 \index{uActor@%(uActor%)!Delete@%(Delete%)}%
-Allocation status is %(Nodelete%) or %(Delete%).
-%(Nodelete%) means either the actor or message persists after an actor processes a message, while %(Delete%) means either the actor or message is deleted after an actor processes a message.
+\index{uActor@%(uActor%)!Destroy@%(Destroy%)}%
+\index{uActor@%(uActor%)!Finished@%(Finished%)}%
+\begin{prefix}
+\item[%(Nodelete%)] means either the actor or message persists after an actor returns from %(receive%).
+Use for multi-use actors or messages during their life time. (message default)
+\item[%(Delete%)] means either the actor or message is deleted after an actor returns from %(receive%).
+Use with dynamically allocated actors or messages at completion.
+\item[%(Destroy%)] means either the actor's or message's destructor is called after an actor returns from %(receive%) but storage is not deallocated.
+Use with placement allocated actors or messages at completion.
+\item[%(Finished%)] means the actor is marked finished after it returns from %(receive%) but neither the destructor is called nor storage deallocated.
+(No action for a message.)
+Use with stack allocated actors or messages at completion.
+\end{prefix}
 
 \begin{figure}
 \centering
@@ -3892,7 +3857,7 @@ Allocation status is %(Nodelete%) or %(Delete%).
 In \uC, actor messages inherit from base-type %(uActor::Message%):
 %[
 struct Message {
-	uActor *sender;										// delegated sender
+	uActor * sender;									// delegated sender
 	Allocation allocation;								// allocation status
 	Message( Allocation allocation = Nodelete, uActor * sender = nullptr );
 	Message( uActor * sender );							// allocation = Delete
@@ -3923,7 +3888,7 @@ struct ReplyMsg : public Message {						// untyped future message
 	virtual bool available() = 0;						// untyped future operations
 	virtual bool cancelled() = 0;
 	virtual void cancel() = 0;
-	virtual bool delivery( uBaseEvent * ex ) = 0;
+	virtual void delivery( uBaseEvent * ex ) = 0;
 	virtual void reset() = 0;
 };
 %]
@@ -3939,7 +3904,7 @@ template< typename Result > struct FutureMessage : public ReplyMsg { // typed fu
 	FutureMessage( Allocation allocation = Nodelete, uActor * sender = nullptr );
 	FutureMessage( uActor * sender );					// allocation = Delete
 	// available, cancelled, cancel, delivery, reset from ReplyMsg
-	bool delivery( Result res );
+	void delivery( Result res );						// raises uDelivered
 };
 %]
 \index{FutureMessage@%(FutureMessage%)!delivery@%(delivery%)}%
@@ -4114,7 +4079,7 @@ Allocation receive( Message &msg ) {
 In this case, the message type %(ReplyMsg%)\index{ReplyMsg@%(ReplyMsg%)} is used to determine if the message is an unknown %(ask%) message (%(FutureMessage%)) versus an unknown %(tell%) message.
 Instead of returning an %(unhandledMsg%) to the sender, it is possible to inform the sender through the future in the %(FutureMessage%).
 One approach is to explicitly deliver an exception (%(MyEvent%)) into the future;
-the other approach is to raise an exception, which is caught by the worker thread executing the actor and the worker thread implicitly duplicates the exception into the %(FutureMessage%).
+the other approach is to raise an exception, which is caught by the the thread executing the actor and this thread implicitly duplicates the exception into the %(FutureMessage%).
 
 Finally, the following routines control the actor executor by adjusting its thread pool.
 %[
@@ -4169,31 +4134,32 @@ However, it is possible for the derived actor to explicitly invoke the base acto
 using namespace std;
 #include <uActor.h>
 
-struct StrMsg : public uActor::Message {				// actor messages
+struct StrMsg : public uActor::Message {				// actor message
 	string val;
 	StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
 };
 
 _Actor Hello {
-	Allocation receive( Message &msg ) {
-		Case( StrMsg, msg ) {							// determine message kind
+	Allocation receive( Message & str ) {
+		Case( StrMsg, str ) {							// determine message kind
 			osacquire acq( cout );
-			cout << msg_d->val;
-			if ( msg_d->val == "hello" ) {
+			cout << str_d->val;							// access message value
+			if ( str_d->val == "hello" ) {
 				cout << ", hello back at you!" << endl;
 			} else {
 				cout << ", do not understand?" << endl;
 			}
-		} else Case( StopMsg, msg ) {
+		} else Case( StopMsg, str ) {
 			return Delete;								// delete actor
 		} // Case
 		return Nodelete;								// reuse actor
 	}
 };
 int main() {
-	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
-	*(new Hello()) | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
-	uActor::stop();										// wait for all actors to end
+    uActorStart();										// start actor system
+	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
+	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
+    uActorStop();										// wait for all actors to terminate
 }
 %]
 \caption{Hello Actor}
@@ -4356,6 +4322,8 @@ int main() {
 	enum { Times = 5 };
 	Future_ISM< int > fi[Times];
 	Future_ISM< string > fs[Times];
+
+    uActorStart();										// start actor system
 	Actor * actor = new Actor;
 
 	for ( int i = 0; i < Times; i += 1 ) {				// tell messages
@@ -4376,7 +4344,7 @@ int main() {
 		osacquire( cout ) << "futures " << fi[i]() << endl;
 	}
 	*actor | uActor::stopMsg;							// terminate actor
-	uActor::stop();										// wait for all actors to terminate
+    uActorStop();										// wait for all actors to terminate
 }
 %]
 \caption{Future Actor}
@@ -5623,7 +5591,7 @@ void main() {
 Several of the predefined kernel exception-types are implicitly enabled in certain contexts to ensure their prompt delivery (see \VRef{s:ImplicitlyEnabledExceptionTypes}).
 
 The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptions (and cancellation, see \VRef{s:Cancellation}) at these points:
-\begin{list}{$\bullet$}{\topsep=3pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=3pt,parsep=0pt,itemsep=0pt]
 \item after a call to %(uBaseTask::yield%),
 \item when an %(_Enable%) statement begins,
 \item when a %(_Disable%) statement ends,
@@ -5635,7 +5603,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item after a task unblocks if it blocked when trying to perform I/O,
 \item the first time a coroutine/task's %(main%)\index{main@%(main%)} routine is executed,
 \item after %(uBaseCoroutine::suspend%)/%(uBaseCoroutine::resume%) return.
-\end{list}
+\end{itemize}
 If this level of polling is insufficient, explicit polling is possible by calling:
 %[
 int uBaseCoroutine::asyncpoll();
@@ -5818,13 +5786,13 @@ void g() {
 \label{s:TerminationResumption}
 
 The form of the raise dictates the set of handlers examined during propagation:
-\begin{list}{$\bullet$}{\topsep=3pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=3pt,parsep=0pt,itemsep=0pt]
 \item
 terminating propagation (%(_Throw%)) only examines termination handlers (%(catch%)),
 \item
 resuming propagation (%(_Resume%)) only examines resumption handlers (%(_CatchResume%)).
 However, the standard default resumption handler converts resuming into terminating propagation (see \VRef{s:ExceptionsInheritedMembers}).
-\end{list}
+\end{itemize}
 Often the set of exception types for termination and resumption handlers are disjoint because each exception type has a specific action.
 However, it is possible for the set of exception types in each handler set to overlap.
 For example, the exception type %(R%) appears in both the termination and resumption handler-sets:
@@ -6462,7 +6430,8 @@ uBaseEvent
 		uPthreadable::Failure
 			uPthreadable::CreationFailure
 	uFutureFailure
-		uCancellation
+		uCancelled
+		uDelivered
 	uIOFailure
 		uFile::Failure
 			uFile::TerminateFailure
@@ -6612,8 +6581,10 @@ uBaseEvent
 \index{uSocketClient@%(uSocketClient%)!SendfileTimeout@%(SendfileTimeout%)}%
 \index{SendfileTimeout@%(SendfileTimeout%)}%
 \index{uBaseEvent@%(uBaseEvent%)!uFutureFailure@%(uFutureFailure%)}%
-\index{uFutureFailure@%(uFutureFailure%)!uCancellation@%(uCancellation%)}%
-\index{uCancellation@%(uCancellation%)}%
+\index{uFutureFailure@%(uFutureFailure%)!uCancelled@%(uCancelled%)}%
+\index{uCancelled@%(uCancelled%)}%
+\index{uFutureFailure@%(uFutureFailure%)!uDelivered@%(uDelivered%)}%
+\index{uCancelled@%(uDelivered%)}%
 \caption{\uC Predefined Exception-Type Hierarchy}
 \label{f:uCPredefinedExceptionTypeHierarchy}
 \end{figure}
@@ -8738,11 +8709,11 @@ Thus, a \uC programmer can use high-level concurrent features in \uC, along with
 It is also possible to take a native pthreads programs and --  with only minor changes --  convert it to a \uC program using \uC's pthreads support.
 In this way, programmers can incrementally transform and extend pthreads applications to use higher-level \CC approaches, starting with a combination of low-level pthreads threads/locks and high-level \uC capabilities, and ultimately moving to all high-level mechanisms. 
 There are three basic ways in which \uC can be used in conjunction with pthreads:
-\begin{list}{$\bullet$}{\topsep=4pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=4pt,parsep=0pt,itemsep=0pt]
 \item linking against pre-compiled binaries using pthreads,
 \item recompilation of separate translation units using pthreads,
 \item recompilation of entire pthreads programs.
-\end{list}
+\end{itemize}
 
 \begin{figure}
 \centering
@@ -9950,7 +9921,7 @@ When a program terminates with an error, only the stack of the coroutine or task
 During execution, the debugger cannot step through a context switch for either a coroutine or task.
 Therefore, it is necessary to put break points after the suspend/resume or signal/wait to acquire control, and just continue execution through the context switch.
 Once the breakpoint is reached, it is possible to next/step through the lines of the coroutine/task until the next context switch.
-For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is possible to examine the active task running on each kernel thread.
+For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is possible to examine the active task running on each kernel thread (also see\VRef{c:GDBCheatSheet}).
 %#none
 %[
 (gdb) info threads	# list all kernel threads
@@ -9969,20 +9940,18 @@ For gdb, the following debugger commands allows the application program to handl
 \label{s:InstallationRequirements}
 
 \uC comes configured to run on any of the following platforms (single and multiple processor):
-\begin{list}{$\bullet$}{\parsep=0pt\itemsep=0pt}
+\begin{itemize}[parsep=0pt,itemsep=0pt]
 \item
-solaris-sparc : Solaris 9/10, SPARC
+linux-x86\_32 : Linux 2.4.x or greater, AMD/Intel 32-bit
 \item
-linux-x86 : Linux 2.4.x or greater, Intel IA-32
-\item
-linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
-\item
-linux-x86\_32 : Linux 2.4.x or greater, AMD 32
-\item
-linux-x86\_64 : Linux 2.4.x or greater, AMD 64
+linux-x86\_64 : Linux 2.4.x or greater, AMD/Intel 64-bit
+% \item
+% linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
+% \item
+% solaris-sparc : Solaris 9/10, SPARC
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
-\end{list}
+\end{itemize}
 \uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.9.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)} flag.
@@ -10676,6 +10645,60 @@ int main() {
 \caption{DSL Sequence}
 \label{f:DSLSeq}
 \end{figure}
+
+
+\chapter{GDB Cheatsheet for $\mu$C++}
+\label{c:GDBCheatSheet}
+
+The following %(gdb%)\index{gdb@%(gdb%)} and Python macros allow %(gdb%) to understand the \uC runtime environment: tasks (see~\VRef{s:Task}), processors (see~\VRef{s:Processors}), and clusters (see~\VRef{s:Cluster}).
+
+These instructions assume the install %(<prefix>%) for \uC is %(/usr/local/u++-7.0.0%);
+if installed elsewhere, change %(<prefix>%).
+Copy %(<prefix>/.gdbinit%) to your home directory or merge it into your existing %(.gdbinit%) file.
+If installed elsewhere, edit the %(<prefix>%) within the %(.gdbinit%) file to the install location.
+Thereafter, %(gdb%) automatically loads the %(.gdbinit%) file from the home directory at start up making the following new %(gdb%) commands available.
+
+Debugging involves setting one or more breakpoints in a program.
+When a breakpoint is encountered, the entire concurrent program stops, i.e., all user and kernel threads.
+At this point, it is possible to examine the stacks of each \uC task stack by listing all the tasks (command %(task%)), switching to an individual task (command %(task 2%)), and printing the back trace (command %(backtrace%)) for its stack.
+The brace trace shows where that task is executing, and by moving up and down the back trace, it is possible to examine the variables in each stack frame.
+
+
+\section{Clusters}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}	& \textbf{\emph{Example}}	\\
+%(clusters%)					& print a list of all clusters	& %(clusters%)				\\
+\end{tabular}
+\end{flushleft}
+
+
+\section{Processors}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}	& \textbf{\emph{Example}}	\\
+%(processors%)						& print all info about all processors on all clusters	& %(processors%)	\\
+%(processors%) \textit{clusterName}	& print all info about all processors on a particular cluster	& %(processors userCluster%)	\\
+\end{tabular}
+\end{flushleft}
+
+
+\section{Tasks}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}					& \textbf{\emph{Example}}	\\
+%(task%)						& print application tasks in %(userCluster%)	& %(task%)					\\
+%(task%) \textit{clusterName}	& print application tasks in a clusterName		& %(task clusterA%)			\\
+%(task all%)					& print all tasks in all clusters				& %(task all%)				\\
+%(task%) \textit{id}			& context switch to task \textit{id} on %(userCluster%)	& %(task 2%)		\\
+%(task%) %(0x%)\textit{address}	& context switch to a task based on its address on any cluster	& %(task 0x80024875%)	\\
+%(task%) \textit{id} \textit{clusterName}	& context switch to a task on a specified cluster	& %(task 2 clusterA%)	\\
+%(prevtask%)					& switch back to the previous task on the stack	& %(prevtask%)				\\
+\end{tabular}
+\end{flushleft}
 
 
 \chapter{Example Programs}

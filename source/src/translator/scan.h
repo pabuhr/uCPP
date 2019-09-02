@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:43:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:13:52 2011
-// Update Count     : 12
+// Last Modified On : Mon Jan 21 09:12:33 2019
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,13 +24,14 @@
 // along  with this library.
 //
 
-#ifndef __SCAN_H__
-#define __SCAN_H__
+
+#pragma once
+
 
 void scan();
 void unscan( token_t *back );
 
-#endif // __SCAN_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

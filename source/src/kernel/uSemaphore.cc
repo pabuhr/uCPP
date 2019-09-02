@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 10 18:35:51 2018
-// Update Count     : 125
+// Last Modified On : Thu Apr 11 12:16:43 2019
+// Update Count     : 126
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -129,7 +129,7 @@ namespace UPP {
 	spinLock.acquire();
 	if ( &s == this ) {				// perform operation on self ?
 	    if ( count < 0 ) {				// V my semaphore
-		waiting.dropHead()->task().wake();	// remove task at head of waiting list
+		waiting.dropHead()->task().wake();	// unblock task at head of waiting list
 	    } // if
 	    count += 1;
 	} else {
@@ -165,7 +165,7 @@ namespace UPP {
 	spinLock.acquire();
 	if ( &s == this ) {				// perform operation on self ?
 	    if ( count < 0 ) {				// V my semaphore
-		waiting.dropHead()->task().wake();	// remove task at head of waiting list
+		waiting.dropHead()->task().wake();	// unblock task at head of waiting list
 	    } // if
 	    count += 1;
 	} else {
@@ -214,7 +214,7 @@ namespace UPP {
 	spinLock.acquire();
 	count += 1;
 	if ( count <= 0 ) {
-	    task = waiting.dropHead();			// remove task at head of waiting list
+	    task = waiting.dropHead();			// unblock task at head of waiting list
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::io_lock_queue, -1 );
 #endif // __U_STATISTICS__
@@ -239,7 +239,7 @@ namespace UPP {
 		break;
 	    } // if
 	    count += 1;
-	    waiting.dropHead()->task().wake();		// remove task at head of waiting list and make new owner
+	    waiting.dropHead()->task().wake();		// unblock task at head of waiting list and make new owner
 	} // for
 	spinLock.release();
     } // uSemaphore::V

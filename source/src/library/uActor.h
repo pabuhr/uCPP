@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:47:40 2019
-// Update Count     : 380
+// Last Modified On : Fri Mar 15 08:28:57 2019
+// Update Count     : 404
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 //
 
-#ifndef __U_ACTOR_H__
-#define __U_ACTOR_H__
+
+#pragma once
+
 
 #include <uFuture.h>
 #include <uSemaphore.h>
@@ -45,14 +46,15 @@ class uActor {
     static uExecutor * executor;			// executor for all actors
     static uSemaphore wait_;				// wait for all actors to delete
     static unsigned long int alive_;			// number of actor objects in system
-
-    unsigned long int ticket_;				// executor-queue handle to provide FIFO message execution
   public:
-    enum Allocation { Nodelete, Delete, Destroy };	// allocation actions
-
+    enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation actions
+  private:
+    unsigned long int ticket_;				// executor-queue handle to provide FIFO message execution
+    Allocation allocation;				// allocation action
+  public:
     struct Message {
 	Allocation allocation;				// allocation action
-	uActor *sender;					// delegated sender
+	uActor * sender;				// delegated sender
 
 	Message( Allocation allocation = Nodelete, uActor * sender = nullptr ) : allocation( allocation ), sender( sender ) {}
 	Message( uActor * sender ) : allocation( Delete ), sender( sender ) {}
@@ -65,7 +67,7 @@ class uActor {
 	virtual bool available() = 0;
 	virtual bool cancelled() = 0;
 	virtual void cancel() = 0;
-	virtual bool delivery( uBaseEvent * ex ) = 0;
+	virtual void delivery( uBaseEvent * ex ) = 0;
 	virtual void reset() = 0;
     }; // ReplyMsg
 
@@ -77,11 +79,24 @@ class uActor {
 	bool available() { return result.available(); }
 	bool cancelled() { return result.cancelled(); }
 	void cancel() { result.cancel(); }
-	bool delivery( Result res ) { return result.delivery( res ); }
-	bool delivery( uBaseEvent * ex ) { return result.delivery( ex ); }
+	void delivery( Result res ) { result.delivery( res ); } // raises uDelivered
+	void delivery( uBaseEvent * ex ) { result.delivery( ex ); } // raises uDelivered
 	void reset() { result.reset(); }
     }; // FutureMessage
   private:
+    static inline void lastActor() {
+	if ( uFetchAdd( alive_, -1 ) == 1 ) wait_.V();	// 1 => count is zero
+    } // lastActor
+
+    static inline void checkMsg( Message & msg ) {
+	switch ( msg.allocation ) {			// analyze message status
+	  case Nodelete: break;
+	  case Delete: delete &msg; break;
+	  case Destroy: msg.~Message(); break;
+	  case Finished: break;
+	} // switch
+    } // checkMsg
+
     struct Deliver_ {
 	uActor & actor;
 	Message & msg;
@@ -90,26 +105,27 @@ class uActor {
 
 	void operator()() {				// functor
 	    try {
-		Allocation ret = actor.process_( msg );	// call current message handler
-		if ( ret == Delete ) { delete &actor; }
-		else if ( ret == Destroy ) actor.~uActor();
+		actor.allocation = actor.process_( msg ); // call current message handler
+		switch ( actor.allocation ) {		// analyze actor status
+		  case Nodelete: break;
+		  case Delete: delete &actor; break;
+		  case Destroy: actor.~uActor(); break;
+		  case Finished: lastActor(); break;
+		} // switch
 	    } catch ( uBaseEvent &ex ) {
 		Case( uActor::ReplyMsg, msg ) {		// unknown future message
 		    msg_d->delivery( ex.duplicate() );	// complain in future
 		} else {
+		    checkMsg( msg );			// process message
 		    _Throw;				// fail to worker thread
 		} // Case
 	    } catch ( ... ) {
 		abort( "C++ exceptions unsupported from throw in actor for future message" );
-		// Case( uActor::ReplyMsg, msg ) {	// unknown future message
-		//     //msg_d->reply( std::current_exception() ); // complain in future
-		// } else {
-		//     _Throw;
-		// } // Case
-	    } _Finally {
-		if ( msg.allocation == Delete ) { delete &msg; }
-		else if ( msg.allocation == Destroy ) msg.~Message();
+	    // To have a zero-cost try block, the checkMsg call is duplicated above/below.
+	    // } _Finally {
+	    // 	checkMsg( msg );			// process message
 	    } // try
+	    checkMsg( msg );				// process message
 	} // Deliver_::operator()
     }; // Deliver_
 
@@ -137,8 +153,8 @@ class uActor {
 	ticket_ = executor->tickets();			// get executor queue handle
     } // uActor::uActor
 
-    virtual ~uActor() {					// check for last actor
-	if ( uFetchAdd( alive_, -1 ) == 1 ) wait_.V();	// 1 => count is zero
+    virtual ~uActor() {
+	if ( allocation != Finished ) lastActor();	// check for last actor ?
     } // uActor::~uActor
 
     // Communication
@@ -226,7 +242,7 @@ template< typename Actor > class uActorType : public uActor {
     } // uActorType::restart
 }; // uActorType
 
-#endif // __U_ACTOR_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:53:22 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:16:28 2011
-// Update Count     : 23
+// Last Modified On : Mon Jan 21 07:49:33 2019
+// Update Count     : 26
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 //
 
 
-#ifndef __U_PIHEAP_H__
-#define __U_PIHEAP_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 //#include <uDebug.h>
@@ -62,9 +59,6 @@ class uPIHeap : public uBasePIQ {
     virtual int drop();
     virtual void remove( int priority, int queueNum );
 }; // PIHeap
-
-
-#endif // __U_PIHEAP_H__
 
 
 // Local Variables: //

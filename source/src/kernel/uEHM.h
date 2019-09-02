@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 15:34:32 2018
-// Update Count     : 510
+// Last Modified On : Mon Jan 21 08:43:28 2019
+// Update Count     : 511
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 // 
 
 
-#ifndef __U_EHM_H__
-#define __U_EHM_H__
+#pragma once
+
 
 #include <typeinfo>
 #include <functional>
@@ -255,7 +255,6 @@ class uEHM::uFinallyHandler {
 	cleanUpRtn();					// invoke handler on block exit
     } // uFinallyHandler::~uFinallyHandler
 }; // uEHM::uFinallyHandler
-#endif // __U_EHM_H__
 
 
 // Local Variables: //

@@ -65,7 +65,7 @@ MAXENTRYBITS ?= 128
 
 ## Define if the kernel is build with statistical counters
 
-STATISTICS ?= TRUE
+STATISTICS ?= FALSE
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -99,15 +99,16 @@ uninstall :
 		echo "The file ${CONFIG} was not found." ; \
 		echo "Create file ${CONFIG} with one of the following commands..." ; \
 		echo "" ; \
-		echo "	${MAKE} solaris-sparc" ; \
-		echo "	${MAKE} linux-x86" ; \
-		echo "	${MAKE} linux-ia64" ; \
 		echo "	${MAKE} linux-x86_32" ; \
 		echo "	${MAKE} linux-x86_64" ; \
 		echo "" ; \
 		exit 1 ; \
 	fi
 
+#		echo "	${MAKE} linux-ia64" ; \
+#		echo "	${MAKE} linux-x86" ; \
+
+#		echo "	${MAKE} solaris-sparc" ; \
 #		echo "	${MAKE} freebsd-x86" ; \
 #		echo "	${MAKE} freebsd-x86_64" ; \
 
@@ -138,20 +139,15 @@ scratch :
 
 # These recipe recursively invoke this file again with all configuration variables set.
 
-solaris-sparc : ; ${MAKE} configure VENDOR=sun OS=solaris CPU=sparc TVENDOR=sun TOS=solaris TCPU=sparc MULTI=TRUE
-
 linux-x86 linux-i386 linux-x86_32 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=i386 TVENDOR=pc TOS=linux TCPU=i386 MULTI=TRUE
-
-linux-ia64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=ia64 TVENDOR=pc TOS=linux TCPU=ia64 MULTI=TRUE
 
 linux-x86_64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=x86_64 TVENDOR=pc TOS=linux TCPU=x86_64 MULTI=TRUE
 
-freebsd-x86 freebsd-i386 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=i386 TVENDOR=pc TOS=freebsd TCPU=i386 MULTI=TRUE
-
-freebsd-x86_64 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=x86_64 TVENDOR=pc TOS=freebsd TCPU=x86_64 MULTI=TRUE
-
-darwin-x86 darwin-i386 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=i386 TVENDOR=pc TOS=freebsd TCPU=i386 MULTI=TRUE
-
+#linux-ia64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=ia64 TVENDOR=pc TOS=linux TCPU=ia64 MULTI=TRUE
+#freebsd-x86 freebsd-i386 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=i386 TVENDOR=pc TOS=freebsd TCPU=i386 MULTI=TRUE
+#freebsd-x86_64 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=x86_64 TVENDOR=pc TOS=freebsd TCPU=x86_64 MULTI=TRUE
+#darwin-x86 darwin-i386 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=i386 TVENDOR=pc TOS=freebsd TCPU=i386 MULTI=TRUE
+#solaris-sparc : ; ${MAKE} configure VENDOR=sun OS=solaris CPU=sparc TVENDOR=sun TOS=solaris TCPU=sparc MULTI=TRUE
 #sequent-i386-ptx : ; @${MAKE} configure VENDOR=sequent OS=svr4 CPU=i386 TVENDOR=sequent TOS=svr4 TCPU=i386 MULTI=TRUE
 #sun-sparc-sunos : ; @${MAKE} configure VENDOR=sun OS=sunos CPU=sparc TVENDOR=sun TOS=sunos TCPU=sparc MULTI=TRUE
 #sun-m68k-sunos : ; @${MAKE} configure VENDOR=sun OS=sunos CPU=m68k TVENDOR=sun TOS=sunos TCPU=m68k MULTI=TRUE
@@ -227,26 +223,22 @@ configure :
 
 	printf "Checking for 32/64 bit compilation..." ; \
 	if [ "${WORDSIZE}" = "" ] ; then \
-		if [ ${TOS} = darwin ] ; then \
+		tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
+		echo 'int main() {}' > $${tmpname} ; \
+		${CCAPP} $${tmpname} > /dev/null 2>&1 ; \
+		if file ./a.out | grep "32-bit" > /dev/null 2>&1 ; then \
+			printf "32 bit\n" ; \
 			echo "WORDSIZE := 32" >> ${CONFIG} ; \
+		elif file ./a.out | grep "64-bit" > /dev/null 2>&1 ; then \
+			printf "64 bit\n" ; \
+			echo "WORDSIZE := 64" >> ${CONFIG} ; \
 		else \
-			tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
-			echo 'int main() {}' > $${tmpname} ; \
-			${CCAPP} $${tmpname} > /dev/null 2>&1 ; \
-			if file ./a.out | grep "32-bit" > /dev/null 2>&1 ; then \
-				printf "32 bit\n" ; \
-				echo "WORDSIZE := 32" >> ${CONFIG} ; \
-			elif file ./a.out | grep "64-bit" > /dev/null 2>&1 ; then \
-				printf "64 bit\n" ; \
-				echo "WORDSIZE := 64" >> ${CONFIG} ; \
-			else \
-				printf "Check for 32/64 bit compilation failed\n" ; \
-				rm -f a.out $${tmpname} ; \
-				rm -f CONFIG ; \
-				exit 1 ; \
-			fi ; \
+			printf "Check for 32/64 bit compilation failed\n" ; \
 			rm -f a.out $${tmpname} ; \
+			rm -f CONFIG ; \
+			exit 1 ; \
 		fi ; \
+		rm -f a.out $${tmpname} ; \
 	else \
 		if [ "${WORDSIZE}" = "32" -o "${WORDSIZE}" = "64" ] ; then \
 			printf "${WORDSIZE} bit\n" ; \
@@ -272,7 +264,7 @@ configure :
 	fi ; \
 	rm -f a.out $${tmpname}
 
-	if [ ${TOS} = linux -o ${TOS} = freebsd -o ${TOS} = solaris ] ; then \
+	if [ ${TOS} = linux ] ; then \
 		echo "AFFINITY := TRUE" >> ${CONFIG} ; \
 	fi ;
 
@@ -281,20 +273,6 @@ configure :
 		echo "BROKEN_CANCEL := TRUE" >> ${CONFIG} ; \
 	else \
 		echo "BROKEN_CANCEL := FALSE" >> ${CONFIG} ; \
-	fi
-
-	# TEMPORARY, printf adds "0x" for %p
-	if [ ${TOS} = solaris ] ; then \
-		echo "Adjusting for printf format difference" ; \
-		for file in `find . -type f \( -name '*.cc' -o -name '*.h' \) -print` ; do \
-			tmpname="${TMPDIR}/uC_tmp$${$$}" ; \
-			sed 's/%p/0x%p/g' $${file} > $${tmpname} ; \
-			cmp -s $${file} $${tmpname} ; \
-			if [ $${?} -ne 0 ] ; then \
-				cp $${tmpname} $${file} ; \
-			fi ; \
-			rm -f $${tmpname} ; \
-		done ; \
 	fi
 
 	echo "Finished configuration, just type '${MAKE} install'."

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 25 07:50:19 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:29:23 2011
-// Update Count     : 64
+// Last Modified On : Mon Jan 21 07:55:43 2019
+// Update Count     : 65
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 // 
 
-#ifndef __FLEXARRAY_H__
-#define __FLEXARRAY_H__
+
+#pragma once
+
 
 #include <uC++.h>
 
@@ -115,9 +116,6 @@ template<typename T> class uFlexArray {
 	NoOfElems = 0;
     } // uFlexArray::clear
 }; // uFlexArray
-
-
-#endif // __FLEXARRAY_H__
 
 
 // Local Variables: //

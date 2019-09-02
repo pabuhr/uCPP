@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 23 21:08:59 2017
-// Update Count     : 144
+// Last Modified On : Fri Apr 12 17:54:03 2019
+// Update Count     : 148
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,13 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __U_ATOMIC_H__
-#define __U_ATOMIC_H__
 
-#if defined( __ia64__ )
-#include <ia64intrin.h>
-#endif // __ia64__
-
+#pragma once
 
 #if defined( __i386__ ) || defined( __x86_64__ )
 static inline unsigned long long int uRdtsc() {
@@ -50,9 +45,7 @@ static inline unsigned long long int uRdtsc() {
 
 
 static inline void uPause() {				// pause to prevent excess processor bus usage
-#if defined( __sparc )
-    __asm__ __volatile__ ( "rd %ccr,%g0" );
-#elif defined( __i386 ) || defined( __x86_64 )
+#if defined( __i386 ) || defined( __x86_64 )
     __asm__ __volatile__ ( "pause" : : : );
 #else
     // do nothing
@@ -84,7 +77,7 @@ template< typename T > static inline T uFetchAdd( volatile T &counter, int incre
 
 
 template< typename T > static inline bool uCompareAssign( volatile T &loc, T comp, T replacement ) {
-#if ( defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) || defined( __ia64__ ) ) && defined( __sync_bool_compare_and_swap ) // broken macro, replace it
+#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) && defined( __sync_bool_compare_and_swap ) // broken macro, replace it
 #if __U_WORDSIZE__ == 32
     return __sync_bool_compare_and_swap_si((int *)(void *)(&loc),(int)(comp),(int)(replacement));
 #else
@@ -100,9 +93,6 @@ template< typename T > static inline bool uCompareAssign( volatile T &loc, T com
 template< typename T > static inline bool uCompareAssignValue( volatile T &loc, T &comp, T replacement ) {
     return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
-
-
-#endif // __U_ATOMIC_H__
 
 
 // Local Variables: //

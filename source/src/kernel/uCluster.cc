@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 15:57:15 2018
-// Update Count     : 618
+// Last Modified On : Thu Apr 11 20:30:58 2019
+// Update Count     : 622
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -53,21 +53,7 @@ void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
 // occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
 // pthread_kill.
-#if defined( __freebsd__ )
-    int retcode;
-
-    THREAD_GETMEM( This )->disableInterrupts();
-    for ( ;; ) {
-	retcode =
-#endif // __freebsd__
-	    RealRtn::pthread_kill( pid, SIGUSR1 );
-
-#if defined( __freebsd__ )
-      if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
-    } // if
-    if ( retcode == -1 ) abort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
-    THREAD_GETMEM( This )->enableInterrupts();
-#endif // __freebsd__
+    RealRtn::pthread_kill( pid, SIGUSR1 );
 #else // UNIPROCESSOR
     // Only one kernel thread so no need to send it a signal.
 #endif // __U_MULTI__
@@ -221,13 +207,16 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 } // uCluster::makeTaskReady
 
 
-void uCluster::makeTaskReady( uBaseTaskSeq &newTasks, unsigned int n ) {
+void uCluster::makeTaskReady( uBaseTaskSeq &newTasks, unsigned int n __attribute__(( unused )) ) {
     readyIdleTaskLock.acquire();
     // cannot be bound task as all tasks come from RW lock
     uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) tasks ready\n",
 			  this, uThisTask().getName(), &uThisTask() ); )
 
-    readyQueue->transfer( newTasks, n );		// add task(s) to end of cluster ready queue
+#ifdef __U_STATISTICS__
+    uFetchAdd( UPP::Statistics::ready_queue, n );
+#endif // __U_STATISTICS__
+    readyQueue->transfer( newTasks );			// add task(s) to end of cluster ready queue
 
 #ifdef __U_MULTI__
     // Wake up an idle processor if the ready task is migrating to another cluster with idle processors or if the
@@ -325,21 +314,7 @@ void uCluster::processorPoke() {
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
 // occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
 // pthread_kill.
-#if defined( __freebsd__ )
-	int retcode;
-
-	THREAD_GETMEM( This )->disableInterrupts();
-	for ( ;; ) {
-	    retcode =
-#endif // __freebsd__
-
-		RealRtn::pthread_kill( head->processor().getPid(), SIGUSR1 );
-#if defined( __freebsd__ )
-	    if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
-	} // if
-	if ( retcode == -1 ) abort( "uCluster::wakeProcessor : internal error, pthread_kill failed, error(%d) %s.", errno, strerror( errno ) );
-	THREAD_GETMEM( This )->enableInterrupts();
-#endif // __freebsd__
+	RealRtn::pthread_kill( head->processor().getPid(), SIGUSR1 );
     } // if
     processorsOnClusterLock.release();
 } // uCluster::processorRemove

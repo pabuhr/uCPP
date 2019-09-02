@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Oct 27 16:09:42 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:17:38 2011
-// Update Count     : 154
+// Last Modified On : Mon Jan 21 07:50:59 2019
+// Update Count     : 157
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 //
 
 
-#ifndef __U_DEADLINEMONOTONICSTATIC_H__
-#define __U_DEADLINEMONOTONICSTATIC_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 #include <uRealTime.h>
@@ -42,11 +39,6 @@ class uDeadlineMonotonicStatic : public uStaticPriorityScheduleSeq<uBaseTaskSeq,
     void removeInitialize( uSequence<uBaseTaskDL> & );
     void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
 }; // uDeadlineMonotonicStatic
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_DEADLINEMONOTONIC_H__
 
 
 // Local Variables: //

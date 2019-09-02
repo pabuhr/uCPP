@@ -7,8 +7,8 @@
 // Author           :
 // Created On       : Thu Aug  9 14:50:41 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:42:46 2012
-// Update Count     : 9
+// Last Modified On : Mon Jan 21 07:48:43 2019
+// Update Count     : 12
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,11 +25,7 @@
 //
 
 
-#ifndef __U_CEILINGQ_H__
-#define __U_CEILINGQ_H__
-
-#pragma __U_NOT_USER_CODE__
-
+#pragma once
 
 //#include <uDebug.h>
 
@@ -88,9 +84,6 @@ class uCeilingQ : public uBasePrioritySeq {
 	setActivePriority( oldOwner, getActivePriorityValue( oldOwner ) - 1 );
     } // uCeilingQ::onRelease
 }; // uCeilingQ
-
-
-#endif //  __U_CEILINGQ_H__
 
 
 // Local Variables: //

@@ -12,10 +12,6 @@ SRCDIR = ${PACKAGE}/src/examples
 
 CXX = ${INSTALLBINDIR}/${UPP}
 
-ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
-    CXXFLAGS += -m${WORDSIZE}
-endif
-
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
     CXXFLAGS += -O2 -Wall -Wextra #
@@ -52,11 +48,7 @@ abortexit :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	if [ ${TOS} = freebsd ] ; then \
-		pscmd="ps -U $${USER}" ; \
-	else \
-		pscmd="ps -u$${USER}" ; \
-	fi ; \
+	pscmd="ps -u$${USER}" ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 		${CXX} ${CXXFLAGS} $${ccflags} AbortExit.cc ; \
 		echo "************************** 0 Killed by SIGTERM **************************" ; \
@@ -151,7 +143,7 @@ future :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in Futures Executor ; do \
+	for filename in Futures Executor Matrix ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \

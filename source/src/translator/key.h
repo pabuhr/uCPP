@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 11:27:26 2018
-// Update Count     : 97
+// Last Modified On : Mon Jan 21 09:17:03 2019
+// Update Count     : 98
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 //
 
 
-#ifndef __KEY_H__
-#define __KEY_H__
+#pragma once
+
 
 struct keyword_t {
     const char *text;
@@ -210,7 +210,6 @@ enum key_value_t {
     TEMPLATEVAR,
 };
 
-#endif // __KEY_H__
 
 // Local Variables: //
 // compile-command: "make install" //

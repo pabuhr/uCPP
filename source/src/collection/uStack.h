@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Feb 13 19:35:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:57:35 2016
-// Update Count     : 67
+// Last Modified On : Mon Jan 21 07:57:44 2019
+// Update Count     : 68
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __U_STACK_H__
-#define __U_STACK_H__
+
+#pragma once
 
 
 #include "uCollection.h"
@@ -108,9 +108,6 @@ template<typename T> class uStackIter : public uColIter<T> {
 	return tp != 0;
     }
 };
-
-
-#endif // __U_STACK_H__
 
 
 // Local Variables: //

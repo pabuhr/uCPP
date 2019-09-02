@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Apr  4 10:20:32 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 18:27:39 2011
-// Update Count     : 17
+// Last Modified On : Mon Jan 21 07:54:35 2019
+// Update Count     : 18
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_BOUNDEDBUFFER_H__
-#define __U_BOUNDEDBUFFER_H__
+#pragma once
 
 
 template<typename ElemType> _Monitor uBoundedBuffer {
@@ -76,9 +75,6 @@ template<typename ElemType> inline ElemType uBoundedBuffer<ElemType>::remove() {
 
     return elem;
 } // uBoundedBuffer::remove
-
-
-#endif // __U_BOUNDEDBUFFER_H__
 
 
 // Local Variables: //

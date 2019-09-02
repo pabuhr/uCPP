@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 22 18:40:03 2017
-// Update Count     : 65
+// Last Modified On : Mon Jan 21 09:20:28 2019
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 //
 
-#ifndef __ATTRIBUTE_H__
-#define __ATTRIBUTE_H__
+
+#pragma once
+
 
 // Mutex qualifiers are NOT part of declaration qualifier because mutual exclusion attributes cannot be accumulated
 // acrossed declarations like declarations qualifiers.
@@ -114,7 +115,6 @@ struct attribute_t {
     ~attribute_t();
 };
 
-#endif // __ATTRIBUTE_H__
 
 // Local Variables: //
 // compile-command: "make install" //

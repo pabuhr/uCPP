@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:18:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 20 10:12:49 2017
-// Update Count     : 74
+// Last Modified On : Mon Jul  8 19:11:21 2019
+// Update Count     : 75
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,7 +24,6 @@
 // along  with this library.
 //
 
-#include <cstddef>					// nullptr
 #include "table.h"
 #include "symbol.h"
 

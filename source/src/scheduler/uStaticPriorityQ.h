@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:59:34 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 15:47:50 2018
-// Update Count     : 101
+// Last Modified On : Thu Apr  4 18:30:46 2019
+// Update Count     : 106
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 //
 
 
-#ifndef __U_STATICPRIORITYQ_H__
-#define __U_STATICPRIORITYQ_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 //#include <uDebug.h>
@@ -99,7 +96,7 @@ class uStaticPriorityQ : public uBasePrioritySeq {
 	} // if
     } // uStaticPriorityQ::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uStaticPriorityQ::transfer, internal error, unsupported operation" );
     } // uStaticPriorityQ
 
@@ -225,13 +222,10 @@ template<typename List, typename Node> class uStaticPriorityScheduleSeq : public
 	} // if
     } // uStaticPriorityScheduleSeq::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uStaticPriorityScheduleSeq::transfer, internal error, unsupported operation" );
     } // uStaticPriorityScheduleSeq
 }; // uStaticPriorityScheduleSeq
-
-
-#endif //  __U_STATICPRIORITYQ_H__
 
 
 // Local Variables: //

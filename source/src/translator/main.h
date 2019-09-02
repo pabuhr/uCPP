@@ -7,12 +7,13 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:06:46 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 15 16:28:55 2014
-// Update Count     : 29
+// Last Modified On : Mon Jan 21 09:17:18 2019
+// Update Count     : 31
 //
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+
+#pragma once
+
 
 #include <iostream>
 
@@ -23,15 +24,13 @@ extern istream *yyin;
 extern ostream *yyout;
 
 extern bool error;
-extern bool Yield;					// name "yield" already taken
-extern bool verify;
 extern bool profile;
 extern bool stdcpp11;
 extern bool user;
 
 int main( int argc, char *argv[] );
 
-#endif // __MAIN_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

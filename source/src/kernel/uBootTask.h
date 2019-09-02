@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 28 11:54:04 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 27 18:27:43 2008
-// Update Count     : 29
+// Last Modified On : Mon Jan 21 08:40:08 2019
+// Update Count     : 30
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_BOOTTASK_H__
-#define __U_BOOTTASK_H__
+#pragma once
 
 
 namespace UPP {
@@ -42,9 +41,6 @@ namespace UPP {
 	~uBootTask();
     }; // uBootTask
 } // UPP
-
-
-#endif // __U_BOOTTASK_H__
 
 
 // Local Variables: //

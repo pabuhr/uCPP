@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  9 21:02:20 2018
-// Update Count     : 319
+// Last Modified On : Thu Apr 11 18:06:19 2019
+// Update Count     : 320
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -289,34 +289,9 @@ uCluster &uBaseTask::migrate( uCluster &cluster ) {
     if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->migrateULThread( cluster );
 #endif // __U_LOCALDEBUGGER_H__
 
-    // swapcontext saves and restores the signal mask while uC++ context switch does not.
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-    // when stepping off the system cluster, the SIGALRM must be reset to blocked
-    if ( &prevCluster == uKernelModule::systemCluster ) {
- 	sigset_t new_mask;
- 	sigemptyset( &new_mask );
- 	sigaddset( &new_mask, SIGALRM );
- 	if ( sigprocmask( SIG_BLOCK, &new_mask, nullptr ) == -1 ) {
- 	    abort( "internal error, sigprocmask" );
- 	} // if
-    } // if
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
-
     // Force a context switch so the task is scheduled on the new cluster.
 
     yield();
-
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-    // when stepping onto the system cluster, the SIGALRM must reset to unblocked
-    if ( &cluster == uKernelModule::systemCluster ) {
-	sigset_t new_mask;
-	sigemptyset( &new_mask );
-	sigaddset( &new_mask, SIGALRM );
-	if ( sigprocmask( SIG_UNBLOCK, &new_mask, nullptr ) == -1 ) {
-	    abort( "internal error, sigprocmask" );
-	} // if
-    } // if
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
 #if defined( __U_DEBUG__ ) && defined( __U_MULTI__ )
     assert( before != THREAD_GETMEM( This ) );

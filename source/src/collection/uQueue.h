@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 17:35:59 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 21:57:23 2016
-// Update Count     : 115
+// Last Modified On : Mon Jan 21 07:55:02 2019
+// Update Count     : 116
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_QUEUE_H__
-#define __U_QUEUE_H__
+#pragma once
 
 
 #include "uCollection.h"
@@ -190,9 +189,6 @@ template<typename T> class uQueueIter : public uColIter<T> {
 	return tp != 0;
     }
 };
-
-
-#endif // __U_QUEUE_H__
 
 
 // Local Variables: //

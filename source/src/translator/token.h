@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:48:16 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 12 21:57:00 2016
-// Update Count     : 54
+// Last Modified On : Mon Jul  8 19:22:35 2019
+// Update Count     : 63
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,8 @@
 // along  with this library.
 //
 
-#ifndef __TOKEN_H__
-#define __TOKEN_H__
+
+#pragma once
 
 #include <cstddef>					// size_t
 
@@ -45,7 +45,6 @@ struct token_t {
     void operator delete( void *p );
     void init() { symbol = nullptr; left = right = nullptr; }
     token_t() { hash = nullptr; init(); }
-    token_t( const token_t &t ) { *this = t; }
     token_t( int value, hash_t *hash ) : value( value ), hash( hash ) {	init(); }
     ~token_t();
     void add_token_after( token_t &before );
@@ -78,8 +77,6 @@ class token_list_t {
 
 extern token_list_t *token_list;
 
-
-#endif // __TOKEN_H__
 
 // Local Variables: //
 // compile-command: "make install" //

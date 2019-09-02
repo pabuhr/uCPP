@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:37:36 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  2 15:56:49 2011
-// Update Count     : 30
+// Last Modified On : Mon Jan 21 09:10:06 2019
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 //
 
 
-#ifndef __HASH_H__
-#define __HASH_H__
+#pragma once
+
 
 // should be a prime number
 #define HASH_TABLE_SIZE 1009
@@ -56,7 +56,7 @@ class hash_table_t {
 
 extern hash_table_t *hash_table;
 
-#endif // __HASH_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:06:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 16:01:17 2018
-// Update Count     : 1089
+// Last Modified On : Mon May 20 12:03:37 2019
+// Update Count     : 1097
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,9 +34,7 @@
 #include <arpa/inet.h>					// inet_aton
 #include <cstring>					// strerror, memset
 #include <unistd.h>					// read, write, close, etc.
-#if defined( __solaris__ ) || defined( __linux__ )
 #include <sys/sendfile.h>
-#endif // __solaris__ || __linux__
 
 #ifndef SUN_LEN
 #define SUN_LEN(su) (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
@@ -93,28 +91,13 @@ uSocket::~uSocket() {
 
 in_addr uSocket::gethostbyname( const char *name ) {
     in_addr host;
-#if defined( __darwin__ ) || defined( __freebsd__ )
-    struct addrinfo hints = { 0, AF_INET, 0, 0, 0, 0, 0, 0 };
-    struct addrinfo *addr;
-    if ( getaddrinfo( name, nullptr, &hints, &addr ) ) {
-	// raise exception
-    } // if
-    memcpy( &host, addr->ai_addr, addr->ai_addrlen );
-    freeaddrinfo( addr );
-#else
     hostent hp;
     int herrno = 0;
     char buffer[8 * 1024];				// best guess at size
     hostent *rc;
 
     for ( int i = 0; i < 5; i += 1 ) {			// N tries
-#if defined( __solaris__ )
-	rc = ::gethostbyname_r( name, &hp, buffer, sizeof(buffer), &herrno );
-#elif defined( __linux__ )
 	::gethostbyname_r( name, &hp, buffer, sizeof(buffer), &rc, &herrno );
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif
       if ( rc != 0 ) break;				// success ?
       if ( herrno != TRY_AGAIN ) break;			// failure ?
 	sleep( 1 );					// TRY_AGAIN => delay and try again
@@ -123,20 +106,13 @@ in_addr uSocket::gethostbyname( const char *name ) {
 	convertFailure( "name", name );
     } // if
     memcpy( &host, hp.h_addr, hp.h_length );
-#endif // __darwin__ || __freebsd__
     return host;
 } // uSocket::gethostbyname
 
 
 in_addr uSocket::gethostbyip( const char *ip ) {
     in_addr host;
-    if (
-#if defined( __solaris__ )
-	inet_pton( AF_INET, ip, &host.s_addr )
-#else
-	inet_aton( ip, &host )
-#endif
-	== 0 ) {
+    if ( inet_aton( ip, &host ) == 0 ) {
 	convertFailure( "ip string", ip );
     } // if
     return host;
@@ -338,22 +314,10 @@ ssize_t uSocketIO::sendfile( uFile::FileAccess &file, off_t *off, size_t len, uD
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::sendfile_syscalls, 1 );
 #endif // __U_STATISTICS__
-	    // solaris/freebsd returns -1/EWOULDBLOCK for a partial sendfile
-#if defined( __freebsd__ )
-	    ret = ::sendfile( in_fd, access.fd, off != nullptr ? *off : 0, len, nullptr, &wlen, 0 );
-	    if ( ret == -1 && errno == EINTR ) ret = 0;	// EINTR may return data
-	    if ( off != nullptr ) *off += wlen;
-#elif defined( __solaris__ )
-	    struct sendfilevec sfv = { in_fd, 0, *off, len };
-	    ret = ::sendfilev( access.fd, &sfv, 1, (size_t *)&wlen );
-	    if ( ret != -1 ) wlen = ret;
-	    if ( off != nullptr ) *off += wlen;
-#else
 	    //fprintf( stderr, "sfd:%d, ffd:%d, off:%ld, len:%d, wlen:%d, errno:%d\n", access.fd, in_fd, *off, len, wlen, errno );
 	    wlen = ret = ::sendfile( access.fd, in_fd, off, len );
 	    if ( ret == -1 ) wlen = 0;
 	    else ret = 0;
-#endif // __freebsd__
 	    //access.poll.setPollFlag( access.fd );	// blocking sendfile
 	    return ret;
 	} // action
@@ -568,7 +532,7 @@ void uSocketAccept::createSocketAcceptor( uDuration *timeout, struct sockaddr *a
 #endif // __U_STATISTICS__
 	    if ( len != nullptr ) tmp = *len;		// save *len, as it may be set to 0 after each attempt
 	    fd = ::accept( access.fd, adr, len );
-	    if ( len != nullptr && *len == 0 ) *len = tmp;	// reset *len after each attempt
+	    if ( len != nullptr && *len == 0 ) *len = tmp; // reset *len after each attempt
 	    return fd;
 	} // action
 	Accept( uIOaccess &access, int &fd, struct sockaddr *adr, socklen_t *len ) : uIOClosure( access, fd ), adr( adr ), len( len ) {}

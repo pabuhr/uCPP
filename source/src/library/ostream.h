@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jul 28 14:42:29 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 23 12:16:21 2011
-// Update Count     : 43
+// Last Modified On : Mon Jan 21 09:07:16 2019
+// Update Count     : 44
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -28,8 +28,9 @@
 
 #include_next <ostream>
 
-#ifndef __OSTREAM_H__
-#define __OSTREAM_H__
+
+#pragma once
+
 
 #include <uFilebuf.h>
 
@@ -114,9 +115,6 @@ namespace std {
     typedef basic_acquire<std::ostream> osacquire;
     typedef basic_acquire<std::istream> isacquire;
 } // namespace std
-
-
-#endif // __OSTREAM_H__
 
 
 // Local Variables: //

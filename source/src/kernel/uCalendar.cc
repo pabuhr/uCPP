@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan 11 08:23:17 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep 14 13:27:33 2007
-// Update Count     : 202
+// Last Modified On : Wed Jul 10 15:29:18 2019
+// Update Count     : 211
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -59,12 +59,12 @@ std::ostream &operator<<( std::ostream &os, const uTime op ) {
 
 
 #ifdef __U_DEBUG__
-const char *uTime::uCreateFmt = "Attempt to create uTime( year=%d, month=%d, day=%d, hour=%d, min=%d, sec=%d, nsec=%d ), "
-				"which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.";
+#define uCreateFmt "Attempt to create uTime( year=%d, month=%d, day=%d, hour=%d, min=%d, sec=%ld, nsec=%ld ), " \
+		   "which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038."
 #endif // __U_DEBUG__
 
 
-void uTime::uCreateTime( int year, int month, int day, int hour, int min, int sec, long int nsec ) {
+void uTime::uCreateTime( int year, int month, int day, int hour, int min, long int sec, long int nsec ) {
     tm t;
 
     tzset();						// initialize time global variables
@@ -74,13 +74,8 @@ void uTime::uCreateTime( int year, int month, int day, int hour, int min, int se
     t.tm_mday = day + 1;				// mktime uses range 1-31
     t.tm_hour = hour;
     t.tm_min = min;
-#if defined( __freebsd__ )
-    t.tm_sec = sec;
-    time_t epochsec = timegm( &t );			// get GMT
-#else
     t.tm_sec = sec - ::timezone;			// adjust off the timezone (global variable!) to get GMT
     time_t epochsec = mktime( &t );
-#endif // __freebsd__
 #ifdef __U_DEBUG__
     if ( epochsec == (time_t)-1 ) {
 	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
@@ -93,6 +88,26 @@ void uTime::uCreateTime( int year, int month, int day, int hour, int min, int se
     } // if
 #endif // __U_DEBUG__
 } // uTime::uCreateTime
+
+
+uTime::uTime( long int sec ) {
+    tv = (long long int)sec * TIMEGRAN;
+#ifdef __U_DEBUG__
+    if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
+	abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, 0L );
+    } // if
+#endif // __U_DEBUG__
+} // uTime::uTime
+
+
+uTime::uTime( long int sec, long int nsec ) {
+    tv = (long long int)sec * TIMEGRAN + nsec;
+#ifdef __U_DEBUG__
+    if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
+	abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, nsec );
+    } // if
+#endif // __U_DEBUG__
+} // uTime::uTime
 
 
 //######################### uClock #########################

@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  7 18:03:14 2019
-// Update Count     : 52
+// Last Modified On : Fri Jul 19 06:44:46 2019
+// Update Count     : 56
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_COBEGIN_H__
-#define __U_COBEGIN_H__
+#pragma once
 
 
 #if __cplusplus > 201103L
@@ -34,7 +33,6 @@
 #include <functional>
 #include <memory>
 
-#pragma __U_NOT_USER_CODE__
 
 // COBEGIN
 
@@ -105,7 +103,7 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
     for ( ; i < threads; i += 1, s += stride ) {	// create threads with subranges
 	runners[i] = new Runner( s, s + stride, f );
     } // for
-    for ( unsigned int i = 0; i < threads; i += 1 ) delete runners[i];
+    for ( i = 0; i < threads; i += 1 ) delete runners[i];
     delete [] runners;
 } // uCofor
 
@@ -158,11 +156,6 @@ auto START( F f, Args&&... args ) -> std::unique_ptr<uWaitRunner<decltype( f( ar
 #else
     #error requires C++14 (-std=c++1y)
 #endif
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_COBEGIN_H__
 
 
 // Local Variables: //

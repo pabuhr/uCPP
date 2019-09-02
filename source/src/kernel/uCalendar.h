@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Tue Dec 19 11:58:22 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 22 21:46:47 2017
-// Update Count     : 252
+// Last Modified On : Wed Jul 10 15:28:30 2019
+// Update Count     : 261
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,14 +25,8 @@
 // 
 
 
-#ifndef __U_CALENDAR_H__
-#define __U_CALENDAR_H__
+#pragma once
 
-
-//#if defined( __linux__ )
-//#define __need_timespec				// force definitions for timespec
-//#include <time.h>					// TEMPORARY: should not be needed
-//#endif // __linux__
 
 #include <ctime>
 #include <sys/time.h>
@@ -51,10 +45,8 @@
 #endif
 
 
-#if defined( __linux__ )
 // fake a few things
 #define	CLOCK_REALTIME	0				// real (clock on the wall) time
-#endif
 
 
 class uDuration;					// forward declaration
@@ -291,13 +283,9 @@ class uTime {
     friend bool operator<=( uTime op1, uTime op2 );
     friend std::ostream &operator<<( std::ostream &os, const uTime op );
 
-#ifdef __U_DEBUG__
-    static const char *uCreateFmt;
-#endif // __U_DEBUG__
-
     long long int tv;					// gcc specific
 
-    void uCreateTime( int year, int month, int day, int hour, int min, int sec, long int nsec );
+    void uCreateTime( int year, int month, int day, int hour, int min, long int sec, long int nsec );
   public:
     uTime() {
     } // uTime::uTime
@@ -306,23 +294,9 @@ class uTime {
     // malloc. The malloc calls lead to recursion problems because uTime values are created from the sigalrm handler in
     // composing the next context switch event.
 
-    explicit uTime( long int sec ) {			// explicit => unambiguous with uDuration( long int sec )
-	tv = (long long int)sec * TIMEGRAN;
-#ifdef __U_DEBUG__
-	if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	    abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, 0 );
-	} // if
-#endif // __U_DEBUG__
-    } // uTime::uTime
+    explicit uTime( long int sec );
 
-    uTime( long int sec, long int nsec ) {
-	tv = (long long int)sec * TIMEGRAN + nsec;
-#ifdef __U_DEBUG__
-	if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	    abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, nsec );
-	} // if
-#endif // __U_DEBUG__
-    } // uTime::uTime
+    uTime( long int sec, long int nsec );
 
     uTime( int min, int sec, long int nsec ) {
 	uCreateTime( 1970, 0, 0, 0, min, sec, nsec );
@@ -465,9 +439,6 @@ class uClock {
 
     static void convertTime( uTime time, int &year, int &month, int &day, int &hour, int &minutes, int &seconds, long int &nsec );
 }; // uClock
-
-
-#endif // __U_CALENDAR_H__
 
 
 // Local Variables: //

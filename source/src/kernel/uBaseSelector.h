@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 16 16:17:57 2017
-// Update Count     : 454
+// Last Modified On : Mon Apr 15 22:54:49 2019
+// Update Count     : 456
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 //
 
-#ifndef __U_BASESELECTOR_H__
-#define __U_BASESELECTOR_H__
+
+#pragma once
+
 
 //#include <iostream>
 //using namespace std;
@@ -278,7 +279,7 @@ namespace UPP {
 	    binary.removeFuture();
 	} // UnarySelector:removeFuture
 
-	void setAction( int action )  {
+	void setAction( int /* action */ )  {
 	    assert( false );				// should not be called
 	    return;
 	} // UnarySelector::setAction
@@ -382,7 +383,6 @@ namespace UPP {
     }; // Executor
 } // UPP
 
-#endif  // __U_BASESELECTOR_H__
 
 // Local Variables: //
 // compile-command: "make install" //

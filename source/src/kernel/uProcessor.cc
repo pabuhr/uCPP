@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  6 15:50:22 2018
-// Update Count     : 2122
+// Last Modified On : Fri Apr 12 17:16:51 2019
+// Update Count     : 2143
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,10 +41,6 @@
 #include <cstring>					// strerror
 #include <cerrno>
 #include <unistd.h>					// getpid
-
-#if defined( __solaris__ )
-#include <sys/processor.h>				// processor_bind
-#endif // __solaris__
 
 #include <limits.h>					// PTHREAD_STACK_MIN
 
@@ -491,11 +487,7 @@ void uProcessorKernel::main() {
 	    readyTask->currCoroutine = readyTask;	// manually reset current coroutine
 
 #ifdef __U_DEBUG__
-#   if defined( __linux__ ) && defined( __ia64__ )
-	    void *SP = (void *)(((ucontext_t *)readyTask->context)->uc_mcontext.sc_ar_bsp);
-#   else
 	    void *SP = ((uContext_t *)readyTask->context)->SP;
-#   endif
 #endif // __U_DEBUG__
 	    uDEBUGPRT(
 		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(1) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
@@ -519,14 +511,6 @@ void uProcessorKernel::main() {
 
 	    assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
 	    THREAD_GETMEM( This )->disableInterrupts();
-
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-#   if defined( __linux__ ) && defined( __ia64__ )
-	    ((ucontext_t *)(readyTask->currCoroutine->context))->uc_mcontext.sc_gr[13] = THREAD_GETMEM( threadPointer );
-#   else
-	#error uC++ : internal error, unsupported architecture
-#   endif
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::user_context_switches, 1 );
@@ -584,11 +568,7 @@ void uProcessorKernel::main() {
 	    THREAD_SETMEM( activeTask, readyTask );
 
 #ifdef __U_DEBUG__
-#   if defined( __linux__ ) && defined( __ia64__ )
-	    void *SP = (void *)(((ucontext_t *)readyTask->currCoroutine->context)->uc_mcontext.sc_ar_bsp);
-#   else
 	    void *SP = ((uContext_t *)readyTask->currCoroutine->context)->SP;
-#   endif
 #endif // __U_DEBUG__
 	    uDEBUGPRT(
 		uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
@@ -605,14 +585,6 @@ void uProcessorKernel::main() {
 	    )
 	    assert( readyTask == (uBaseTask *)uKernelModule::bootTask ? true : readyTask->currCoroutine->limit < SP && SP < readyTask->currCoroutine->base );
 	    assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
-
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-#   if defined( __linux__ ) && defined( __ia64__ )
-	    ((ucontext_t *)(readyTask->currCoroutine->context))->uc_mcontext.sc_gr[13] = THREAD_GETMEM( threadPointer );
-#   else
-	#error uC++ : internal error, unsupported architecture
-#   endif
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
 #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::user_context_switches, 1 );
@@ -829,24 +801,6 @@ void uProcessor::createProcessor( uCluster &cluster, bool detached, int ms, int 
     uKernelModule::globalProcessorLock->release();
 
     procTask = new uProcessorTask( cluster, *this );
-
-#if defined( __U_AFFINITY__ ) && defined( __solaris__ )
-    int cpus = sysconf( _SC_NPROCESSORS_CONF );		// number of processors
-    if ( cpus == -1 ) {
-	abort( "(uProcessor &)%p.createProcessor() : internal error, sysconf failure, error(%d) %s.", this, errno, strerror( errno ) );
-    } // if
-    assert( cpus > 0 );
-    for ( int i = 0; i < cpus; i += 1 ) {
-	int cpu = p_online( i, P_STATUS );
-	if ( cpu == -1 ) {
-	    if ( errno == EINVAL ) continue;		// processor numbers not necessarily contiguous
-	    abort( "(uProcessor &)%p.createProcessor() : internal error, p_online failure, error(%d) %s.", this, errno, strerror( errno ) );
-	} // if
-	if ( cpu == P_ONLINE || cpu == P_NOINTR ) {	// accumulate set of processors able to execute LWPs
-	    cpuId.set( i );
-	} // if
-    } // for
-#endif // __U_AFFINITY__
 } // uProcessor::createProcessor
 
 
@@ -984,8 +938,8 @@ void uProcessor::fork( uProcessor *processor ) {
     if ( ret ) {
 	abort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_init failed, error(%d) %s.", this, ret, strerror( ret ) );
     } // if
-    assert( processor->processorKer.size >= PTHREAD_STACK_MIN );
-    ret = RealRtn::pthread_attr_setstack( &attr, processor->processorKer.limit, processor->processorKer.size );
+    assert( processor->processorKer.stackSize() >= PTHREAD_STACK_MIN );
+    ret = RealRtn::pthread_attr_setstack( &attr, processor->processorKer.limit, processor->processorKer.stackSize() );
     if ( ret ) {
 	abort( "(uProcessorKernel &)%p.fork() : internal error, pthread_attr_setstack failed, error(%d) %s.", this, ret, strerror( ret ) );
     } // if
@@ -1071,37 +1025,13 @@ unsigned int uProcessor::setPreemption( unsigned int ms ) {
 
 #if defined( __U_AFFINITY__ )
 void uProcessor::setAffinity( const cpu_set_t &mask ) {
-#if defined( __linux__ ) || defined( __freebsd__ )
 #if defined( __U_MULTI__ )
     int rcode = RealRtn::pthread_setaffinity_np( pid, sizeof(cpu_set_t), &mask );
     if ( rcode != 0 ) {
 	errno = rcode;
 #else
-#if defined( __linux__ )
     if ( sched_setaffinity( pid, sizeof(cpu_set_t), &mask ) != 0 ) {
-#else
-    if ( cpuset_setaffinity( CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(cpuset_t), &mask ) != 0 ) {
-#endif
 #endif // __U_MULTI__
-#elif defined( __solaris__ )
-    // Solaris only allows an LWP to be restricted to a single CPU without being part of an LWP group, which require exclusive access
-    cpuId = mask;
-    int posn = cpuId.ffs();
-    cpuId.clr( posn );					// clear first 1 bit
-    if ( cpuId.ffs() != CPU_SETSIZE ) {			// check if another 1 bit
-	abort( "(uProcessor &)%p.setAffinity() : cpu set restricted to one cpu.", this );
-    } // if
-    cpuId.set( posn );					// reset 1 bit
-    if ( processor_bind(
-#if defined( __U_MULTI__ )
-	P_LWPID,
-#else
-	P_PID,
-#endif // __U_MULTI__
-	pid, posn, nullptr ) != 0 ) {
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif // __U_AFFINITY__
 	abort( "(uProcessor &)%p.setAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
     } // if
 } // uProcessor::setAffinity
@@ -1115,25 +1045,15 @@ void uProcessor::setAffinity( unsigned int cpu ) {
 
 
 void uProcessor::getAffinity( cpu_set_t &mask ) {
-#if defined( __linux__ ) || defined( __freebsd__ )
 #if defined( __U_MULTI__ )
     int rcode = RealRtn::pthread_getaffinity_np( pid, sizeof(cpu_set_t), &mask );
     if ( rcode ) {
 	errno = rcode;
 #else
-#if defined( __linux__ )
     if ( sched_getaffinity( pid, sizeof(cpu_set_t), &mask ) != 0 ) {
-#else
-    if ( cpuset_getaffinity( CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(cpuset_t), &mask ) != 0 ) {
-#endif
 #endif // __U_MULTI__
 	abort( "(uProcessor &)%p.getAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
     } // if
-#elif defined( __solaris__ )
-    mask = cpuId;
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
 } // uProcessor::getAffinity
 
 int uProcessor::getAffinity() {

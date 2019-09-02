@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep  6 08:22:51 2018
-// Update Count     : 384
+// Last Modified On : Fri Jul 19 16:40:00 2019
+// Update Count     : 387
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_HEAPMANAGER_H__
-#define __U_HEAPMANAGER_H__
+#pragma once
 
 
 #define FASTLOOKUP
@@ -148,7 +147,7 @@ namespace UPP {
 
 	enum { NoBucketSizes = 93,			// number of buckets sizes
 	       #ifdef FASTLOOKUP
-	       LookupSizes = 65536,			// number of fast lookup sizes
+	       LookupSizes = 65536 + sizeof(uHeapManager::Storage), // number of fast lookup sizes
 	       #endif // FASTLOOKUP
 	};
 
@@ -211,7 +210,7 @@ namespace UPP {
 	void * extend( size_t size );
 	void * doMalloc( size_t size );
 	static void * mallocNoStats( size_t size ) __THROW;
-	static void * memalign2( size_t alignment, size_t size ) __THROW;
+	static void * memalignNoStats( size_t alignment, size_t size ) __THROW;
 	void doFree( void * addr );
 	size_t prtFree();
 	uHeapManager();
@@ -222,9 +221,6 @@ namespace UPP {
       public:
     }; // uHeapManager
 } // UPP
-
-
-#endif // __U_HEAPMANAGER_H__
 
 
 // Local Variables: //

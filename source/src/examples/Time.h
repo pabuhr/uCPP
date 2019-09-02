@@ -5,17 +5,7 @@
 inline unsigned long long int Time() {
 #if 1
     timespec ts;
-    clock_gettime(
-#if defined( __linux__ )
-	 CLOCK_THREAD_CPUTIME_ID,
-#elif defined( __freebsd__ )
-	 CLOCK_PROF,
-#elif defined( __solaris__ )
-	 CLOCK_HIGHRES,
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif
-	 &ts );
+    clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ts );
     return 1000000000LL * ts.tv_sec + ts.tv_nsec;
 #endif
 

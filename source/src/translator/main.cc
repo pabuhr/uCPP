@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 12 15:21:41 2019
-// Update Count     : 169
+// Last Modified On : Sat Jan 19 12:34:54 2019
+// Update Count     : 173
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -57,20 +57,13 @@ istream *yyin = &cin;
 ostream *yyout = &cout;
 
 bool error = false;
-bool Yield = false;
-bool verify = false;
 bool profile = false;
 bool stdcpp11 = false;
-bool user = false;
 
 extern void sigSegvBusHandler( int sig );
 
 void check( string arg ) {
-    if ( arg == "__U_YIELD__" ) {
-	Yield = true;
-    } else if ( arg == "__U_VERIFY__" ) {
-	verify = true;
-    } else if ( arg == "__U_PROFILE__" ) {
+    if ( arg == "__U_PROFILE__" ) {
 	profile = true;
     } else if ( arg == "__U_STD_CPP11__" ) {
 	stdcpp11 = true;
@@ -82,13 +75,12 @@ int main( int argc, char *argv[] ) {
     char *outfile = nullptr;
     strcpy( file, "no file name" );
 
-    // The translator can receive 2 types of arguments.
+    // The translator can receive 2 kinds of arguments.
     //
-    // The first type begin with a '-' character and are generally -D<string> type arguments.  We are interested in
-    // arguments, -D__U_YIELD__, -D__U_VERIFY__ and __GNUG__ because they affect the code that is produced by the
-    // translator.
+    // The first kind begins with a '-' character and are generally -D<string> arguments.  Arguments like __GNUG__
+    // affect the code that is produced by the translator.
     //
-    // The second type of argument are input and output file specifications.  These arguments do not begin with a '-'
+    // The second kind of argument are input and output file specifications.  These arguments do not begin with a '-'
     // character.  The first file specification is taken to be the input file specification while the second file
     // specification is taken to be the output file specification.  If no files are specified, stdin and stdout are
     // assumed.  If more files are specified, an error results.
@@ -128,7 +120,7 @@ int main( int argc, char *argv[] ) {
 	} // if
     } // for
 
-    uDEBUGPRT( cerr << "flags yield:" << Yield << " verify:" << verify << " profile:" << profile << " std cpp11:" << stdcpp11 << endl; )
+    uDEBUGPRT( cerr << " profile:" << profile << " std cpp11:" << stdcpp11 << endl; )
 
     *yyin >> std::resetiosflags( std::ios::skipws );	// turn off white space skipping during input
 

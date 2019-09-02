@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 27 15:27:27 2018
-// Update Count     : 576
+// Last Modified On : Fri Apr 12 13:18:56 2019
+// Update Count     : 578
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,7 +45,6 @@
 
 using namespace UPP;
 
-#if defined( __linux__ )
 #include <execinfo.h>					// backtrace, backtrace_symbols
 #include <cxxabi.h>					// __cxa_demangle
 
@@ -107,7 +106,6 @@ static void uBacktrace() {
 
     free( messages );
 } // uBacktrace
-#endif // __linux__
 
 
 void exit( int retcode ) __THROW {			// interpose
@@ -201,9 +199,7 @@ void abort( const char *fmt, ... ) {
 	uDebugWrite( STDERR_FILENO, ".\n", 2 );
     } // if
 
-#if defined( __linux__ )
     uBacktrace();
-#endif // __linux__
 
     // In debugger mode, tell the global debugger to stop the application.
 

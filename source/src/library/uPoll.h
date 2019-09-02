@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:01:20 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 26 11:17:02 2009
-// Update Count     : 30
+// Last Modified On : Mon Jan 21 09:08:13 2019
+// Update Count     : 34
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,26 +25,12 @@
 // 
 
 
-#ifndef __POLL_H__
-#define __POLL_H__
+#pragma once
 
-#pragma __U_NOT_USER_CODE__
-
-
-#if defined( __solaris__ )
-
-#define U_FNDELAY O_NONBLOCK				// POSIX non-blocking
-
-// ENOBUFS : system could not allocate an internal buffer. The operation may
-// succeed when buffers become available.
-#define U_EWOULDBLOCK EWOULDBLOCK
-
-#else
 
 #define U_FNDELAY FNDELAY
 #define U_EWOULDBLOCK EWOULDBLOCK
 
-#endif
 
 class uPoll {
   public:
@@ -64,11 +50,6 @@ class uPoll {
     void clearPollFlag( int fd );
     void computeStatus( int fd );
 }; // uPoll
-
-
-#pragma __U_USER_CODE__
-
-#endif // __POLL_H__
 
 
 // Local Variables: //

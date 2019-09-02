@@ -7,8 +7,8 @@
 // Author           : Robert Denda
 // Created On       : Tue Jul 16 16:45:16 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 13:22:18 2016
-// Update Count     : 720
+// Last Modified On : Mon Jan 21 08:46:15 2019
+// Update Count     : 721
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 // 
 
-#ifndef __U_PROFILER_H__
-#define __U_PROFILER_H__
+
+#pragma once
+
 
 #include <uC++.h>
 
@@ -386,9 +387,6 @@ _Task uProfiler {
     // debugging hook
     static void (* uProfiler_printCallStack)(uProfileTaskSampler * );
 }; // uProfiler
-
-
-#endif // __U_PROFILER_H__
 
 
 // Local variables: //

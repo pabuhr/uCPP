@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun 22 15:23:25 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 24 13:55:46 2018
-// Update Count     : 21
+// Last Modified On : Mon Jan 21 08:50:03 2019
+// Update Count     : 23
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_SYSTEMTASK_H__
-#define __U_SYSTEMTASK_H__
+#pragma once
 
 
 _Task uSystemTask {
@@ -44,9 +43,6 @@ _Task uSystemTask {
     ~uSystemTask();
     void reaper( uBaseTask &victim );
 }; // uSystemTask
-
-
-#endif // __U_SYSTEMTASK_H__
 
 
 // Local Variables: //

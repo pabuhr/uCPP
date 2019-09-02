@@ -7,14 +7,15 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Jan  8 13:21:58 2019
-%% Update Count     : 7408
+%% Last Modified On : Fri Aug 16 10:52:45 2019
+%% Update Count     : 7501
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
 \usepackage{fullpage,times,lgrind,epic,eepic,comment}
 \usepackage[usenames]{color}
 \usepackage{subfig}
+\usepackage{enumitem}
 \usepackage{latexsym}				% \Box
 \usepackage{mathptmx}				% better math font with "times"
 \usepackage[dvips]{graphics}
@@ -54,7 +55,7 @@
 \large Peter A. Buhr \copyright\thanks{\normalsize
 Permission is granted to redistribute this manual unmodified in any form;
 permission is granted to redistribute modified versions of this	manual in any form, provided the modified version explicitly attributes said modifications to their respective authors, and provided that no modification is made to these terms of redistribution.
-} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016 \\
+} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019 \\
 Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
 } % author
 
@@ -303,12 +304,12 @@ each is used to affect control in objects created by the new types.
 \begin{table}[htb]
 \center
 \begin{tabular}{c|c||l|l}
-\multicolumn{2}{c||}{object properties}	& \multicolumn{2}{c}{object's member routine properties}					\\
+\multicolumn{2}{c||}{object properties}	& \multicolumn{2}{c}{object's member routine properties}				\\
 \hline
 thread	& execution state				& \multicolumn{1}{c|}{no mutual exclusion}	&\multicolumn{1}{c}{mutual exclusion}\\
 \hline
 \hline
-no		& no							& [\,\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Nomutex}}}\endlgrinde\LGend{}]$\dagger$ \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}\0\K{class}}}\endlgrinde\LGend{}					\\
+no		& no							& [\,\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Nomutex}}}\endlgrinde\LGend{}]$\dagger$ \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}\0\K{class}}}\endlgrinde\LGend{}				\\
 \hline
 no		& yes							& [\,\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Nomutex}}}\endlgrinde\LGend{}] \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Coroutine}}}\endlgrinde\LGend{}		& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}\0\K{\_Coroutine}}}\endlgrinde\LGend{}			\\
 \hline
@@ -465,28 +466,6 @@ The runtime checks should only be removed after the program is completely debugg
 The program is linked with the non-debugging version of the unikernel or multikernel, so the execution of the program is faster.
 \Emph{However, no runtime checks or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}s are performed so errors usually result in abnormal program termination.}
 
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{}]
-\index{-yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{} option}\index{yield!compilation option}\index{compilation option!-yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{}}%
-When a program is translated, a random number of context switches occur at the beginning of each member routine so that during execution on a uniprocessor there is a better simulation of parallelism.
-(This non-determinism in execution is in addition to random context switching due to pre-emptive scheduling\index{pre-emptive!scheduling}, see \VRef{s:ImplicitTaskScheduling}).
-The extra yields of execution can help during the debugging phase of a \uC program, but substantially slows the execution of the program.
-
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noyield}}}\endlgrinde\LGend{}]
-\index{-noyield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noyield}}}\endlgrinde\LGend{} option}\index{compilation option!-noyield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noyield}}}\endlgrinde\LGend{}}%
-Additional context switches are not inserted in member routines.
-\textbf{This option is the default.}
-
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{}]
-\index{-verify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{} option}\index{compilation option!-verify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{}}%
-When a program is translated, a check to verify that the stack has not overflowed occurs at the beginning of each member routine.
-(This checking is in addition to checks on each context switch provided by the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{debug}}}\endlgrinde\LGend{} option.)
-Verifying the stack has not overflowed is important during the debugging phase of a \uC program, but slows the execution of the program.
-
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noverify}}}\endlgrinde\LGend{}]
-\index{-noverify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noverify}}}\endlgrinde\LGend{} option}\index{compilation option!-noverify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{noverify}}}\endlgrinde\LGend{}}%
-Stack-overflow checking is not inserted in member routines.
-\textbf{This option is the default.}
-
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{}]
 \index{-multi@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{} option}\index{compilation option!-multi@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{}}%
 The program is linked with the multikernel.
@@ -495,16 +474,6 @@ The program is linked with the multikernel.
 \index{-nomulti@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nomulti}}}\endlgrinde\LGend{} option}\index{compilation option!-nomulti@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nomulti}}}\endlgrinde\LGend{}}%
 The program is linked with the unikernel.
 \textbf{This option is the default.}
-
-% \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{unixrc}}}\endlgrinde\LGend{}]
-% \index{-unixrc@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{unixrc}}}\endlgrinde\LGend{} option}\index{compilation option!-unixrc@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{unixrc}}}\endlgrinde\LGend{}}
-% The program is linked with a version of UNIX I/O cover routines that return standard UNIX return codes.
-% \textbf{This is the default.}
-% 
-% \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nounixrc}}}\endlgrinde\LGend{}]
-% \index{-nounixrc@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nounixrc}}}\endlgrinde\LGend{} option}\index{compilation option!-nounixrc@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nounixrc}}}\endlgrinde\LGend{}}
-% The program is linked with a version of UNIX I/O cover routines that do \emph{not} return standard UNIX return codes;
-% instead, the UNIX I/O cover routines raise exceptions.
 
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{quiet}}}\endlgrinde\LGend{}]
 \index{-quiet@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{quiet}}}\endlgrinde\LGend{} option}\index{compilation option!-quiet@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{quiet}}}\endlgrinde\LGend{}}%
@@ -525,10 +494,6 @@ The path-name of the compiler used to compile a \uC program(s).
 The default is the compiler used to compile the \uC runtime library.
 It is unsafe to use a different compiler unless the generated code is binary compatible.
 (See \VRef{s:InstallationRequirements} for supported compilers.)
-
-% \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{cpp}}}\endlgrinde\LGend{} path-name]
-% \index{-cpp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{cpp}}}\endlgrinde\LGend{} option}\index{compilation option!-cpp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{cpp}}}\endlgrinde\LGend{}}%
-% The name of the C preprocessor used to preprocess the \uC program.
 \end{prefix}
 When multiple conflicting options appear on the command line, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{debug}}}\endlgrinde\LGend{} followed by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nodebug}}}\endlgrinde\LGend{}, the last option takes precedence.
 
@@ -555,14 +520,6 @@ is always available during preprocessing and its value is the current patch \Ind
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_DEBUG\_\_}}}\endlgrinde\LGend{}]
 \index{__U_DEBUG__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_DEBUG\_\_}}}\endlgrinde\LGend{}}\index{preprocessor variables!__U_DEBUG__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_DEBUG\_\_}}}\endlgrinde\LGend{}}
 is available during preprocessing if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{debug}}}\endlgrinde\LGend{} compilation option is specified.
-
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_YIELD\_\_}}}\endlgrinde\LGend{}]
-\index{__U_YIELD__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_YIELD\_\_}}}\endlgrinde\LGend{}}\index{yield!preprocessor}\index{preprocessor variables!__U_YIELD__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_YIELD\_\_}}}\endlgrinde\LGend{}}
-is available during preprocessing if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{} compilation option is specified.
-
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_VERIFY\_\_}}}\endlgrinde\LGend{}]
-\index{__U_VERIFY__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_VERIFY\_\_}}}\endlgrinde\LGend{}}\index{preprocessor variables!__U_VERIFY__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_VERIFY\_\_}}}\endlgrinde\LGend{}}
-is available during preprocessing if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{} compilation option is specified.
 
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_MULTI\_\_}}}\endlgrinde\LGend{}]
 \index{__U_MULTI__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_MULTI\_\_}}}\endlgrinde\LGend{}}\index{preprocessor variables!__U_MULTI__@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_\_U\_MULTI\_\_}}}\endlgrinde\LGend{}}
@@ -945,10 +902,6 @@ To completely ensure the stack size is never exceeded, a call to \LGinlinetrue\L
 \endlgrinde\LGend
 Thus, after a coroutine has allocated its local variables, a check is made that its stack has not overflowed.
 Clearly, this technique is not ideal and requires additional work for the programmer, but it does handle complex cases where the stack depth is difficult to determine and can be used to help debug possible stack overflow situations.
-
-\begin{annotation}
-When the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{}\index{-verify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{} option}\index{compilation option!-verify@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{verify}}}\endlgrinde\LGend{}} option is used, calls to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{verify}}}\endlgrinde\LGend{} are automatically inserted at the beginning of each member routine, but not after each set of declarations.
-\end{annotation}
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setName}}}\endlgrinde\LGend{}\index{setName@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setName}}}\endlgrinde\LGend{}} associates a name with a coroutine and returns the previous name.
 The name is not copied so its storage must persist for the duration of the coroutine.
@@ -2088,10 +2041,6 @@ If after the creation of several tasks the creator yields control, some created 
 This facility is not a mechanism to control the exact order of execution of tasks;
 pre-emptive scheduling\index{pre-emptive!scheduling} and/or multiple processors make this impossible.
 
-\begin{annotation}
-When the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{}\index{-yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{} option}\index{yield!compilation option}\index{compilation option!-yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{yield}}}\endlgrinde\LGend{}} option is used, calls to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}(\0\V{rand}()\0\%\03\0)}}\endlgrinde\LGend{} are automatically inserted at the beginning of each member routine.
-\end{annotation}
-
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sleep}}}\endlgrinde\LGend{}\index{sleep@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sleep}}}\endlgrinde\LGend{}} blocks the task for the specified duration or until the specified time.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sleep}}}\endlgrinde\LGend{} is a static member-routine that always sleeps the calling thread;
 use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{sleep}(.\,.\,.)}}\endlgrinde\LGend{} for a call outside of a task type.
@@ -2666,7 +2615,7 @@ The counters are \emph{not} synchronized among processor, so there is significan
 \L{\LB{\K{void}\0\V{uPause}()}}
 \endlgrinde\LGend
 }%
-For x86 and SPARC, the routine causes a hardware \Index{pause}, which is a hint to the processor of a busy loop in progress.
+For x86, the routine causes a hardware \Index{pause}, which is a hint to the processor of a busy loop in progress.
 The pause prevents the processor pipeline filling with load/compare instructions, which takes resources (CPU), space (instruction cache), and power (heat).
 The \Index{test-and-set}\index{atomic instruction!test/set}\index{critical section!hardware!test/set} routine performs an atomic read and fixed assignment.
 The routine sets some location within the parameter to an implementation defined nonzero value (often the value 1) and the return value is true if and only if the previous contents had the same nonzero value.
@@ -2917,10 +2866,9 @@ Only a coroutine's or task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endl
 \end{annotation}
 
 \begin{annotation}
-\Textbf{WARNING:} Some processors, like the SPARC, implicitly save both fixed and floating-point registers, which means it is unnecessary to create instances of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFloatingPointContext}}}\endlgrinde\LGend{} in tasks performing floating-point operations.
+\Textbf{WARNING:} Some processors, implicitly save both fixed and floating-point registers, which means it is unnecessary to create instances of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFloatingPointContext}}}\endlgrinde\LGend{} in tasks performing floating-point operations.
 However, leaving out \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFloatingPointContext}}}\endlgrinde\LGend{} is dangerous because the program is not portable to other processors.
 Therefore, it is important to always include an instance of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFloatingPointContext}}}\endlgrinde\LGend{} in tasks performing floating-point operations.
-For processors like the SPARC, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFloatingPointContext}}}\endlgrinde\LGend{} does nothing, so there is no cost.
 \end{annotation}
 
 Additional context can be associated with a coroutine or task in a free routine, member routine, or as part of a class object to temporarily save a particular context.
@@ -3110,7 +3058,7 @@ As with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()}}\endlgrinde\LGend{},
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}]
 \begin{sloppypar}
 -- attempts to cancel the asynchronous call associated with the future.
-All clients waiting for the result are unblocked, and an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancellation}}}\endlgrinde\LGend{} is thrown at any client attempting to access the result.
+All clients waiting for the result are unblocked, and an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{} is thrown at any client attempting to access the result.
 Depending on the server, this operation may also have the effect of preventing the requested computation from starting, or it may interrupt the computation in progress.
 If the computation cannot be interrupted, the call may block until the computation is finished.
 \end{sloppypar}
@@ -3125,13 +3073,13 @@ The future operations available to a server are:
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{T}\0\V{result}\0)}}\endlgrinde\LGend{}]
 -- copy the server-generated result into the future, unblocking any clients that are waiting for the result.
 This result is the value returned to the client.
-Returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the result is copied and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if the asynchronous call has already completed.
+If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the result.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}]
 -- mark the future as empty so it can be reused, after which the current future value is no longer available.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exception}(\0\V{uBaseEvent}\0\*\V{cause}\0)}}\endlgrinde\LGend{}]
 -- copy a server-generated exception into the future.
 All clients waiting for the result are unblocked, and the exception \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cause}}}\endlgrinde\LGend{} is thrown at any client attempting to access the result.
-Returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the exception is copied and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if the asynchronous call has already completed.
+If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the exception.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
 \L{\LB{\V{Future\_ISM}\<\K{int}\>\0\V{result};}}
@@ -3185,9 +3133,9 @@ The explicit storage-management (ESM) future (see \VRef[Figure]{f:FutureExplicit
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0server}}
 \CE{}\L{\LB{}\Tab{4}{\V{ServerData}\0\V{serverData};}\Tab{44}{\C{}\1\1\0information\0needed\0by\0server}}
 \CE{}\L{\LB{}}
-\L{\LB{}\Tab{4}{\K{bool}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{exception}(\0\V{uBaseEvent}\0\*\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{exception}(\0\V{uBaseEvent}\0\*\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!available@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{}}%
@@ -3226,8 +3174,8 @@ This example illustrates how a client uses a number of futures to communicate as
 \CE{}\L{\LB{\}}}
 \L{\LB{\C{}\1\1\0work\0asynchronously\0while\0server\0processes\0requests}}
 \CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0retrieve\0async\0results}}
-\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
-\CE{}\L{\LB{}\Tab{24}{\V{f}[\V{i}]\0\<\<\0\V{endl};}\Tab{44}{\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
+\CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{v}\0=\0\V{f}[\V{i}]()\0+\07;}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
+\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{f}[\V{i}]\0\<\<\0\V{endl};\0\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 The client creates an array of $N$ futures for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} values.
@@ -3236,6 +3184,11 @@ For each call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{server}.\V{mem}}}\endlgr
 The client then proceeds asynchronously with the server to perform other work, possibly in parallel with the server (if running multiprocessor).
 Finally, the client retrieves the results from the server by first performing a blocking access to each future.
 After that future is retrieved, it can be retrieved again using the cheap nonblocking-form (or the expensive blocking-form, but there is no point in synchronizing more than once for each asynchronous call.)
+Warning, combining blocking and non-blocking future access in an expression is dangerous:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{f}[\V{i}]\0\<\<\0\V{endl};}}
+\endlgrinde\LGend
+because the order of expression evaluation is not left to right, so the non-blocking access may be executed first.
 
 The key point for explicit futures is that the client preallocates the future storage so the server does not perform any dynamic memory-allocation for the futures, which can provided a substantial performance benefit.
 In the example, the client is able to use low-cost stack storage for the futures needed to interact with the server.
@@ -3263,9 +3216,9 @@ The implicit storage-management (ISM) future (see \VRef[Figure]{f:FutureImplicit
 \L{\LB{}\Tab{4}{\K{bool}\0\V{equals}(\0\K{const}\0\V{Future\_ISM}\<\V{T}\>\0\&\V{other}\0);\0\C{}\1\1\0equality\0of\0reference}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0server}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{exception}(\0\V{uBaseEvent}\0\*\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{exception}(\0\V{uBaseEvent}\0\*\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!available@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{}}%
@@ -3306,8 +3259,8 @@ This example uses ISM futures in the same way the previous example used ESM futu
 \CE{}\L{\LB{\}}}
 \L{\LB{\C{}\1\1\0work\0asynchronously\0while\0server\0processes\0requests}}
 \CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0retrieve\0async\0results}}
-\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
-\CE{}\L{\LB{}\Tab{24}{\V{f}[\V{i}]\0\<\<\0\V{endl};}\Tab{44}{\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
+\CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{v}\0=\0\V{f}[\V{i}]()\0+\07;}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
+\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]\0\<\<\0\S{}\"\0\"\SE{}\0\<\<}\Tab{40}{\V{f}[\V{i}]\0\<\<\0\V{endl};\0\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 Note that the asynchronous call to the server has the future as its return value, resembling a traditional return call, unlike the ESM future.
@@ -3859,12 +3812,12 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde
 
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
 Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
-\VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (worker) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
+\VRef[Figure]{f:ActorModel} shows the Actor model has an \newterm{actor} (work) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages sent by other actors.
 A mailbox contains heterogeneous typed messages.
 Actors do not have a thread;
 instead they are executed by an underlying thread-pool (executor, see \VRef{s:Executors}), which calls an actor's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} member with each message from its mailbox.
 Actor execution guarantees messages are executed sequentially and in FIFO order from the mailbox (i.e., messages are never executed concurrently for a specific actor).
-Actors also create other other actors and communicate with these new actors by sending messages to their mailbox.
+Actors also create other actors and communicate with these new actors by sending messages to their mailbox.
 Messages are divided into those that do and do not require a response.
 Responses are handled asynchronously through \Index{future}s, where the actor processing the message deliveries the future result.
 Actor references, futures, and routines/functors/lambdas can be passed in messages.
@@ -3873,14 +3826,26 @@ Most actor systems leverage \Index{garbage collection} to manage actors and mess
 Since \CC does not have implicit garbage collection, \uC actors and messages involve explicit storage management, so programmers need to deal with actor/message life-time by returning an allocation status after processing a message.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uActor}\0\{}}
-\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete}\0\};}\Tab{56}{\C{}\1\1\0allocation\0status}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0actions}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Nodelete@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Delete@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}}%
-Allocation status is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{} means either the actor or message persists after an actor processes a message, while \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{} means either the actor or message is deleted after an actor processes a message.
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Destroy@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}}%
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Finished@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}}%
+\begin{prefix}
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}] means either the actor or message persists after an actor returns from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}.
+Use for multi-use actors or messages during their life time. (message default)
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}] means either the actor or message is deleted after an actor returns from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}.
+Use with dynamically allocated actors or messages at completion.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}] means either the actor's or message's destructor is called after an actor returns from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} but storage is not deallocated.
+Use with placement allocated actors or messages at completion.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}] means the actor is marked finished after it returns from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} but neither the destructor is called nor storage deallocated.
+(No action for a message.)
+Use with stack allocated actors or messages at completion.
+\end{prefix}
 
 \begin{figure}
 \centering
@@ -3892,7 +3857,7 @@ Allocation status is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrin
 In \uC, actor messages inherit from base-type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{Message}}}\endlgrinde\LGend{}:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{struct}\0\V{Message}\0\{}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\*\V{sender};}\Tab{56}{\C{}\1\1\0delegated\0sender}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\*\0\V{sender};}\Tab{56}{\C{}\1\1\0delegated\0sender}}
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation};}\Tab{56}{\C{}\1\1\0allocation\0status}}
 \CE{}\L{\LB{}\Tab{4}{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\V{Message}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
@@ -3923,7 +3888,7 @@ The message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{ReplyMsg}}}\endlg
 \CE{}\L{\LB{}\Tab{4}{\K{virtual}\0\K{bool}\0\V{available}()\0=\00;}\Tab{56}{\C{}\1\1\0untyped\0future\0operations}}
 \CE{}\L{\LB{}\Tab{4}{\K{virtual}\0\K{bool}\0\V{cancelled}()\0=\00;}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{cancel}()\0=\00;}}
-\L{\LB{}\Tab{4}{\K{virtual}\0\K{bool}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0)\0=\00;}}
+\L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0)\0=\00;}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{reset}()\0=\00;}}
 \L{\LB{\};}}
 \endlgrinde\LGend
@@ -3939,8 +3904,8 @@ The generic future message inherits from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{
 \CE{}\L{\LB{}\Tab{4}{\V{FutureMessage}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\V{FutureMessage}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
 \CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0available,\0cancelled,\0cancel,\0delivery,\0reset\0from\0ReplyMsg}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{delivery}(\0\V{Result}\0\V{res}\0);}}
-\L{\LB{\};}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{Result}\0\V{res}\0);}\Tab{56}{\C{}\1\1\0raises\0uDelivered}}
+\CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{FutureMessage@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}!delivery@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}}%
 
@@ -4114,7 +4079,7 @@ The following idiom for an actor's receive handles sending and receiving unknown
 In this case, the message type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ReplyMsg}}}\endlgrinde\LGend{}\index{ReplyMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ReplyMsg}}}\endlgrinde\LGend{}} is used to determine if the message is an unknown \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{} message (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}) versus an unknown \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} message.
 Instead of returning an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{} to the sender, it is possible to inform the sender through the future in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}.
 One approach is to explicitly deliver an exception (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{MyEvent}}}\endlgrinde\LGend{}) into the future;
-the other approach is to raise an exception, which is caught by the worker thread executing the actor and the worker thread implicitly duplicates the exception into the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}.
+the other approach is to raise an exception, which is caught by the the thread executing the actor and this thread implicitly duplicates the exception into the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}.
 
 Finally, the following routines control the actor executor by adjusting its thread pool.
 \LGinlinefalse\LGbegin\lgrinde
@@ -4169,31 +4134,32 @@ However, it is possible for the derived actor to explicitly invoke the base acto
 \L{\LB{\K{using}\0\K{namespace}\0\V{std};}}
 \L{\LB{\K{\#include}\0\<\V{uActor}.\V{h}\>}}
 \L{\LB{}}
-\L{\LB{\K{struct}\0\V{StrMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{}\Tab{56}{\C{}\1\1\0actor\0messages}}
+\L{\LB{\K{struct}\0\V{StrMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{}\Tab{56}{\C{}\1\1\0actor\0message}}
 \CE{}\L{\LB{}\Tab{4}{\V{string}\0\V{val};}}
 \L{\LB{\Proc{StrMsg}}\Tab{4}{\V{StrMsg}(\0\V{string}\0\V{val}\0)\0:\0\V{Message}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Actor}\0\V{Hello}\0\{}}
-\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\V{msg}\0)\0\{}}
-\L{\LB{}\Tab{8}{\V{Case}(\0\V{StrMsg},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0determine\0message\0kind}}
+\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{str}\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{Case}(\0\V{StrMsg},\0\V{str}\0)\0\{}\Tab{56}{\C{}\1\1\0determine\0message\0kind}}
 \CE{}\L{\LB{}\Tab{12}{\V{osacquire}\0\V{acq}(\0\V{cout}\0);}}
-\L{\LB{}\Tab{12}{\V{cout}\0\<\<\0\V{msg\_d}\-\>\V{val};}}
-\L{\LB{}\Tab{12}{\K{if}\0(\0\V{msg\_d}\-\>\V{val}\0==\0\S{}\"hello\"\SE{}\0)\0\{}}
+\L{\LB{}\Tab{12}{\V{cout}\0\<\<\0\V{str\_d}\-\>\V{val};}\Tab{56}{\C{}\1\1\0access\0message\0value}}
+\CE{}\L{\LB{}\Tab{12}{\K{if}\0(\0\V{str\_d}\-\>\V{val}\0==\0\S{}\"hello\"\SE{}\0)\0\{}}
 \L{\LB{}\Tab{16}{\V{cout}\0\<\<\0\S{}\",\0hello\0back\0at\0you!\"\SE{}\0\<\<\0\V{endl};}}
 \L{\LB{}\Tab{12}{\}\0\K{else}\0\{}}
 \L{\LB{}\Tab{16}{\V{cout}\0\<\<\0\S{}\",\0do\0not\0understand?\"\SE{}\0\<\<\0\V{endl};}}
 \L{\LB{}\Tab{12}{\}}}
-\L{\LB{}\Tab{8}{\}\0\K{else}\0\V{Case}(\0\V{StopMsg},\0\V{msg}\0)\0\{}}
+\L{\LB{}\Tab{8}{\}\0\K{else}\0\V{Case}(\0\V{StopMsg},\0\V{str}\0)\0\{}}
 \L{\LB{}\Tab{12}{\K{return}\0\V{Delete};}\Tab{56}{\C{}\1\1\0delete\0actor}}
 \CE{}\L{\LB{}\Tab{8}{\}\0\C{}\1\1\0Case}}
 \CE{}\L{\LB{}\Tab{8}{\K{return}\0\V{Nodelete};}\Tab{56}{\C{}\1\1\0reuse\0actor}}
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\*(\K{new}\0\V{Hello}())\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"buenos\0dias\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
-\L{\LB{}\Tab{4}{\*(\K{new}\0\V{Hello}())\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"bonjour\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
-\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0end}}
+\L{\LB{\0\0\0\0\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\CE{}\L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"bonjour\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
+\L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"buenos\0dias\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
+\L{\LB{\0\0\0\0\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Hello Actor}
@@ -4356,7 +4322,9 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} futures are
 \L{\LB{}\Tab{4}{\K{enum}\0\{\0\V{Times}\0=\05\0\};}}
 \L{\LB{}\Tab{4}{\V{Future\_ISM}\<\0\K{int}\0\>\0\V{fi}[\V{Times}];}}
 \L{\LB{}\Tab{4}{\V{Future\_ISM}\<\0\V{string}\0\>\0\V{fs}[\V{Times}];}}
-\L{\LB{}\Tab{4}{\V{Actor}\0\*\0\V{actor}\0=\0\K{new}\0\V{Actor};}}
+\L{\LB{}}
+\L{\LB{\0\0\0\0\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\CE{}\L{\LB{}\Tab{4}{\V{Actor}\0\*\0\V{actor}\0=\0\K{new}\0\V{Actor};}}
 \L{\LB{}}
 \L{\LB{\Proc{for}}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Times};\0\V{i}\0+=\01\0)\0\{}\Tab{56}{\C{}\1\1\0tell\0messages}}
 \CE{}\L{\LB{}\Tab{8}{\*\V{actor}\0\|\0\*\K{new}\0\V{IntMsg}(\03\0);}\Tab{56}{\C{}\1\1\0ignore\0future}}
@@ -4376,7 +4344,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} futures are
 \CE{}\L{\LB{}\Tab{8}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"futures\0\"\SE{}\0\<\<\0\V{fi}[\V{i}]()\0\<\<\0\V{endl};}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{\*\V{actor}\0\|\0\V{uActor}::\V{stopMsg};}\Tab{56}{\C{}\1\1\0terminate\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\CE{}\L{\LB{\0\0\0\0\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Future Actor}
@@ -5623,7 +5591,7 @@ Initially, \Emph{nonlocal propagation is disabled for all exception types in a c
 Several of the predefined kernel exception-types are implicitly enabled in certain contexts to ensure their prompt delivery (see \VRef{s:ImplicitlyEnabledExceptionTypes}).
 
 The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptions (and cancellation, see \VRef{s:Cancellation}) at these points:
-\begin{list}{$\bullet$}{\topsep=3pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=3pt,parsep=0pt,itemsep=0pt]
 \item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}}}\endlgrinde\LGend{},
 \item when an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} statement begins,
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} statement ends,
@@ -5635,7 +5603,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item after a task unblocks if it blocked when trying to perform I/O,
 \item the first time a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed,
 \item after \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{} return.
-\end{list}
+\end{itemize}
 If this level of polling is insufficient, explicit polling is possible by calling:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{int}\0\V{uBaseCoroutine}::\V{asyncpoll}();}}
@@ -5818,13 +5786,13 @@ Values at the raise site can be modified directly in the handler if variables ar
 \label{s:TerminationResumption}
 
 The form of the raise dictates the set of handlers examined during propagation:
-\begin{list}{$\bullet$}{\topsep=3pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=3pt,parsep=0pt,itemsep=0pt]
 \item
 terminating propagation (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Throw}}}\endlgrinde\LGend{}) only examines termination handlers (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{}),
 \item
 resuming propagation (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Resume}}}\endlgrinde\LGend{}) only examines resumption handlers (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CatchResume}}}\endlgrinde\LGend{}).
 However, the standard default resumption handler converts resuming into terminating propagation (see \VRef{s:ExceptionsInheritedMembers}).
-\end{list}
+\end{itemize}
 Often the set of exception types for termination and resumption handlers are disjoint because each exception type has a specific action.
 However, it is possible for the set of exception types in each handler set to overlap.
 For example, the exception type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R}}}\endlgrinde\LGend{} appears in both the termination and resumption handler-sets:
@@ -6462,7 +6430,8 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \L{\LB{}\Tab{8}{\V{uPthreadable}::\V{Failure}}}
 \L{\LB{}\Tab{12}{\V{uPthreadable}::\V{CreationFailure}}}
 \L{\LB{}\Tab{4}{\V{uFutureFailure}}}
-\L{\LB{}\Tab{8}{\V{uCancellation}}}
+\L{\LB{}\Tab{8}{\V{uCancelled}}}
+\L{\LB{}\Tab{8}{\V{uDelivered}}}
 \L{\LB{}\Tab{4}{\V{uIOFailure}}}
 \L{\LB{}\Tab{8}{\V{uFile}::\V{Failure}}}
 \L{\LB{}\Tab{12}{\V{uFile}::\V{TerminateFailure}}}
@@ -6612,8 +6581,10 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \index{uSocketClient@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}}}\endlgrinde\LGend{}!SendfileTimeout@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileTimeout}}}\endlgrinde\LGend{}}%
 \index{SendfileTimeout@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileTimeout}}}\endlgrinde\LGend{}}%
 \index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}}%
-\index{uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}!uCancellation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancellation}}}\endlgrinde\LGend{}}%
-\index{uCancellation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancellation}}}\endlgrinde\LGend{}}%
+\index{uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}!uCancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}}%
+\index{uCancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}}%
+\index{uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}!uDelivered@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{}}%
+\index{uCancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{}}%
 \caption{\uC Predefined Exception-Type Hierarchy}
 \label{f:uCPredefinedExceptionTypeHierarchy}
 \end{figure}
@@ -8738,11 +8709,11 @@ Thus, a \uC programmer can use high-level concurrent features in \uC, along with
 It is also possible to take a native pthreads programs and --  with only minor changes --  convert it to a \uC program using \uC's pthreads support.
 In this way, programmers can incrementally transform and extend pthreads applications to use higher-level \CC approaches, starting with a combination of low-level pthreads threads/locks and high-level \uC capabilities, and ultimately moving to all high-level mechanisms. 
 There are three basic ways in which \uC can be used in conjunction with pthreads:
-\begin{list}{$\bullet$}{\topsep=4pt\parsep=0pt\itemsep=0pt}
+\begin{itemize}[topsep=4pt,parsep=0pt,itemsep=0pt]
 \item linking against pre-compiled binaries using pthreads,
 \item recompilation of separate translation units using pthreads,
 \item recompilation of entire pthreads programs.
-\end{list}
+\end{itemize}
 
 \begin{figure}
 \centering
@@ -9950,7 +9921,7 @@ When a program terminates with an error, only the stack of the coroutine or task
 During execution, the debugger cannot step through a context switch for either a coroutine or task.
 Therefore, it is necessary to put break points after the suspend/resume or signal/wait to acquire control, and just continue execution through the context switch.
 Once the breakpoint is reached, it is possible to next/step through the lines of the coroutine/task until the next context switch.
-For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is possible to examine the active task running on each kernel thread.
+For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is possible to examine the active task running on each kernel thread (also see\VRef{c:GDBCheatSheet}).
 % switching to none
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{(\V{gdb})\0\V{info}\0\V{threads}}\Tab{20}{\V{\#}\0\V{list}\0\V{all}\0\V{kernel}\0\V{threads}}}
@@ -9969,20 +9940,18 @@ For gdb, the following debugger commands allows the application program to handl
 \label{s:InstallationRequirements}
 
 \uC comes configured to run on any of the following platforms (single and multiple processor):
-\begin{list}{$\bullet$}{\parsep=0pt\itemsep=0pt}
+\begin{itemize}[parsep=0pt,itemsep=0pt]
 \item
-solaris-sparc : Solaris 9/10, SPARC
+linux-x86\_32 : Linux 2.4.x or greater, AMD/Intel 32-bit
 \item
-linux-x86 : Linux 2.4.x or greater, Intel IA-32
-\item
-linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
-\item
-linux-x86\_32 : Linux 2.4.x or greater, AMD 32
-\item
-linux-x86\_64 : Linux 2.4.x or greater, AMD 64
+linux-x86\_64 : Linux 2.4.x or greater, AMD/Intel 64-bit
+% \item
+% linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
+% \item
+% solaris-sparc : Solaris 9/10, SPARC
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
-\end{list}
+\end{itemize}
 \uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.9.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{}\index{-fopenmp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{} option}\index{compilation option!-fopenmp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{}} flag.
@@ -10676,6 +10645,60 @@ otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}
 \caption{DSL Sequence}
 \label{f:DSLSeq}
 \end{figure}
+
+
+\chapter{GDB Cheatsheet for $\mu$C++}
+\label{c:GDBCheatSheet}
+
+The following \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\index{gdb@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}} and Python macros allow \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} to understand the \uC runtime environment: tasks (see~\VRef{s:Task}), processors (see~\VRef{s:Processors}), and clusters (see~\VRef{s:Cluster}).
+
+These instructions assume the install \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{} for \uC is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\1\V{usr}\1\V{local}\1\V{u}++\-7.0.0}}\endlgrinde\LGend{};
+if installed elsewhere, change \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{}.
+Copy \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>\1.\V{gdbinit}}}\endlgrinde\LGend{} to your home directory or merge it into your existing \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file.
+If installed elsewhere, edit the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{} within the \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file to the install location.
+Thereafter, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} automatically loads the \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file from the home directory at start up making the following new \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} commands available.
+
+Debugging involves setting one or more breakpoints in a program.
+When a breakpoint is encountered, the entire concurrent program stops, i.e., all user and kernel threads.
+At this point, it is possible to examine the stacks of each \uC task stack by listing all the tasks (command \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{}), switching to an individual task (command \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\02}}\endlgrinde\LGend{}), and printing the back trace (command \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{backtrace}}}\endlgrinde\LGend{}) for its stack.
+The brace trace shows where that task is executing, and by moving up and down the back trace, it is possible to examine the variables in each stack frame.
+
+
+\section{Clusters}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}	& \textbf{\emph{Example}}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{clusters}}}\endlgrinde\LGend{}					& print a list of all clusters	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{clusters}}}\endlgrinde\LGend{}				\\
+\end{tabular}
+\end{flushleft}
+
+
+\section{Processors}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}	& \textbf{\emph{Example}}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{processors}}}\endlgrinde\LGend{}						& print all info about all processors on all clusters	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{processors}}}\endlgrinde\LGend{}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{processors}}}\endlgrinde\LGend{} \textit{clusterName}	& print all info about all processors on a particular cluster	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{processors}\0\V{userCluster}}}\endlgrinde\LGend{}	\\
+\end{tabular}
+\end{flushleft}
+
+
+\section{Tasks}
+
+\begin{flushleft}
+\begin{tabular}{@{}p{0.25\textwidth} p{0.5\textwidth} p{0.2\textwidth}@{}}
+\textbf{\emph{Command}}			& \textbf{\emph{Description}}					& \textbf{\emph{Example}}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{}						& print application tasks in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{userCluster}}}\endlgrinde\LGend{}	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{}					\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{} \textit{clusterName}	& print application tasks in a clusterName		& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\0\V{clusterA}}}\endlgrinde\LGend{}			\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\0\V{all}}}\endlgrinde\LGend{}					& print all tasks in all clusters				& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\0\V{all}}}\endlgrinde\LGend{}				\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{} \textit{id}			& context switch to task \textit{id} on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{userCluster}}}\endlgrinde\LGend{}	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\02}}\endlgrinde\LGend{}		\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x}}\endlgrinde\LGend{}\textit{address}	& context switch to a task based on its address on any cluster	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\00x80024875}}\endlgrinde\LGend{}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}}}\endlgrinde\LGend{} \textit{id} \textit{clusterName}	& context switch to a task on a specified cluster	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{task}\02\0\V{clusterA}}}\endlgrinde\LGend{}	\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prevtask}}}\endlgrinde\LGend{}					& switch back to the previous task on the stack	& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prevtask}}}\endlgrinde\LGend{}				\\
+\end{tabular}
+\end{flushleft}
 
 
 \chapter{Example Programs}

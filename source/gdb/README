@@ -1,12 +1,14 @@
-These instructions and associated files assume uC++ is installed in
-/usr/local/u++-7.0.0. Modify the path in .gdbinit, if installed elsewhere.
+These instructions assume the install <prefix> for uC++ is /usr/local/u++-7.0.0.
+If installed elsewhere, change <prefix>.
 
-Copy /usr/local/u++-7.0.0/.gdbinit to your home directory. Thereafter, gdb will
-load the .gdbinit file and the associated uC++ macro extensions.
+Copy <prefix>/.gdbinit to your home directory. If installed elsewhere, change
+the <prefix> within .gdbinit. Thereafter, gdb automatically loads the .gdbinit
+file from the home directory making the following new gdb commands available.
 
 New commands:
 
     clusters                        : print all clusters
+    processors                      : print all processors on all clusters
     processors  <clusterName>       : print all processors on cluster
     task                            : print userCluster tasks, application tasks only
     task <clusterName>              : print cluster tasks, application tasks only

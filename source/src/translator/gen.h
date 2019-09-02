@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:36:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 16:33:10 2017
-// Update Count     : 81
+// Last Modified On : Mon Jan 21 09:20:00 2019
+// Update Count     : 84
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,8 @@
 //
 
 
-#ifndef __GEN_H__
-#define __GEN_H__
+#pragma once
+
 
 #include "key.h"
 
@@ -63,13 +63,11 @@ void gen_PIQ( token_t *before, symbol_t *symbol );
 void gen_mutex( token_t *before, symbol_t *symbol );
 void gen_mutex_entry( token_t *before, symbol_t *symbol );
 void gen_base_specifier_name( token_t *before, symbol_t *symbol );
-void gen_verify( token_t *before );
-void gen_yield( token_t *before );
 void gen_entry( token_t *before, unsigned int );
 void gen_mask( token_t *before, unsigned int );
 void gen_hash( token_t *before, hash_t *hash );
 
-#endif // __GEN_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

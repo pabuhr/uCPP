@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:59:34 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 15:43:05 2018
-// Update Count     : 67
+// Last Modified On : Thu Apr  4 18:31:07 2019
+// Update Count     : 71
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 //
 
 
-#ifndef __U_HEAPQ_H__
-#define __U_HEAPQ_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 //#include <uDebug.h>
@@ -64,7 +61,7 @@ class uPriorityQ : public uBasePrioritySeq {
     virtual uBaseTaskDL *drop();
     virtual void remove( uBaseTaskDL *node );
 
-    virtual void transfer( uBaseTaskSeq & /*from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /*from */ ) {
 	abort( "uPriorityQ::transfer, internal error, unsupported operation" );
     } // uPriorityQ::transfer
 
@@ -231,13 +228,10 @@ template<typename List, typename Node> class uPriorityScheduleQSeq : public uPri
 	}
     } // uPriorityScheduleQSeq::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uPriorityScheduleQSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQSeq::transfer
 }; // uPriorityScheduleQSeq
-
-
-#endif // __U_HEAPQ_H__
 
 
 // Local Variables: //

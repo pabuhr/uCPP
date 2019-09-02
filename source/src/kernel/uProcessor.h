@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 26 09:36:12 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr  6 13:51:50 2012
-// Update Count     : 52
+// Last Modified On : Mon Jan 21 08:45:28 2019
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_PROCESSOR_H__
-#define __U_PROCESSOR_H__
+#pragma once
 
 
 //######################### uProcessorTask #########################
@@ -50,9 +49,6 @@ _Task uProcessorTask {
     ~uProcessorTask();
   public:
 }; // uProcessorTask
-
-
-#endif // __U_PROCESSOR_H__
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 22 18:32:23 2017
-// Update Count     : 57
+// Last Modified On : Mon Jul  8 19:07:23 2019
+// Update Count     : 58
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,6 @@
 //
 
 #include "attribute.h"
-
-#include <cstddef>					// nullptr
 
 attribute_t::attribute_t() {
     Mutex = false;

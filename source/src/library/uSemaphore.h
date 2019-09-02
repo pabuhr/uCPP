@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 13:42:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 16 14:51:27 2016
-// Update Count     : 80
+// Last Modified On : Mon Jan 21 09:05:37 2019
+// Update Count     : 83
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,8 @@
 // 
 
 
-#ifndef __U_SEMAPHORE_H__
-#define __U_SEMAPHORE_H__
+#pragma once
 
-#pragma __U_NOT_USER_CODE__
 
 #ifndef __U_SEMAPHORE_MONITOR__
 
@@ -115,11 +113,6 @@ _Monitor uSemaphore {
 }; // uSemaphore
 
 #endif // ! __U_SEMAPHORE_MONITOR__
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_SEMAPHORE_H__
 
 
 // Local Variables: //

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:21:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:24:57 2019
-// Update Count     : 23
+// Last Modified On : Tue Feb  5 12:46:21 2019
+// Update Count     : 24
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,7 +86,7 @@ _Actor Generator {
 	    return Nodelete;
 	} else {
 	    *fib | stopMsg;
-	    return Delete;
+	    return Finished;
 	} // if
     } // Fib::receive
 }; // Generator
@@ -108,7 +108,7 @@ int main( int argc, char * argv[] ) {
     } // try
 
     uActorStart();					// start actor system
-    new Generator;
+    Generator generator;
     uActorStop();					// wait for all actors to terminate
 } // main
 

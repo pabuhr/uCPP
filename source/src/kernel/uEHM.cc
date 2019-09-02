@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 15:59:44 2018
-// Update Count     : 761
+// Last Modified On : Mon Sep  2 09:10:04 2019
+// Update Count     : 772
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,6 +27,8 @@
 
 #define __U_KERNEL__
 #include <uC++.h>
+
+//#define __U_DEBUG_H__
 //#include <uDebug.h>
 
 #include <cxxabi.h>
@@ -244,7 +246,7 @@ class uEHM::ResumeWorkHorseInit {
     ~ResumeWorkHorseInit() {
 	uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
 	coroutine.resumedObj = prevResumption;
-	if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) {		// update top, unless it's a forceful unwind
+	if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) {	// update top, unless it's a forceful unwind
 	    coroutine.topResumedType = prevResumption ? &typeid(prevResumption) : nullptr;
 	} // if
 	coroutine.handlerStackVisualTop = prevVisualTop;
@@ -528,7 +530,7 @@ void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
 	    uHandlerBase *elem = tmp->table[i];		// optimization
 	    const void *bound = event.staticallyBoundObject;
 	    uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
-				  i, elem, elem->staticallyBoundObject, elem->EventType, bound ); )
+				  i, elem, elem->getMatchBinding(), elem->getEventType(), bound ); )
 	    // if (no binding OR binding match) AND (type match OR resume_any) => handler found
 	    if ( ( elem->getMatchBinding() == nullptr || bound == elem->getMatchBinding() ) &&
 		 ( elem->getEventType() == nullptr || match_exception_type( raisedtype, elem->getEventType() ) ) ) {

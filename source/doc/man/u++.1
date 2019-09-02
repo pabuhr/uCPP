@@ -7,8 +7,8 @@
 .\" Author           : Peter A. Buhr
 .\" Created On       : Sat Jul  2 21:47:05 1994
 .\" Last Modified By : Peter A. Buhr
-.\" Last Modified On : Fri Apr  6 13:44:28 2012
-.\" Update Count     : 52
+.\" Last Modified On : Sat Jan 19 12:40:33 2019
+.\" Update Count     : 54
 .\" 
 .\" nroff -man u++.1
 .\"
@@ -51,24 +51,6 @@ The program is linked with the non-debugging version of the unikernel or
 multikernel, so the execution of the program is faster.  However, no runtime
 checks or asserts are performed so errors usually result in abnormal program
 termination.
-.IP -yield
-When a program is translated, a random number of context switches occur at the
-beginning of each member routine so that during execution on a uniprocessor
-there is a better simulation of parallelism.  (This non-determinism in
-execution is in addition to random context switching due to pre-emptive
-scheduling.  The extra yields of execution can help during the debugging phase
-of a uC++ program, but substantially slows the execution of the program.
-.IP -noyield
-Additional context switches are not inserted in member routines.  This option
-is the default.
-.IP -verify
-When a program is translated, a check to verify that the stack has not
-overflowed occurs at the beginning of each member routine.  Verifying the
-stack has not overflowed is important during the debugging phase of a uC++
-program, but slows the execution of the program.
-.IP -noverify
-Stack-overflow checking is not inserted in member routines.  This option is the
-default.
 .IP -multi
 The program is linked with the multikernel.  See the uC++ RUNTIME KERNELS
 section below.
@@ -128,12 +110,6 @@ is always available during preprocessing and its value is the current patch
 version number.
 .IP __U_DEBUG__
 is available during preprocessing if the -debug compilation option is
-specified.
-.IP __U_YIELD__
-is available during preprocessing if the -yield compilation option is
-specified.
-.IP __U_VERIFY__
-is available during preprocessing if the -verify compilation option is
 specified.
 .IP __U_MULTI__
 is available during preprocessing if the -multi compilation option is specified.

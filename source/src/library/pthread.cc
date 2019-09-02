@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 24 16:21:55 2018
-// Update Count     : 1070
+// Last Modified On : Fri Apr 12 13:21:36 2019
+// Update Count     : 1082
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,10 +40,6 @@
 #include <uStack.h>
 
 //#include <uDebug.h>
-
-#if defined( __solaris__ )
-#include <thread.h>
-#endif // __solaris__
 
 #define NOT_A_PTHREAD ((pthread_t)-2)			// used as return from pthread_self for non-pthread tasks
 
@@ -370,10 +366,6 @@ namespace UPP {
 	friend class PthreadLock;
 
 	struct storage {
-#ifdef __solaris__
-	    // store pointer in the second word to avoid Solaris magic number
-	    uint64_t dummy;				// contains Solaris magic number
-#endif
 	    Lock *lock;
 	}; // storage
 
@@ -402,9 +394,6 @@ namespace UPP {
 		    next += sizeof(Lock);		// assume lock size is multiple of alignment size
 		} // if
 	    } // if
-#ifdef __solaris__
-	    ((storage *)lock)->dummy = 0;		// zero Solaris magic number
-#endif
 	} // PthreadLock::Impl::init
 
 	template< typename PublicLock >
@@ -417,7 +406,7 @@ namespace UPP {
 	template< typename PublicLock >
 	static Lock *get( PublicLock *lock ) {
 	    static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
-	    // Use double check to improve performance. Check is safe on sparc/x86; volatile prevents compiler reordering
+	    // Use double check to improve performance. Check is safe on x86; volatile prevents compiler reordering
 	    volatile PublicLock *const lock_ = lock;
 	    Lock *l = ((storage *)lock_)->lock;
 	    // check is necessary because storage can be statically initialized
@@ -479,14 +468,7 @@ _Unwind_Reason_Code uPthreadable::unwinder_cleaner( int /* version */, _Unwind_A
     void *cfa = (void *)_Unwind_GetCFA(context);	// identify the current stack frame
     uBaseCoroutine::PthreadCleanup *cst = p->cleanupStackTop(); // find the address of the top cleanup information
 
-    while ( cst != nullptr && 				// as long as there are cleanup handlers
-#if defined( __freebsd__ ) && ! defined( pthread_cleanup_push )	// and their stack address is as high as the frame we're looking at
-	    cst->sp < cfa 				// (for bsd, we need to get the address out of the actual data field
-#else                                                   // but this address is the stack pointer, so testing equality would run
-							// cleanups too early )
-	    cst <= cfa
-#endif
-	) {
+    while ( cst != nullptr && cst <= cfa ) {		// as long as there are cleanup handlers
 	p->cleanup_pop(1);				// keep popping off cleanups and execute them
 	cst = p->cleanupStackTop();
     } // while
@@ -508,23 +490,12 @@ void uPthreadable::do_unwind() {
 } // uPthreadable::do_unwind
 
 void uPthreadable::cleanup_push( void (*routine)(void *), void *args, void *stackaddress ) {
-#if defined( __freebsd__ ) && ! defined( pthread_cleanup_push )	// macro ?
-    uBaseCoroutine::PthreadCleanup *buf = new uBaseCoroutine::PthreadCleanup;
-    buf->sp = stackaddress;
-#else
     uBaseCoroutine::PthreadCleanup *buf = new(stackaddress) uBaseCoroutine::PthreadCleanup; // use the buffer data structure (on the stack) to store information
-#endif
     buf->routine = routine;
     buf->args = args;
     cleanup_handlers.add( buf );
 
-#if defined(__solaris__)
-    static_assert( sizeof(_cleanup_t) >= sizeof(uBaseCoroutine::PthreadCleanup), "" );
-#elif defined(__linux__)
     static_assert( sizeof(_pthread_cleanup_buffer) >= sizeof(uBaseCoroutine::PthreadCleanup), "" );
-#elif defined( __freebsd__ ) && ! defined( pthread_cleanup_push )
-    static_assert( sizeof(_pthread_cleanup_info) >= sizeof(uBaseCoroutine::PthreadCleanup), "" );
-#endif
 } // uPthreadable::cleanup_push
 
 void uPthreadable::cleanup_pop( int ex ) {
@@ -534,9 +505,6 @@ void uPthreadable::cleanup_pop( int ex ) {
     if ( ex ) {
 	buf->routine( buf->args );
     } // if
-#if defined( __freebsd__ ) && ! defined( pthread_cleanup_push )	// macro ?
-    delete buf;
-#endif // __freebsd__
 } // uPthreadable::cleanup_pop
 
 
@@ -680,18 +648,11 @@ extern "C" {
 	return ENOSYS;
     } // pthread_attr_getschedparam
 
-#if defined( __freebsd__ )
-    void pthread_yield( void ) {			// GNU extension
-	uThisTask().uYieldNoPoll();
-	pthread_testcancel();				// pthread_yield is a cancellation point
-    } // pthread_yield
-#else
     int pthread_yield( void ) __THROW {			// GNU extension
 	uThisTask().uYieldNoPoll();
 	pthread_testcancel();				// pthread_yield is a cancellation point
 	return 0;
     } // pthread_yield
-#endif // __freebsd__
 
 
     //######################### Exit #########################
@@ -955,13 +916,6 @@ extern "C" {
 #endif // __U_DEBUG__
     } // pthread_self
 
-    // On some versions of linux pthread_equal is implemented as an inline function; hence it is impossible to redefine
-    // it here.  Fortunately, the implementation on these platforms is the same as we would otherwise define.
-#if ! defined( __linux__ )
-    int pthread_equal( pthread_t t1, pthread_t t2 ) __THROW {
-	return t1 == t2;
-    } // pthread_equal
-#endif // ! __linux__
 
     int pthread_once( pthread_once_t *once_control, void (*init_routine)( void ) ) __OLD_THROW {
 	uDEBUGPRT(
@@ -1045,72 +999,15 @@ extern "C" {
     } // pthread_testcancel
 
 
-#if defined( __solaris__ )
-  asm(
-" .file \"pthread.cc\"\n\
-   .section \".text\"\n\
-   .align 4\n\
-   .global _getfp\n\
-   .type _getfp,#function\n\
-_getfp:\n\
-     retl\n\
-     mov %fp, %o0\n\
-   .size _getfp,(.-_getfp)"
-	);
-#endif
-
-
-#if defined( __solaris__ ) || defined( __linux__ )
-#if defined( __solaris__ )
-    void __pthread_cleanup_push( void (*routine)(void *), void *args, caddr_t fp, _cleanup_t *buffer ) {
-#elif defined( __linux__ )
     void _pthread_cleanup_push( struct _pthread_cleanup_buffer *buffer, void (*routine) (void *), void *args ) __THROW {
-#endif // __solaris__ || __linux__
   	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
 	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
 	p->cleanup_push( routine, args, buffer );
-
-#elif defined( __freebsd__ )
-#if defined( pthread_cleanup_push )			// macro ?
-    void __pthread_cleanup_push_imp( void (*routine) (void *), void *args, _pthread_cleanup_info *info ) {
-	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
-#ifdef __U_DEBUG__
-	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
-#endif // __U_DEBUG__
-	p->cleanup_push( routine, args, info );
-#else
-    void pthread_cleanup_push( void (*routine) (void *), void *args ) {
-	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
-#ifdef __U_DEBUG__
-	if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
-#endif // __U_DEBUG__
-	// NOTE: gcc on freebsd usually pushes arguments onto the stack instead of copying them just above %esp, and
-	// also allocates additional 8 bytes before the call (so it can adjust sp by 0x10 ? maybe there's something in
-	// the bsd i386 ABI docs ?)  so we need to guess what the caller's stack pointer was. But it's a guess anyway,
-	// since the sp where this function is called is not necessarily the one used for stack unwinding. It's better
-	// to overestimate here.  The alternative is to decode the unwind information stored for this function, which
-	// would be slow and also requires using a lot of gcc internals.  NOTE also that this will probably not work on
-	// AMD64-freebsd should we ever support it
-	p->cleanup_push( routine, args, &routine + 4 );
-#endif // pthread_cleanup_push
-#else
-    #error uC++ : internal error, unsupported architecture
-#endif // __solaris__
     } // pthread_cleanup_push
 
-#if defined( __solaris__ )
-    void __pthread_cleanup_pop( int ex, _cleanup_t *buffer ) {
-#elif defined( __linux__ )
     void _pthread_cleanup_pop ( struct _pthread_cleanup_buffer * /* buffer */, int ex ) __THROW {
-#elif defined( __freebsd__ )
-#if defined( pthread_cleanup_pop )			// macro ?
-    void __pthread_cleanup_pop_imp( int ex ) {
-#else    
-    void pthread_cleanup_pop( int ex ) {
-#endif // pthread_cleanup_pop
-#endif
 	uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
 	if ( p == nullptr ) abort( "pthread_cleanup_pop performed on something other than a pthread task" );	    
@@ -1122,24 +1019,9 @@ _getfp:\n\
     //######################### Mutex #########################
 
     static inline void mutex_check( pthread_mutex_t *mutex ) {
-#if defined( __solaris__ )
-	// Solaris has a magic value at byte 6 of its pthread mutex locks. Check if it moved.
-	static_assert( offsetof( _pthread_mutex, __pthread_mutex_flags.__pthread_mutex_magic ) == 6, "" );
 	// Cannot use a pthread_mutex_lock due to recursion on initialization.
 	static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
-	// Use double check to improve performance. Check is safe on sparc/x86; volatile prevents compiler reordering
-	volatile pthread_mutex_t *const mutex_ = mutex;
-	if ( mutex_->__pthread_mutex_flags.__pthread_mutex_magic == MUTEX_MAGIC ) {
-	    ((uOwnerLock *)&magic_check)->acquire();	// race
-	    if ( mutex_->__pthread_mutex_flags.__pthread_mutex_magic == MUTEX_MAGIC ) {
-		pthread_mutex_init( mutex, nullptr );
-	    } // if
-	    ((uOwnerLock *)&magic_check)->release();
-	} // if
-#elif defined(__linux__)
-	// Cannot use a pthread_mutex_lock due to recursion on initialization.
-	static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
-	// Use double check to improve performance. Check is safe on sparc/x86; volatile prevents compiler reordering
+	// Use double check to improve performance. Check is safe on x86; volatile prevents compiler reordering
 	volatile pthread_mutex_t *const mutex_ = mutex;
 	// SKULLDUGGERY: not a portable way to access the kind field, /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
 	int kind = ((pthread_mutex_t *)mutex_)->__data.__kind;
@@ -1152,7 +1034,6 @@ _getfp:\n\
 	    } // if
 	    ((uOwnerLock *)&magic_check)->release();
 	} // if
-#endif
     } // mutex_check
 
     int pthread_mutex_init( pthread_mutex_t *mutex, const pthread_mutexattr_t * /* attr */ ) __THROW {
@@ -1210,11 +1091,7 @@ _getfp:\n\
 	return 0;
     } // pthread_mutexattr_setprotocol
 
-    int pthread_mutexattr_getprotocol(
-#if ! defined( __freebsd__ )
-	    const
-#endif // ! __freebsd__
-	    pthread_mutexattr_t * /* attr */, int * /* protocol */ ) __THROW {
+    int pthread_mutexattr_getprotocol( const pthread_mutexattr_t * /* attr */, int * /* protocol */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_getprotocol
 
@@ -1222,11 +1099,7 @@ _getfp:\n\
 	return 0;
     } // pthread_mutexattr_setprioceiling
 
-    int pthread_mutexattr_getprioceiling(
-#if ! defined( __freebsd__ )
-	    const
-#endif // ! __freebsd__
-	    pthread_mutexattr_t * /* attr */, int * /* ceiling */ ) __THROW {
+    int pthread_mutexattr_getprioceiling( const pthread_mutexattr_t * /* attr */, int * /* ceiling */ ) __THROW {
 	return 0;
     } // pthread_mutexattr_getprioceiling
 
@@ -1234,19 +1107,11 @@ _getfp:\n\
 	return 0;
     } // pthread_mutex_setprioceiling
 
-    int pthread_mutex_getprioceiling(
-#if ! defined( __freebsd__ )
-	    const
-#endif // ! __freebsd__
-	    pthread_mutex_t * /* mutex */, int * /* ceiling */ ) __THROW {
+    int pthread_mutex_getprioceiling( const pthread_mutex_t * /* mutex */, int * /* ceiling */ ) __THROW {
 	return 0;
     } // pthread_mutex_getprioceiling
 
-#if defined( __freebsd__ )
-    int pthread_mutexattr_gettype( pthread_mutexattr_t * /* __attr */, int * /* __kind */ ) __THROW {
-#else
     int pthread_mutexattr_gettype( __const pthread_mutexattr_t * __restrict /* __attr */, int * __restrict /* __kind */ ) __THROW {
-#endif // __freebsd__
 	return 0;
     } // pthread_mutexattr_gettype
 
@@ -1257,24 +1122,6 @@ _getfp:\n\
 
     //######################### Condition #########################
 
-
-    static inline void cond_check( pthread_cond_t *cond __attribute__(( unused )) ) {
-#if defined( __solaris__ )
-	// Solaris has a magic value at byte 6 of its pthread cond locks. Check if it moved.
-	static_assert( offsetof( _pthread_cond, __pthread_cond_flags.__pthread_cond_magic ) == 6, "" );
-	// Cannot use a pthread_cond_lock due to recursion on initialization.
-	static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
-	// Use double check to improve performance. Check is safe on sparc/x86; volatile prevents compiler reordering
-	volatile pthread_cond_t *const cond_ = cond;
-	if ( cond_->__pthread_cond_flags.__pthread_cond_magic == COND_MAGIC ) {
-	    ((uOwnerLock *)&magic_check)->acquire();	// race
-	    if ( cond_->__pthread_cond_flags.__pthread_cond_magic == COND_MAGIC ) {
-		pthread_cond_init( cond, nullptr );
-	    } // if
-	    ((uOwnerLock *)&magic_check)->release();
-	} // if
-#endif
-    } // cond_check
 
     int pthread_cond_init( pthread_cond_t *cond, const pthread_condattr_t * /* attr */ ) __THROW {
 	PthreadLock::init< uCondLock >( cond );
@@ -1289,7 +1136,6 @@ _getfp:\n\
 
     int pthread_cond_wait( pthread_cond_t *cond, pthread_mutex_t *mutex ) {
 	uDEBUGPRT( uDebugPrt( "pthread_cond_wait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); )
-	cond_check( cond );
 	pthread_testcancel();				// pthread_cond_wait is a cancellation point
 	PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ) );
 	return 0;
@@ -1297,21 +1143,18 @@ _getfp:\n\
 
     int pthread_cond_timedwait( pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime ) {
 	uDEBUGPRT( uDebugPrt( "pthread_cond_timedwait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); )
-	cond_check( cond );
 	pthread_testcancel();				// pthread_cond_timedwait is a cancellation point
 	return PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ), uTime( abstime->tv_sec, abstime->tv_nsec ) ) ? 0 : ETIMEDOUT;
     } // pthread_cond_timedwait
 
     int pthread_cond_signal( pthread_cond_t *cond ) __THROW {
     uDEBUGPRT(	uDebugPrt( "pthread_cond_signal(cond:%p) enter task:%p\n", cond, &uThisTask() ); )
-	cond_check( cond );
 	PthreadLock::get< uCondLock >( cond )->signal();
 	return 0;
     } // pthread_cond_signal
 
     int pthread_cond_broadcast( pthread_cond_t *cond ) __THROW {
 	uDEBUGPRT( uDebugPrt( "pthread_cond_broadcast(cond:%p) task:%p\n", cond, &uThisTask() ); )
-	cond_check( cond );
 	PthreadLock::get< uCondLock >( cond )->broadcast();
 	return 0;
     } // pthread_cond_broadcast
@@ -1337,86 +1180,6 @@ _getfp:\n\
     } // pthread_condattr_getpshared
 } // extern "C"
 
-
-#if defined( __solaris__ )
-#include <thread.h>
-
-// Called by the Solaris system routines, and by the Solaris/pthread thread routines.
-
-extern "C" {
-    // Creation
-    int _thr_create( void *stackaddr, size_t stacksize, void *(*start_func)( void* ), void *arg, long flags, thread_t *new_thread_id ) {
-	pthread_attr_t attr;
-	pthread_attr_init( &attr );
-	pthread_attr_setstacksize( &attr, stacksize );
-	pthread_attr_setstackaddr( &attr, stackaddr );
-	pthread_attr_setdetachstate( &attr, flags | THR_DETACHED ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE );
-	pthread_attr_setscope( &attr, flags | THR_BOUND ? PTHREAD_SCOPE_SYSTEM : PTHREAD_SCOPE_PROCESS );
-	int retcode = pthread_create( (pthread_t *)new_thread_id, &attr, start_func, arg );
-	pthread_attr_destroy( &attr );
-	if ( retcode != 0 ) {
-	    errno = retcode;
-	    retcode = -1;
-	} // if
-	return retcode;
-    } // _thr_create
-
-
-    // Mutex
-    int _mutex_init( mutex_t *mutex, int type, void * arg ) {
-	return pthread_mutex_init( (pthread_mutex_t *)mutex, nullptr );
-    } // mutex_init
-
-    int _mutex_destroy( mutex_t *mutex ) {
-	return pthread_mutex_destroy( (pthread_mutex_t *)mutex );
-    } // mutex_destroy
-
-    int _mutex_lock( mutex_t *mutex ) {
-	return pthread_mutex_lock( (pthread_mutex_t *)mutex );
-    } // mutex_lock
-
-    int _mutex_trylock( mutex_t *mutex ) {
-	return pthread_mutex_trylock( (pthread_mutex_t *)mutex );
-    } // mutex_trylock
-
-    int _mutex_unlock( mutex_t *mutex ) {
-	return pthread_mutex_unlock( (pthread_mutex_t *)mutex );
-    } // mutex_unlock
-
-    // Condition Variable
-    int cond_init( cond_t *cond, int type, void *arg ) {
-	pthread_condattr_t attr;
-	pthread_condattr_init( &attr );
-	pthread_condattr_setpshared( &attr, type == USYNC_PROCESS ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE );
-	pthread_cond_init( (pthread_cond_t *)cond, &attr );
-	pthread_condattr_destroy( &attr );
-	return 0;
-    } // cond_init
-
-    int cond_destroy( cond_t *cond ) {
-	return pthread_cond_destroy( (pthread_cond_t *)cond );
-    } // cond_destroy
-
-    int cond_wait( cond_t *cond, mutex_t *mutex ) {
-	return pthread_cond_wait( (pthread_cond_t *)cond, (pthread_mutex_t *)mutex );
-    } // cond_wait
-
-    int cond_timedwait( cond_t *cond, mutex_t *mutex, const timestruc_t *abstime ) {
-	return pthread_cond_timedwait( (pthread_cond_t *)cond, (pthread_mutex_t *)mutex, abstime );
-    } // cond_timedwait
-
-    int cond_signal( cond_t *cond ) {
-	return pthread_cond_signal( (pthread_cond_t *)cond );
-    } // cond_signal
-
-    int cond_broadcast( cond_t *cond ) {
-	return pthread_cond_broadcast( (pthread_cond_t *)cond );
-    } // cond_broadcast
-} // extern "C"
-#endif // __solaris__
-
-
-#if defined( __linux__ ) || defined( __freebsd__ )
 
 extern "C" {
 
@@ -1597,8 +1360,6 @@ extern "C" {
 	abort( "_pthread_cleanup_pop_restore" );
     } // _pthread_cleanup_pop_restore
 } // extern "C"
-
-#endif // __linux__ || __freebsd__
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:41:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 12 12:55:25 2019
-// Update Count     : 20
+// Last Modified On : Mon Jan 21 09:10:22 2019
+// Update Count     : 21
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,8 +24,9 @@
 // along  with this library.
 //
 
-#ifndef __OUTPUT_H__
-#define __OUTPUT_H__
+
+#pragma once
+
 
 #include <token.h>
 
@@ -37,7 +38,7 @@ void parse_directive( char * text, char file[], unsigned int & line, unsigned in
 
 void write_all_output();
 
-#endif // __OUTPUT_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

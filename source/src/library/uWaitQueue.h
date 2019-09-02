@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Jul 16 08:17:06 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 22:05:46 2016
-// Update Count     : 18
+// Last Modified On : Mon Jan 21 09:08:40 2019
+// Update Count     : 19
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,8 +25,7 @@
 // 
 
 
-#ifndef __U_WAITQUEUE_H__
-#define __U_WAITQUEUE_H__
+#pragma once
 
 
 template< typename Selectee >
@@ -186,9 +185,6 @@ class uWaitQueue_ISM {
     // new "head" use "drop" instead
     //T *head() const;
 }; // uWaitQueue_ISM
-
-
-#endif // __U_WAITQUEUE_H__
 
 
 // Local Variables: //

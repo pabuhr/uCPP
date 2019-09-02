@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 13 08:54:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:03:35 2017
-// Update Count     : 9
+// Last Modified On : Wed Jul 10 15:51:45 2019
+// Update Count     : 10
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -420,8 +420,3 @@ int main() {
 #endif
     }
 }
-
-
-// Local Variables: //
-// compile-command: "u++ -g Locks.cc" //
-// End: //

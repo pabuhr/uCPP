@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:42:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:11:10 2011
-// Update Count     : 12
+// Last Modified On : Mon Jan 21 09:18:01 2019
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,12 +25,12 @@
 //
 
 
-#ifndef __PARSE_H__
-#define __PARSE_H__
+#pragma once
+
 
 void translation_unit();
 
-#endif // __PARSE_H__
+
 
 // Local Variables: //
 // compile-command: "make install" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:49:48 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar  6 12:30:37 2011
-// Update Count     : 69
+// Last Modified On : Mon Jan 21 09:05:54 2019
+// Update Count     : 72
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,12 +25,10 @@
 // 
 
 
-#ifndef __U_IOCNTL_H__
-#define __U_IOCNTL_H__
+#pragma once
+
 
 #include <uPoll.h>
-
-#pragma __U_NOT_USER_CODE__
 
 
 //######################### uIOaccess #########################
@@ -77,11 +75,6 @@ struct uIOClosure {
 
     virtual int action() = 0;
 }; // uIOClosure
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_IOCNTL_H__
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  7 21:33:00 2018
-// Update Count     : 884
+// Last Modified On : Fri Apr 12 17:13:05 2019
+// Update Count     : 892
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -94,28 +94,9 @@ namespace UPP {
 
     inline void * uSigHandlerModule::signalContextPC( __U_SIGCXT__ cxt ) {
 #if defined( __i386__ )
-#if defined( __linux__ )
 	return (void *)(cxt->uc_mcontext.gregs[REG_EIP]);
-#elif defined( __freebsd__ )
-	return (void *)(cxt->uc_mcontext.mc_eip);
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif // OS
-
 #elif defined( __x86_64__ )
-#if defined( __linux__ )
 	return (void *)(cxt->uc_mcontext.gregs[REG_RIP]);
-#elif defined( __freebsd__ )
-	return (void *)(cxt->uc_mcontext.mc_rip);
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif // OS
-
-#elif defined( __ia64__ )
-	return (void *)(cxt->uc_mcontext.sc_ip);
-
-#elif defined( __sparc__ )
-	return (void *)(cxt->uc_mcontext.gregs[REG_PC]);
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif // architecture
@@ -123,9 +104,6 @@ namespace UPP {
 
 
     inline void * uSigHandlerModule::signalContextSP( __U_SIGCXT__ cxt ) {
-#if defined( __linux__ )
-
-#if ! defined( __ia64__ )
 	return (void *)cxt->uc_mcontext.gregs[
 #if __U_WORDSIZE__ == 32
 	    REG_ESP
@@ -133,23 +111,6 @@ namespace UPP {
 	    REG_RSP
 #endif // __U_WORDSIZE__ == 32
 	    ];
-#else
-	return (void *)cxt->uc_mcontext.sc_gr[12];
-#endif // __ia64__
-
-#elif defined( __freebsd__ )
-	return (void *)cxt->uc_mcontext.
-#if __U_WORDSIZE__ == 32
-	    mc_esp;
-#else
-	    mc_rsp;
-#endif // __U_WORDSIZE__ == 32
-
-#elif defined( __solaris__ )
-	    return (void *)cxt->uc_mcontext.gregs[REG_SP];
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif // operating systems
     } // uSigHandlerModule::signalContextSP
 
 
@@ -174,15 +135,6 @@ namespace UPP {
 	    abort( "UNKNOWN ALARM SIGNAL\n" );
 	} // if
 #endif // __U_STATISTICS__
-
-#if defined( __ia64__ ) && defined( __U_MULTI__ )
-	// The following check must be executed first on the ia64. It clears p7 to indicate a signal occured during a
-	// THREAD_GETMEM / THREAD_SETMEM.
-      if ( *(unsigned long*)cxt->uc_mcontext.sc_gr[13] & 1 ) {
-	    cxt->uc_mcontext.sc_pr &= ~(1 << 7);
-	    return;
-	} // if
-#endif // __ia64__ && __U_MULTI__
 
       if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
 
@@ -254,14 +206,6 @@ namespace UPP {
 	if ( sigprocmask( SIG_BLOCK, &block_mask, nullptr ) == -1 ) {
 	    abort( "internal error, sigprocmask" );
 	} // if
-
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-#   if defined( __linux__ ) && defined( __ia64__ )
-	((ucontext_t *)cxt)->uc_mcontext.sc_gr[13] = THREAD_GETMEM( threadPointer );
-#   else
-	#error uC++ : internal error, unsupported architecture
-#   endif
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
 	uDEBUGPRT(
 	    uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",

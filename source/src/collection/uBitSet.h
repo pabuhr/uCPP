@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Dec 15 14:05:51 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 11 23:05:54 2017
-// Update Count     : 272
+// Last Modified On : Mon Jan 21 08:00:47 2019
+// Update Count     : 278
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,10 +24,8 @@
 // along  with this library.
 // 
 
-#ifndef __U_BITSET_H__
-#define __U_BITSET_H__
 
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 #include <cassert>					// assert
@@ -198,8 +196,6 @@ template<unsigned int N> class uBitSet : public UPP::uBitSetImpl<
     unsigned int size() const { return N; };
 };
 
-
-#endif // __U_BITSET_H__
 
 // Local Variables: //
 // compile-command: "make install" //

@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Fri Jul 19 16:34:59 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 15:44:55 2018
-// Update Count     : 140
+// Last Modified On : Thu Apr  4 18:30:27 2019
+// Update Count     : 146
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,7 @@
 //
 
 
-#ifndef __U_REALTIME_H__
-#define __U_REALTIME_H__
-
-#pragma __U_NOT_USER_CODE__
+#pragma once
 
 
 //#include <uDebug.h>
@@ -106,7 +103,7 @@ template<typename List, typename Node> class uPriorityScheduleQueue : public uBa
 	} // if
     } // uPriorityScheduleQueue::drop
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uPriorityScheduleQueue::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleQueue::transfer
 
@@ -198,7 +195,7 @@ class uPrioritySeq : public uBasePrioritySeq {
 	} // if
     } // uPrioritySeq::remove
 
-    void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uPrioritySeq::transfer, internal error, unsupported operation" );
     } // uPrioritySeq::transfer
 
@@ -244,7 +241,7 @@ template<typename List, typename Node> class uPriorityScheduleSeq : public uPrio
 	} // if
     } // uPriorityScheduleSeq::remove
 
-    virtual void transfer( uBaseTaskSeq & /* from */, unsigned int /* n */ ) {
+    virtual void transfer( uBaseTaskSeq & /* from */ ) {
 	abort( "uPriorityScheduleSeq::transfer, internal error, unsupported operation" );
     } // uPriorityScheduleSeq::transfer
 }; // uPriorityScheduleSeq
@@ -324,11 +321,6 @@ class uRealTimeCluster : public uCluster {
     uRealTimeCluster( uBaseSchedule<uBaseTaskDL> &rq, const char *name );
     ~uRealTimeCluster();
 }; // uRealTimeCluster
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_REALTIME_H__
 
 
 // Local Variables: //

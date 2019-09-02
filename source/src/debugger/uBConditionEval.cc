@@ -7,8 +7,8 @@
 // Author           : Jun Shih
 // Created On       : Sat Nov 11 14:44:08 EST 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 20 11:09:44 2017
-// Update Count     : 48
+// Last Modified On : Fri Apr 12 17:33:03 2019
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -61,12 +61,8 @@ CodeAddress uBConditionEval::eval_address_local( int which ) {
     //local address is the real fp + offset (usually negative)
 
     unsigned int prev_2fp;
-#if defined( __sparc__ )
-    prev_2fp = *(unsigned long*) ( *(unsigned long*)(bp_cond.fp + 4 * 14) + 4 * 14 );
-#elif defined( __i386__ )
+#if defined( __i386__ )
     prev_2fp = *(unsigned long*) ( *(unsigned int*) ((int) bp_cond.fp ));
-#elif defined( __ia64__ )
-    prev_2fp = 0;
 #elif defined( __x86_64__ )
     prev_2fp = 0;
 #else
@@ -120,28 +116,7 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
 
     unsigned long address;
 
-#if defined( __sparc__ )
-    // registers are assumed to be on the stack, the layout of which can be found on 
-    // page 195 "The SPARC Architecture Manual" version 8.
-
-    unsigned long prev_fp = *(unsigned long*) (bp_cond.fp + 4 * 14);
-    uDEBUGPRT( uDebugPrt( "prev_fp:%p\n",prev_fp );
-    for ( int i = 0; i < 25; i++) {
-	int *addr = (int*) (prev_fp + (i*4));
-	uDebugPrt( "addr:%9p i:%3d off:%4d val:%11d val:0x%9p\n",addr,i,bp_cond.var[which].offset,*addr, *addr );
-    } // for
-    for ( int i = 0; i < 25; i++) {
-	int *addr = (int*) ( bp_cond.fp + ( i*4));
-	uDebugPrt( "addr:%9p i:%3d off:%4d val:%11d val:0x%9p\n",addr,i,bp_cond.var[which].offset,*addr, *addr );
-    } // for )
-    if ( (int)bp_cond.var[which].offset >= 16 && (int) bp_cond.var[which].offset < 32 ) { // local and in registers
-	address = ((unsigned long) prev_fp + (long) (sizeof(long)  *((int)bp_cond.var[which].offset - 16)));
-    } else if ( (int)bp_cond.var[which].offset >= 8 && (int) bp_cond.var[which].offset < 15) { // out register (r8 at 17th word)
-	address = ((unsigned long) bp_cond.fp + (long) (sizeof(long)  *(bp_cond.var[which].offset)));
-    } else {
-	abort( "uBConditionEval::eval_address_register : internal error, failed to find global registers" );
-    } // if
-#elif defined( __i386__ )
+#if defined( __i386__ )
     unsigned long prev_fp = *(unsigned int*) ((int) bp_cond.fp);
     address =  (unsigned long) prev_fp - (sizeof(long)  *(bp_cond.var[which].offset+1));
     uDEBUGPRT(
@@ -150,8 +125,6 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
 	    uDebugPrt( "i:%d addr:%p val:%d %p\n",i,addr, *(int*)addr,*(int*)addr );
 	} // for
     )
-#elif defined( __ia64__ )
-    address = 0;
 #elif defined( __x86_64__ )
     address = 0;
 #else

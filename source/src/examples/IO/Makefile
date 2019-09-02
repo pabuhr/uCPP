@@ -15,10 +15,6 @@ LFILE = ${PACKAGE}/src/kernel/uC++.cc
 
 CXX = ${INSTALLBINDIR}/${UPP}
 
-ifneq (${TCPU},ia64)			# gcc does not support -m64 flag ?
-    CXXFLAGS += -m${WORDSIZE}
-endif
-
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)
     CXXFLAGS += -O2 -Wall -Wextra #
@@ -199,27 +195,25 @@ sendfile :
 	    multi=${MULTI} ; \
 	fi ; \
 	times=3 ; \
-	if [ ${TOS} != solaris -a ${TOS} != freebsd ] ; then \
-	    rm -f sock ; \
-	    for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-		${CXX} ${CXXFLAGS} $${ccflags} ClientUNIXSTREAMSendfile.cc -o Client ; \
-		${CXX} ${CXXFLAGS} $${ccflags} ServerUNIXSTREAMSendfile.cc -o Server ; \
-		( ./Server sock & \
-		    ( \
-			sleep 5 ; \
-			i=0 ; \
-			while [ $${i} -lt $${times} ] ; do \
-			    ( echo ${LFILE} | ./Client sock > xxx1 & echo ${LFILE} | ./Client sock > xxx2 & echo ${LFILE} | ./Client sock > xxx3 & \
-				echo ${LFILE} | ./Client sock > xxx4 & echo ${LFILE} | ./Client sock > xxx5 ; wait ) ; \
-			    for file in xxx* ; do cmp ${LFILE} $${file} ; done ; \
-			    i=`expr $${i} + 1` ; \
-			    echo "************************** $${i} **************************" ; \
-			done ; \
-		    ) ; wait \
-		) ; \
-		rm -f Server Client xxx* ; \
-	    done ; \
-	fi ; \
+	rm -f sock ; \
+	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+	    ${CXX} ${CXXFLAGS} $${ccflags} ClientUNIXSTREAMSendfile.cc -o Client ; \
+	    ${CXX} ${CXXFLAGS} $${ccflags} ServerUNIXSTREAMSendfile.cc -o Server ; \
+	    ( ./Server sock & \
+		( \
+		    sleep 5 ; \
+		    i=0 ; \
+		    while [ $${i} -lt $${times} ] ; do \
+			( echo ${LFILE} | ./Client sock > xxx1 & echo ${LFILE} | ./Client sock > xxx2 & echo ${LFILE} | ./Client sock > xxx3 & \
+			    echo ${LFILE} | ./Client sock > xxx4 & echo ${LFILE} | ./Client sock > xxx5 ; wait ) ; \
+			for file in xxx* ; do cmp ${LFILE} $${file} ; done ; \
+			i=`expr $${i} + 1` ; \
+			echo "************************** $${i} **************************" ; \
+		    done ; \
+		) ; wait \
+	    ) ; \
+	    rm -f Server Client xxx* ; \
+	done ; \
 	rm -f portno ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 	    ${CXX} ${CXXFLAGS} $${ccflags} ClientINETSTREAMSendfile.cc -o Client ; \

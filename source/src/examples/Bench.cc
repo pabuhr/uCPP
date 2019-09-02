@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 15 22:03:16 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 17 09:36:50 2017
-// Update Count     : 481
+// Last Modified On : Wed Apr 10 22:03:02 2019
+// Update Count     : 482
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -709,7 +709,7 @@ int main() {
 #if defined( __U_DEBUG__ )				// takes longer so run fewer iterations
 	100000;
 #else
-	1000000;
+	10000000;
 #endif // __U_DEBUG__
 
     osacquire( cerr ) << "\t\tcreate\tcreate\tresume/\tsignal/\t16i/4o\t16i/4o" << endl;

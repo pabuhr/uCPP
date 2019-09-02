@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:32:37 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 13:22:42 2016
-// Update Count     : 220
+// Last Modified On : Fri Apr 12 13:22:45 2019
+// Update Count     : 222
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,10 +27,7 @@
 
 #ifndef __U_LOCALDEBUGGER_H__
 // Set preprocessor variable if debugger works for that CPU/OS.
-#if defined( __U_DEBUG__ ) && (	\
-							   ( defined( __sparc__ ) && defined( __svr4__ ) ) ||	\
-							   ( defined( __i386__ )  && defined( __linux__ ) )	\
-							   )
+#if defined( __U_DEBUG__ ) && defined( __i386__ )
 #define __U_LOCALDEBUGGER_H__ 0							// TURN OFF FOR NOW
 #else
 #define __U_LOCALDEBUGGER_H__ 0

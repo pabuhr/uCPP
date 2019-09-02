@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Tue Aug  8 16:53:43 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  6 22:47:22 2016
-// Update Count     : 7
+// Last Modified On : Fri Apr 12 13:06:50 2019
+// Update Count     : 9
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,7 +38,6 @@
 // OMP_NUM_THREADS environment variable.
 
 unsigned int uDefaultProcessors() {
-#if defined( __linux__ ) || defined( __freebsd__ )
     unsigned int nprocs = 0;
     char *value = getenv( "OMP_NUM_THREADS" );
     if ( value != nullptr ) {
@@ -47,9 +46,6 @@ unsigned int uDefaultProcessors() {
 	nprocs = sysconf( _SC_NPROCESSORS_ONLN );
     } // if
     return __U_DEFAULT_USER_PROCESSORS__ > nprocs ? __U_DEFAULT_USER_PROCESSORS__ : nprocs;
-#else
-    return __U_DEFAULT_USER_PROCESSORS__;
-#endif // __linux__
 } // uDefaultProcessors
 
 

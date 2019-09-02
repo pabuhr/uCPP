@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Nov 24 16:19:10 2018
-// Update Count     : 572
+// Last Modified On : Thu Apr 11 18:06:20 2019
+// Update Count     : 607
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,7 +58,7 @@ uBaseCoroutine::UnwindStack::UnwindStack( bool e ) : exec_dtor( e ) {
 } // uBaseCoroutine::UnwindStack::UnwindStack
 
 uBaseCoroutine::UnwindStack::~UnwindStack() {
-    if ( exec_dtor && ! std::__U_UNCAUGHT_EXCEPTION__() ) { 	// if executed as part of an exceptional clean-up do nothing, otherwise terminate is called
+    if ( exec_dtor && ! std::__U_UNCAUGHT_EXCEPTION__() ) { // if executed as part of an exceptional clean-up do nothing, otherwise terminate is called
 	__cxxabiv1::__cxa_free_exception( this );	// if handler terminates and 'safety' is off, clean up the memory for old exception
 	_Throw UnwindStack( true );			// and throw a new exception to continue unwinding
     } // if
@@ -115,12 +115,11 @@ void uBaseCoroutine::createCoroutine() {
 // back side of the context switch the processor may have changed so the stored value is wrong. This routine forces
 // another call to __errno_location on the back side of the context switch.
 
-#if ! defined( __U_ERRNO_FUNC__ )
-static int *my_errno_location() __attribute__(( noinline )); // prevent unwrapping
-static int *my_errno_location() {
+static int *errno_location() __attribute__(( noinline )); // prevent unwrapping
+static int *errno_location() {
+    asm( "" : : : "memory" );				// prevent call eliding (see GCC function attribute)
     return &errno;
-} // my_errno_location
-#endif // ! __U_ERRNO_FUNC__
+} // errno_location
 
 
 void uBaseCoroutine::taskCxtSw() {			// switch between a task and the kernel
@@ -138,18 +137,13 @@ void uBaseCoroutine::taskCxtSw() {			// switch between a task and the kernel
     uDEBUGPRT( uDebugPrt( "(uBaseCoroutine &)%p.taskCxtSw, coroutine:%p, coroutine.SP:%p, coroutine.storage:%p, storage:%p\n",
 			  this, &coroutine, coroutine.stackPointer(), coroutine.storage, storage ); )
 
-#if ! defined( __U_ERRNO_FUNC__ )
     errno_ = errno;					// save
-#endif // ! __U_ERRNO_FUNC__
     coroutine.save();					// save user specified contexts
 
     uSwitch( coroutine.context, context );		// context switch to kernel
 
     coroutine.restore();				// restore user specified contexts
-
-#if ! defined( __U_ERRNO_FUNC__ )
-    *my_errno_location() = errno_;			// restore
-#endif // ! __U_ERRNO_FUNC__
+    *errno_location() = errno_;				// restore
 
     coroutine.setState( Active );			// set state of new coroutine to active
     currTask.setState( uBaseTask::Running );
@@ -177,12 +171,12 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
 	if ( currSerialOwner != nullptr  ) {
 	    if ( &currSerialOwner->getCoroutine() != this ) {
 		abort( "Attempt by task %.256s (%p) to activate coroutine %.256s (%p) currently executing in a mutex object owned by task %.256s (%p).\n"
-			"Possible cause is task attempting to logically change ownership of a mutex object via a coroutine.",
-			currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
+		       "Possible cause is task attempting to logically change ownership of a mutex object via a coroutine.",
+		       currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
 	    } else {
 		abort( "Attempt by task %.256s (%p) to resume coroutine %.256s (%p) currently being executed by task %.256s (%p).\n"
-			"Possible cause is two tasks attempting simultaneous execution of the same coroutine.",
-			currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
+		       "Possible cause is two tasks attempting simultaneous execution of the same coroutine.",
+		       currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
 	    } // if
 	}  else {
 	    currSerialOwner = &currTask;
@@ -206,13 +200,9 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
     coroutine.save();					// save user specified contexts
     currTask.currCoroutine = this;			// set new coroutine that task is executing
 
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-#   if defined( __linux__ ) && defined( __ia64__ )
-	((ucontext_t *)(context))->uc_mcontext.sc_gr[13] = THREAD_GETMEM( threadPointer );
-#   else
-	#error uC++ : internal error, unsupported architecture
-#   endif
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
+#ifdef __U_STATISTICS__
+    uFetchAdd( UPP::Statistics::coroutine_context_switches, 1 );
+#endif // __U_STATISTICS__
 
     uSwitch( coroutine.context, context );		// context switch to specified coroutine
 

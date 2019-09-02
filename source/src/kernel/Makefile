@@ -116,17 +116,6 @@ ${OBJDIR}/uHeapLmmm-m-d.o : ${SRCDIR}/uHeapLmmm.cc # multi, debug
 
 include ${PACKAGE}/src/MakeRecipes
 
-ifeq (${TOS},linux)
-    ifeq (${TCPU},ia64)
-        ifeq (${MULTI},TRUE)
-
-${MODOBJ-M} : ${OBJDIR}/%-m.o : ${SRCDIR}/%.cc
-	${CC} -multi -nodebug -mno-sdata  ${CCFLAGS} $< -c -o $@
-
-        endif
-    endif
-endif
-
 ## Include the dependencies for object files and libraries.
 
 -include ${DEPENDS}

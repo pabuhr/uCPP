@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  5 10:30:22 2017
-// Update Count     : 176
+// Last Modified On : Fri Apr 12 13:19:32 2019
+// Update Count     : 177
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,9 +25,7 @@
 // 
 
 #include <unistd.h>					// sbrk
-#if defined( __linux__ )
 #include <malloc.h>					// TEMPORARY: memalign missing from stdlib.h
-#endif
 #include <iostream>
 using std::cout;
 using std::osacquire;

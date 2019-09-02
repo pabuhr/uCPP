@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:27:40 2019
-// Update Count     : 9
+// Last Modified On : Tue Feb  5 12:52:44 2019
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -48,7 +48,7 @@ _Actor Ping {
 	    } else {
 		PRT( cout << "ping stop" << endl; )	// stop cycling
 		msg.sender->tell( stopMsg, this );	// return to sender
-		return Delete;				// delete actor
+		return Finished;
 	    } // if
 	} // Case
 	return Nodelete;				// reuse actor
@@ -64,7 +64,7 @@ _Actor Pong {
 	    msg.sender->tell( pongMsg, this );		// respond to sender
 	} else Case( StopMsg, msg ) {			// stop cycling
 	    PRT( cout << "pong stop" << endl; )
-	    return Delete;				// delete actor
+	    return Finished;
 	} // Case
 	return Nodelete;				// reuse actor
     } // Pong::receive
@@ -89,9 +89,9 @@ int main( int argc, char *argv[] ) {
     } // try
 
     uActorStart();					// start actor system
-    Ping *ping = new Ping( Cycles );
-    Pong *pong = new Pong;
-    ping->tell( pongMsg, pong );			// start cycling
+    Ping ping( Cycles );
+    Pong pong;
+    ping.tell( pongMsg, &pong );			// start cycling
     uActorStop();					// wait for all actors to terminate
 } // main
 

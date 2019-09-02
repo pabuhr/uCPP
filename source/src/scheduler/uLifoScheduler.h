@@ -7,8 +7,8 @@
 // Author           : Jiongxiong Chen and Ashif S. Harji
 // Created On       : Fri Feb 14 14:26:49 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:41:00 2012
-// Update Count     : 143
+// Last Modified On : Mon Jan 21 07:49:12 2019
+// Update Count     : 147
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,10 +25,8 @@
 //
 
 
-#ifndef __U_LIFOSCHEDULER_H__
-#define __U_LIFOSCHEDULER_H__
+#pragma once
 
-#pragma __U_NOT_USER_CODE__
 
 #include <uC++.h>
 
@@ -45,9 +43,6 @@ class uLifoScheduler : public uBaseSchedule<uBaseTaskDL> {
     void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
 }; // uLifoScheduler
 
-#pragma __U_USER_CODE__
-
-#endif //  __U_LIFOSCHEDULER_H__
 
 // Local Variables: //
 // compile-command: "make install" //

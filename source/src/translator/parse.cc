@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 17:20:47 2019
-// Update Count     : 4899
+// Last Modified On : Sat Aug  3 19:37:17 2019
+// Update Count     : 4946
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -294,6 +294,8 @@ static bool template_key() {
 
 static bool typeof_specifier();
 
+bool templateSpecial = false;
+
 static token_t *nested_name_specifier() {
     token_t *back = ahead;
     token_t *token = nullptr;
@@ -310,7 +312,8 @@ static token_t *nested_name_specifier() {
 	    uDEBUGPRT( print_focus_change( "nested_name_specifier2", focus, top->tbl ); )
 	    focus = top->tbl;
 	    match( TYPE );
-	    template_key();
+	    // if the last item of a name is a template key => template specialization
+	    if ( template_key() ) templateSpecial = true;
 
 	    uassert( token->symbol != nullptr );
 	    // uassert( token->symbol->data != nullptr );
@@ -325,19 +328,12 @@ static token_t *nested_name_specifier() {
 		} // if
 	    } else {
 		if ( prev == nullptr ) break;		// no "::" found
-//		if ( token->symbol->data->key != 0 ) return token;
 		// backup to the previous type, which is the last type that is part of the nested-name-specifier, i.e.,
 		// the last type *before* the last "::".
 		focus = prev->symbol->data->table;
 		ahead = token;
 		return prev;
 	    } // if
-//	} else if ( typeof_specifier() ) {
-//	    token = ahead;
-//	    if ( check( COLON_COLON ) ) { // type must be a "class-or-namespace-name"
-//		match( COLON_COLON );
-//		match( TEMPLATE );
-//	    } // if
 	} else {
 	    if ( token == nullptr ) break;		// handle 1st case of no type
 	    return token;				// otherwise return last type (not prev)
@@ -402,6 +398,8 @@ static token_t *epyt() {				// destructor
 } // epyt
 
 
+static void make_type( token_t *token, symbol_t *&symbol, table_t *locn = focus );
+
 static token_t *identifier() {
     token_t *back = ahead;
     token_t *token;
@@ -423,6 +421,9 @@ static token_t *identifier() {
 	uassert( token != nullptr );
 	if ( token->symbol == nullptr ) {
 	    token->symbol = new symbol_t( token->value, token->hash );
+	} // if
+	if ( strcmp( token->hash->text, "__make_integer_seq" ) == 0 ) { // clang builtin template
+	    make_type( token, token->symbol );
 	} // if
 	template_key();					// optional
 	return token;
@@ -2062,6 +2063,7 @@ static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
 	    if ( match( AT ) ) {
 		if ( kind == UTHROW ) {
 		    gen_error( back, "keyword \"_Throw\" is not used for asynchronous raise.\nUse keyword \"_Resume\" with appropriate default resumption handler to achieve the same effect." );
+		    gen_code( back, "CHANGE_THROW_TO_RESUME" ); // force compilation error
 		} // if
 
 		gen_code( prefix, "uEHM :: ResumeAt (" );
@@ -2311,12 +2313,6 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt ) {
     // identifier
 
     if ( check( LC ) ) {
-#if 0							// too expensive
-	if ( user ) {
-	    if ( verify ) gen_verify( ahead );
-	    if ( Yield ) gen_yield( ahead );
-	} // if
-#endif
 	table_t *table = new table_t( nullptr );	// no symbol to connect to
 	uassert( focus == top->tbl );
 	table->lexical = top->tbl;
@@ -2640,7 +2636,7 @@ static int class_key( attribute_t &attribute ) {
 } // class_key
 
 
-static void make_type( token_t *token, symbol_t *&symbol, table_t *locn = focus ) { // symbol is in/out parameter because it may be changed
+static void make_type( token_t *token, symbol_t *&symbol, table_t *locn ) { // symbol is in/out parameter because it may be changed
     uassert( token != nullptr );
     uassert( symbol != nullptr );
 
@@ -3042,7 +3038,7 @@ static token_t *class_head( attribute_t &attribute ) {
 	attribute_clause_list();			// optional
 
 	if ( attribute.dclkind.kind.FRIEND ) {		// friend declaration ?
-	    if ( ( token = identifier() ) != nullptr ) {	// undefined ?
+	    if ( ( token = identifier() ) != nullptr ) { // undefined ?
 		// Undefined friend declarations are moved to the root scope.
 		symbol = token->symbol;
 		uassert( symbol != nullptr );
@@ -3184,7 +3180,8 @@ static bool class_specifier( attribute_t &attribute ) {
 
     if ( ( clss = class_head( attribute ) ) != nullptr ) {
 	// specialized template: "template<...> class T<...>" => create new symbol table
-	if ( strcmp( ahead->aft->hash->text, ">" ) == 0 ) { // specialization ?
+	if ( templateSpecial ) {			// specialization ?
+	    templateSpecial = false;
 	    // SKULLDUGGERY: Naming specializations is difficult. Instead, assume the template specialization is
 	    // completely inlined, which is reasonable because templates cannot be separately compiled. The next
 	    // specialization simply drops all local declarations from the previous one and starts again.  This hack
@@ -3979,20 +3976,6 @@ static bool body( token_t *function, attribute_t &attribute, symbol_t *symbol ) 
 	symbol->data->attribute.fileCR = attribute.fileCR;
 	symbol->data->attribute.lineCR = attribute.lineCR;
 
-	if ( function ) {
-	    if ( user &&				// user code ? (see #pragma __U_USER_CODE__)
-		 // Since these routines are used at boot time, they cannot be annotated.
-		 strcmp( function->hash->text, "uDefaultHeapExpansion" ) != 0 &&
-		 strcmp( function->hash->text, "uDefaultStackSize" ) != 0 &&
-		 strcmp( function->hash->text, "uMainStackSize" ) != 0 &&
-		 strcmp( function->hash->text, "uDefaultSpin" ) != 0 &&
-		 strcmp( function->hash->text, "uDefaultPreemption" ) != 0
-		) {
-		if ( verify ) gen_verify( ahead );
-		if ( Yield ) gen_yield( ahead );
-	    } // if
-	} // if
-
 	while ( statement( symbol ) );			// declarations/statements in routine body
 
 	// Must remove the current function scope *before* looking up the next
@@ -4479,7 +4462,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 
     bool initializer;
 
-    while ( type_qualifier( attribute ) || template_qualifier( attribute ) );
+    while ( type_qualifier( attribute ) || template_qualifier( attribute ) || attribute_clause() );
 
     prefix = ahead;
     if ( ( constructor = constructor_declarator( rp, attribute ) ) != nullptr ) {
@@ -4595,7 +4578,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
     table_t *table;
     token_t *prefix, *suffix;
 
-    while ( type_qualifier( attribute ) || template_qualifier( attribute ) );
+    while ( type_qualifier( attribute ) || template_qualifier( attribute ) || attribute_clause() );
 
     if ( ( destructor = destructor_declarator( attribute ) ) != nullptr ) {
 	symbol = destructor->symbol;
@@ -4869,6 +4852,7 @@ static void declarator_list( attribute_t &attribute ) {
     token = declarator( attribute );
     if ( token != ABSTRACT && token != nullptr ) {
 	symbol = token->symbol;
+	uassert( symbol );
 	// There is no separate namespace for structures so if target symbol of the typedef is already defined, assume
 	// it is a type, which is sufficient to parse declarations.
 	if ( attribute.dclkind.kind.TYPEDEF && ( symbol->data->key == 0 || symbol->data->found != nullptr ) ) {
@@ -5162,6 +5146,7 @@ static bool using_directive() {
 // using-alias:
 //    "using" identifier attr(optional) "=" typename_opt type-id ";"
 //    "template" "<" template-parameter-list ">" "using" identifier attr(optional) "=" typename_opt type-id ";"
+
 
 static bool using_alias( attribute_t &attribute ) {
     token_t *back = ahead;

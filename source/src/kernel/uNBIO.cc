@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  8 11:56:37 2017
-// Update Count     : 1500
+// Last Modified On : Fri Apr 12 13:08:00 2019
+// Update Count     : 1503
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,9 +47,7 @@ using std::min;
 #include <cerrno>
 #include <sys/socket.h>
 #include <sys/poll.h>
-#if defined( __linux__ ) || defined( __freebsd__ )
 #include <sys/param.h>					// howmany
-#endif
 
 
 namespace UPP {
@@ -644,7 +642,7 @@ namespace UPP {
 
 		// process each bit in the combined chunks
 		for ( int fd = i * NFDBITS - 1; combined != 0; ) { // fd is origin 0 so substract 1
-#if ( defined( __linux__ ) || defined( __freebsd__ ) ) && __U_WORDSIZE__ == 64 // 64 bit architecture with ffsl
+#if __U_WORDSIZE__ == 64				// 64 bit architecture with ffsl
 		    int posn = ffsl( combined );
 #elif __U_WORDSIZE__ == 32				// 32 bit architecture with ffs
 		    int posn = ffs( combined );

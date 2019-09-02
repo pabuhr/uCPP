@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 29 10:51:08 2018
-// Update Count     : 3142
+// Last Modified On : Fri Apr 12 17:49:17 2019
+// Update Count     : 3156
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,15 +46,7 @@
 #include <dlfcn.h>
 #include <cstdio>
 #include <unistd.h>					// _exit
-#if defined( __solaris__ )
-#include <ieeefp.h>					// floating-point exceptions
-#else
 #include <fenv.h>					// floating-point exceptions
-#endif // __solaris__
-
-#if defined( __ia64__ )
-#include <ia64intrin.h>					// __sync_lock_release
-#endif // __ia64__
 
 
 using namespace UPP;
@@ -62,28 +54,29 @@ using namespace UPP;
 
 #ifdef __U_STATISTICS__
 // Kernel, signed because of the atomic inc/dec
-int Statistics::ready_queue = 0, Statistics::spins = 0, Statistics::spin_sched = 0, Statistics::mutex_queue = 0,
+long int Statistics::ready_queue = 0, Statistics::spins = 0, Statistics::spin_sched = 0, Statistics::mutex_queue = 0,
     Statistics::owner_lock_queue = 0, Statistics::adaptive_lock_queue = 0, Statistics::io_lock_queue = 0,
     Statistics::uSpinLocks = 0, Statistics::uLocks = 0, Statistics::uOwnerLocks = 0, Statistics::uCondLocks = 0, Statistics::uSemaphores = 0, Statistics::uSerials = 0;
 
 // I/O statistics
-unsigned int Statistics::select_syscalls = 0, Statistics::select_errors = 0, Statistics::select_eintr = 0;
-unsigned int Statistics::select_events = 0, Statistics::select_nothing = 0, Statistics::select_blocking = 0, Statistics::select_pending = 0;
-unsigned int Statistics::select_maxFD = 0;
-unsigned int Statistics::accept_syscalls = 0, Statistics::accept_errors = 0;
-unsigned int Statistics::read_syscalls = 0, Statistics::read_errors = 0, Statistics::read_eagain = 0, Statistics::read_chunking = 0, Statistics::read_bytes = 0;
-unsigned int Statistics::write_syscalls = 0, Statistics::write_errors = 0, Statistics::write_eagain = 0, Statistics::write_bytes = 0;
-unsigned int Statistics::sendfile_syscalls = 0, Statistics::sendfile_errors = 0, Statistics::sendfile_eagain = 0, Statistics::first_sendfile = 0, Statistics::sendfile_yields = 0;
+unsigned long int Statistics::select_syscalls = 0, Statistics::select_errors = 0, Statistics::select_eintr = 0;
+unsigned long int Statistics::select_events = 0, Statistics::select_nothing = 0, Statistics::select_blocking = 0, Statistics::select_pending = 0;
+unsigned long int Statistics::select_maxFD = 0;
+unsigned long int Statistics::accept_syscalls = 0, Statistics::accept_errors = 0;
+unsigned long int Statistics::read_syscalls = 0, Statistics::read_errors = 0, Statistics::read_eagain = 0, Statistics::read_chunking = 0, Statistics::read_bytes = 0;
+unsigned long int Statistics::write_syscalls = 0, Statistics::write_errors = 0, Statistics::write_eagain = 0, Statistics::write_bytes = 0;
+unsigned long int Statistics::sendfile_syscalls = 0, Statistics::sendfile_errors = 0, Statistics::sendfile_eagain = 0, Statistics::first_sendfile = 0, Statistics::sendfile_yields = 0;
 
-unsigned int Statistics::iopoller_exchange = 0, Statistics::iopoller_spin = 0;
-unsigned int Statistics::signal_alarm = 0, Statistics::signal_usr1 = 0;
+unsigned long int Statistics::iopoller_exchange = 0, Statistics::iopoller_spin = 0;
+unsigned long int Statistics::signal_alarm = 0, Statistics::signal_usr1 = 0;
 
 // Scheduling statistics
-unsigned int Statistics::roll_forward = 0;
-unsigned int Statistics::user_context_switches = 0;
-unsigned int Statistics::kernel_thread_yields = 0, Statistics::kernel_thread_pause = 0;
-unsigned int Statistics::wake_processor = 0;
-unsigned int Statistics::events = 0, Statistics::setitimer = 0;
+unsigned long int Statistics::coroutine_context_switches = 0;
+unsigned long int Statistics::user_context_switches = 0;
+unsigned long int Statistics::roll_forward = 0;
+unsigned long int Statistics::kernel_thread_yields = 0, Statistics::kernel_thread_pause = 0;
+unsigned long int Statistics::wake_processor = 0;
+unsigned long int Statistics::events = 0, Statistics::setitimer = 0;
 
 // Print statistics
 bool Statistics::prtStatTerm_ = false;
@@ -97,17 +90,17 @@ void UPP::Statistics::print() {
     len = snprintf( helpText, 512,
 		    "\nKernel statistics:\n"
 		    "  locks:"
-		    " spinlocks %d"
-		    " / spins %d"
-		    " / schedules %d"
-		    " / uLocks %d"
-		    " / uOwnerLocks %d"
-		    " / uCondLocks %d"
-		    " / uSemaphores %d"
-		    " / uSerials %d\n"
+		    " spinlocks %ld"
+		    " / spins %ld"
+		    " / schedules %ld"
+		    " / uLocks %ld"
+		    " / uOwnerLocks %ld"
+		    " / uCondLocks %ld"
+		    " / uSemaphores %ld"
+		    " / uSerials %ld\n"
 		    "  signal:"
-		    " alarm %d"
-		    " / usr1 %d\n",
+		    " alarm %ld"
+		    " / usr1 %ld\n",
 		    Statistics::uSpinLocks,
 		    Statistics::spins,
 		    Statistics::spin_sched,
@@ -123,17 +116,17 @@ void UPP::Statistics::print() {
     len = snprintf( helpText, 512,
 		    "\nI/O statistics:\n"
 		    "  select:"
-		    " calls %d"
-		    " / errors %d"
-		    " (EINTR %d)"
-		    " / select events %d"
-		    " / no events %d"
-		    " / events per call %d"
-		    " / blocking %d"
-		    " / max fd %d\n"
+		    " calls %ld"
+		    " / errors %ld"
+		    " (EINTR %ld)"
+		    " / select events %ld"
+		    " / no events %ld"
+		    " / events per call %ld"
+		    " / blocking %ld"
+		    " / max fd %ld\n"
 		    "  accept:"
-		    " calls %d"
-		    " / errors %d\n",
+		    " calls %ld"
+		    " / errors %ld\n",
 		    Statistics::select_syscalls,
 		    Statistics::select_errors,
 		    Statistics::select_eintr,
@@ -148,16 +141,16 @@ void UPP::Statistics::print() {
 
     len = snprintf( helpText, 512,
 		    "  read:"
-		    " calls %d"
-		    " / errors %d"
-		    " / eagain %d"
-		    " / chunking %d"
-		    " / bytes %d\n"
+		    " calls %ld"
+		    " / errors %ld"
+		    " / eagain %ld"
+		    " / chunking %ld"
+		    " / bytes %ld\n"
 		    "  write:"
-		    " calls %d"
-		    " / errors %d"
-		    " / eagain %d"
-		    " / bytes %d\n",
+		    " calls %ld"
+		    " / errors %ld"
+		    " / eagain %ld"
+		    " / bytes %ld\n",
 		    Statistics::read_syscalls,
 		    Statistics::read_errors,
 		    Statistics::read_eagain,
@@ -171,14 +164,14 @@ void UPP::Statistics::print() {
 
     len = snprintf( helpText, 512,
 		    "  sendfile:"
-		    " calls %d"
-		    " / errors %d"
-		    " / eagain %d"
-		    " / yields %d"
-		    " / first call completion %d\n"
+		    " calls %ld"
+		    " / errors %ld"
+		    " / eagain %ld"
+		    " / yields %ld"
+		    " / first call completion %ld\n"
 		    "  iopoller:"
-		    " exchanges %d"
-		    " / spins %d\n",
+		    " exchanges %ld"
+		    " / spins %ld\n",
 		    Statistics::sendfile_syscalls,
 		    Statistics::sendfile_errors,
 		    Statistics::sendfile_eagain,
@@ -190,15 +183,17 @@ void UPP::Statistics::print() {
 
     len = snprintf( helpText, 512,
 		    "\nScheduler statistics:\n"
-		    "  roll forward: %d\n"
-		    "  user context switches: %d\n"
-		    "  kernel thread: yields %d"
-		    " / pause %d"
-		    " / processor wake %d\n"
-		    "  events %d"
-		    " / setitimer %d\n",
-		    Statistics::roll_forward,
+		    "  coroutine context switches: %ld\n"
+		    "  user context switches: %ld\n"
+		    "  roll forwards: %ld\n"
+		    "  kernel threads: yields %ld"
+		    " / pauses %ld"
+		    " / processor wakes %ld\n"
+		    "  events %ld"
+		    " / setitimer %ld\n",
+		    Statistics::coroutine_context_switches,
 		    Statistics::user_context_switches,
+		    Statistics::roll_forward,
 		    Statistics::kernel_thread_yields,
 		    Statistics::kernel_thread_pause,
 		    Statistics::wake_processor,
@@ -416,10 +411,6 @@ void uBaseSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
 	THREAD_GETMEM( This )->disableIntSpinLock();
     } // for
 
-#if defined( __sparc__ )
-    asm volatile ( "membar #LoadLoad" );		// flush the cache
-#endif // __sparc__
-
 #else
     value = 1;						// lock
 #endif // __U_MULTI__
@@ -437,9 +428,6 @@ bool uBaseSpinLock::tryacquire() {
 
 #ifdef __U_MULTI__
     if ( uTestSet( value ) == 0 ) {			// get the lock ?
-#if defined( __sparc__ )
-	asm volatile ( "membar #LoadLoad" );		// flush the cache
-#endif // __sparc__
 	return true;
     } else {
 	THREAD_GETMEM( This )->enableIntSpinLock();
@@ -776,23 +764,7 @@ void uCxtSwtchHndlr::handler() {
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
 // occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
 // pthread_kill.
-#if defined( __freebsd__ )
-    int retcode;
-
-    THREAD_GETMEM( This )->disableInterrupts();
-    for ( ;; ) {
-	retcode =
-#endif // __freebsd__
-
-	    RealRtn::pthread_kill( processor.getPid(), SIGUSR1 );
-
-#if defined( __freebsd__ )
-      if ( retcode != -1 || errno != EINTR ) break;	// not a timer interrupt ?
-    } // if
-    if ( retcode == -1 ) abort( "(uCxtSwtchHndlr &)%p.handler() : internal error, pthread_kill failed, error(%d) %s.", this, errno, strerror( errno ) );
-    THREAD_GETMEM( This )->enableInterrupts();
-#endif // __freebsd__
-
+    RealRtn::pthread_kill( processor.getPid(), SIGUSR1 );
 #else // UNIPROCESSOR
     uThisTask().uYieldInvoluntary();
 #endif // __U_MULTI__
@@ -963,15 +935,11 @@ namespace UPP {
 	    } // if
 #endif // RTLD_NEXT
 	} // if
-#if defined( __linux__ )
 	if ( version == nullptr ) {
-#endif // __linux__
 	    originalFunc = dlsym( library, symbolName );
-#if defined( __linux__ )
 	} else {
 	    originalFunc = dlvsym( library, symbolName, version );
 	} // if
-#endif // __linux__
 	error = dlerror();
 	if ( error != nullptr ) {
 	    ::abort( "RealRtn::interposeSymbol : internal error, %s\n", error );
@@ -986,9 +954,7 @@ namespace UPP {
     __typeof__( ::pselect ) *RealRtn::pselect;
     __typeof__( std::set_terminate ) *RealRtn::set_terminate;
     __typeof__( std::set_unexpected ) *RealRtn::set_unexpected;
-#if defined( __linux__ ) || defined( __freebsd__ )
     __typeof__( ::dl_iterate_phdr ) *RealRtn::dl_iterate_phdr;
-#endif // __linux__ || __freebsd__
 #if defined( __U_MULTI__ )
     __typeof__( ::pthread_create ) *RealRtn::pthread_create;
 //    __typeof__( ::pthread_exit ) *RealRtn::pthread_exit;
@@ -997,10 +963,8 @@ namespace UPP {
     __typeof__( ::pthread_kill ) *RealRtn::pthread_kill;
     __typeof__( ::pthread_join ) *RealRtn::pthread_join;
     __typeof__( ::pthread_self ) *RealRtn::pthread_self;
-#if defined( __linux__ ) || defined( __freebsd__ )
     __typeof__( ::pthread_setaffinity_np ) *RealRtn::pthread_setaffinity_np;
     __typeof__( ::pthread_getaffinity_np ) *RealRtn::pthread_getaffinity_np;
-#endif // __linux__ || __freebsd__
 #endif // __U_MULTI__
 
 
@@ -1008,29 +972,21 @@ namespace UPP {
 	const char *version = nullptr;
 	INIT_REALRTN( exit, version );
 	INIT_REALRTN( abort, version );
-#if defined( __solaris__ ) && FD_SETSIZE > 1024 && __U_WORDSIZE__ == 32
-	pselect = (__typeof__(pselect))interposeSymbol( "select_large_fdset", version );
-#else
 	INIT_REALRTN( pselect, version );
-#endif // __solaris__
 	set_terminate = (__typeof__(std::set_terminate)*)interposeSymbol( "_ZSt13set_terminatePFvvE", version );
 	set_unexpected = (__typeof__(std::set_unexpected)*)interposeSymbol( "_ZSt14set_unexpectedPFvvE", version );
-#if defined( __linux__ ) || defined( __freebsd__ )
 	INIT_REALRTN( dl_iterate_phdr, version );
-#endif // __linux__ || __freebsd__
 #if defined( __U_MULTI__ )
 	INIT_REALRTN( pthread_attr_setstack, version );
 	INIT_REALRTN( pthread_self, version );
 	INIT_REALRTN( pthread_kill, version );
 	INIT_REALRTN( pthread_join, version );
-#if defined( __linux__ ) || defined( __freebsd__ )
 	INIT_REALRTN( pthread_setaffinity_np, version );
 	INIT_REALRTN( pthread_getaffinity_np, version );
-#endif // __linux__ || __freebsd__
 //	INIT_REALRTN( pthread_exit, version );
-#if defined( __linux__ ) && defined( __i386__ )
+#if defined( __i386__ )
 	version = "GLIBC_2.1";
-#endif // __linux__&& __i386__
+#endif // __i386__
 	INIT_REALRTN( pthread_create, version );
 	INIT_REALRTN( pthread_attr_init, version );
 #endif // __U_MULTI__
@@ -1038,7 +994,6 @@ namespace UPP {
 } // UPP
 
 
-#if defined( __linux__ ) || defined( __freebsd__ )
 extern "C" int dl_iterate_phdr( int (*callback)( dl_phdr_info *, size_t, void * ), void *data ) {
     assert( RealRtn::dl_iterate_phdr != nullptr );
     THREAD_GETMEM( This )->disableInterrupts();
@@ -1046,7 +1001,6 @@ extern "C" int dl_iterate_phdr( int (*callback)( dl_phdr_info *, size_t, void * 
     THREAD_GETMEM( This )->enableInterrupts();
     return ret;
 } // dl_iterate_phdr
-#endif // __linux__
 
 
 //######################### uKernelModule #########################
@@ -1080,12 +1034,6 @@ void uKernelModule::uKernelModuleData::ctor() volatile {
     disableIntSpinCnt = 0;
 
     RFpending = RFinprogress = false;
-
-#if defined( __ia64__ ) && ( defined( __linux__ ) || defined( __freebsd__ ) ) && defined( __U_MULTI__ )
-    // set private memory pointer
-    register volatile uKernelModule *thread_self asm( "r13" );
-    threadPointer = (unsigned long)thread_self;
-#endif // __U_MULTI__
 } // uKernelModule::ctor
 
 
@@ -2036,11 +1984,6 @@ void UPP::uKernelBoot::startup() {
 
     // Cause floating-point errors to signal SIGFPE, which is handled by uC++ signal handler.
 
-#if defined( __solaris__ )
-    fpsetmask( FP_X_INV | FP_X_OFL | FP_X_UFL | FP_X_DZ ); // raise floating-point signal
-    // TEMPORARY, do not add FP_X_IMP, there is a bug in "sin" (maybe other trig routines)
-    // fpsetmask( FP_X_IMP );
-#else	// Linux
     feenableexcept( FE_ALL_EXCEPT );			// raise floating-point signal
     // TEMPORARY removal, there is a bug in "sin" (maybe other trig routines)
     fedisableexcept( FE_INEXACT );
@@ -2050,13 +1993,6 @@ void UPP::uKernelBoot::startup() {
     asm volatile ( "fnstcw %0" : "=m" (uMachContext::fncw) );
     asm volatile ( "stmxcsr %0" : "=m" (uMachContext::mxcsr) );
 #endif // __i386__ || __x86_64__
-
-#if defined( __ia64__ )
-    // TEMPORARY removal, there is a bug in "__builtin_clz"
-    fedisableexcept( FE_UPWARD );
-    fedisableexcept( FE_DOWNWARD );
-#endif // __ia64__
-#endif // __solaris__
 
     // create kernel locks
 
@@ -2101,16 +2037,6 @@ void UPP::uKernelBoot::startup() {
 
     uProcessorKernel *pk = new uProcessorKernel;
     THREAD_SETMEM( processorKernelStorage, pk );
-
-    // set thread register in the new context
-
-#if defined( __U_MULTI__ ) && defined( __U_SWAPCONTEXT__ )
-#   if defined( __linux__ ) && defined( __ia64__ )
-	((ucontext_t *)THREAD_GETMEM( processorKernelStorage )->context)->uc_mcontext.sc_gr[13] = THREAD_GETMEM( threadPointer );
-#   else
-	#error uC++ : internal error, unsupported architecture
-#   endif
-#endif // __U_MULTI__ && __U_SWAPCONTEXT__
 
     // start boot task, which executes the global constructors and destructors
 

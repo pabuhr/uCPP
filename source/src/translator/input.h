@@ -6,9 +6,9 @@
 //
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:38:14 1992
-// Last Modified By : 
-// Last Modified On : Sat Oct 12 17:12:58 2013
-// Update Count     : 22
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Mon Jan 21 09:09:46 2019
+// Update Count     : 23
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,12 +25,11 @@
 //
 
 
-#ifndef __INPUT_H__
-#define __INPUT_H__
+#pragma once
+
 
 void read_all_input();
 
-#endif // __INPUT_H__
 
 // Local Variables: //
 // compile-command: "make install" //

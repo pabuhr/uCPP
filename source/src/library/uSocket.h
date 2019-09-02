@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:04:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 16:02:25 2018
-// Update Count     : 386
+// Last Modified On : Thu Apr 11 23:27:43 2019
+// Update Count     : 392
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,27 +25,19 @@
 // 
 
 
-#ifndef __U_SOCKET_H__
-#define __U_SOCKET_H__
+#pragma once
 
 
 #include <uFile.h>
 //#include <uDebug.h>
 
 
-#pragma __U_NOT_USER_CODE__
-
-
 #include <cstdio>
-#include <netdb.h>					// MAXHOSTNAMELEN on Solaris
-#include <sys/param.h>					// MAXHOSTNAMELEN on BSD
+#include <netdb.h>
+#include <sys/param.h>					// MAXHOSTNAMELEN
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
-
-#if defined( __freebsd__ )
-#include <netinet/in.h>					// struct sockaddr_in
-#endif // __freebsd__
 
 
 //######################### uSocket #########################
@@ -710,11 +702,6 @@ _Monitor uSocketClient : public uSocketIO {
 	memcpy( addr, saddr, baddrlen );
     } // uSocketClient::getServer
 }; // uSocketClient
-
-
-#pragma __U_USER_CODE__
-
-#endif // __U_SOCKET_H__
 
 
 // Local Variables: //
