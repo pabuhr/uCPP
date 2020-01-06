@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:13:05 2019
-// Update Count     : 892
+// Last Modified On : Fri Dec 13 06:59:54 2019
+// Update Count     : 893
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -218,9 +218,13 @@ namespace UPP {
 
     void uSigHandlerModule::sigSegvBusHandler( __U_SIGPARMS__ ) {
       if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-	abort( "Addressing invalid memory at location %p\n"
-	       "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
-	       sfp->si_addr );
+	if ( sfp->si_addr == nullptr ) {
+	    abort( "Null pointer (nullptr) dereference." );
+	} else {
+	    abort( "Addressing invalid memory at location %p\n"
+		   "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
+		   sfp->si_addr );
+	} // if
     } // uSigHandlerModule::sigSegvBusHandler
 
 

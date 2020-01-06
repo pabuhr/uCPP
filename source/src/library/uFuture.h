@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 27 16:53:03 2019
-// Update Count     : 878
+// Last Modified On : Mon Jan  6 12:31:37 2020
+// Update Count     : 919
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,6 @@ _Event uFutureFailue {};
 
 _Event uCancelled : public uFutureFailue {};		// raised if future cancelled
 _Event uDelivered : public uFutureFailue {};		// raised if future has value/exception
-
 
 namespace UPP {
     template<typename T> _Monitor uBaseFuture {
@@ -605,6 +604,8 @@ class uWaitQueue_ESM {
 
 //############################## uExecutor ##############################
 
+#include <uDefaultExecutor.h>
+
 
 class uExecutor {
     friend class uActor;
@@ -617,6 +618,7 @@ class uExecutor {
     #define CALIGN __attribute__(( aligned (64) ))
 
 //#define LOCKFREE
+//#define SPINLOCK
 #if defined( LOCKFREE )
     // http://www.1024cores.net/home/lock-free-algorithms/queues/intrusive-mpsc-node-based-queue
 
@@ -730,7 +732,7 @@ class uExecutor {
 
     // Each worker has its own set (when requests buffers > workers) of work buffers to reduce contention between client
     // and server, where work requests arrive and are distributed into buffers in a roughly round-robin order.
-    template< typename ELEMTYPE > _Task Worker {
+    template< typename ELEMTYPE > _Task Thread {
 	Buffer< ELEMTYPE > * requests;
 	unsigned int start, range;
 
@@ -747,23 +749,23 @@ class uExecutor {
 		request->doit();
 		delete request;
 	    } // for
-	} // Worker::main
+	} // Thread::main
       public:
-	Worker( uCluster & wc, Buffer< ELEMTYPE > * requests, unsigned int start, unsigned int range ) :
+	Thread( uCluster & wc, Buffer< ELEMTYPE > * requests, unsigned int start, unsigned int range ) :
 	    uBaseTask( wc ), requests( requests ), start( start ), range( range ) {}
-    }; // Worker
+    }; // Thread
 
     uCluster * cluster;					// if workers execute on separate cluster
     uProcessor ** processors;				// array of virtual processors adding parallelism for workers
     Buffer< WRequest > * requests;			// list of work requests
-    Worker< WRequest > ** workers;			// array of workers executing work requests
-    const unsigned int nprocessors, nworkers, nmailboxes; // number of mailboxes/workers/processor tasks
+    Thread< WRequest > ** workers;			// array of workers executing work requests
+    const unsigned int nprocessors, nthreads, nrqueues;	// number of processors/threads/request queues
     const bool sepClus;					// use same or separate cluster for executor
-    static thread_local unsigned int next;		// demultiplexed across worker buffers
+    static unsigned int next;				// demultiplexed across worker buffers
 
     unsigned int tickets() {
-	//return uFetchAdd( next, 1 ) % nmailboxes;
-	return next++ % nmailboxes;			// no locking, interference randomizes
+	//return uFetchAdd( next, 1 ) % nrqueues;
+	return next++ % nrqueues;			// no locking, interference randomizes
     } // uExecutor::tickets
 
     template< typename Func > void send( Func action, unsigned int ticket ) { // asynchronous call, no return value
@@ -778,13 +780,15 @@ class uExecutor {
 	return result;
     } // uExecutor::sendrecv
   public:
-    uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) :
-	    nprocessors( nprocessors ), nworkers( nworkers ), nmailboxes( nmailboxes ), sepClus( sepClus ) {
-	assert( nmailboxes >= nworkers );
+    uExecutor( unsigned int nprocessors, unsigned int nthreads, unsigned int nrqueues, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) :
+	    nprocessors( nprocessors ), nthreads( nthreads ), nrqueues( nrqueues ), sepClus( sepClus ) {
+	assert( nrqueues >= nthreads );
 	cluster = sepClus ? new uCluster( "uExecutor" ) : &uThisCluster();
 	processors = new uProcessor *[ nprocessors ];
-	requests = new Buffer< WRequest >[ nmailboxes ];
-	workers = new Worker< WRequest > *[ nworkers ];
+	requests = new Buffer< WRequest >[ nrqueues ];
+	workers = new Thread< WRequest > *[ nthreads ];
+
+	//uDEBUGPRT( uDebugPrt( "uExecutor::uExecutor nprocessors %u nthreads %u nrqueues %u sepClus %d affAffinity %d\n", nprocessors, nthreads, nrqueues, sepClus, affAffinity ); )
 
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
 	    processors[ i ] = new uProcessor( *cluster );
@@ -793,26 +797,26 @@ class uExecutor {
 	    } // if
 	} // for
 
-	unsigned int reqPerWorker = nmailboxes / nworkers, extras = nmailboxes % nworkers;
-	for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker + ( i < extras ? 1 : 0 ) ) {
-	    workers[ i ] = new Worker< WRequest >( *cluster, requests, step, reqPerWorker + ( i < extras ? 1 : 0 ) );
+	unsigned int reqPerThread = nrqueues / nthreads, extras = nrqueues % nthreads;
+	for ( unsigned int i = 0, step = 0; i < nthreads; i += 1, step += reqPerThread + ( i < extras ? 1 : 0 ) ) {
+	    workers[ i ] = new Thread< WRequest >( *cluster, requests, step, reqPerThread + ( i < extras ? 1 : 0 ) );
 	} // for
     } // uExecutor::uExecutor
 
-    uExecutor( unsigned int nprocessors, unsigned int nworkers, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) : uExecutor( nprocessors, nworkers, nworkers, sepClus, affAffinity ) {}
-    uExecutor( unsigned int nprocessors, bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() ) : uExecutor( nprocessors, nprocessors, nprocessors, sepClus, affAffinity ) {}
-    uExecutor() : uExecutor( 0, uThisCluster().getProcessors(), false, -1 ) {} // special for current cluster
+    uExecutor( unsigned int nprocessors, unsigned int nthreads, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nthreads, nthreads, sepClus, affAffinity ) {}
+    uExecutor( unsigned int nprocessors, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nprocessors, nprocessors, sepClus, affAffinity ) {}
+    uExecutor() : uExecutor( uDefaultExecutorProcessors(), uDefaultExecutorThreads(), uDefaultExecutorRQueues(), uDefaultExecutorSepClus(), uDefaultExecutorAffinity() ) {}
 
     ~uExecutor() {
 	// Add one sentinel per worker to stop them. Since in destructor, no new work should be queued.  Cannot combine
 	// next two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1 may take
 	// the single sentinel while waiting for worker 0 to end.
-	WRequest sentinel[nworkers];
-	unsigned int reqPerWorker = nmailboxes / nworkers;
-	for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
+	WRequest sentinel[nthreads];
+	unsigned int reqPerThread = nrqueues / nthreads;
+	for ( unsigned int i = 0, step = 0; i < nthreads; i += 1, step += reqPerThread ) {
 	    requests[step].insert( &sentinel[i] );	// force eventually termination
 	} // for
-	for ( unsigned int i = 0; i < nworkers; i += 1 ) {
+	for ( unsigned int i = 0; i < nthreads; i += 1 ) {
 	    delete workers[ i ];
 	} // for
 	for ( unsigned int i = 0; i < nprocessors; i += 1 ) {

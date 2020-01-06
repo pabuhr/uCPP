@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jun 18 07:37:30 2017
-// Update Count     : 139
+// Last Modified On : Sun Sep 22 21:55:25 2019
+// Update Count     : 140
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,7 +43,7 @@ using namespace UPP;
 // calls to malloc at the file buffer level. Therefore, it is safe to call this routine from inside the memory
 // management routines because there will be no recursive calls to allocate memory.
 
-enum { BufferSize = 512 };
+enum { BufferSize = 4096 };
 static char buffer[BufferSize];
 
 // SKULLDUGGERY: The debug spin lock has to be available at the same time as the heap routines to allow debugging

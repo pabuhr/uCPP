@@ -2,13 +2,13 @@
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2017
 // 
-// uDefaultActorSepClus.cc -- 
+// uDefaultExecutorRQueues.cc -- 
 // 
 // Author           : Peter A. Buhr
-// Created On       : Mon Jul 10 15:02:42 2017
+// Created On       : Thu Jan  2 20:51:39 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 10 18:24:22 2017
-// Update Count     : 3
+// Last Modified On : Thu Jan  2 20:53:43 2020
+// Update Count     : 2
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,16 +25,16 @@
 // 
 
 
-#include <uDefault.h>
+#include <uDefaultExecutor.h>
 
 
 // Must be a separate translation unit so that an application can redefine this routine and the loader does not link
 // this routine from the uC++ standard library.
 
 
-bool uDefaultActorSepClus() {
-    return __U_DEFAULT_ACTOR_SEPCLUS__;			// create processors on separate cluster
-} // uDefaultActorSepClus
+unsigned int uDefaultExecutorRQueues() {
+    return __U_DEFAULT_EXECUTOR_RQUEUES__;		// number of executor request queues
+} // uDefaultExecutorRQueues
 
 
 // Local Variables: //

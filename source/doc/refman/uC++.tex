@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Fri Aug 16 10:52:45 2019
-%% Update Count     : 7501
+%% Last Modified On : Mon Jan  6 09:17:31 2020
+%% Update Count     : 7549
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -577,7 +577,7 @@ The following example shows the labelled \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{
 \L{\LB{}\Tab{4}{.\,.\,.\0\emph{declarations}\0.\,.\,.}}
 \L{\LB{}\Tab{4}{\K{switch}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{4}{\0\0\K{case}\03:}}
-\L{\LB{}\Tab{4}{\0\0\0\0\K{if}\0(\0.\,.\,.\0)\0\{}}
+\L{\LB{}\Tab{8}{\K{if}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{12}{\K{for}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{16}{.\,.\,.\0\K{goto}\0\V{L1};\0.\,.\,.}}
 \L{\LB{}\Tab{16}{.\,.\,.\0\K{goto}\0\V{L2};\0.\,.\,.}}
@@ -596,7 +596,7 @@ The following example shows the labelled \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{
 \L{\LB{}\Tab{4}{.\,.\,.\0\emph{declarations}\0.\,.\,.}}
 \L{\LB{}\Tab{4}{\V{L2}:\0\K{switch}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{4}{\0\0\K{case}\03:}}
-\L{\LB{}\Tab{4}{\0\0\0\0\V{L3}:\0\K{if}\0(\0.\,.\,.\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{L3}:\0\K{if}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{12}{\V{L4}:\0\K{for}\0(\0.\,.\,.\0)\0\{}}
 \L{\LB{}\Tab{16}{.\,.\,.\0\K{break}\0\V{L1};\0.\,.\,.}\Tab{36}{\C{}\1\1\0exit\0compound\0statement}}
 \CE{}\L{\LB{}\Tab{16}{.\,.\,.\0\K{break}\0\V{L2};\0.\,.\,.}\Tab{36}{\C{}\1\1\0exit\0switch}}
@@ -3710,18 +3710,19 @@ The future is then buffered in vector \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{req
 \label{s:Executors}
 
 An executor is a predefined, generic server with a fixed-size pool of worker threads performing submitted units of work, where work is formed by a routine or functor.
-Each worker thread has its own work queue and arriving work requests are demultiplexed among the queues in roughly round-robin order.
-No work sharing or stealing is performed among the work queues.
+Each worker thread has its own request queue and arriving work requests are demultiplexed among the queues in roughly round-robin order.
+No work sharing or stealing is performed among the request queues.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uExecutor}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\0\0\0\0\V{uExecutor}();\0\C{}\1\1\0special\0for\0current\0cluster}}
-\CE{}\L{\LB{\0\0\0\0\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},}}
-\L{\LB{}\Tab{8}{\0\K{bool}\0\V{sepClus}\0=\0\V{uDefaultActorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultActorAffinity}()\0);}}
-\L{\LB{\0\0\0\0\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nworkers},}}
-\L{\LB{}\Tab{8}{\0\K{bool}\0\V{sepClus}\0=\0\V{uDefaultActorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultActorAffinity}()\0);}}
-\L{\LB{\0\0\0\0\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nworkers},\0\K{unsigned}\0\K{int}\0\V{nmailboxes},}}
-\L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultActorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultActorAffinity}()\0);}}
+\L{\LB{}\Tab{4}{\V{uExecutor}();}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{unsigned}\0\K{int}\0\V{nrqueues},}}
+\L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},}}
+\L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},}}
+\L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
+\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{void}\0\V{send}(\0\V{Func}\0\V{action}\0);}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{auto}\0\V{sendrecv}(\0\V{Func}\0\V{action}\0)\0\-\>\0\V{Future\_ISM}\<\0\K{decltype}(\V{action}())\0\>;}}
 \L{\LB{\};}}
@@ -3732,21 +3733,24 @@ The constructor routines have the following form:
 \begin{prefix}
 \begin{sloppypar}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}()}}\endlgrinde\LGend{}]
--- creates an executor containing 0 processors, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisCluster}().\V{getProcessors}()}}\endlgrinde\LGend{} worker threads and queues, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
+-- creates an executor with processors, threads, request queues, current or separate cluster, and processor affinity all set to the default values from the default routines.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{unsigned}\0\K{int}\0\V{nrqueues},\0\K{bool}\0\V{sepClus},}}\endlgrinde\LGend{}]
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}\0\V{affAffinity}\0)}}\endlgrinde\LGend{}
+-- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nthreads}}}\endlgrinde\LGend{} worker threads, and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nrqueues}}}\endlgrinde\LGend{} request queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
+-- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nthreads}}}\endlgrinde\LGend{} worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
 -- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), worker threads, and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nworkers},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
--- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nworkers}}}\endlgrinde\LGend{} worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nworkers},\0\K{unsigned}\0\K{int}\0\V{nmailboxes},\0\K{bool}\0\V{sepClus},}}\endlgrinde\LGend{}]
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}\0\V{affAffinity}\0)}}\endlgrinde\LGend{}
--- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nworkers}}}\endlgrinde\LGend{} worker threads and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nmailboxes}}}\endlgrinde\LGend{} queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \end{sloppypar}
 \end{prefix}
 If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{affOffset}}}\endlgrinde\LGend{} is zero or positive, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors are locked (affinity) on the CPUs starting at the specified starting value;
 e.g., for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} of 4 and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{affOffset}}}\endlgrinde\LGend{} of 16, the processors are locked on CPUS 16, 17, 18, 19.
 Otherwise, the processors are run on any CPUs selected by the operating system.
-Note, when using the default constructor the processors on the current cluster are used.
-Therefore, it is necessary to explicitly populate the current cluster with the appropriate number of processors, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessors}\0\V{p}[3]}}\endlgrinde\LGend{} to get 4 processors, as each cluster usually gets an initial processor.
+Note, to get the executor to use processors on the current cluster, declare it as:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{uExecutor}\0\V{executor}(\00,\0\V{uThisCluster}().\V{getProcessors}()\0);}}
+\endlgrinde\LGend
+\emph{after} the current cluster has created the appropriate number of processors, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessors}\0\V{p}[3]}}\endlgrinde\LGend{} to get 4 processors, as each cluster usually has an initial processor.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{send}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{}, with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{}, with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
@@ -3805,6 +3809,26 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde
 \caption{Executor Example}
 \label{f:ExecutorExample}
 \end{figure}
+
+Finally, the following routines control the default executor parameters.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorProcessors}();}\Tab{52}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0worker\0threads}}
+\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorThreads}();}\Tab{52}{\C{}\1\1\0worker\0threads\0servicing\0work\0requests}}
+\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorRQueues}();}\Tab{52}{\C{}\1\1\0executor\0request\0queues\0divided\0among\0workers}}
+\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultExecutorSepClus}();}\Tab{52}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
+\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultExecutorAffinity}();}\Tab{52}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
+\CE{}\endlgrinde\LGend
+\index{uDefaultExecutorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorProcessors}}}\endlgrinde\LGend{}}%
+\index{uDefaultExecutorThreads@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorThreads}}}\endlgrinde\LGend{}}%
+\index{uDefaultExecutorRQueues@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorRQueues}}}\endlgrinde\LGend{}}%
+\index{uDefaultExecutorSepClus@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorSepClus}}}\endlgrinde\LGend{}}%
+\index{uDefaultExecutorAffinity@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorAffinity}}}\endlgrinde\LGend{}}%
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorProcessors}}}\endlgrinde\LGend{} returns the number of processor (kernel threads) used by the executor.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorThreads}}}\endlgrinde\LGend{} returns the number of threads on the actor executor.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorRQueues}}}\endlgrinde\LGend{} returns the number of executor request-queues, which are distributed evenly across the worker threads.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorSepClus}}}\endlgrinde\LGend{} returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorAffinity}}}\endlgrinde\LGend{} returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
+Currently, the defaults are 2 processors, 2 threads 2 request queues, and the actor executor runs in the user cluster without affinity.
 
 
 \section{Actor}
@@ -4081,30 +4105,14 @@ Instead of returning an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\e
 One approach is to explicitly deliver an exception (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{MyEvent}}}\endlgrinde\LGend{}) into the future;
 the other approach is to raise an exception, which is caught by the the thread executing the actor and this thread implicitly duplicates the exception into the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FutureMessage}}}\endlgrinde\LGend{}.
 
-Finally, the following routines control the actor executor by adjusting its thread pool.
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorMailboxes}();}\Tab{48}{\C{}\1\1\0executor\0request\0queues}}
-\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorThreads}();}\Tab{48}{\C{}\1\1\0user\0threads\0servicing\0executor\0thread\-pool}}
-\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultActorProcessors}();}\Tab{48}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0executor\0thread\-pool}}
-\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultActorAffinity}();}\Tab{48}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
-\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultActorSepClus}();}\Tab{48}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
-\CE{}\endlgrinde\LGend
-\index{uDefaultActorMailboxes@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{}}%
-\index{uDefaultActorThreads@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorThreads}}}\endlgrinde\LGend{}}%
-\index{uDefaultActorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{}}%
-\index{uDefaultActorAffinity@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorAffinity}}}\endlgrinde\LGend{}}%
-\index{uDefaultActorSepClus@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorSepClus}}}\endlgrinde\LGend{}}%
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorMailboxes}}}\endlgrinde\LGend{} returns the number of executor request-queues (mailboxes) written to by actors and serviced by the actor-executor threads.
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorThreads}}}\endlgrinde\LGend{} returns the number of threads per processor on the actor executor.
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorProcessors}}}\endlgrinde\LGend{} returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
-Currently, the defaults are 4 request queues, 4 threads, 2 processors, and the actor executor runs in the user cluster.
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorAffinity}}}\endlgrinde\LGend{} returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultActorSepClus}}}\endlgrinde\LGend{} returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
-
 Actors may inherit from other actors\index{actor!inheritance}:
+\begin{flushleft}
+\begin{tabular}{@{}l|l@{}}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Actor}\0\V{B}\0\{}}
-\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0)\0\{\0\K{return}\0\V{Delete};\0\}}}
+\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0)\0\{}}
+\L{\LB{}\Tab{8}{\K{return}\0\V{Delete};}}
+\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{preStart}()\0\{\0.\,.\,.\0\}}}
 \L{\LB{\0\0\K{public}:}}
@@ -4112,17 +4120,21 @@ Actors may inherit from other actors\index{actor!inheritance}:
 \L{\LB{\Proc{B}}\Tab{4}{\V{B}(\0\K{int}\0\V{i}\0)\0\{\}}}
 \L{\LB{\};}}
 \endlgrinde\LGend
+&
+\LGindent=0pt
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Actor}\0\V{D}\0:\0\K{public}\0\V{B}\0\{}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{preStart}()\0\{\0\V{B}::\V{preStart}();\0\}}\Tab{56}{\C{}\1\1\0call\0base\0member}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{preStart}()\0\{\0\V{B}::\V{preStart}();\0\}\0\0\C{}\1\1\0call\0base\0member}}
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0)\0\{\0\K{return}\0\V{Delete};\0\}}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{\Proc{D}}\Tab{4}{\V{D}()\0\{\}}}
 \L{\LB{\Proc{D}}\Tab{4}{\V{D}(\0\K{int}\0\V{i}\0)\0:\0\V{B}(\0\V{i}\0)\0\{\}}}
 \L{\LB{\};}}
-\L{\LB{\V{B}\0\V{b};}\Tab{8}{\C{}\1\1\0B::preStart\0called\0after\0constructor}}
-\CE{}\L{\LB{\V{D}\0\V{d};}\Tab{8}{\C{}\1\1\0D::prestart\0called\0after\0constructor,\0which\0calls\0B::preStart}}
+\L{\LB{\V{B}\0\V{b};\0\C{}\1\1\0B::preStart\0called\0after\0constructor}}
+\CE{}\L{\LB{\V{D}\0\V{d};\0\C{}\1\1\0D::prestart\0called\0after\0constructor,\0which\0calls\0B::preStart}}
 \CE{}\endlgrinde\LGend
+\end{tabular}
+\end{flushleft}
 For variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{b}}}\endlgrinde\LGend{}, only \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{B}::\V{preStart}}}\endlgrinde\LGend{} is called;
 for variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{d}}}\endlgrinde\LGend{}, only \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{D}::\V{preStart}}}\endlgrinde\LGend{} is called.
 In general, the most derived actor knows how it wants to initialize the entire actor object.
@@ -4156,15 +4168,27 @@ However, it is possible for the derived actor to explicitly invoke the base acto
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{\0\0\0\0\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\L{\LB{}\Tab{4}{\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"bonjour\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
 \L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"buenos\0dias\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
-\L{\LB{\0\0\0\0\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\L{\LB{}\Tab{4}{\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Hello Actor}
 \label{f:HelloActor}
 \end{figure}
+
+Finally, the Actor system must be started, which creates the actor thread-pool (executor), and control must wait for all actors to complete.
+Macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActorStart}}}\endlgrinde\LGend{} is the default way to start an actor system:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\#define}\0\V{uActorStart}()\0\V{uExecutor}\0\V{\_\_uExecutor\_\_}(\00,\0\V{uThisCluster}().\V{getProcessors}(),\0\K{false},\0\-1\0);\0\2}}
+\L{\LB{}\Tab{20}{\V{uActor}::\V{start}(\0\V{\_\_uExecutor\_\_}\0)}}
+\endlgrinde\LGend
+which creates an actor executor containing 0 processors, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisCluster}().\V{getProcessors}()}}\endlgrinde\LGend{} worker threads and queues on the current cluster without affinity.
+Macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActorStop}}}\endlgrinde\LGend{} is the default way to wait for the actor system to end:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\#define}\0\V{uActorStop}()\0\V{uActor}::\V{stop}()}}
+\endlgrinde\LGend
 
 \VRef[Figure]{f:HelloActor} shows a simple actor that receives a number of messages and then stops.
 There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
@@ -4323,7 +4347,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} futures are
 \L{\LB{}\Tab{4}{\V{Future\_ISM}\<\0\K{int}\0\>\0\V{fi}[\V{Times}];}}
 \L{\LB{}\Tab{4}{\V{Future\_ISM}\<\0\V{string}\0\>\0\V{fs}[\V{Times}];}}
 \L{\LB{}}
-\L{\LB{\0\0\0\0\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\L{\LB{}\Tab{4}{\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\V{Actor}\0\*\0\V{actor}\0=\0\K{new}\0\V{Actor};}}
 \L{\LB{}}
 \L{\LB{\Proc{for}}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Times};\0\V{i}\0+=\01\0)\0\{}\Tab{56}{\C{}\1\1\0tell\0messages}}
@@ -4344,7 +4368,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} futures are
 \CE{}\L{\LB{}\Tab{8}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"futures\0\"\SE{}\0\<\<\0\V{fi}[\V{i}]()\0\<\<\0\V{endl};}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{\*\V{actor}\0\|\0\V{uActor}::\V{stopMsg};}\Tab{56}{\C{}\1\1\0terminate\0actor}}
-\CE{}\L{\LB{\0\0\0\0\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Future Actor}
@@ -8058,8 +8082,8 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23867) Attempt to create uTime( year=1970, month=0, day=0, hour=0, min=0, sec=-17, nsec=0 ), which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
-Error occurred while executing task main (0x7ffc68620ca0).
+uC++ Runtime error (UNIX pid:2700) Attempt to create uTime( year=-17, month=0, day=0, hour=0, min=0, sec=0, nsec=0 ), which is not in the range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
+Error occurred while executing task main (0x7fffec02ac70).
 \end{quote}
 
 
@@ -8505,7 +8529,6 @@ The processor interface is the following:
 \L{\LB{}\Tab{4}{\V{uProcessor}(\0\V{uCluster}\0\&\V{cluster},\0\K{bool}\0\V{detached},\0\K{unsigned}\0\K{int}\0\V{ms}\0=\0\V{uDefaultPreemption}(),}}
 \L{\LB{}\Tab{16}{\K{unsigned}\0\K{int}\0\V{spin}\0=\0\V{uDefaultSpin}()\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\V{uClock}\0\&\V{getClock}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{uPid\_t}\0\V{getPid}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{uCluster}\0\&\V{setCluster}(\0\V{uCluster}\0\&\V{cluster}\0);}}
 \L{\LB{}\Tab{4}{\V{uCluster}\0\&\V{getCluster}()\0\K{const};}}
@@ -8520,7 +8543,6 @@ The processor interface is the following:
 \L{\LB{}}
 \L{\LB{\V{uProcessor}\0\V{proc}(\0\V{clus}\0);\0\0\C{}\1\1\0processor\0is\0attached\0to\0cluster\0clus}}
 \CE{}\endlgrinde\LGend
-\index{uProcessor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}!getClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getClock}}}\endlgrinde\LGend{}}%
 \index{uProcessor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}!getPid@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getPid}}}\endlgrinde\LGend{}}%
 \index{uProcessor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}!setCluster@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setCluster}}}\endlgrinde\LGend{}}%
 \index{uProcessor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}!getCluster@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getCluster}}}\endlgrinde\LGend{}}%
@@ -8554,8 +8576,6 @@ The indicator for detachment is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\
 The indicator for detachment is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} for non-detached and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} for detached.
 \end{prefix}
 \end{sloppypar}
-
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getClock}}}\endlgrinde\LGend{})\index{getClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getClock}}}\endlgrinde\LGend{}} returns the clock used to control timing on this processor (see \VRef{s:Clock}).
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getPid}}}\endlgrinde\LGend{}\index{getPid@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getPid}}}\endlgrinde\LGend{}} returns the current UNIX process id that the processor is associated with.
 
@@ -9019,39 +9039,40 @@ The creation and manipulation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuratio
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uDuration}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{uDuration}();}}
-\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{long}\0\K{int}\0\V{sec}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}();}\Tab{32}{\C{}\1\1\0initialize\0to\0zero}}
+\CE{}\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{long}\0\K{int}\0\V{sec}\0);}}
 \L{\LB{}\Tab{4}{\V{uDuration}(\0\K{long}\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{const}\0\V{timeval}\0\&\V{t}\0);}}
-\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{const}\0\V{timespec}\0\&\V{t}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{const}\0\V{timeval}\0\V{tv}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}(\0\K{const}\0\V{timespec}\0\V{ts}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}=(\0\K{const}\0\V{timeval}\0\&\V{t}\0)\0\{}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}=(\0\K{const}\0\V{timespec}\0\&\V{t}\0)\0\{}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}=(\0\K{const}\0\V{timeval}\0\V{tv}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}=(\0\K{const}\0\V{timespec}\0\V{ts}\0);}}
 \L{\LB{}\Tab{4}{\K{operator}\0\V{timeval}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{operator}\0\V{timespec}()\0\K{const};}}
-\L{\LB{}\Tab{4}{\K{long}\0\K{long}\0\K{int}\0\V{nanoseconds}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{long}\0\K{int}\0\V{seconds}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\V{int64\_t}\0\V{nanoseconds}()\0\K{const};}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}\-=(\0\V{uDuration}\0\V{op}\0);}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}+=(\0\V{uDuration}\0\V{op}\0);}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}\*=(\0\K{long}\0\K{long}\0\K{int}\0\V{op}\0);}}
-\L{\LB{}\Tab{4}{\V{uDuration}\0\&\K{operator}\1=(\0\K{long}\0\K{long}\0\K{int}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}\-=(\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}+=(\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}\*=(\0\V{int64\_t}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uDuration}\0\K{operator}\1=(\0\V{int64\_t}\0\V{op}\0);}}
 \L{\LB{\};\0\C{}\1\1\0uDuration}}
 \CE{}\L{\LB{}}
-\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uDuration}\0\V{op}\0);}}
-\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\V{uDuration}\0\K{operator}+(\0\V{uDuration}\0\V{op}\0);}}
 \L{\LB{\V{uDuration}\0\K{operator}+(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
+\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\V{uDuration}\0\K{operator}\*(\0\V{uDuration}\0\V{op1},\0\K{long}\0\K{long}\0\K{int}\0\V{op2}\0);}}
 \L{\LB{\V{uDuration}\0\K{operator}\*(\0\K{long}\0\K{long}\0\K{int}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\V{uDuration}\0\K{operator}\1(\0\V{uDuration}\0\V{op1},\0\K{long}\0\K{long}\0\K{int}\0\V{op2}\0);}}
 \L{\LB{\K{long}\0\K{long}\0\K{int}\0\K{operator}\1(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
+\L{\LB{\K{bool}\0\K{operator}==(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
+\L{\LB{\K{bool}\0\K{operator}!=(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\>(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\<(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\>=(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\<=(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
-\L{\LB{\K{bool}\0\K{operator}==(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
-\L{\LB{\K{bool}\0\K{operator}!=(\0\V{uDuration}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
-\L{\LB{\V{ostream}\0\&\K{operator}\<\<(\0\V{ostream}\0\&\V{os},\0\K{const}\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{\V{ostream}\0\&\0\K{operator}\<\<(\0\V{ostream}\0\&\0\V{os},\0\K{const}\0\V{uDuration}\0\V{op}\0);}}
 \endlgrinde\LGend
 \caption{Duration Class}
 \label{f:DurationClass}
@@ -9075,7 +9096,8 @@ A UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} and 
 \CE{}\L{\LB{\V{d1}\0=\0\V{d3};}\Tab{28}{\C{}\1\1\0convert\0from\0uDuration\0to\0timeval\0(implicit\0cast)}}
 \CE{}\endlgrinde\LGend
 Conversion is guaranteed to be exact.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nanoseconds}}}\endlgrinde\LGend{} returns the duration value as a 64 bit number in nanoseconds.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{seconds}}}\endlgrinde\LGend{} returns the duration value in seconds.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nanoseconds}}}\endlgrinde\LGend{} returns the duration value in nanoseconds.
 
 Arithmetic operations may be performed on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} values, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
@@ -9088,7 +9110,7 @@ Arithmetic operations may be performed on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V
 \CE{}\L{\LB{\V{x}\0=\0\V{n}\0\*\0\V{y};}\Tab{28}{\C{}\1\1\0multiply\0a\0uDuration\0n\0times}}
 \CE{}\L{\LB{\V{x}\0=\0\V{y}\0\1\0\V{n};}\Tab{28}{\C{}\1\1\0divide\0a\0uDuration\0by\0n}}
 \CE{}\endlgrinde\LGend
-In addition, relational comparison operators are defined for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} objects.
+In addition, relational comparison operators are defined for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} values.
 
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}\index{uTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}} is a class, whose instance represents an absolute time.
 Time can be specified using some combination of year, month, day, hour, minute, second, and nanosecond in UTC.
@@ -9099,38 +9121,37 @@ The creation and manipulation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uTime}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{uTime}();}}
-\L{\LB{}\Tab{4}{\K{explicit}\0\V{uTime}(\0\K{long}\0\K{int}\0\V{sec}\0);}\Tab{36}{\C{}\1\1\0explicit\0=\>\0unambiguous\0with\0uDuration(\0long\0int\0sec\0)}}
-\CE{}\L{\LB{}\Tab{4}{\V{uTime}(\0\K{long}\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{int}\0\V{min},\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{int}\0\V{hour},\0\K{int}\0\V{min},\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{int}\0\V{day},\0\K{int}\0\V{hour},\0\K{int}\0\V{min},\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{int}\0\V{month},\0\K{int}\0\V{day},\0\K{int}\0\V{hour},\0\K{int}\0\V{min},\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{int}\0\V{year},\0\K{int}\0\V{month},\0\K{int}\0\V{day},\0\K{int}\0\V{hour},\0\K{int}\0\V{min},\0\K{int}\0\V{sec},\0\K{long}\0\K{int}\0\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{const}\0\V{timeval}\0\&\V{t}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}(\0\K{const}\0\V{timespec}\0\&\V{t}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}();}\Tab{28}{\C{}\1\1\0initialize\0to\0zero}}
+\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0explicit\0=\>\0unambiguous\0with\0uDuration(\0long\0int\0sec\0)}}
+\CE{}\L{\LB{}\Tab{4}{\K{explicit}\0\V{uTime}(\0\K{int}\0\V{year},\0\K{int}\0\V{month}\0=\01,\0\K{int}\0\V{day}\0=\01,\0\K{int}\0\V{hour}\0=\00,\0\K{int}\0\V{min}\0=\00,}}
+\L{\LB{}\Tab{20}{\K{int}\0\V{sec}\0=\00,\0\V{int64\_t}\0\V{nsec}\0=\00\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}(\0\V{timeval}\0\V{tv}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}(\0\V{timespec}\0\V{ts}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\V{uTime}\0\&\K{operator}=(\0\K{const}\0\V{timeval}\0\&\V{t}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}\0\&\K{operator}=(\0\K{const}\0\V{timespec}\0\&\V{t}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}\0\K{operator}=(\0\V{timeval}\0\V{tv}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}\0\K{operator}=(\0\V{timespec}\0\V{ts}\0);}}
 \L{\LB{}\Tab{4}{\K{operator}\0\V{timeval}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{operator}\0\V{timespec}()\0\K{const};}}
-\L{\LB{}\Tab{4}{\K{long}\0\K{long}\0\K{int}\0\V{nanoseconds}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{operator}\0\V{tm}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{convert}(\0\K{int}\0\&\0\V{year},\0\K{int}\0\&\0\V{month},\0\K{int}\0\&\0\V{day},\0\K{int}\0\&\0\V{hour},\0\K{int}\0\&\0\V{minutes},}}
+\L{\LB{}\Tab{20}{\K{int}\0\&\0\V{seconds},\0\V{int64\_t}\0\&\0\V{nseconds}\0)\0\K{const};}}
+\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{nanoseconds}()\0\K{const};}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\V{uTime}\0\&\K{operator}\-=(\0\V{uDuration}\0\V{op}\0);}}
-\L{\LB{}\Tab{4}{\V{uTime}\0\&\K{operator}+=(\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}\0\K{operator}\-=(\0\V{uDuration}\0\V{op}\0);}}
+\L{\LB{}\Tab{4}{\V{uTime}\0\K{operator}+=(\0\V{uDuration}\0\V{op}\0);}}
 \L{\LB{\};\0\C{}\1\1\0uTime}}
 \CE{}\L{\LB{}}
-\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
-\L{\LB{\V{uTime}\0\K{operator}\-(\0\V{uTime}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\V{uTime}\0\K{operator}+(\0\V{uTime}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
 \L{\LB{\V{uTime}\0\K{operator}+(\0\V{uDuration}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
+\L{\LB{\V{uDuration}\0\K{operator}\-(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
+\L{\LB{\V{uTime}\0\K{operator}\-(\0\V{uTime}\0\V{op1},\0\V{uDuration}\0\V{op2}\0);}}
+\L{\LB{\K{bool}\0\K{operator}==(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
+\L{\LB{\K{bool}\0\K{operator}!=(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\>(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\<(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\>=(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
 \L{\LB{\K{bool}\0\K{operator}\<=(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
-\L{\LB{\K{bool}\0\K{operator}==(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
-\L{\LB{\K{bool}\0\K{operator}!=(\0\V{uTime}\0\V{op1},\0\V{uTime}\0\V{op2}\0);}}
-\L{\LB{\V{ostream}\0\&\K{operator}\<\<(\0\V{ostream}\0\&\V{os},\0\K{const}\0\V{uTime}\0\V{op}\0);}}
+\L{\LB{\V{ostream}\0\&\0\K{operator}\<\<(\0\V{ostream}\0\&\0\V{os},\0\K{const}\0\V{uTime}\0\V{op}\0);}}
 \endlgrinde\LGend
 \caption{Time Class}
 \label{f:TimeClass}
@@ -9140,29 +9161,25 @@ The overloaded constructor routines \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime
 The parameters have the following meanings:
 \begin{prefix}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{year}}}\endlgrinde\LGend{}] -- a year greater than or equal to 1970 and less than or equal to 2038.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{month}}}\endlgrinde\LGend{}] -- a number between 0 and 11 inclusive, where 0 represents January and 11 represents December.
-The default value for a constructor without this argument is 0.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{day}}}\endlgrinde\LGend{}] -- a number between 0 and 30 inclusive, where 0 represents the first day of the month and 30 the last day.
-The default value for a constructor without this argument is 0.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{month}}}\endlgrinde\LGend{}] -- a number between 1 and 12 inclusive, where 1 represents January and 12 represents December.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{day}}}\endlgrinde\LGend{}] -- a number between 1 and 31 inclusive, where 1 represents the first day of the month and 31 the last day.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{hour}}}\endlgrinde\LGend{}] -- a number between 0 and 23 inclusive, where 0 represents 12:00am and 23 represents 11:00pm.
-The default value for a constructor without this argument is 0.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{min}}}\endlgrinde\LGend{}] -- a number between 0 and 59 inclusive, where 0 is the first minute of the hour and 59 the last.
-The default value for a constructor without this argument is 0.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sec}}}\endlgrinde\LGend{}] -- a number between 0 and 59 inclusive, where 0 is the first second of the minute and 59 the last.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sec}}}\endlgrinde\LGend{}] -- a number between 0 and 60 inclusive, where 0 is the first second of the minute and 59 the last, and 60 allows for a leap second.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nsec}}}\endlgrinde\LGend{}] -- a number between 0 and 999999999 inclusive, where 0 is the first nanosecond of the second and 999999999 the last.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} / \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{}] -- a UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{}, which is converted to a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} value.
 \end{prefix}
-It is permissible to \emph{exceed} the logical ranges for the time components;
-any excess is accumulative, e.g., the following declarations are valid:
+Values may be in any range (+/-) but the result must be in the UNIX epoch.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{uTime}\0\V{t1}(\00,48,0,60,1000000000\0);}\Tab{36}{\C{}\1\1\01970\0Jan\03\00:01:01:000000000\0(GMT)\0}}
-\CE{}\L{\LB{\V{uTime}\0\V{t2}(\0818227413,\00\0);}\Tab{36}{\C{}\1\1\01995\0Dec\06\005:23:33:000000000\0(GMT)}}
+\L{\LB{\V{uTime}\0\V{t1}(\02020,\01,\05,\09,\00,\00,\0100000000000LL\0);\0\C{}\1\1\02020\0Jan\0\05\009:01:40}}
+\CE{}\L{\LB{\V{uTime}\0\V{t2}(\01969,\013,\05,\09\0);}\Tab{28}{\C{}\1\1\01970\0Jan\0\05\009:00:00}}
+\CE{}\L{\LB{\V{uTime}\0\V{t3}(\01970,\025,\0366,\048,\0120,\0\-120,\060000000000LL\0);\0\C{}\1\1\01973\0Jan\0\02\001:59:00}}
 \CE{}\endlgrinde\LGend
 
 A UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{} value can be used to initialize or assign to a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} value, and a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} value may be cast into a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timespec}}}\endlgrinde\LGend{} value, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{timeval}\0\V{t1};}}
-\L{\LB{\V{gettimeofday}(\0\&\V{t1},\0\K{nullptr}\0);}\Tab{32}{\C{}\1\1\0current\0time\0(seconds\0\1\0microseconds)}}
+\L{\LB{\V{gettimeofday}(\0\&\V{t1},\0\K{nullptr}\0);}\Tab{28}{\C{}\1\1\0current\0time\0(seconds\0\1\0microseconds)}}
 \CE{}\L{\LB{\V{uTime}\0\V{t2}\0=\0\V{t1},\0\V{t3};}\Tab{28}{\C{}\1\1\0convert\0from\0timeval\0to\0uTime\0(initialization)}}
 \CE{}\L{\LB{\V{timespec}\0\V{t4}\0=\0\V{t2};}\Tab{28}{\C{}\1\1\0convert\0from\0uTime\0to\0timespec\0(seconds\0\1\0nanoseconds)\0(implicit\0cast)}}
 \CE{}\L{\LB{\V{t3}\0=\0\V{t1};}\Tab{28}{\C{}\1\1\0convert\0from\0timeval\0to\0uTime\0(assignment)}}
@@ -9170,7 +9187,8 @@ A UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{timeval}}}\endlgrinde\LGend{} and 
 \CE{}\L{\LB{\V{t1}\0=\0\V{t3};}\Tab{28}{\C{}\1\1\0convert\0from\0uTime\0to\0timeval\0(implicit\0cast)}}
 \CE{}\endlgrinde\LGend
 Conversion is guaranteed to be exact.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nanoseconds}}}\endlgrinde\LGend{} returns the absolute time value as a 64 bit number in nanoseconds from the start of the UNIX epoch.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convert}}}\endlgrinde\LGend{} unpacks the time into its time components.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nanoseconds}}}\endlgrinde\LGend{} returns the time value in nanoseconds.
 
 As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} values, arithmetic and relational operations may be performed on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{} values.
 As well, mixed mode operations are possible involving durations and time.
@@ -9378,32 +9396,32 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{} cre
 \L{\LB{\K{class}\0\V{uClock}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{uClock}();}}
-\L{\LB{}\Tab{4}{\V{uClock}(\0\V{uTime}\0\V{adj}\0);}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{resetClock}();}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{resetClock}(\0\V{uTime}\0\V{adj}\0);}}
+\L{\LB{}\Tab{4}{\V{uClock}(\0\V{uDuration}\0\V{adj}\0);}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{resetClock}(\0\V{uDuration}\0\V{adj}\0);}}
 \L{\LB{}\Tab{4}{\V{uTime}\0\V{getTime}();}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{getTime}(\0\K{int}\0\&\V{year},\0\K{int}\0\&\V{month},\0\K{int}\0\&\V{day},\0\K{int}\0\&\V{hour},\0\K{int}\0\&\V{minutes},}}
-\L{\LB{}\Tab{16}{\0\0\K{int}\0\&\V{seconds},\0\K{long}\0\K{int}\0\&\V{nsec}\0);}}
-\L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{convertTime}(\0\V{uTime}\0\V{time},\0\K{int}\0\&\V{year},\0\K{int}\0\&\V{month},\0\K{int}\0\&\V{day},\0\K{int}\0\&\V{hour},\0\K{int}\0\&\V{minutes},}}
-\L{\LB{}\Tab{28}{\K{int}\0\&\V{seconds},\0\K{long}\0\K{int}\0\&\V{nsec}\0);}}
+\L{\LB{}\Tab{4}{\K{static}\0\V{uDuration}\0\V{getResNsec}();}}
+\L{\LB{}\Tab{4}{\K{static}\0\V{uDuration}\0\V{getRes}();}}
+\L{\LB{}\Tab{4}{\K{static}\0\V{uTime}\0\V{currTime}();}}
+\L{\LB{}\Tab{4}{\K{static}\0\V{uTime}\0\V{getCPUTime}();}}
 \L{\LB{\};\0\C{}\1\1\0uClock}}
 \CE{}\endlgrinde\LGend
 \index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!resetClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}}%
 \index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!getTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getTime}}}\endlgrinde\LGend{}}%
-\index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!convertTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convertTime}}}\endlgrinde\LGend{}}%
+\index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!getResNsec@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getResNsec}}}\endlgrinde\LGend{}}%
+\index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!getRes@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRes}}}\endlgrinde\LGend{}}%
+\index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!currTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{currTime}}}\endlgrinde\LGend{}}%
+\index{uClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}!getCPUTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getCPUTime}}}\endlgrinde\LGend{}}%
 
 The overloaded constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}\index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}} has the following forms:
 \begin{prefix}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}()}}\endlgrinde\LGend{}]
--- creates a clock as a real-time clock running at the same time as the underlying virtual process.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}(\0\V{uTime}\0\V{adj}\0)}}\endlgrinde\LGend{}]
--- creates a clock as a virtual clock starting at time \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{adj}}}\endlgrinde\LGend{}.
+-- creates a clock as a real-time clock running at the same time as the underlying operating system.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}(\0\V{uDuration}\0\V{adj}\0)}}\endlgrinde\LGend{}]
+-- creates a clock as a virtual clock adjusted forward/backward by duration \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{adj}}}\endlgrinde\LGend{}.
 \end{prefix}
 
-The overloaded member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}\index{resetClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}} resets the kind of clock between real-time and virtual, and each routine has the following form:
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}\index{resetClock@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}} resets the virtual clock adjustment:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}()}}\endlgrinde\LGend{}]
--- this form sets the clock to a real-time clock, so it returns the current time of the underlying virtual processor.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}(\0\V{uTime}\0\V{adj}\0)}}\endlgrinde\LGend{}]
 -- this form sets the clock to a virtual clock starting at time \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{adj}}}\endlgrinde\LGend{}.
 \end{prefix}
@@ -9416,11 +9434,8 @@ The overloaded member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getTime}}}\
 -- this form returns the current time broken up into the traditional non-fixed radix units of time.
 \end{prefix}
 
+The static member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{currTime}}}\endlgrinde\LGend{}\index{currTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{currTime}}}\endlgrinde\LGend{}} returns the current time with nanoseconds accuracy from the start of the UNIX epoch.
 The static member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convertTime}}}\endlgrinde\LGend{}\index{convertTime@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convertTime}}}\endlgrinde\LGend{}} converts the specified time in nanoseconds from the start of the UNIX epoch into a traditional non-fixed radix units of time.
-
-As mentioned, each virtual processor has its own real-time clock.
-The current time is available from a virtual processor via the call \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisProcessor}().\V{getClock}().\V{getTime}()}}\endlgrinde\LGend{};
-hence, it is unnecessary to create a clock to get the current time.
 
 
 \section{Periodic Task}
@@ -9775,7 +9790,7 @@ hence, the task is simply deleted without a need to re-schedule.
 \L{\LB{\K{\_PeriodicTask}\0\V{PeriodicTask1}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{PeriodicTask1}(\0\V{uDuration}\0\V{period},\0\V{uTime}\0\V{endtime},\0\V{uDuration}\0\V{deadline},\0\V{uCluster}\0\&\V{cluster}\0)\0:}}
-\L{\LB{}\Tab{16}{\V{uPeriodicBaseTask}(\0\V{period},\0\V{uTime}(0),\0\V{endtime},\0\V{deadline},\0\V{cluster}\0)\0\{}}
+\L{\LB{}\Tab{16}{\V{uPeriodicBaseTask}(\0\V{period},\0\V{uTime}(),\0\V{endtime},\0\V{deadline},\0\V{cluster}\0)\0\{}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\C{}\1\1\0periodic\0task\0body}}
@@ -9785,7 +9800,7 @@ hence, the task is simply deleted without a need to re-schedule.
 \L{\LB{\K{\_PeriodicTask}\0\V{PeriodicTask2}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{PeriodicTask2}(\0\V{uDuration}\0\V{period},\0\V{uTime}\0\V{endtime},\0\V{uDuration}\0\V{deadline},\0\V{uCluster}\0\&\V{cluster}\0)\0:}}
-\L{\LB{}\Tab{16}{\V{uPeriodicBaseTask}(\0\V{period},\0\V{uTime}(0),\0\V{endtime},\0\V{deadline},\0\V{cluster}\0)\0\{}}
+\L{\LB{}\Tab{16}{\V{uPeriodicBaseTask}(\0\V{period},\0\V{uTime}(),\0\V{endtime},\0\V{deadline},\0\V{cluster}\0)\0\{}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\C{}\1\1\0periodic\0task\0body}}
@@ -9801,7 +9816,7 @@ hence, the task is simply deleted without a need to re-schedule.
 \CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0processor\0is\0created\0on\0the\0\"RTClust\"\0cluster.\0\0This\0is\0ideal,\0as}}
 \CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0\"addInitialize\"\0is\0called\0as\0each\0task\0is\0added\0to\0the\0cluster.}}
 \CE{}\L{\LB{}}
-\L{\LB{}\Tab{8}{\V{uTime}\0\V{currTime}\0=\0\V{uThisProcessor}().\V{getClock}().\V{getTime}();}}
+\L{\LB{}\Tab{8}{\V{uTime}\0\V{currTime}\0=\0\V{uClock}::\V{currTime}();}}
 \L{\LB{}\Tab{8}{\V{PeriodicTask1}\0\V{t1}(\015,\0\V{currTime}+90,\0\05,\0\V{RTClust}\0);}\Tab{60}{\C{}\1\1\015\0sec\0period,\05\0\0sec\0deadline}}
 \CE{}\L{\LB{}\Tab{8}{\V{PeriodicTask2}\0\V{t2}(\030,\0\V{currTime}+90,\010,\0\V{RTClust}\0);}\Tab{60}{\C{}\1\1\030\0sec\0period,\05\0\0sec\0deadline}}
 \CE{}\L{\LB{}\Tab{8}{\V{PeriodicTask1}\0\V{t3}(\060,\0\V{currTime}+90,\020,\0\V{RTClust}\0);}\Tab{60}{\C{}\1\1\060\0sec\0period,\020\0sec\0deadline}}
@@ -10177,16 +10192,24 @@ This approach avoids external fragmentation if large-object requests are infrequ
 
 The \uC allocator has the standard heap-operations:
 \begin{description}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc}(\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory; memory is uninitialized.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}(\0\V{N},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{N}}}\endlgrinde\LGend{} elements of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{N}}}\endlgrinde\LGend{} $\times$ \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes) and return a pointer to the allocated memory; memory is zero filled.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{size}\0)}}\endlgrinde\LGend{}] change the size of the memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory; if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc}(\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory;
+memory is uninitialized.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}(\0\V{N},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{N}}}\endlgrinde\LGend{} elements of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{N}}}\endlgrinde\LGend{} $\times$ \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes) and return a pointer to the allocated memory;
+memory is zero filled.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{size}\0)}}\endlgrinde\LGend{}] change the size of the memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory;
+if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
 Any uncopied memory in the new storage is uninitialized.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{posix\_memalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory; the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is uninitialized.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{posix\_memalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory;
+the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is uninitialized.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{free}(\0\V{ptr}\0)}}\endlgrinde\LGend{}] deallocate memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{}, which must have been allocated by a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}}}\endlgrinde\LGend{}.
 \end{description}
 The following extended routines (not defined by POSIX) are supported:
 \begin{description}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{memalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory; the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is uninitialized.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{memalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory;
+the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is uninitialized.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] change the alignment and size of the memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} boundary and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the aligned allocated memory;
+if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
+Any uncopied memory in the new storage is uninitialized.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mallopt}(\0\V{parameter},\0\V{value}\0)}}\endlgrinde\LGend{}] adjust parameters of the memory allocator for a specific application.
 Supported parameters are (see also \VRef{s:DefaultValuesHeap}):
 \begin{description}
@@ -10214,7 +10237,8 @@ zero fill		& \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}}}\endlgrinde\LGend{}
 Note the missing interface to allocate aligned storage that is zero filled;
 therefore, the interface is extended to complete the table with routine:
 \begin{description}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cmemalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory; the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is zero filled.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cmemalign}(\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] allocate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} bytes and return a pointer to the allocated memory;
+the address returned is a multiple of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{alignment}}}\endlgrinde\LGend{} and memory is zero filled.
 \end{description}
 This routine completes programmer expectation with respect to accessing the allocation properties.
 As well, current heap semantics do not preserve zero fill and alignment properties with respect to re-allocation.
@@ -10225,6 +10249,7 @@ This silent generation of a problem is unintuitive to programmers and difficult 
 Therefore, the semantics of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}}}\endlgrinde\LGend{} are augmented and some additional query routines are added:
 \begin{description}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{size}\0)}}\endlgrinde\LGend{}] same semantics as before with the addition that zero fill and alignment properties are preserved if a new allocation is made.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{realloc}(\0\V{ptr},\0\V{alignment},\0\V{size}\0)}}\endlgrinde\LGend{}] same semantics as before with the addition of new alignment and the zero fill property is preserved if a new allocation is made.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_alignment}(\0\V{ptr}\0)}}\endlgrinde\LGend{}] returns the alignment of the memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{}.
 If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}}}\endlgrinde\LGend{}, the minimal alignment for any allocation is returned, e.g., multiple of 8.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_zero\_fill}(\0\V{ptr}\0)}}\endlgrinde\LGend{}] returns a boolean result indicating if memory referenced by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ptr}}}\endlgrinde\LGend{} was allocated with zero fill (i.e., by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{calloc}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cmemalign}}}\endlgrinde\LGend{}).
@@ -10654,7 +10679,7 @@ The following \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\i
 
 These instructions assume the install \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{} for \uC is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\1\V{usr}\1\V{local}\1\V{u}++\-7.0.0}}\endlgrinde\LGend{};
 if installed elsewhere, change \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{}.
-Copy \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>\1.\V{gdbinit}}}\endlgrinde\LGend{} to your home directory or merge it into your existing \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file.
+Copy \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>\1\V{gdb}\1.\V{gdbinit}}}\endlgrinde\LGend{} to your home directory or merge it into your existing \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file.
 If installed elsewhere, edit the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{prefix}\>}}\endlgrinde\LGend{} within the \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file to the install location.
 Thereafter, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} automatically loads the \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file from the home directory at start up making the following new \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} commands available.
 

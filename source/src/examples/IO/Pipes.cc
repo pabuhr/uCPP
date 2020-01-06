@@ -40,7 +40,7 @@ _Task Reader {
 	uTime start, end;
 
 	cout << setprecision(2) << fixed;
-	start = uThisProcessor().getClock().getTime();
+	start = uClock::currTime();
 
 	uDuration pollFreq( 1 );
 	cout << "   Time"
@@ -75,7 +75,7 @@ _Task Reader {
 
 		// Statistics.
 		select_calls += 1;
-		end = uThisProcessor().getClock().getTime();
+		end = uClock::currTime();
 		uDuration diff = end - start;
 #ifdef __U_STATISTICS__
 		tselect_syscalls = UPP::Statistics::select_syscalls - tselect_syscalls;
@@ -129,11 +129,11 @@ char buffer[8192];					// common data for writers
 _Task Writer {
     void main() {
 	//osacquire( cerr ) << "Starting writer thread " << &uThistask() << endl;
-	uTime start = uThisProcessor().getClock().getTime(), end;
+	uTime start = uClock::currTime(), end;
 	uDuration work( 30 );				// work for N seconds
 	int pipe = rand() % PIPE_NUM;
 
-	for ( ; uThisProcessor().getClock().getTime() - start < work; ) {
+	for ( ; uClock::currTime() - start < work; ) {
 	    // Write a page to a pipe.
 	    pipes[pipe].right().write( buffer, 8192 );
 	    pipe += 1;

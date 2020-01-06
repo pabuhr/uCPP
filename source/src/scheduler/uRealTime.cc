@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  1 15:06:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 22 17:25:04 2017
-// Update Count     : 82
+// Last Modified On : Sat Jan  4 18:29:34 2020
+// Update Count     : 85
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ uRealTimeBaseTask::uRealTimeBaseTask( uEvent firstActivateEvent_, uTime endTime_
 	abort( "Attempt to create real time task with deadline less than 0." );
     } // if
     firstActivateEvent = firstActivateEvent_;
-    firstActivateTime = uTime( 0 );
+    firstActivateTime = uTime();
     endTime = endTime_;
     deadline = deadline_;
 } // uRealTimeBaseTask::uRealTimeBaseTask
@@ -135,7 +135,7 @@ int uRealTimeBaseTask::setVersion( uCluster &cluster, int version ) {
 //######################### uPeriodicBaseTask #########################
 
 
-uPeriodicBaseTask::uPeriodicBaseTask( uDuration period_, uCluster &cluster ) : uRealTimeBaseTask( uTime(0), uTime(0), uDuration(0), cluster ) {
+uPeriodicBaseTask::uPeriodicBaseTask( uDuration period_, uCluster &cluster ) : uRealTimeBaseTask( uTime(), uTime(), uDuration(), cluster ) {
     period = period_;
 } // uPeriodicBaseTask::uPeriodicBaseTask
 
@@ -180,7 +180,7 @@ uDuration uPeriodicBaseTask::setPeriod( uDuration period_ ) {
 //######################### uSporadicBaseTask #########################
 
 
-uSporadicBaseTask::uSporadicBaseTask( uDuration frame_, uCluster &cluster ) : uRealTimeBaseTask( uTime(0), uTime(0), uDuration(0), cluster ) {
+uSporadicBaseTask::uSporadicBaseTask( uDuration frame_, uCluster &cluster ) : uRealTimeBaseTask( uTime(), uTime(), uDuration(), cluster ) {
     frame = frame_;
 } // uSporadicBaseTask::uSporadicBaseTask
 

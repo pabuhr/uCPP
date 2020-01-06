@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Thu Dec 11 10:17:16 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:03:55 2016
-// Update Count     : 99
+// Last Modified On : Fri Jan  3 17:34:51 2020
+// Update Count     : 100
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -63,7 +63,7 @@ void T1::main(){
 
     // Test if timing out works.
 
-    starttime = uThisProcessor().getClock().getTime();
+    starttime = uClock::currTime();
     
     _Accept( mem1 ){
 	osacquire( cout ) << this << " mem1 accepted" << endl;
@@ -72,7 +72,7 @@ void T1::main(){
     } or _Timeout( uDuration( 1 ) ) {
 	osacquire( cout ) << this << " timeout accepted" << endl;
     } // _Accept
-    endtime = uThisProcessor().getClock().getTime();
+    endtime = uClock::currTime();
     osacquire( cout ) << this << " ending at " << endtime - starttime << endl;
 
     t2->cont();
@@ -80,7 +80,7 @@ void T1::main(){
     // Test calls which occur increasingly close to timeout value.
 
     for ( unsigned int i = 0; i < NoOfTimes + 3; i += 1 ) {
-	starttime = uThisProcessor().getClock().getTime();
+	starttime = uClock::currTime();
 	
 	_Accept( mem1 ) {
 	    osacquire( cout ) << this << " mem1 accepted" << endl;
@@ -93,7 +93,7 @@ void T1::main(){
 	    } or _Accept( mem2 );
 	} // _Accept
 
-	endtime = uThisProcessor().getClock().getTime();
+	endtime = uClock::currTime();
 	if ( i < 4 ) {
 	    osacquire( cout ) << this << " ending at " << endtime - starttime << endl;
 	} // if

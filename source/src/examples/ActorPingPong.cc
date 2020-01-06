@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  5 12:52:44 2019
-// Update Count     : 14
+// Last Modified On : Mon Jan  6 08:36:05 2020
+// Update Count     : 25
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,24 +33,21 @@ using namespace std;
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
 
-struct PingMsg : public uActor::Message {} pingMsg;
-struct PongMsg : public uActor::Message {} pongMsg;
+struct PingPongMsg : public uActor::Message {} pingpongMsg;
 
 _Actor Ping {
     int cycle = 0, cycles;
 
-    Allocation receive( Message &msg ) {
-	Case( PongMsg, msg ) {				// determine message kind
-	    if ( cycle < cycles ) {			// keep cycling ?
-		cycle += 1;
-		PRT( cout << "ping "; )
-		msg.sender->tell( pingMsg, this );	// return to sender
-	    } else {
-		PRT( cout << "ping stop" << endl; )	// stop cycling
-		msg.sender->tell( stopMsg, this );	// return to sender
-		return Finished;
-	    } // if
-	} // Case
+    Allocation receive( Message & msg ) {
+	if ( cycle < cycles ) {				// keep cycling ?
+	    cycle += 1;
+	    PRT( cout << "ping "; );
+	    msg.sender->tell( pingpongMsg, this );	// return to sender
+	} else {
+	    PRT( cout << "ping stop" << endl; );	// stop cycling
+	    msg.sender->tell( stopMsg, this );		// return to sender
+	    return Finished;
+	} // if
 	return Nodelete;				// reuse actor
     } // Ping::receive
   public:
@@ -58,10 +55,10 @@ _Actor Ping {
 }; // Ping
 
 _Actor Pong {
-    Allocation receive( Message &msg ) {
-	Case( PingMsg, msg ) {				// determine message kind
+    Allocation receive( Message & msg ) {
+	Case( PingPongMsg, msg ) {			// determine message kind
 	    PRT( cout << "pong" << endl; )
-	    msg.sender->tell( pongMsg, this );		// respond to sender
+	    msg.sender->tell( pingpongMsg, this );	// respond to sender
 	} else Case( StopMsg, msg ) {			// stop cycling
 	    PRT( cout << "pong stop" << endl; )
 	    return Finished;
@@ -70,7 +67,7 @@ _Actor Pong {
     } // Pong::receive
 }; // Pong
 
-int main( int argc, char *argv[] ) {
+int main( int argc, char * argv[] ) {
     int Cycles = 10;					// default values
 
     try {
@@ -91,10 +88,10 @@ int main( int argc, char *argv[] ) {
     uActorStart();					// start actor system
     Ping ping( Cycles );
     Pong pong;
-    ping.tell( pongMsg, &pong );			// start cycling
+    ping.tell( pingpongMsg, &pong );			// start cycling
     uActorStop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //
-// compile-command: "u++-work -g -O2 -multi ActorPingPong.cc" //
+// compile-command: "u++-work -g -O2 -multi -nodebug ActorPingPong.cc" //
 // End: //

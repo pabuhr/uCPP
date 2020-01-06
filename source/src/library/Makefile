@@ -20,11 +20,11 @@ LIBSRC = ${addprefix ${SRCDIR}/, ${addsuffix .cc, \
 uFile \
 uPoll \
 uSocket \
-uDefaultActorMailboxes \
-uDefaultActorThreads \
-uDefaultActorProcessors \
-uDefaultActorAffinity \
-uDefaultActorSepClus \
+uDefaultExecutorProcessors \
+uDefaultExecutorThreads \
+uDefaultExecutorRQueues \
+uDefaultExecutorSepClus \
+uDefaultExecutorAffinity \
 uFuture \
 uActor \
 pthread \

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun  3 18:06:58 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jun  3 18:08:17 2019
-// Update Count     : 2
+// Last Modified On : Wed Jan  1 21:28:42 2020
+// Update Count     : 4
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
 #define __U_KERNEL__
 #include <uC++.h>
 #include <uFuture.h>
-thread_local unsigned int uExecutor::next = 0;		// demultiplexed across workers buffers
+unsigned int uExecutor::next = 0;		// demultiplexed across workers buffers
 
 // Local Variables: //
 // compile-command: "make install" //

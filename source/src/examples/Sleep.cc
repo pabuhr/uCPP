@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Wed Jan 10 17:02:39 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:03:18 2016
-// Update Count     : 23
+// Last Modified On : Sat Jan  4 13:52:27 2020
+// Update Count     : 25
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,19 +29,16 @@ using std::cout;
 using std::osacquire;
 using std::endl;
 
-uClock Clock;
 volatile int x = 0, y = 1;
 
 _Task fred {
     void main() {
-	uTime start, end;
 	for ( ;; ) {
 	  if ( x == 20 ) break;
 	    if ( x < y ) x += 1;
-	    start = Clock.getTime();
+	    uTime start = uClock::currTime();
 	    _Timeout( uDuration( 1 ) );
-	    end = Clock.getTime();
-	    osacquire( cout ) << "fred slept for " << end - start << " seconds" << endl;
+	    osacquire( cout ) << "fred slept for " << uClock::currTime() - start << " seconds" << endl;
 	} // for
 	osacquire( cout ) << "fred finished" << endl;
     } // fred::main
@@ -49,14 +46,12 @@ _Task fred {
 
 _Task mary {
     void main() {
-	uTime start, end;
 	for ( ;; ) {
 	  if ( y == 20 ) break;
 	    if ( y == x ) y += 1;
-	    start = Clock.getTime();
+	    uTime start = uClock::currTime();
 	    _Timeout( uDuration( 2 ) );
-	    end = Clock.getTime();
-	    osacquire( cout ) << "mary slept for " << end - start << " seconds" << endl;
+	    osacquire( cout ) << "mary slept for " << uClock::currTime() - start << " seconds" << endl;
 	} // for
 	osacquire( cout ) << "mary finished" << endl;
     } // mary::main

@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 08:43:28 2019
-// Update Count     : 511
+// Last Modified On : Wed Jan  1 17:28:14 2020
+// Update Count     : 515
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,27 +46,27 @@ class uBaseEvent {
   public:
     enum RaiseKind { ThrowRaise, ResumeRaise };
   protected:
-    const uBaseCoroutine *src;				// source execution for async raise, set at raise
+    const uBaseCoroutine * src;				// source execution for async raise, set at raise
     char srcName[uEHMMaxName];				//    and this field, too
     char msg[uEHMMaxMsg];				// message to print if exception uncaught
-    mutable void *staticallyBoundObject;		// bound object for matching, set at raise
+    mutable void * staticallyBoundObject;		// bound object for matching, set at raise
     mutable RaiseKind raiseKind;			// how the exception is raised
 
-    uBaseEvent( const char *const msg = "" ) { src = nullptr; setMsg( msg ); }
-    void setSrc( uBaseCoroutine &coroutine );
-    const std::type_info *getEventType() const { return &typeid( *this ); };
-    void setMsg( const char *const msg );
+    uBaseEvent( const char * const msg = "" ) { src = nullptr; setMsg( msg ); }
+    void setSrc( uBaseCoroutine & coroutine );
+    const std::type_info * getEventType() const { return &typeid( *this ); };
+    void setMsg( const char * const msg );
     virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
   public:
     virtual ~uBaseEvent();
 
-    const char *message() const { return msg; }
-    const uBaseCoroutine &source() const { return *src; }
-    const char *sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
+    const char * message() const { return msg; }
+    const uBaseCoroutine & source() const { return *src; }
+    const char * sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
     RaiseKind getRaiseKind() const { return raiseKind; }
-    const void *getOriginalThrower() const { return staticallyBoundObject; }
+    const void * getOriginalThrower() const { return staticallyBoundObject; }
     void reraise();
-    virtual uBaseEvent *duplicate() const = 0;		// translator generated => object specific
+    virtual uBaseEvent * duplicate() const = 0;		// translator generated => object specific
     virtual void defaultTerminate() const;
     virtual void defaultResume() const;
 }; // uBaseEvent
@@ -86,8 +86,8 @@ class uEHM {
     class AsyncEMsg;
     class AsyncEMsgBuffer;
 
-    static bool match_exception_type( const std::type_info *derived_type, const std::type_info *parent_type );
-    static bool deliverable_exception( const std::type_info *event_type );
+    static bool match_exception_type( const std::type_info * derived_type, const std::type_info * parent_type );
+    static bool deliverable_exception( const std::type_info * event_type );
     static void terminate() __attribute__(( noreturn ));
     static void terminateHandler() __attribute__(( noreturn ));
     static void unexpected() __attribute__(( noreturn ));
@@ -103,28 +103,28 @@ class uEHM {
     class uHandlerBase;
     class uDeliverEStack;
 
-    static void asyncToss( const uBaseEvent &event, uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind, bool rethrow = false );
-    static void asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind );
+    static void asyncToss( const uBaseEvent & event, uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind, bool rethrow = false );
+    static void asyncReToss( uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind );
 
-    static void Throw( const uBaseEvent &event, void *const bound = 0 ) __attribute__(( noreturn ));
-    //static void ThrowAt( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ThrowRaise ); }
-    //static void ThrowAt( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ThrowRaise ); } // asynchronous rethrow
+    static void Throw( const uBaseEvent & event, void * const bound = nullptr ) __attribute__(( noreturn ));
+    //static void ThrowAt( const uBaseEvent & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseEvent::ThrowRaise ); }
+    //static void ThrowAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseEvent::ThrowRaise ); } // asynchronous rethrow
     static void ReThrow() __attribute__(( noreturn ));	// synchronous rethrow
 
-    static void Resume( const uBaseEvent &event, void *const bound = 0 );
-    static void ResumeAt( const uBaseEvent &event, uBaseCoroutine &target ) { asyncToss( event, target, uBaseEvent::ResumeRaise ); }
-    static void ResumeAt( uBaseCoroutine &target ) { asyncReToss( target, uBaseEvent::ResumeRaise ); } // asynchronous reresume
-    static void ReResume();
+    static void Resume( const uBaseEvent & event, void * const bound = nullptr, bool conseq = true );
+    static void ReResume( bool conseq = true );
+    static void ResumeAt( const uBaseEvent & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseEvent::ResumeRaise ); }
+    static void ResumeAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseEvent::ResumeRaise ); } // asynchronous reresume
 
     static bool pollCheck();
     static int poll();
-    static const std::type_info *getTopResumptionType();
-    static uBaseEvent *getCurrentException();
-    static uBaseEvent *getCurrentResumption();
-    static char *getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char *s1, size_t n );
-    static char *strncpy( char *s1, const char *s2, size_t n );
+    static const std::type_info * getTopResumptionType();
+    static uBaseEvent * getCurrentException();
+    static uBaseEvent * getCurrentResumption();
+    static char * getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char * s1, size_t n );
+    static char * strncpy( char * s1, const char * s2, size_t n );
   private:
-    static void resumeWorkHorse( const uBaseEvent &event, bool conseq );
+    static void resumeWorkHorse( const uBaseEvent & event, bool conseq );
 }; // uEHM
 
 
@@ -138,12 +138,12 @@ class uEHM::AsyncEMsg : public uSeqable {
     friend void uEHM::ResumeAt( const uBaseEvent &, uBaseCoroutine & );
 
     bool hidden;
-    uBaseEvent *asyncEvent;
+    uBaseEvent * asyncEvent;
 
-    AsyncEMsg &operator=( const AsyncEMsg & );
+    AsyncEMsg & operator=( const AsyncEMsg & );
     AsyncEMsg( const AsyncEMsg & );
 
-    AsyncEMsg( const uBaseEvent &event );
+    AsyncEMsg( const uBaseEvent & event );
   public:
     ~AsyncEMsg();
 }; // uEHM::AsyncEMsg
@@ -161,10 +161,10 @@ class uEHM::AsyncEMsgBuffer : public uSequence<uEHM::AsyncEMsg> {
     uSpinLock lock;
     AsyncEMsgBuffer();
     ~AsyncEMsgBuffer();
-    void uAddMsg( AsyncEMsg *msg );
-    AsyncEMsg *uRmMsg();
-    AsyncEMsg *uRmMsg( AsyncEMsg *msg );
-    AsyncEMsg *nextVisible( AsyncEMsg *msg );
+    void uAddMsg( AsyncEMsg * msg );
+    AsyncEMsg * uRmMsg();
+    AsyncEMsg * uRmMsg( AsyncEMsg * msg );
+    AsyncEMsg * nextVisible( AsyncEMsg * msg );
 }; // uEHM::AsyncEMsgBuffer
 
 
@@ -173,30 +173,30 @@ class uEHM::AsyncEMsgBuffer : public uSequence<uEHM::AsyncEMsg> {
 
 // base class allowing a list of otherwise-heterogeneous uHandlers
 class uEHM::uHandlerBase {
-    const void *const matchBinding;
-    const std::type_info *eventType;
+    const void * const matchBinding;
+    const std::type_info * eventType;
   protected:
-    uHandlerBase( const void *matchBinding, const std::type_info *eventType ) : matchBinding( matchBinding ), eventType( eventType ) {}
+    uHandlerBase( const void * matchBinding, const std::type_info * eventType ) : matchBinding( matchBinding ), eventType( eventType ) {}
     virtual ~uHandlerBase() {}
   public:
-    virtual void uHandler( uBaseEvent &exn ) = 0;
-    const void *getMatchBinding() const { return matchBinding; }
-    const std::type_info *getEventType() const { return eventType; }
+    virtual void uHandler( uBaseEvent & exn ) = 0;
+    const void * getMatchBinding() const { return matchBinding; }
+    const std::type_info * getEventType() const { return eventType; }
 }; // uHandlerBase
 
 template< typename Exn >
 class uRoutineHandler : public uEHM::uHandlerBase {
     const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > handlerRtn; // lambda for exception handling routine
   public:
-    uRoutineHandler( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > &handlerRtn ) : uHandlerBase( 0, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
-    uRoutineHandler( const void *originalThrower, const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > &handlerRtn ) : uHandlerBase( originalThrower, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
-    virtual void uHandler( uBaseEvent &exn ) { handlerRtn( (Exn &)exn ); }
+    uRoutineHandler( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > & handlerRtn ) : uHandlerBase( nullptr, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
+    uRoutineHandler( const void * originalThrower, const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > & handlerRtn ) : uHandlerBase( originalThrower, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
+    virtual void uHandler( uBaseEvent & exn ) { handlerRtn( (Exn &)exn ); }
 }; // uRoutineHandler
 
 class uRoutineHandlerAny : public uEHM::uHandlerBase {
     const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > handlerRtn; // lambda for exception handling routine
   public:
-    uRoutineHandlerAny( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > &handlerRtn ) : uHandlerBase( 0, 0 ), handlerRtn( handlerRtn ) {}
+    uRoutineHandlerAny( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > & handlerRtn ) : uHandlerBase( nullptr, nullptr ), handlerRtn( handlerRtn ) {}
     virtual void uHandler( uBaseEvent & /* exn */ ) { handlerRtn(); }
 }; // uRoutineHandlerAny
 
@@ -207,17 +207,17 @@ class uRoutineHandlerAny : public uEHM::uHandlerBase {
 class uEHM::uResumptionHandlers {
     friend void uEHM::resumeWorkHorse( const uBaseEvent &, bool );
 
-    uResumptionHandlers *next, *conseqNext;		// uNext maintains a proper stack, while uConseqNext is used to skip
+    uResumptionHandlers * next, * conseqNext;		// uNext maintains a proper stack, while uConseqNext is used to skip
 							// over handlers that have already been examined for resumption (to avoid recursion)
 
     const unsigned int size;				// number of handlers
-    uHandlerBase *const *table;				// pointer to array of resumption handlers
+    uHandlerBase * const * table;			// pointer to array of resumption handlers
   public:
     uResumptionHandlers( const uResumptionHandlers & ) = delete; // no copy
     uResumptionHandlers( uResumptionHandlers && ) = delete;
-    uResumptionHandlers &operator=( const uResumptionHandlers & ) = delete; // no assignment
+    uResumptionHandlers & operator=( const uResumptionHandlers & ) = delete; // no assignment
 
-    uResumptionHandlers( uHandlerBase *const table[], const unsigned int size );
+    uResumptionHandlers( uHandlerBase * const table[], const unsigned int size );
     ~uResumptionHandlers();
 }; // uEHM::uResumptionHandlers
 
@@ -227,16 +227,16 @@ class uEHM::uResumptionHandlers {
 class uEHM::uDeliverEStack {
     friend bool uEHM::deliverable_exception( const std::type_info * );
 
-    uDeliverEStack *next;
+    uDeliverEStack * next;
     bool deliverFlag;					// true when events in table is Enable, otherwise false
     int  table_size;                                    // number of events in the table, 0 implies everything
-    const std::type_info **event_table;			// event id table
+    const std::type_info ** event_table;		// event id table
   public:
     uDeliverEStack( const uDeliverEStack & ) = delete;	// no copy
     uDeliverEStack( uDeliverEStack && ) = delete;
-    uDeliverEStack &operator=( const uDeliverEStack & ) = delete; // no assignment
+    uDeliverEStack & operator=( const uDeliverEStack & ) = delete; // no assignment
 
-    uDeliverEStack( bool f, const std::type_info **t = nullptr, unsigned int msg = 0 ); // for enable and disable blocks
+    uDeliverEStack( bool f, const std::type_info ** t = nullptr, unsigned int msg = 0 ); // for enable and disable blocks
     ~uDeliverEStack();
 }; // uEHM::uDeliverEStack
 
@@ -246,7 +246,7 @@ class uEHM::uDeliverEStack {
 class uEHM::uFinallyHandler {
     const std::function< FINALLY_CATCHRESUME_DISALLOW_RETURN () > cleanUpRtn; // lambda for clean up
   public:
-    uFinallyHandler( const std::function< FINALLY_CATCHRESUME_DISALLOW_RETURN () > &cleanUpRtn ) : cleanUpRtn( cleanUpRtn ) {}
+    uFinallyHandler( const std::function< FINALLY_CATCHRESUME_DISALLOW_RETURN () > & cleanUpRtn ) : cleanUpRtn( cleanUpRtn ) {}
     ~uFinallyHandler()
 #if __cplusplus >= 201103L
 	    noexcept( false )				// C++11, required to allow exception from destructor

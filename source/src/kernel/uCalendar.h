@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Tue Dec 19 11:58:22 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 10 15:28:30 2019
-// Update Count     : 261
+// Last Modified On : Sun Jan  5 19:13:51 2020
+// Update Count     : 331
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,22 +28,13 @@
 #pragma once
 
 
-#include <ctime>
-#include <sys/time.h>
-#include <iosfwd>
+#include <ctime>					// timespec
+#include <sys/time.h>					// itimerval
 
 
 #define CLOCKGRAN 15000000L				// ALWAYS in nanoseconds, MUST BE less than 1 second
 #define TIMEGRAN 1000000000L				// nanosecond granularity, except for timeval
 #define GETTIMEOFDAY( tp ) gettimeofday( (tp), (struct timezone *)0 )
-
-
-#if defined( REALTIME_POSIX )
-#define tv_XSEC tv_nsec
-#else
-#define tv_XSEC tv_usec
-#endif
-
 
 // fake a few things
 #define	CLOCK_REALTIME	0				// real (clock on the wall) time
@@ -71,7 +62,7 @@ bool operator>( uDuration op1, uDuration op2 );		// forward declaration
 bool operator<( uDuration op1, uDuration op2 );		// forward declaration
 bool operator>=( uDuration op1, uDuration op2 );	// forward declaration
 bool operator<=( uDuration op1, uDuration op2 );	// forward declaration
-std::ostream &operator<<( std::ostream &os, const uDuration op ); // forward declaration
+std::ostream & operator<<( std::ostream & os, const uDuration op ); // forward declaration
 
 
 //######################### uTime #########################
@@ -87,7 +78,7 @@ bool operator>( uTime op1, uTime op2 );			// forward declaration
 bool operator<( uTime op1, uTime op2 );			// forward declaration
 bool operator>=( uTime op1, uTime op2 );		// forward declaration
 bool operator<=( uTime op1, uTime op2 );		// forward declaration
-std::ostream &operator<<( std::ostream &os, const uTime op ); // forward declaration
+std::ostream & operator<<( std::ostream & os, const uTime op ); // forward declaration
 
 
 //######################### uDuration (cont) #########################
@@ -111,77 +102,82 @@ class uDuration {
     friend bool operator>=( uDuration op1, uDuration op2 ); 
     friend bool operator<=( uDuration op1, uDuration op2 );
     friend uDuration abs( uDuration op );
-    friend std::ostream &operator<<( std::ostream &os, const uDuration op );
+    friend std::ostream & operator<<( std::ostream & os, const uDuration op );
 
     friend uDuration operator-( uTime op1, uTime op2 );
     friend uTime operator-( uTime op1, uDuration op2 );
     friend uTime operator+( uTime op1, uDuration op2 );
 
-    long long int tv;
+    int64_t tn;						// nanoseconds
   public:
     uDuration() {
+	tn = 0;
     } // uDuration::uDuration
 
     uDuration( long int sec ) {
-	tv = (long long int)sec * TIMEGRAN;
+	tn = (long long int)sec * TIMEGRAN;
     } // uDuration::uDuration
 
     uDuration( long int sec, long int nsec ) {
-	tv = (long long int)sec * TIMEGRAN + nsec;
+	tn = (long long int)sec * TIMEGRAN + nsec;
     } // uDuration::uDuration
 
-    uDuration( const timeval &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_usec * 1000;
+    uDuration( const timeval tv ) {
+	tn = (long long int)tv.tv_sec * TIMEGRAN + tv.tv_usec * 1000;
     } // uDuration::uDuration
 
-    uDuration( const timespec &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_nsec;
+    uDuration( const timespec ts ) {
+	tn = (long long int)ts.tv_sec * TIMEGRAN + ts.tv_nsec;
     } // uDuration::uDuration
 
-    uDuration &operator=( const timeval &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_usec * 1000;
+    uDuration operator=( const timeval tv ) {
+	tn = (long long int)tv.tv_sec * TIMEGRAN + tv.tv_usec * 1000;
 	return *this;
     } // uDuration::operator=
 
-    uDuration &operator=( const timespec &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_nsec;
+    uDuration operator=( const timespec ts ) {
+	tn = (long long int)ts.tv_sec * TIMEGRAN + ts.tv_nsec;
 	return *this;
     } // uDuration::operator=
 
     operator timeval() const {
-	timeval dummy;
-	dummy.tv_sec = tv / TIMEGRAN;			// seconds
-	dummy.tv_usec = tv % TIMEGRAN / ( TIMEGRAN / 1000000L ); // microseconds
-	return dummy;
+	timeval tv;
+	tv.tv_sec = tn / TIMEGRAN;			// seconds
+	tv.tv_usec = tn % TIMEGRAN / ( TIMEGRAN / 1000000L ); // microseconds
+	return tv;
     } // uDuration::operator timeval
 
     operator timespec() const {
-	timespec dummy;
-	dummy.tv_sec = tv / TIMEGRAN;			// seconds
-	dummy.tv_nsec = tv % TIMEGRAN;			// nanoseconds
-	return dummy;
+	timespec ts;
+	ts.tv_sec = tn / TIMEGRAN;			// seconds
+	ts.tv_nsec = tn % TIMEGRAN;			// nanoseconds
+	return ts;
     } // uDuration::operator timespec
 
-    long long int nanoseconds() const {
-	return tv;
+    long int seconds() const {
+	return tn / TIMEGRAN;				// seconds
     } // uDuration::nanoseconds
 
-    uDuration &operator-=( uDuration op ) {
+    int64_t nanoseconds() const {
+	return tn;
+    } // uDuration::nanoseconds
+
+    uDuration operator-=( uDuration op ) {
 	*this = *this - op;
 	return *this;
     } // uDuration::operator-=
 
-    uDuration &operator+=( uDuration op ) {
+    uDuration operator+=( uDuration op ) {
 	*this = *this + op;
 	return *this;
     } // uDuration::operator+=
 
-    uDuration &operator*=( long long int op ) {
+    uDuration operator*=( int64_t op ) {
 	*this = *this * op;
 	return *this;
     } // uDuration::operator*=
 
-    uDuration &operator/=( long long int op ) {
+    uDuration operator/=( int64_t op ) {
 	*this = *this / op;
 	return *this;
     } // uDuration::operator/=
@@ -190,31 +186,31 @@ class uDuration {
 
 inline uDuration operator+( uDuration op ) {		// unary
     uDuration ans;
-    ans.tv = +op.tv;
+    ans.tn = +op.tn;
     return ans;
 } // operator+
 
 inline uDuration operator+( uDuration op1, uDuration op2 ) { // binary
     uDuration ans;
-    ans.tv = op1.tv + op2.tv;
+    ans.tn = op1.tn + op2.tn;
     return ans;
 } // operator+
 
 inline uDuration operator-( uDuration op ) {		// unary
     uDuration ans;
-    ans.tv = -op.tv;
+    ans.tn = -op.tn;
     return ans;
 } // operator-
 
 inline uDuration operator-( uDuration op1, uDuration op2 ) { // binary
     uDuration ans;
-    ans.tv = op1.tv - op2.tv;
+    ans.tn = op1.tn - op2.tn;
     return ans;
 } // operator-
 
 inline uDuration operator*( uDuration op1, long long int op2 ) {
     uDuration ans;
-    ans.tv = op1.tv * op2;
+    ans.tn = op1.tn * op2;
     return ans;
 } // operator*
 
@@ -224,44 +220,44 @@ inline uDuration operator*( long long int op1, uDuration op2 ) {
 
 inline uDuration operator/( uDuration op1, long long int op2 ) {
     uDuration ans;
-    ans.tv = op1.tv / op2;
+    ans.tn = op1.tn / op2;
     return ans;
 } // operator/
 
 inline long long int operator/( uDuration op1, uDuration op2 ) {
-    return op1.tv / op2.tv;
+    return op1.tn / op2.tn;
 } // operator/
 
 inline bool operator==( uDuration op1, uDuration op2 ) {
-    return op1.tv == op2.tv;
+    return op1.tn == op2.tn;
 } // operator==
 
 inline bool operator!=( uDuration op1, uDuration op2 ) {
-    return op1.tv != op2.tv;
+    return op1.tn != op2.tn;
 } // operator!=
 
 inline bool operator>( uDuration op1, uDuration op2 ) {
-    return op1.tv > op2.tv;
+    return op1.tn > op2.tn;
 } // operator>
 
 inline bool operator<( uDuration op1, uDuration op2 ) {
-    return op1.tv < op2.tv;
+    return op1.tn < op2.tn;
 } // operator<
 
 inline bool operator>=( uDuration op1, uDuration op2 ) { 
-    return op1.tv >= op2.tv;
+    return op1.tn >= op2.tn;
 } // operator>=
 
 inline bool operator<=( uDuration op1, uDuration op2 ) {
-    return op1.tv <= op2.tv;
+    return op1.tn <= op2.tn;
 } // operator<=
 
 inline long long int operator%( uDuration op1, uDuration op2 ) {
-    return op1.tv % op2.tv;
+    return op1.tn % op2.tn;
 } // operator%
 
 inline uDuration abs( uDuration op1 ) {
-    if ( op1.tv < 0 ) op1.tv = -op1.tv;
+    if ( op1.tn < 0 ) op1.tn = -op1.tn;
     return op1;
 } // abs
 
@@ -281,85 +277,72 @@ class uTime {
     friend bool operator<( uTime op1, uTime op2 );
     friend bool operator>=( uTime op1, uTime op2 ); 
     friend bool operator<=( uTime op1, uTime op2 );
-    friend std::ostream &operator<<( std::ostream &os, const uTime op );
+    friend std::ostream & operator<<( std::ostream & os, const uTime op );
 
-    long long int tv;					// gcc specific
-
-    void uCreateTime( int year, int month, int day, int hour, int min, long int sec, long int nsec );
+    uint64_t tn;					// nanoseconds since UNIX epoch
   public:
     uTime() {
+	tn = 0;
     } // uTime::uTime
 
-    // These two constructors must not call uCreateTime because of its call to mktime, which subsequently calls
-    // malloc. The malloc calls lead to recursion problems because uTime values are created from the sigalrm handler in
-    // composing the next context switch event.
+    // explicit => unambiguous with uDuration( long int sec )
+    explicit uTime( int year, int month = 1, int day = 1, int hour = 0, int min = 0, int sec = 0, int64_t nsec = 0 );
 
-    explicit uTime( long int sec );
-
-    uTime( long int sec, long int nsec );
-
-    uTime( int min, int sec, long int nsec ) {
-	uCreateTime( 1970, 0, 0, 0, min, sec, nsec );
+    uTime( timeval tv ) {
+	tn = (long long int)tv.tv_sec * TIMEGRAN + tv.tv_usec * 1000;
     } // uTime::uTime
 
-    uTime( int hour, int min, int sec, long int nsec ) {
-	uCreateTime( 1970, 0, 0, hour, min, sec, nsec );
+    uTime( timespec ts ) {
+	tn = (long long int)ts.tv_sec * TIMEGRAN + ts.tv_nsec;
     } // uTime::uTime
 
-    uTime( int day, int hour, int min, int sec, long int nsec ) {
-	uCreateTime( 1970, 0, day, hour, min, sec, nsec );
-    } // uTime::uTime
-
-    uTime( int month, int day, int hour, int min, int sec, long int nsec ) {
-	uCreateTime( 1970, month, day, hour, min, sec, nsec );
-    } // uTime::uTime
-
-    uTime( int year, int month, int day, int hour, int min, int sec, long int nsec ) {
-	uCreateTime( year, month, day, hour, min, sec, nsec );
-    } // uTime::uTime
-
-    uTime( const timeval &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_usec * 1000;
-    } // uTime::uTime
-
-    uTime( const timespec &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_nsec;
-    } // uTime::uTime
-
-    uTime &operator=( const timeval &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_usec * 1000;
+    uTime operator=( timeval tv ) {
+	tn = (long long int)tv.tv_sec * TIMEGRAN + tv.tv_usec * 1000;
 	return *this;
     } // uTime::operator=
 
-    uTime &operator=( const timespec &t ) {
-	tv = (long long int)t.tv_sec * TIMEGRAN + t.tv_nsec;
+    uTime operator=( timespec ts ) {
+	tn = (long long int)ts.tv_sec * TIMEGRAN + ts.tv_nsec;
 	return *this;
     } // uTime::operator=
 
     operator timeval() const {
-	timeval dummy;
-	dummy.tv_sec = tv / TIMEGRAN;			// seconds
-	dummy.tv_usec = tv % TIMEGRAN / ( TIMEGRAN / 1000000L ); // microseconds
-	return dummy;
+	timeval tv;
+	tv.tv_sec = tn / TIMEGRAN;			// seconds
+	tv.tv_usec = tn % TIMEGRAN / ( TIMEGRAN / 1000000L ); // microseconds
+	return tv;
     } // uTime::operator timeval
 
     operator timespec() const {
-	timespec dummy;
-	dummy.tv_sec = tv / TIMEGRAN;			// seconds
-	dummy.tv_nsec = tv % TIMEGRAN;			// nanoseconds
-	return dummy;
+	timespec ts;
+	ts.tv_sec = tn / TIMEGRAN;			// seconds
+	ts.tv_nsec = tn % TIMEGRAN;			// nanoseconds
+	return ts;
     } // uTime::operator timespec
 
-    long long int nanoseconds() const {
-	return tv;
-    } // uTime::longlongint
+    operator tm() const {
+	tm tm;
+	time_t sec = tn / TIMEGRAN;			// seconds
+	localtime_r( &sec, &tm );
+	return tm;
+    } // uTime::operator tm
 
-    uTime &operator-=( uDuration op ) {
+    void convert( int & year, int & month, int & day, int & hour, int & minutes, int & seconds, int64_t & nseconds ) const {
+        tm tm = *this;
+	year = tm.tm_year; month = tm.tm_mon; day = tm.tm_mday; hour = tm.tm_hour; minutes = tm.tm_min; seconds = tm. tm_sec;
+	nseconds = tn % TIMEGRAN;
+    } // uTime::convert
+
+    uint64_t nanoseconds() const {
+	return tn;
+    } // uTime::nanoseconds
+
+    uTime operator-=( uDuration op ) {
 	*this = *this - op;
 	return *this;
     } // uTime::operator-=
 
-    uTime &operator+=( uDuration op ) {
+    uTime operator+=( uDuration op ) {
 	*this = *this + op;
 	return *this;
     } //  uTime::operator+=
@@ -368,7 +351,7 @@ class uTime {
 
 inline uTime operator+( uTime op1, uDuration op2 ) {
     uTime ans;
-    ans.tv = op1.tv + op2.tv;
+    ans.tn = op1.tn + op2.tn;
     return ans;
 } // operator+
 
@@ -378,38 +361,38 @@ inline uTime operator+( uDuration op1, uTime op2 ) {
 
 inline uDuration operator-( uTime op1, uTime op2 ) {
     uDuration ans;
-    ans.tv = op1.tv - op2.tv;
+    ans.tn = op1.tn - op2.tn;
     return ans;
 } // operator-
 
 inline uTime operator-( uTime op1, uDuration op2 ) {
     uTime ans;
-    ans.tv = op1.tv - op2.tv;
+    ans.tn = op1.tn - op2.tn;
     return ans;
 } // operator-
 
 inline bool operator==( uTime op1, uTime op2 ) {
-    return op1.tv == op2.tv;
+    return op1.tn == op2.tn;
 } // operator==
 
 inline bool operator!=( uTime op1, uTime op2 ) {
-    return op1.tv != op2.tv;
+    return op1.tn != op2.tn;
 } // operator!=
 
 inline bool operator>( uTime op1, uTime op2 ) {
-    return op1.tv > op2.tv;
+    return op1.tn > op2.tn;
 } // operator>
 
 inline bool operator<( uTime op1, uTime op2 ) {
-    return op1.tv < op2.tv;
+    return op1.tn < op2.tn;
 } // operator<
 
 inline bool operator>=( uTime op1, uTime op2 ) { 
-    return op1.tv >= op2.tv;
+    return op1.tn >= op2.tn;
 } // operator>=
 
 inline bool operator<=( uTime op1, uTime op2 ) {
-    return op1.tv <= op2.tv;
+    return op1.tn <= op2.tn;
 } // operator<=
 
 
@@ -417,27 +400,47 @@ inline bool operator<=( uTime op1, uTime op2 ) {
 
 
 class uClock {
-    uTime offset;					// for virtual clock: contains offset from real-time
-    int clocktype;					// implementation only -1 (virtual), CLOCK_REALTIME
+    uDuration offset;					// for virtual clock: contains offset from real-time
   public:
-    uClock() {
-	clocktype = CLOCK_REALTIME;
+    uClock() : offset( 0 ) {
     } // uClock::uClock
 
-    uClock( uTime adj ) {
+    void resetClock( uDuration adj ) {
+	offset = adj + __timezone * TIMEGRAN;		// timezone (global) is (UTC - local time) in seconds
+    } // uClock::resetClock
+
+    uClock( uDuration adj ) {
 	resetClock( adj );
     } // uClock::uClock
 
-    void resetClock() {
-	clocktype = CLOCK_REALTIME;
-    } // uClock::resetClock
+    static uDuration getResNsec() {
+	timespec res;
+	clock_getres( CLOCK_REALTIME, &res );
+	return uDuration( res.tv_sec * TIMEGRAN, res.tv_nsec);
+    } // uClock::getRes
 
-    void resetClock( uTime adj );
+    static uDuration getRes() {
+	struct timespec res;
+	clock_getres( CLOCK_REALTIME_COARSE, &res );
+	return uDuration( res.tv_sec * TIMEGRAN, res.tv_nsec );
+    } // uClock::getRes
 
-    uTime getTime();
-    void getTime( int &year, int &month, int &day, int &hour, int &minutes, int &seconds, long int &nsec );
+    // cannot overload static getTime with member getTime
+    static uTime currTime() {				// ##### REFERENCED IN TRANSLATOR #####
+	timespec ts;
+	clock_gettime( CLOCK_REALTIME, &ts );
+	return uTime( ts );
+    } // uClock::currTime
 
-    static void convertTime( uTime time, int &year, int &month, int &day, int &hour, int &minutes, int &seconds, long int &nsec );
+    uTime getTime() {
+	return currTime() + offset;
+    } // uClock::getTime
+
+    static uTime getCPUTime() {
+	timespec ts;
+	clock_gettime( CLOCK_THREAD_CPUTIME_ID, &ts );
+	return uTime( ts );
+    } // uClock::getCPUTime
 }; // uClock
 
 

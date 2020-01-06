@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 13:08:00 2019
-// Update Count     : 1503
+// Last Modified On : Fri Jan  3 17:22:14 2020
+// Update Count     : 1504
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -931,7 +931,7 @@ namespace UPP {
 		waitOrPoll( node );
 	    } else {
 		uDuration delay( timeout->tv_sec, timeout->tv_usec * 1000 );
-		uTime time = activeProcessorKernel->kernelClock.getTime() + delay;
+		uTime time = uClock::currTime() + delay;
 		uSelectTimeoutHndlr handler( uThisTask(), node );
 
 		uEventNode timeoutEvent( uThisTask(), handler, time ); // event node for event list
@@ -989,7 +989,7 @@ namespace UPP {
 		waitOrPoll( nfds, node );
 	    } else {
 		uDuration delay( timeout->tv_sec, timeout->tv_usec * 1000 );
-		uTime time = activeProcessorKernel->kernelClock.getTime() + delay;
+		uTime time = uClock::currTime() + delay;
 		uSelectTimeoutHndlr handler( uThisTask(), node );
 
 		uEventNode timeoutEvent( uThisTask(), handler, time ); // event node for event list

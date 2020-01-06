@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  3 19:37:17 2019
-// Update Count     : 4946
+// Last Modified On : Wed Jan  1 17:28:12 2020
+// Update Count     : 4955
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2055,7 +2055,7 @@ static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
     token_t *prefix, *suffix;
     char helpText[64];
 
-    if ( match( kind ) ) {				// _Throw or _Resume ?
+    if ( match( kind ) ) {				// _Throw, _Resume or _ResumeTop ?
 	const char *kindstr = kind == UTHROW ? "Throw" : "Resume";
 	prefix = ahead;					// remember where to put the prefix
 	for ( ;; ) {					// look for the end of the statement
@@ -2090,17 +2090,21 @@ static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
 	    if ( match( ';' ) ) {
 		suffix = ahead->prev_parse_token();
 		if ( prefix == suffix ) {		// no exception ? => reraise
-		    sprintf( helpText, "uEHM :: Re%s ( )", kindstr );
+		    sprintf( helpText, "uEHM :: Re%s ( %s )", kindstr, kind == RESUMETOP ? "false" : "" );
 		    gen_code( prefix, helpText );
 		} else {
 		    sprintf( helpText, "uEHM :: %s (", kindstr );
 		    gen_code( prefix, helpText );
 		    prefix = prefix->prev_parse_token();
 		    if ( symbol->data->found != nullptr && symbol->data->found->symbol && ! symbol->data->attribute.dclqual.qual.STATIC ) { // not static member?
-			gen_code( suffix, ", this )" );	// object for bound
+			gen_code( suffix, ", this" );	// object for bound
 		    } else {
-			gen_code( suffix, ")" );	// no object for bound
+			gen_code( suffix, ", nullptr" ); // no object for bound
 		    } // if
+		    if ( kind == RESUMETOP ) {
+			gen_code( suffix, ", false" );	// no consequence
+		    } // if
+		    gen_code( suffix, ")" );
 		} // if
 		return true;
 	    } // if
@@ -2377,6 +2381,7 @@ static bool statement( symbol_t *symbol ) {
 	if ( throw_expression() ) return true;
 	if ( raise_expression( UTHROW, symbol ) ) return true;
 	if ( raise_expression( RESUME, symbol ) ) return true;
+	if ( raise_expression( RESUMETOP, symbol ) ) return true;
 
 	if ( enable_statement( symbol ) ) return true;
 	if ( disable_statement( symbol ) ) return true;
@@ -3844,7 +3849,7 @@ static token_t *function_array( attribute_t &attribute ) {
 } // function_array
 
 
-static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
+static bool copy_constructor( const bool explict, const token_t *token, attribute_t &attribute ) {
     token_t *back = ahead;
     symbol_t *symbol;
     bool pushflag = false;
@@ -3891,7 +3896,7 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
 			scan();				// ignore everything else
                 } // for
 		if ( commas == 0 ) {
-		    token->symbol->data->table->hascopy = true;
+		    if ( ! explict ) token->symbol->data->table->hascopy = true;
 		    if ( pushflag ) pop_table();
 		    return true;
 		} // if
@@ -3905,6 +3910,7 @@ static bool copy_constructor( const token_t *token, attribute_t &attribute ) {
 
 
 static bool function_return_type( attribute_t &attribute );
+
 static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
     token_t *back = ahead;
     token_t *token;
@@ -3913,7 +3919,7 @@ static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
 	// constructors and destructors are not put in the symbol table.  the class symbol table is the one set for
 	// further name look ups.
 
-	if ( copy_constructor( token, attribute ) || formal_parameter( true, token, attribute ) ) {
+	if ( copy_constructor( attribute.dclqual.qual.EXPLICIT, token, attribute ) || formal_parameter( true, token, attribute ) ) {
 	    // remember where the right parenthese of the argument list of the constructor is
 	    rp = ahead->prev_parse_token();
 	    uassert( rp->value == ')' );

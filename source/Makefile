@@ -51,7 +51,7 @@ CCAPP ?= ${CCBUILD}
 
 ## Define version of C++11 (-std=): c++11 (minimum), c++14, c++17, c++1y
 
-CPP11 ?= c++14
+CPP11 ?= c++17
 
 ## Define name of the uC++ translator so multiple u++ versions can coexist.
 
@@ -65,7 +65,7 @@ MAXENTRYBITS ?= 128
 
 ## Define if the kernel is build with statistical counters
 
-STATISTICS ?= FALSE
+STATISTICS ?= TRUE
 
 ########################### END OF THINGS TO CHANGE ###########################
 
@@ -84,10 +84,9 @@ SHELL := /bin/sh
 
 ## Define the major recipes.
 
-.SILENT : all depend clean install uninstall
+.SILENT : all test clean install uninstall
 
 all \
-depend \
 clean \
 install \
 uninstall :
@@ -136,6 +135,23 @@ uninstall :
 scratch :
 	rm -rf ${INSTALLMANDIR}/* ${INSTALLBINDIR}/* ${INSTALLLIBDIR}/* ${INSTALLINCDIR}/*
 
+test :
+	tmpname="${TMPDIR}/uC_tmp$${$$}" ; \
+	for kind in "-debug -nomulti" "-nodebug -nomulti" "-debug -multi" "-nodebug -multi" ; do \
+		echo '_Task T { void main() {}; }; int main() { T t[10]; }' > $${tmpname}.cc ; \
+		${INSTALLBINDIR}/u++ -quiet $${kind} $${tmpname}.cc -o $${tmpname} ; \
+		if [ $${?} -ne 0 ] ; then \
+			echo "Compilation failed for options $${kind}" ; \
+			exit 1 ; \
+		fi ; \
+		$${tmpname} ; \
+		if [ $${?} -ne 0 ] ; then \
+			echo "Test failed for options $${kind}" ; \
+			exit 1 ; \
+		fi ; \
+	done ; \
+	echo "Test passed for" ${INSTALLBINDIR}/u++ ; \
+	rm -f $${tmpname}.cc $${tmpname}
 
 # These recipe recursively invoke this file again with all configuration variables set.
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 18 17:56:52 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:51:25 2016
-// Update Count     : 21
+// Last Modified On : Sat Jan  4 18:33:04 2020
+// Update Count     : 24
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -103,8 +103,8 @@ _Mutex<uStaticPriorityQ, uStaticPriorityQ> _PeriodicTask<uStaticPIQ> task1 {
     } // Philosopher::main
   public:
     task1( int id, uDuration period, uDuration delay1, uDuration delay2, uCluster &clust ) :
-	    uPeriodicBaseTask( period, uTime(0,0), uThisProcessor().getClock().getTime() + uDuration(90), period, clust ),
-//	    uPeriodicBaseTask( period, uTime(0,0), uTime(0,0), period, clust ),
+	    uPeriodicBaseTask( period, uTime(), uClock::currTime() + 90, period, clust ),
+//	    uPeriodicBaseTask( period, uTime(), uTime(), period, clust ),
 	D1( delay1 ), D2( delay2 ), id( id ) {
     } // task1::task1
 }; // task1
@@ -122,8 +122,8 @@ _Mutex<uStaticPriorityQ, uStaticPriorityQ> _PeriodicTask<uStaticPIQ> task2 {
     } // Philosopher::main
   public:
     task2( int id, uDuration period, uDuration delay, uCluster &clust ) :
-	    uPeriodicBaseTask( period, uTime(0,0), uThisProcessor().getClock().getTime() + uDuration( 90 ), period, clust ),
-//	    uPeriodicBaseTask( period, uTime(0,0), uTime(0,0), period, clust ),
+	    uPeriodicBaseTask( period, uTime(), uClock::currTime() + 90, period, clust ),
+//	    uPeriodicBaseTask( period, uTime(), uTime(), period, clust ),
 	D1( delay ), id( id ) {
     } // task2::task2
 }; // task2

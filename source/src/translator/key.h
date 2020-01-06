@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:17:03 2019
-// Update Count     : 98
+// Last Modified On : Wed Jan  1 17:16:13 2020
+// Update Count     : 99
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -178,6 +178,7 @@ enum key_value_t {
     NOMUTEX,
     PTASK,
     RESUME,
+    RESUMETOP,
     RTASK,
     SELECT,
     STASK,

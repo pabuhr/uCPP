@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Tue Jul 23 14:58:56 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:02:27 2016
-// Update Count     : 84
+// Last Modified On : Sat Jan  4 18:39:00 2020
+// Update Count     : 86
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,11 +43,11 @@ class AcrossCxtSw : public uContext {
     } // AcrossCxtSw::AcrossCxtSw
 
     void save(){
-	beginCxtSw = uThisProcessor().getClock().getTime();
+	beginCxtSw = uClock::currTime();
     } // AcrossCxtSw::save
 
     void restore(){
-	clock += uThisProcessor().getClock().getTime() - beginCxtSw;
+	clock += uClock::currTime() - beginCxtSw;
     } // AcrossCxtSw::restore
 }; // AcrossCxtSw
 
@@ -57,7 +57,7 @@ uRealTimeMonitor RestRoom {
     void Toilet( int id, uDuration C1 ) {
 	uTime starttime, delay, currtime, endtime;
 
-	starttime = uThisProcessor().getClock().getTime();
+	starttime = uClock::currTime();
 	osacquire( cout ) << setw(3) << starttime - ::Start << "\t" << id << " goes to TOILET (priority " <<
 	    uThisTask().getActivePriority() << ")" << endl;
 
@@ -68,16 +68,16 @@ uRealTimeMonitor RestRoom {
 	// problem, the current time value is saved *before* the comparison.  Thus, whether the delay value is the old
 	// or new (i.e., becomes larger) value, the comparision does not cause a premature exit.
 
-	delay = uThisProcessor().getClock().getTime() + C1;
+	delay = uClock::currTime() + C1;
 	{
 	    AcrossCxtSw acrossCxtSw( delay );
 	    do {
 		for ( int i = 0; i < Delay; i += 1 );	// don't spend too much time in non-interruptible clock routine
-		currtime = uThisProcessor().getClock().getTime();
+		currtime = uClock::currTime();
 	    } while ( delay > currtime );
 	}
 
-	endtime = uThisProcessor().getClock().getTime();
+	endtime = uClock::currTime();
 	osacquire( cout ) << setw(3) << endtime - ::Start << "\t" << id << " leaves TOILET " <<
 	    setw(3) << endtime - starttime << " seconds later (priority " << uThisTask().getActivePriority() << ")" << endl;
     } // Toilet::Toilet
@@ -85,7 +85,7 @@ uRealTimeMonitor RestRoom {
     _Nomutex void Wash( int id, uDuration C2 ) {
 	uTime starttime, delay, currtime, endtime;
 
-	starttime = uThisProcessor().getClock().getTime();
+	starttime = uClock::currTime();
 	osacquire( cout ) << setw(3) << starttime - ::Start << "\t" << id << " goes to WASH (priority " <<
 	    uThisTask().getActivePriority() << ")" << endl;
 
@@ -96,16 +96,16 @@ uRealTimeMonitor RestRoom {
 	// problem, the current time value is saved *before* the comparison.  Thus, whether the delay value is the old
 	// or new (i.e., becomes larger) value, the comparision does not cause a premature exit.
 
-	delay = uThisProcessor().getClock().getTime() + C2;
+	delay = uClock::currTime() + C2;
 	{
 	    AcrossCxtSw acrossCxtSw( delay );
 	    do {
 		for ( int i = 0; i < Delay; i += 1 );	// don't spend too much time in non-interruptible clock routine
-		currtime = uThisProcessor().getClock().getTime();
+		currtime = uClock::currTime();
 	    } while ( delay > currtime );
 	}
 
-	endtime = uThisProcessor().getClock().getTime();
+	endtime = uClock::currTime();
 	osacquire( cout ) << setw(3) << endtime - ::Start << "\t" << id << " finished with WASH " <<
 	    setw(3) << endtime - starttime << " seconds later (priority " << uThisTask().getActivePriority() << ")" << endl;
     } // Toilet::Wash
@@ -123,8 +123,8 @@ _PeriodicTask Philosopher {
     } // Philosopher::main
   public:
     Philosopher( int id, uDuration period, uDuration toilet, uDuration wash, uCluster &clust ) :
-	    uPeriodicBaseTask( period, uTime(0,0), uThisProcessor().getClock().getTime()+90, period, clust ),
-//	    uPeriodicBaseTask( period, uTime(0,0), uTime(0,0), period, clust ),
+	    uPeriodicBaseTask( period, uTime(), uClock::currTime() + 90, period, clust ),
+//	    uPeriodicBaseTask( period, uTime(), uTime(), period, clust ),
 	    C1( toilet ), C2( wash ), id( id ) {
     } // Philosopher::Philosopher
 }; // Philosopher
@@ -141,7 +141,7 @@ int main() {
 
 	osacquire( cout ) << "Time  \t\tPhilosopher" << endl;
 
-	::Start = uThisProcessor().getClock().getTime();
+	::Start = uClock::currTime();
 	processor = new uProcessor( rtCluster );	// now create the processor to do the work
     }
     delete processor;

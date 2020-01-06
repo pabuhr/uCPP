@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 15 22:54:49 2019
-// Update Count     : 456
+// Last Modified On : Fri Jan  3 17:21:41 2020
+// Update Count     : 457
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -307,7 +307,7 @@ namespace UPP {
 	    root.registerSelf( &selectState );
 	} // Executor::Executor
 
-	Executor( Root &root, uDuration timeout ) : root( root ), timeout( uThisProcessor().getClock().getTime() + timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
+	Executor( Root &root, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
 	    root.registerSelf( &selectState );
 	} // Executor::Executor
 
@@ -315,8 +315,7 @@ namespace UPP {
 	    root.registerSelf( &selectState );
 	} // Executor::Executor
 
-	Executor( Root &root, bool timeoutGuard, uDuration timeout )
-		: root( root ), timeout( uThisProcessor().getClock().getTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
+	Executor( Root &root, bool timeoutGuard, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
 	    root.registerSelf( &selectState );
 	} // Executor::Executor
 
@@ -326,7 +325,7 @@ namespace UPP {
 	} // Executor::Executor
 
 	Executor( Root &root, bool timeoutGuard, uDuration timeout, bool elseGuard )
-		: root( root ), timeout( uThisProcessor().getClock().getTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( elseGuard ), isFinish( NonAvail ) {
+		: root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( elseGuard ), isFinish( NonAvail ) {
 	    root.registerSelf( &selectState );
 	} // Executor::Executor
 

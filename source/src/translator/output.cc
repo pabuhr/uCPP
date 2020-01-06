@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 18:18:13 2019
-// Update Count     : 243
+// Last Modified On : Wed Jan  1 17:31:26 2020
+// Update Count     : 244
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -156,6 +156,7 @@ void putoutput( token_t * token ) {
       case DISABLE:
       case ENABLE:
       case RESUME:
+      case RESUMETOP:
       case UTHROW:
       case ACCEPT:
       case ACCEPTRETURN:

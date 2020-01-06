@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 19:08:39 2019
-// Update Count     : 124
+// Last Modified On : Wed Jan  1 16:58:53 2020
+// Update Count     : 125
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -149,6 +149,7 @@ keyword_t key[] = {
     { "_PeriodicTask", PTASK },
     { "_RealTimeTask", RTASK },
     { "_Resume", RESUME },
+    { "_ResumeTop", RESUMETOP },
     { "_Select", SELECT },
     { "_SporadicTask", STASK },
     { "_Task", TASK },

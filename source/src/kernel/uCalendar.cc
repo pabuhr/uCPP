@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan 11 08:23:17 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 10 15:29:18 2019
-// Update Count     : 211
+// Last Modified On : Sun Jan  5 17:55:21 2020
+// Update Count     : 278
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,11 +35,11 @@
 //######################### uDuration #########################
 
 
-std::ostream &operator<<( std::ostream &os, const uDuration op ) {
-    os << op.tv / TIMEGRAN << ".";
+std::ostream & operator<<( std::ostream & os, const uDuration op ) {
+    os << op.tn / TIMEGRAN << ".";
     os.width(9);					// nanoseconds
     char oc = os.fill( '0' );
-    os << ( op.tv < 0 ? -op.tv : op.tv ) % TIMEGRAN;
+    os << ( op.tn < 0 ? -op.tn : op.tn ) % TIMEGRAN;
     os.fill( oc );
     return os;
 } // operator<<
@@ -48,129 +48,47 @@ std::ostream &operator<<( std::ostream &os, const uDuration op ) {
 //######################### uTime #########################
 
 
-std::ostream &operator<<( std::ostream &os, const uTime op ) {
-    os << op.tv / TIMEGRAN << ".";
+std::ostream & operator<<( std::ostream & os, const uTime op ) {
+    os << op.tn / TIMEGRAN << ".";
     os.width(9);					// nanoseconds
     char oc = os.fill( '0' );
-    os << ( op.tv < 0 ? -op.tv : op.tv ) % TIMEGRAN;
+    os << op.tn % TIMEGRAN;
     os.fill( oc );
     return os;
 } // operator<<
 
 
 #ifdef __U_DEBUG__
-#define uCreateFmt "Attempt to create uTime( year=%d, month=%d, day=%d, hour=%d, min=%d, sec=%ld, nsec=%ld ), " \
-		   "which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038."
+#define uCreateFmt "Attempt to create uTime( year=%d, month=%d, day=%d, hour=%d, min=%d, sec=%d, nsec=%jd ), " \
+		   "which is not in the range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038, where month and day have 1 origin."
 #endif // __U_DEBUG__
 
 
-void uTime::uCreateTime( int year, int month, int day, int hour, int min, long int sec, long int nsec ) {
-    tm t;
+uTime::uTime( int year, int month, int day, int hour, int min, int sec, int64_t nsec ) {
+    tm tm;
 
-    tzset();						// initialize time global variables
-    t.tm_isdst = -1;					// let mktime determine if alternate timezone is in effect
-    t.tm_year = year - 1900;				// mktime uses 1900 as its starting point
-    t.tm_mon = month;
-    t.tm_mday = day + 1;				// mktime uses range 1-31
-    t.tm_hour = hour;
-    t.tm_min = min;
-    t.tm_sec = sec - ::timezone;			// adjust off the timezone (global variable!) to get GMT
-    time_t epochsec = mktime( &t );
+    // Values may be in any range (+/-) but result must be in the epoch.
+    tm.tm_year = year - 1900;				// mktime uses 1900 as its starting point
+    // Make month in range 1-12 to match with day.
+    tm.tm_mon = month - 1;				// mktime uses range 0-11
+    tm.tm_mday = day;					// mktime uses range 1-31
+    tm.tm_hour = hour;
+    tm.tm_min = min;
+    tm.tm_sec = sec;
+    tm.tm_isdst = -1;					// let mktime determine if alternate timezone is in effect
+    time_t epochsec = mktime( &tm );
 #ifdef __U_DEBUG__
-    if ( epochsec == (time_t)-1 ) {
+    if ( epochsec <= (time_t)-1 ) {			// MUST BE LESS THAN OR EQUAL!
 	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
     } // if
 #endif // __U_DEBUG__
-    tv = (long long int)(epochsec) * TIMEGRAN + nsec;	// convert to nanoseconds
+    tn = (int64_t)(epochsec) * TIMEGRAN + nsec;		// convert to nanoseconds
 #ifdef __U_DEBUG__
-    if ( tv > 2147483647LL * TIMEGRAN ) {		// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
+    if ( tn > 2147483647LL * TIMEGRAN ) {		// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
+    	abort( uCreateFmt, year, month, day, hour, min, sec, nsec );
     } // if
 #endif // __U_DEBUG__
 } // uTime::uCreateTime
-
-
-uTime::uTime( long int sec ) {
-    tv = (long long int)sec * TIMEGRAN;
-#ifdef __U_DEBUG__
-    if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, 0L );
-    } // if
-#endif // __U_DEBUG__
-} // uTime::uTime
-
-
-uTime::uTime( long int sec, long int nsec ) {
-    tv = (long long int)sec * TIMEGRAN + nsec;
-#ifdef __U_DEBUG__
-    if ( tv < 0 || tv > 2147483647LL * TIMEGRAN ) {	// between 00:00:00 UTC, January 1, 1970 and 03:14:07 UTC, January 19, 2038.
-	abort( uCreateFmt, 1970, 0, 0, 0, 0, sec, nsec );
-    } // if
-#endif // __U_DEBUG__
-} // uTime::uTime
-
-
-//######################### uClock #########################
-
-
-// uClock::uClock( int ) {
-//     // Use exceptions here later on, to see if clock call works
-//     //		clock_gettime( CLOCK_REALTIME, &curr );
-//     // Right now, only support one real clock.  Later, appropriately set clocktype
-//     //		clocktype=clock_id;
-//     clocktype = CLOCK_REALTIME;
-// } // uClock::uClock
-
-
-void uClock::resetClock( uTime adj ) {
-#if defined( REALTIME_POSIX )
-    timespec curr;
-    clock_gettime( CLOCK_REALTIME, &curr );
-#else
-    timeval curr;
-    GETTIMEOFDAY( &curr );
-#endif
-    uTime currtime( curr.tv_sec, curr.tv_usec * 1000 );	// convert to nanoseconds
-    clocktype = -1;
-    offset.tv = currtime.tv - adj.tv;
-} // uClock::resetClock
-
-
-uTime uClock::getTime() {				// ##### REFERENCED IN TRANSLATOR #####
-#if defined( REALTIME_POSIX )
-    timespec curr;
-    if ( clocktype < 0 ) type = CLOCK_REALTIME;
-    clock_gettime( type, &curr );
-#else
-    timeval curr;
-    GETTIMEOFDAY( &curr );
-#endif
-    uTime currtime( curr.tv_sec, curr.tv_usec * 1000 );	// convert to nanoseconds
-
-    if ( clocktype < 0 ) {				// using virtual clock if < 0
-	currtime.tv -= offset.tv;			// adjust the time to reflect the "virtual" time.
-    } // if
-
-    return currtime;
-} // uClock::getTime
-
-
-void uClock::getTime( int &year, int &month, int &day, int &hour, int &min, int &sec, long int &nsec ) {
-    const timeval temp = getTime();
-    tm t;
-    localtime_r( (const time_t *)&temp.tv_sec, &t );
-    year = t.tm_year; month = t.tm_mon; day = t.tm_mday; hour = t.tm_hour; min = t.tm_min; sec = t.tm_sec;
-    nsec = temp.tv_XSEC;
-} // uClock::getTime
-
-
-void uClock::convertTime( uTime time, int &year, int &month, int &day, int &hour, int &min, int &sec, long int &nsec ) {
-    const timeval temp = time;
-    tm t;
-    localtime_r( (const time_t *)&temp.tv_sec, &t );
-    year = t.tm_year; month = t.tm_mon; day = t.tm_mday; hour = t.tm_hour; min = t.tm_min; sec = t.tm_sec;
-    nsec = temp.tv_XSEC;
-} // uClock::convertTime
 
 
 // Local Variables: //

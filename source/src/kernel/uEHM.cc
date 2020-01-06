@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  2 09:10:04 2019
-// Update Count     : 772
+// Last Modified On : Thu Jan  2 10:57:22 2020
+// Update Count     : 813
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ void uEHM::terminate() {
 
     if ( ! exception && ! resumption ) abort( "terminate called without an active exception" );
 
-    uBaseEvent *curr = getCurrentException();		// optimization
+    uBaseEvent * curr = getCurrentException();		// optimization
     bool msg = curr != nullptr && curr->msg[0] != '\0';
 
     abort( "%s%s%s%s%s%s%s%s",
@@ -83,14 +83,14 @@ void uEHM::unexpectedHandler() {
 } // uEHM::unexpectedHandler
 
 std::terminate_handler std::set_terminate( std::terminate_handler func ) throw() {
-    uBaseTask &task = uThisTask();			// optimization
+    uBaseTask & task = uThisTask();			// optimization
     std::terminate_handler prev = task.terminateRtn;
     task.terminateRtn = func;
     return prev;
 } // std::set_terminate
 
 std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) throw() {
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+    uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
     std::unexpected_handler prev = coroutine.unexpectedRtn;
     coroutine.unexpectedRtn = func;
     return prev;
@@ -100,7 +100,7 @@ std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) thro
 //######################### uEHM::AsyncEMsg ########################
 
 
-uEHM::AsyncEMsg::AsyncEMsg( const uBaseEvent &event ) : hidden( false ) {
+uEHM::AsyncEMsg::AsyncEMsg( const uBaseEvent & event ) : hidden( false ) {
     asyncEvent = event.duplicate();
 } // uEHM::AsyncEMsg::AsyncEMsg
 
@@ -119,22 +119,22 @@ uEHM::AsyncEMsgBuffer::AsyncEMsgBuffer() {
 
 uEHM::AsyncEMsgBuffer::~AsyncEMsgBuffer() {
     uCSpinLock dummy( lock );
-    for ( AsyncEMsg *tmp = drop(); tmp; tmp = drop() ) {
+    for ( AsyncEMsg * tmp = drop(); tmp; tmp = drop() ) {
 	delete tmp;
     } // for
 } // uEHM::AsyncEMsgBuffer::~AsyncEMsgBuffer
 
-void uEHM::AsyncEMsgBuffer::uAddMsg( AsyncEMsg *msg ) {
+void uEHM::AsyncEMsgBuffer::uAddMsg( AsyncEMsg * msg ) {
     uCSpinLock dummy( lock );
     add( msg );
 } // uEHM::AsyncEMsgBuffer::uAddMsg
 
-uEHM::AsyncEMsg *uEHM::AsyncEMsgBuffer::uRmMsg() {
+uEHM::AsyncEMsg * uEHM::AsyncEMsgBuffer::uRmMsg() {
     uCSpinLock dummy( lock );
     return drop();
 } // uEHM::AsyncEMsgBuffer::uRmMsg
 
-uEHM::AsyncEMsg *uEHM::AsyncEMsgBuffer::uRmMsg( AsyncEMsg *msg ) {
+uEHM::AsyncEMsg * uEHM::AsyncEMsgBuffer::uRmMsg( AsyncEMsg * msg ) {
     // Only lock at the end or the start of the list as these are the only places where interference can occur.
 
     if ( msg == tail() || msg == head() ) {
@@ -146,7 +146,7 @@ uEHM::AsyncEMsg *uEHM::AsyncEMsgBuffer::uRmMsg( AsyncEMsg *msg ) {
     return msg;
 } // uEHM::AsyncEMsgBuffer::uRmMsg
 
-uEHM::AsyncEMsg *uEHM::AsyncEMsgBuffer::nextVisible( AsyncEMsg *msg ) {
+uEHM::AsyncEMsg * uEHM::AsyncEMsgBuffer::nextVisible( AsyncEMsg * msg ) {
     // find the next msg node that is visible or null
     do {						// do-while because current node could be visible
 	msg = succ( msg );
@@ -158,14 +158,14 @@ uEHM::AsyncEMsg *uEHM::AsyncEMsgBuffer::nextVisible( AsyncEMsg *msg ) {
 //######################### uBaseEvent ########################
 
 
-void uBaseEvent::setMsg( const char *const msg ) {
+void uBaseEvent::setMsg( const char * const msg ) {
     uEHM::strncpy( uBaseEvent::msg, msg, uEHMMaxMsg );	// copy message
 }; // uBaseEvent::setMsg
 
 uBaseEvent::~uBaseEvent() {}
 
-void uBaseEvent::setSrc( uBaseCoroutine &coroutine ) {
-    src = &coroutine;
+void uBaseEvent::setSrc( uBaseCoroutine & coroutine ) {
+    src = & coroutine;
     uEHM::strncpy( srcName, coroutine.getName(), uEHMMaxName ); // copy source name
 } // uBaseEvent::setSrc
 
@@ -192,8 +192,8 @@ void uBaseEvent::defaultResume() const {
 //######################### uEHM::uResumptionHandlers ########################
 
 
-uEHM::uResumptionHandlers::uResumptionHandlers( uHandlerBase *const table[], const unsigned int size ) : size( size ), table( table ) {
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+uEHM::uResumptionHandlers::uResumptionHandlers( uHandlerBase * const table[], const unsigned int size ) : size( size ), table( table ) {
+    uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
     next = coroutine.handlerStackTop;
     conseqNext = coroutine.handlerStackVisualTop;
     coroutine.handlerStackTop = this;
@@ -201,7 +201,7 @@ uEHM::uResumptionHandlers::uResumptionHandlers( uHandlerBase *const table[], con
 } // uEHM::uResumptionHandlers::uResumptionHandlers
 
 uEHM::uResumptionHandlers::~uResumptionHandlers() {
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+    uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
     coroutine.handlerStackTop = next;
     coroutine.handlerStackVisualTop = conseqNext;
 } // uEHM::uResumptionHandlers::~uResumptionHandlers
@@ -210,9 +210,9 @@ uEHM::uResumptionHandlers::~uResumptionHandlers() {
 //######################### uEHM::uDeliverEStack ########################
 
 
-uEHM::uDeliverEStack::uDeliverEStack( bool f, const std::type_info **t, unsigned int msg ) : deliverFlag( f ), table_size( msg ), event_table( t ) {
+uEHM::uDeliverEStack::uDeliverEStack( bool f, const std::type_info ** t, unsigned int msg ) : deliverFlag( f ), table_size( msg ), event_table( t ) {
     // the current node applies to all exceptions when table_size is 0
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+    uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
     next = coroutine.DEStack;
     coroutine.DEStack = this;
 } // uEHM::uDeliverEStack::uDeliverEStack
@@ -230,21 +230,21 @@ uEHM::uDeliverEStack::~uDeliverEStack() {
 // resumption object for reraise.
 
 class uEHM::ResumeWorkHorseInit {
-    uResumptionHandlers *prevVisualTop;
-    uBaseEvent *prevResumption;
+    uResumptionHandlers * prevVisualTop;
+    uBaseEvent * prevResumption;
   public:
-    ResumeWorkHorseInit( uResumptionHandlers *h, uBaseEvent & newResumption ) {
-	uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+    ResumeWorkHorseInit( uResumptionHandlers * h, uBaseEvent & newResumption ) {
+	uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
 	prevResumption = coroutine.resumedObj;
 	coroutine.resumedObj = &newResumption;
 	coroutine.topResumedType = &typeid(newResumption);
-	uBaseCoroutine &current = coroutine;
+	uBaseCoroutine & current = coroutine;
 	prevVisualTop = current.handlerStackVisualTop;
 	current.handlerStackVisualTop = h;
     } // uEHM::ResumeWorkHorseInit::resumeWorkHorse
 
     ~ResumeWorkHorseInit() {
-	uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
+	uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
 	coroutine.resumedObj = prevResumption;
 	if ( ! std::__U_UNCAUGHT_EXCEPTION__() ) {	// update top, unless it's a forceful unwind
 	    coroutine.topResumedType = prevResumption ? &typeid(prevResumption) : nullptr;
@@ -258,7 +258,7 @@ class uEHM::ResumeWorkHorseInit {
 
 
 #ifdef __U_DEBUG__
-static void Check( uBaseCoroutine &target, const char *kind ) {
+static void Check( uBaseCoroutine & target, const char * kind ) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress"
@@ -277,15 +277,15 @@ static void Check( uBaseCoroutine &target, const char *kind ) {
 #endif // __U_DEBUG__
 
 
-void uEHM::asyncToss( const uBaseEvent &event, uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind, bool rethrow ) {
+void uEHM::asyncToss( const uBaseEvent & event, uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind, bool rethrow ) {
 #ifdef __U_DEBUG__
     Check( target, raiseKind == uBaseEvent::ThrowRaise ? "throw" : "resume" );
 #endif // __U_DEBUG__
 
     if ( target.getState() != uBaseCoroutine::Halt ) {
 	event.raiseKind = raiseKind;
-	AsyncEMsg *temp = new AsyncEMsg( event );
-	uBaseCoroutine &coroutine = uThisCoroutine();
+	AsyncEMsg * temp = new AsyncEMsg( event );
+	uBaseCoroutine & coroutine = uThisCoroutine();
 	if ( ! rethrow ) {				// reset current raiser ?
 	    temp->asyncEvent->staticallyBoundObject = (void *)&coroutine;
 	    temp->asyncEvent->setSrc( coroutine );
@@ -294,8 +294,8 @@ void uEHM::asyncToss( const uBaseEvent &event, uBaseCoroutine &target, uBaseEven
     } // if
 } // uEHM::asyncToss
 
-void uEHM::asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind ) {
-    uBaseEvent *r;
+void uEHM::asyncReToss( uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind ) {
+    uBaseEvent * r;
 
     if ( raiseKind == uBaseEvent::ResumeRaise ) {
 	r = getCurrentResumption();
@@ -317,7 +317,7 @@ void uEHM::asyncReToss( uBaseCoroutine &target, uBaseEvent::RaiseKind raiseKind 
 } // uEHM::asyncReToss
 
 
-void uEHM::Throw( const uBaseEvent &event, void *const bound ) {
+void uEHM::Throw( const uBaseEvent & event, void * const bound ) {
     uDEBUGPRT( uDebugPrt( "uEHM::Throw( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n",
 			  &event, bound, uThisTask().getName(), &uThisTask() ); )
     event.staticallyBoundObject = bound;
@@ -328,7 +328,7 @@ void uEHM::Throw( const uBaseEvent &event, void *const bound ) {
 } // uEHM::Throw
 
 void uEHM::ReThrow() {
-    uBaseEvent *e = getCurrentException();		// optimization
+    uBaseEvent * e = getCurrentException();		// optimization
     if ( ! e ) {
 	abort( "Attempt to rethrow but no active exception.\n"
 	       "Possible cause is a rethrow not directly or indirectly performed from a catch clause." );
@@ -338,36 +338,36 @@ void uEHM::ReThrow() {
 } // uEHM::ReThrow
 
 
-void uEHM::Resume( const uBaseEvent &event, void *const bound ) {
+void uEHM::Resume( const uBaseEvent & event, void * const bound, bool conseq ) {
     uDEBUGPRT( uDebugPrt( "uEHM::Resume( uBaseEvent::event:%p, bound:%p ) from task %.256s (%p)\n",
 			  &event, bound, uThisTask().getName(), &uThisTask() ); )
     event.staticallyBoundObject = bound;
     event.raiseKind = uBaseEvent::ResumeRaise;
-    resumeWorkHorse( event, true );
+    resumeWorkHorse( event, conseq );
 } // uEHM::Resume
 
-void uEHM::ReResume() {
-    uBaseEvent *r = getCurrentResumption();		// optimization
+void uEHM::ReResume( bool conseq ) {
+    uBaseEvent * r = getCurrentResumption();		// optimization
     if ( ! r ) {
 	abort( "Attempt to reresume but no active exception.\n"
-	       "Possible cause is a reresume not directly or indirectly performed from a catch clause." );
+	       "Possible cause is a reresume not directly or indirectly performed from a _CatchResume clause." );
     } // if
-    resumeWorkHorse( *r, true );	
+    resumeWorkHorse( *r, conseq );	
 }; // uEHM::ReResume
 
 
 int uEHM::poll() {					// handle pending nonlocal exceptions
     struct RAIIdelete {					// ensure cleanup even when an exception is thrown
-	AsyncEMsg *msg;
-	AsyncEMsgBuffer &buf;
-	RAIIdelete( AsyncEMsg *msg, AsyncEMsgBuffer &buf ) : msg( msg ), buf( buf ) {}
+	AsyncEMsg * msg;
+	AsyncEMsgBuffer & buf;
+	RAIIdelete( AsyncEMsg * msg, AsyncEMsgBuffer & buf ) : msg( msg ), buf( buf ) {}
 	~RAIIdelete() {
 	    buf.uRmMsg( msg );
 	    delete msg;
 	} // RAIIdelete::~RAIIdelete
     }; // RAIIdelete
 
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimzation
+    uBaseCoroutine & coroutine = uThisCoroutine();	// optimzation
   if ( coroutine.cancelInProgress() ) return 0;		// skip async handling if cancelling
     if ( coroutine.getCancelState() != uBaseCoroutine::CancelDisabled && coroutine.cancelled() ) { // check for cancellation first, but only if it is enabled	
 	coroutine.unwindStack();			// not cancelling, so unwind stack
@@ -375,8 +375,8 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
 	assert( false );
     } // if
 
-    AsyncEMsgBuffer &msgbuf = coroutine.asyncEBuf;	// optimization
-    AsyncEMsg *asyncMsg = msgbuf.head();		// find first node in queue
+    AsyncEMsgBuffer & msgbuf = coroutine.asyncEBuf;	// optimization
+    AsyncEMsg * asyncMsg = msgbuf.head();		// find first node in queue
 
   if ( asyncMsg == nullptr ) return 0;
 
@@ -393,7 +393,7 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
 	    RAIIdelete dummy( asyncMsg, msgbuf );	// ensure deletion of node even if exception raised
 
 	    asyncMsg->hidden = true;			// hide node from recursive children of poll
-	    uBaseEvent *asyncEvent = asyncMsg->asyncEvent; // optimization
+	    uBaseEvent * asyncEvent = asyncMsg->asyncEvent; // optimization
 
 	    // Recover memory allocated for async event message. Resuming handler should not destroyed raised exception
 	    // regardless of whether the exception is normal or nonlocal.
@@ -421,13 +421,13 @@ int uEHM::poll() {					// handle pending nonlocal exceptions
 } // uEHM::poll
 
 
-uBaseEvent *uEHM::getCurrentException() {
+uBaseEvent * uEHM::getCurrentException() {
     // check if exception type derived from uBaseEvent (works for basic/POD types)
-    const std::type_info *t = __cxxabiv1::__cxa_current_exception_type();
+    const std::type_info * t = __cxxabiv1::__cxa_current_exception_type();
     if ( t && uEHM::match_exception_type( t, &typeid( uBaseEvent ) ) ) {
-	__cxxabiv1::__cxa_eh_globals *globals = __cxxabiv1::__cxa_get_globals();
+	__cxxabiv1::__cxa_eh_globals * globals = __cxxabiv1::__cxa_get_globals();
 	if ( globals != nullptr ) {
-	    __cxxabiv1::__cxa_exception *header = globals->caughtExceptions;
+	    __cxxabiv1::__cxa_exception * header = globals->caughtExceptions;
 	    if ( header != nullptr ) {			// handling an exception and want to turn it into resumption
 		return (uBaseEvent *)((char *)header + sizeof(__cxxabiv1::__cxa_exception));
 	    } // if
@@ -436,7 +436,7 @@ uBaseEvent *uEHM::getCurrentException() {
     return nullptr;
 } // uEHM::getCurrentException
 
-uBaseEvent *uEHM::getCurrentResumption() {
+uBaseEvent * uEHM::getCurrentResumption() {
     return uThisCoroutine().resumedObj;			// optimization
 } // uEHM::getCurrentResumption
 
@@ -445,8 +445,8 @@ const std::type_info * uEHM::getTopResumptionType() {
 } // uEHM::getCurrentResumptionType()
 
 
-char *uEHM::getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char *s1, size_t n ) {
-    const std::type_info *t;
+char * uEHM::getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char * s1, size_t n ) {
+    const std::type_info * t;
 
     if ( raiseKind == uBaseEvent::ResumeRaise ) {
 	t = uEHM::getTopResumptionType();
@@ -456,7 +456,7 @@ char *uEHM::getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char *s1, size
 
     if ( t != nullptr ) {
 	int status;
-	char *s2 = __cxxabiv1::__cxa_demangle( t->name(), 0, 0, &status );
+	char * s2 = __cxxabiv1::__cxa_demangle( t->name(), nullptr, 0, &status );
 	strncpy( s1, s2 ? s2 : "*unknown*", n );	// TEMPORARY: older g++ may generate a null name for elementary types
 	free( s2 );
     } else {
@@ -466,7 +466,7 @@ char *uEHM::getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char *s1, size
 } // uEHM::getCurrentExceptionName
 
 
-char *uEHM::strncpy( char *s1, const char *s2, size_t n ) {
+char * uEHM::strncpy( char * s1, const char * s2, size_t n ) {
     ::strncpy( s1, s2, n );
     if ( strlen( s2 ) > n ) {				// name too long ?
 	strcpy( &s1[n - 4], "..." );			// add 4 character ...
@@ -475,9 +475,9 @@ char *uEHM::strncpy( char *s1, const char *s2, size_t n ) {
 } // uEHM::strncpy
 
 
-bool uEHM::match_exception_type( const std::type_info *derived_type, const std::type_info *parent_type ) {
+bool uEHM::match_exception_type( const std::type_info * derived_type, const std::type_info * parent_type ) {
     // return true if derived_type event is derived from parent_type event
-    void *dummy;
+    void * dummy;
 #ifdef __DEBUG__
     if ( ! parent_type ) abort( "internal error, error in setting up guarded region." );
 #endif // __DEBUG__
@@ -491,8 +491,8 @@ bool uEHM::match_exception_type( const std::type_info *derived_type, const std::
 } // uEHM::match_exception_type
 
 
-bool uEHM::deliverable_exception( const std::type_info *event_type ) {
-    for ( uDeliverEStack *tmp = uThisCoroutine().DEStack; tmp; tmp = tmp->next ) {
+bool uEHM::deliverable_exception( const std::type_info * event_type ) {
+    for ( uDeliverEStack * tmp = uThisCoroutine().DEStack; tmp; tmp = tmp->next ) {
 	if ( tmp->table_size == 0 ) {			// table_size == 0 is a short hand for all exceptions
 	    return tmp->deliverFlag;
 	} // if
@@ -513,22 +513,22 @@ bool uEHM::deliverable_exception( const std::type_info *event_type ) {
 // should not consider earlier resumption handlers. In this case, the virtual top (handlerStackVisualTop) of the handler
 // stack is used.
 
-void uEHM::resumeWorkHorse( const uBaseEvent &event, bool conseq ) {
+void uEHM::resumeWorkHorse( const uBaseEvent & event, bool conseq ) {
     uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse( ex:%p, conseq:%d ) from task %.256s (%p)\n",
 			  &event, conseq, uThisTask().getName(), &uThisTask() ); )
 
-    const std::type_info *raisedtype = event.getEventType();
-    uResumptionHandlers *tmp = (conseq) ? uThisCoroutine().handlerStackVisualTop : uThisCoroutine().handlerStackTop;
+    const std::type_info * raisedtype = event.getEventType();
+    uResumptionHandlers * tmp = (conseq) ? uThisCoroutine().handlerStackVisualTop : uThisCoroutine().handlerStackTop;
 
     while ( tmp ) {
-	uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse tmp:%p, raisedtype:%p\n", tmp, raisedtype ); )
+	uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse tmp:%p, raisedtype:%p\n", tmp, raisedtype ); );
 
-	uResumptionHandlers *next = (conseq) ? tmp->conseqNext : tmp->next;
+	uResumptionHandlers * next = (conseq) ? tmp->conseqNext : tmp->next;
 
 	// search all resumption handlers in the same handler clause
 	for ( unsigned int i = 0; i < tmp->size; i += 1 ) {
-	    uHandlerBase *elem = tmp->table[i];		// optimization
-	    const void *bound = event.staticallyBoundObject;
+	    uHandlerBase * elem = tmp->table[i];	// optimization
+	    const void * bound = event.staticallyBoundObject;
 	    uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
 				  i, elem, elem->getMatchBinding(), elem->getEventType(), bound ); )
 	    // if (no binding OR binding match) AND (type match OR resume_any) => handler found

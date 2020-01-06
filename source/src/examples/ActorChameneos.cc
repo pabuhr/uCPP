@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:24:02 2019
-// Update Count     : 7
+// Last Modified On : Mon Jan  6 08:41:13 2020
+// Update Count     : 8
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,10 +35,6 @@ using namespace std;
 #else
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
-
-unsigned int uDefaultActorThreads() { return 1; }
-unsigned int uDefaultActorProcessors() { return 0; }
-
 
 enum Colour { BLUE, RED, YELLOW, NoOfColours };
 static const char * ColourNames[NoOfColours] = { "BLUE", "RED", "YELLOW" };

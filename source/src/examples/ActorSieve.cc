@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:29:26 2019
-// Update Count     : 14
+// Last Modified On : Mon Jan  6 08:43:16 2020
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -26,9 +26,6 @@
 #include <iostream>
 using namespace std;
 #include <uActor.h>
-
-unsigned int uDefaultActorThreads() { return 1; }	// 1 => user thread
-unsigned int uDefaultActorProcessors() { return 0; }	// 0 => 1 kernel thread from user cluster
 
 struct Number : public uActor::Message {
     int n;

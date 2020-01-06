@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:29:11 2019
-// Update Count     : 19
+// Last Modified On : Mon Jan  6 08:43:10 2020
+// Update Count     : 20
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,9 +32,6 @@ using namespace std;
 #else
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
-
-unsigned int uDefaultActorThreads() { return 1; }	// 1 => user thread
-unsigned int uDefaultActorProcessors() { return 0; }	// 0 => 1 kernel thread from user cluster
 
 struct Token : public uActor::Message { unsigned int cnt = 0; } token; // token passed around ring
 int RingSize = 3, Times = 10;				// default values

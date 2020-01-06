@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug 22 17:21:14 2017
-// Update Count     : 310
+// Last Modified On : Sat Jan  4 18:25:51 2020
+// Update Count     : 315
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,12 +72,12 @@ uEventNode::uEventNode( uBaseTask &task, uSignalHandler &sig, uTime alarm, uDura
 
 
 uEventNode::uEventNode( uSignalHandler &sig ) {
-    createEventNode( nullptr, &sig, uTime( 0 ), 0 );
+    createEventNode( nullptr, &sig, uTime(), 0 );
 } // uEventNode::uEventNode
 
 
 uEventNode::uEventNode() {
-    createEventNode( nullptr, nullptr, uTime( 0 ), 0 );
+    createEventNode( nullptr, nullptr, uTime(), 0 );
 } // uEventNode::uEventNode
 
 
@@ -189,19 +189,10 @@ void uEventList::setTimer( uTime time ) {		// time parameter is real-time (not v
 	char buffer[256];
 	uDebugPrtBuf( buffer, "uEventList::setTimer, time:%lld\n", time.nanoseconds() );
     )
-  if ( time == uTime( 0 ) ) return;			// zero time is invalid
+  if ( time == uTime() ) return;			// zero time is invalid
 
-#if defined( REALTIME_POSIX )
-    timespec curr;
-    if ( clocktype < 0 ) type = CLOCK_REALTIME;
-    clock_gettime( type, &curr );
-#else
-    timeval curr;
-    GETTIMEOFDAY( &curr );
-#endif // REALTIME_POSIX
-    uTime currtime( curr.tv_sec, curr.tv_usec * 1000 );	// convert to nanoseconds
+    uDuration dur = time - uClock::currTime();
 
-    uDuration dur = time - currtime;
     if ( dur <= 0 ) {					// if duration is zero or negative (it has already past)
 	uDEBUGPRT( uDebugPrtBuf( buffer, "uEventList::setTimer, kill time:%lld currtime:%lld dur:%lld\n",
 				 time.nanoseconds(), currtime.nanoseconds(), dur.nanoseconds() ); )
@@ -218,7 +209,7 @@ void uEventList::setTimer( uTime time ) {		// time parameter is real-time (not v
 
 void uEventListPop::over( uEventList &events, bool inKernel ) {
     uEventListPop::events = &events;
-    currTime = activeProcessorKernel->kernelClock.getTime();
+    currTime = uClock::currTime();
     cxtSwHandler = nullptr;
     uEventListPop::inKernel = inKernel;
     assert( ! THREAD_GETMEM( RFinprogress ) );		// should not be on

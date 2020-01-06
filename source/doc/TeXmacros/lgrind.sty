@@ -53,13 +53,14 @@
 \LGnuminterval=10
 \newskip\LGindent % Indentation for displayed lines
 \LGindent=1.6667\parindent
-\newskip\LGtab % size of a tab character
-\LGtab=1ex
+\def\LGtab{\hspace*{1ex}} % size of a tab character
 \newskip\LGbeginspacing % spacing at beginning of display code
 \LGbeginspacing=0pt
 \newskip\LGendspacing % spacing at ending of display code
 \LGendspacing=0pt
 \def\LGlcsep{\qquad} % separation after line counter
+\def\LGispace{\hspace*{0.8ex}} % width of inline space
+\def\LGspace{\LGispace} % width of display space
 
 \def\LGbegin{%
 	\ifLGinline%
@@ -144,11 +145,11 @@
 		\LB%
 	}% \Tab
 	\ifLGinline%
-		\def\sp@ce{\hskip 0.8ex}%
+		\def\sp@ce{\LGispace}%
 	\else%
-		\setbox\tb@x=\hbox{\hskip \LGtab}%
+		\setbox\tb@x=\hbox{\LGtab}%
 		\@ts=\wd\tb@x%
-		\def\sp@ce{\hskip 0.8ex}%
+		\def\sp@ce{\LGspace}%
 	\fi%
 	%
 	\def\myCHarFont{\fontencoding{T1}\selectfont}%
@@ -176,11 +177,12 @@
 	\def\|{{\myCHarFont \char`\|}}%
 	\def\<{{\myCHarFont \char`\<}}%
 	\def\>{{\myCHarFont \char`\>}}%
-	\def\*{\raisebox{-.55ex}{{\myCHarFont \char`\*}}}%
+	\def\*{\raisebox{-0.55ex}{{\myCHarFont \char`\*}}}%
 %	\def\-{\makebox[1ex]{\rule[0.43ex]{0.75ex}{0.1ex}}}%
-	\def\-{{\ttfamily\upshape \char`\-}}%
+	\def\-{\raisebox{-0.1ex}{{\ttfamily \char`\-}}}%
 %	\def\_{\makebox[1.2ex]{{\myCHarFont \char`\_}}}%
-	\def\_{\makebox[1.2ex]{\rule{1ex}{0.1ex}}}%
+%	\def\_{\makebox[1.2ex][r]{\rule{1ex}{0.1ex}}}%
+	\def\_{{\myCHarFont \char`\_}}%
 	\def\&{{\myCHarFont \char`\&}}%
 	\def\#{{\myCHarFont \char`\#}}%
 	\def\%{{\myCHarFont \char`\%}}%

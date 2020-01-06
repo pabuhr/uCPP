@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Dec 21 22:17:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:12:46 2019
-// Update Count     : 4
+// Last Modified On : Fri Jan  3 17:33:37 2020
+// Update Count     : 5
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -73,7 +73,7 @@ _Task Reader {
 	} // for
 
 	osacquire( cout ) << setprecision(2) << fixed;
-	start = uThisProcessor().getClock().getTime();
+	start = uClock::currTime();
 
 	// Run the select loop.
 
@@ -117,7 +117,7 @@ _Task Reader {
 	    // Statistics.
 	    select_calls += 1;
 	    select_fds += nfds;
-	    end = uThisProcessor().getClock().getTime();
+	    end = uClock::currTime();
 	    uDuration diff = end - start;
 #ifdef __U_STATISTICS__
 	    tselect_syscalls = UPP::Statistics::select_syscalls - tselect_syscalls;

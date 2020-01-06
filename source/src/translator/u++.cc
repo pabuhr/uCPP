@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 15 12:02:44 2019
-// Update Count     : 975
+// Last Modified On : Wed Dec  4 08:01:15 2019
+// Update Count     : 976
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -492,7 +492,7 @@ int main( int argc, char * argv[] ) {
 	} // if
 
 	if ( multi ) {
-	    libs[nlibs++] = "-lpthread";
+	    libs[nlibs++] = "-pthread";
 	} // if
     } // if
 

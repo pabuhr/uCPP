@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 15 22:03:16 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 10 22:03:02 2019
-// Update Count     : 482
+// Last Modified On : Sat Jan  4 10:19:07 2020
+// Update Count     : 492
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,7 +34,6 @@ unsigned int uDefaultPreemption() {
     return 0;
 } // uDefaultPreemption
 
-#include "Time.h"
 
 //=======================================
 // time class
@@ -51,39 +50,31 @@ class ClassDummy {
 volatile int ClassDummy::i;
 
 void BlockClassCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	ClassDummy dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // BlockClassCreateDelete
 
 void DynamicClassCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	ClassDummy *dummy = new ClassDummy;
 	delete dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // DynamicClassCreateDelete
 
 void ClassBidirectional( int N ) {
-    long long int StartTime, EndTime;
     ClassDummy dummy;
     volatile int rv __attribute__(( unused ));
 
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	rv = dummy.bidirectional( 1, 2, 3, 4 ); 
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // ClassBidirectional
 
 //=======================================
@@ -100,39 +91,31 @@ _Coroutine CoroutineDummy {
 }; // CoroutineDummy
 
 void BlockCoroutineCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	CoroutineDummy dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // BlockCoroutineCreateDelete
 
 void DynamicCoroutineCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	CoroutineDummy *dummy = new CoroutineDummy;
 	delete dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // DynamicCoroutineCreateDelete
 
 void CoroutineBidirectional( int N ) {
-    long long int StartTime, EndTime;
     CoroutineDummy dummy;
     volatile int rv __attribute__(( unused ));
 
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	rv = dummy.bidirectional( 1, 2, 3, 4 ); 
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // CoroutineBidirectional
 
 _Coroutine CoroutineResume {
@@ -149,14 +132,11 @@ _Coroutine CoroutineResume {
     } // CoroutineResume::CoroutineResume
 
     void resumer() {
-	long long int StartTime, EndTime;
-
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    resume();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     } // CoroutineResume::resumer
 }; // CoroutineResume
 
@@ -172,39 +152,31 @@ _Mutex class MonitorDummy {
 }; // MonitorDummy
 
 void BlockMonitorCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	MonitorDummy dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // BlockMonitorCreateDelete
 
 void DynamicMonitorCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	MonitorDummy *dummy = new MonitorDummy;
 	delete dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // DynamicMonitorCreateDelete
 
 void MonitorBidirectional( int N ) {
-    long long int StartTime, EndTime;
     MonitorDummy dummy;
     volatile int rv __attribute__(( unused ));
 
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	rv = dummy.bidirectional( 1, 2, 3, 4 ); 
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // MonitorBidirectional
 
 _Monitor Monitor {
@@ -221,29 +193,23 @@ _Monitor Monitor {
     } // Monitor::caller
 
     void acceptor( int N ) {
-	long long int StartTime, EndTime;
-
 	here = 1;					// indicate that the acceptor is in place
 
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    _Accept( caller );
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     } // Monitor::acceptor
 
     void sigwaiterA( int N ) {
-	long long int StartTime, EndTime;
-
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1;; i += 1 ) {
 	    condA.signal();
 	  if ( i > N ) break;
 	    condB.wait();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
+	osacquire( cerr ) << "\t " << ( ( (uClock::getCPUTime() - start).nanoseconds() ) / N );
     } // Monitor::sigwaiterA
 
     void sigwaiterB( int N ) {
@@ -330,39 +296,31 @@ _Mutex _Coroutine CoroutineMonitorDummy {
 }; // CoroutineMonitorDummy
 
 void BlockCoroutineMonitorCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	CoroutineMonitorDummy dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // BlockCoroutineMonitorCreateDelete
 
 void DynamicCoroutineMonitorCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	CoroutineMonitorDummy *dummy = new CoroutineMonitorDummy;
 	delete dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // DynamicCoroutineMonitorCreateDelete
 
 void CoroutineMonitorBidirectional( int N ) {
-    long long int StartTime, EndTime;
     CoroutineMonitorDummy dummy;
     volatile int rv __attribute__(( unused ));
 
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	rv = dummy.bidirectional( 1, 2, 3, 4 );
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // CoroutineMonitorBidirectional
 
 _Mutex _Coroutine CoroutineMonitorA {
@@ -384,16 +342,13 @@ _Mutex _Coroutine CoroutineMonitorA {
     } // CoroutineMonitorA::acceptor
   private:
     void main() {
-	long long int StartTime, EndTime;
-
 	here = 1;
 
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    _Accept( caller );
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     }; // CoroutineMonitorA::main
 }; // CoroutineMonitorA
 
@@ -446,14 +401,11 @@ _Mutex _Coroutine CoroutineMonitorResume {
     } // CoroutineMonitorResume::CoroutineMonitorResume
 
     void resumer() {
-	long long int StartTime, EndTime;
-
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    resume();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     }; // CoroutineMonitorResume::resumer
 }; // CoroutineMonitorResume
 
@@ -462,16 +414,13 @@ _Mutex _Coroutine CoroutineMonitorB {
     uCondition condA, condB;
 
     void main() {
-	long long int StartTime, EndTime;
-
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1;; i += 1 ) {
 	    condA.signal();
 	  if ( i > N ) break;
 	    condB.wait();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
+	osacquire( cerr ) << "\t " << ( ( (uClock::getCPUTime() - start).nanoseconds() ) / N );
     }; // CoroutineMonitorB::main
   public:
     void sigwaiterA( int N ) {
@@ -527,26 +476,20 @@ _Task TaskDummy {
 }; // TaskDummy
 
 void BlockTaskCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	TaskDummy dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // BlockTaskCreateDelete
 
 void DynamicTaskCreateDelete( int N ) {
-    long long int StartTime, EndTime;
-
-    StartTime = Time();
+    uTime start = uClock::getCPUTime();
     for ( int i = 0; i < N; i += 1 ) {
 	TaskDummy *dummy = new TaskDummy;
 	delete dummy;
     } // for
-    EndTime = Time();
-    osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+    osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
 } // DynamicTaskCreateDelete
 
 _Task TaskAcceptorPartner {
@@ -561,14 +504,11 @@ _Task TaskAcceptorPartner {
     } // TaskAcceptorPartner
   private:
     void main() {
-	long long int StartTime, EndTime;
-    
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    _Accept( caller );
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     } // TaskAcceptorPartner::main
 }; // TaskAcceptorPartner
 
@@ -607,18 +547,15 @@ _Task TaskSignallerPartner {
     } // TaskSignallerPartner
   private:
     void main() {
-	long long int StartTime, EndTime;
-
 	_Accept( sigwaiter );
 
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1;; i += 1 ) {
 	    condA.signal();
 	  if ( i > N ) break;
 	    condB.wait();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t " << ( ( EndTime - StartTime ) / N );
+	osacquire( cerr ) << "\t " << ( ( (uClock::getCPUTime() - start).nanoseconds() ) / N );
     } // TaskSignallerPartner::main
 }; // TaskSignallerPartner
 
@@ -644,14 +581,11 @@ _Task ContextSwitch {
     int N;
 
     void main() {    
-	long long int StartTime, EndTime;
-
-	StartTime = Time();
+	uTime start = uClock::getCPUTime();
 	for ( int i = 1; i <= N; i += 1 ) {
 	    uYieldNoPoll();
 	} // for
-	EndTime = Time();
-	osacquire( cerr ) << "\t\t\t " << ( EndTime - StartTime ) / N;
+	osacquire( cerr ) << "\t\t\t " << ( (uClock::getCPUTime() - start).nanoseconds() ) / N;
     } // ContextSwitch::main
   public:
     ContextSwitch( int N ) {

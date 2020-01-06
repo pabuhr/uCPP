@@ -1,4 +1,4 @@
-//                              -*- Mode: C++ -*- 
+//                               -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1997
 // 
@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:49:12 2019
-// Update Count     : 66
+// Last Modified On : Thu Jan  2 20:41:21 2020
+// Update Count     : 69
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -69,27 +69,6 @@
 #define __U_DEFAULT_USER_PROCESSORS__ 1
 
 
-// Define the default number of executor request-queues (mailboxes) written to by actors and serviced by the
-// actor-executor threads. Must be greater than 0.
-
-#define __U_DEFAULT_ACTOR_MAILBOXES__ 4
-
-// Define the default number of threads created in the actor executor. Must be greater than 0.
-
-#define __U_DEFAULT_ACTOR_THREADS__ 4
-
-// Define the default number of processors created in the actor executor. Must be greater than 0.
-
-#define __U_DEFAULT_ACTOR_PROCESSORS__ 2
-
-// Define affinity for actor executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
-
-#define __U_DEFAULT_ACTOR_AFFINITY__ -1
-
-// Define if actor executor is created in a separate cluster
-
-#define __U_DEFAULT_ACTOR_SEPCLUS__ false
-
 extern unsigned int uDefaultHeapExpansion();		// heap expansion size (bytes)
 extern unsigned int uDefaultMmapStart();		// cross over point to use mmap rather than buckets
 extern unsigned int uDefaultStackSize();		// cluster coroutine/task stack size (bytes)
@@ -98,12 +77,6 @@ extern unsigned int uDefaultSpin();			// processor spin time for idle task (cont
 extern unsigned int uDefaultPreemption();		// processor scheduling pre-emption durations (milliseconds)
 extern unsigned int uDefaultProcessors();		// number of processors created on the user cluster
 extern unsigned int uDefaultBlockingIOProcessors();	// number of blocking I/O processors created on the blocking I/O cluster
-
-extern unsigned int uDefaultActorMailboxes();		// executor request queues
-extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
-extern unsigned int uDefaultActorProcessors();		// kernel threads (processors) servicing executor thread-pool
-extern int uDefaultActorAffinity();			// affinity and offset (-1 => no affinity, default)
-extern bool uDefaultActorSepClus();			// create processors on separate cluster
 
 extern void uStatistics();				// print user defined statistics on interrupt
 

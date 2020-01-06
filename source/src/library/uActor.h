@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 15 08:28:57 2019
-// Update Count     : 404
+// Last Modified On : Mon Jan  6 09:15:55 2020
+// Update Count     : 425
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,6 +28,7 @@
 #pragma once
 
 
+#include <uDefaultExecutor.h>
 #include <uFuture.h>
 #include <uSemaphore.h>
 
@@ -181,7 +182,8 @@ class uActor {
 
     // Administration
 
-#   define uActorStart() uExecutor __uExecutor__; uActor::start( __uExecutor__ )
+    // use processors on current cluster
+#   define uActorStart() uExecutor __uExecutor__( 0, uThisCluster().getProcessors(), false, -1 ); uActor::start( __uExecutor__ )
     static void start( uExecutor & executor ) {		// wait for all actors to terminate or timeout
 	assert( ! uActor::executor );
 	uActor::executor = &executor;
@@ -189,12 +191,14 @@ class uActor {
 
 #   define uActorStop() uActor::stop()
     static bool stop( uDuration duration = 0 ) {	// wait for all actors to terminate or timeout
+	bool stopped = true;
 	if ( duration == 0 ) {				// optimization
 	    uActor::wait_.P();
-	    return true;				// true => stop
 	} else {
-	    return uActor::wait_.P( duration );		// true => stop, false => timeout
+	    stopped = uActor::wait_.P( duration );	// true => Ved, false => timeout
 	} // if
+	uActor::executor = nullptr;
+	return stopped;					// true => stop, false => timeout
     } // uActor::stop
 
     static struct StartMsg : public uActor::Message {} startMsg; // start actor
@@ -241,7 +245,6 @@ template< typename Actor > class uActorType : public uActor {
 	send_( [this]() { this->restart_(); } );	// run restart message
     } // uActorType::restart
 }; // uActorType
-
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Fri Aug 16 10:52:45 2019
-%% Update Count     : 7501
+%% Last Modified On : Mon Jan  6 09:17:31 2020
+%% Update Count     : 7549
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -577,7 +577,7 @@ The following example shows the labelled %(break%) specifying which control stru
 	... \(\emph{declarations}\) ...
 	switch ( ... ) {
 	  case 3:
-	    if ( ... ) {
+		if ( ... ) {
 			for ( ... ) {
 				... goto L1; ...
 				... goto L2; ...
@@ -596,7 +596,7 @@ L1: {
 	... \(\emph{declarations}\) ...
 	L2: switch ( ... ) {
 	  case 3:
-	    L3: if ( ... ) {
+		L3: if ( ... ) {
 			L4: for ( ... ) {
 				... break L1; ...	// exit compound statement
 				... break L2; ...	// exit switch
@@ -3710,18 +3710,19 @@ The future is then buffered in vector %(requests%) until the input worker subseq
 \label{s:Executors}
 
 An executor is a predefined, generic server with a fixed-size pool of worker threads performing submitted units of work, where work is formed by a routine or functor.
-Each worker thread has its own work queue and arriving work requests are demultiplexed among the queues in roughly round-robin order.
-No work sharing or stealing is performed among the work queues.
+Each worker thread has its own request queue and arriving work requests are demultiplexed among the queues in roughly round-robin order.
+No work sharing or stealing is performed among the request queues.
 %[
 class uExecutor {
   public:
-    uExecutor(); // special for current cluster
-    uExecutor( unsigned int nprocessors,
-		 bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
-    uExecutor( unsigned int nprocessors, unsigned int nworkers,
-		 bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
-    uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes,
-		bool sepClus = uDefaultActorSepClus(), int affAffinity = uDefaultActorAffinity() );
+	uExecutor();
+	uExecutor( unsigned int nprocessors, unsigned int nthreads, unsigned int nrqueues,
+		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
+	uExecutor( unsigned int nprocessors, unsigned int nthreads,
+		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
+	uExecutor( unsigned int nprocessors,
+		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
+
 	template< typename Func > void send( Func action );
 	template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
 };
@@ -3732,21 +3733,24 @@ The constructor routines have the following form:
 \begin{prefix}
 \begin{sloppypar}
 \item[%(uExecutor()%)]
--- creates an executor containing 0 processors, %(uThisCluster().getProcessors()%) worker threads and queues, which are created on the current cluster with the cluster's default stack\index{stack!default size} size.
+-- creates an executor with processors, threads, request queues, current or separate cluster, and processor affinity all set to the default values from the default routines.
+\item[%(uExecutor( unsigned int nprocessors, unsigned int nthreads, unsigned int nrqueues, bool sepClus,%)]
+%(int affAffinity )%)
+-- creates an executor containing %(nprocessors%) processors (with default affinity), %(nthreads%) worker threads, and %(nrqueues%) request queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
+\item[%(uExecutor( unsigned int nprocessors, unsigned int nthreads, bool sepClus, int affAffinity)%)]
+-- creates an executor containing %(nprocessors%) processors (with default affinity), and %(nthreads%) worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \item[%(uExecutor( unsigned int nprocessors, bool sepClus, int affAffinity)%)]
 -- creates an executor containing %(nprocessors%) processors (with default affinity), worker threads, and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nprocessors, unsigned int nworkers, bool sepClus, int affAffinity)%)]
--- creates an executor containing %(nprocessors%) processors (with default affinity), and %(nworkers%) worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nmailboxes, bool sepClus,%)]
-%(int affAffinity )%)
--- creates an executor containing %(nprocessors%) processors (with default affinity), %(nworkers%) worker threads and %(nmailboxes%) queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \end{sloppypar}
 \end{prefix}
 If %(affOffset%) is zero or positive, the %(nprocessors%) processors are locked (affinity) on the CPUs starting at the specified starting value;
 e.g., for %(nprocessors%) of 4 and %(affOffset%) of 16, the processors are locked on CPUS 16, 17, 18, 19.
 Otherwise, the processors are run on any CPUs selected by the operating system.
-Note, when using the default constructor the processors on the current cluster are used.
-Therefore, it is necessary to explicitly populate the current cluster with the appropriate number of processors, e.g., %(uProcessors p[3]%) to get 4 processors, as each cluster usually gets an initial processor.
+Note, to get the executor to use processors on the current cluster, declare it as:
+%[
+uExecutor executor( 0, uThisCluster().getProcessors() );
+%]
+\emph{after} the current cluster has created the appropriate number of processors, e.g., %(uProcessors p[3]%) to get 4 processors, as each cluster usually has an initial processor.
 
 The member routine %(send%) queues a unit of work %(action%), with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
 The member routine %(sendrecv%) queues a unit of work %(action%), with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
@@ -3805,6 +3809,26 @@ int main() {
 \caption{Executor Example}
 \label{f:ExecutorExample}
 \end{figure}
+
+Finally, the following routines control the default executor parameters.
+%[
+extern unsigned int uDefaultExecutorProcessors();	// kernel threads (processors) servicing worker threads
+extern unsigned int uDefaultExecutorThreads();		// worker threads servicing work requests
+extern unsigned int uDefaultExecutorRQueues();		// executor request queues divided among workers
+extern bool uDefaultExecutorSepClus();				// create processors on separate cluster
+extern int uDefaultExecutorAffinity();				// affinity and offset (-1 => no affinity, default)
+%]
+\index{uDefaultExecutorProcessors@%(uDefaultExecutorProcessors%)}%
+\index{uDefaultExecutorThreads@%(uDefaultExecutorThreads%)}%
+\index{uDefaultExecutorRQueues@%(uDefaultExecutorRQueues%)}%
+\index{uDefaultExecutorSepClus@%(uDefaultExecutorSepClus%)}%
+\index{uDefaultExecutorAffinity@%(uDefaultExecutorAffinity%)}%
+Routine %(uDefaultExecutorProcessors%) returns the number of processor (kernel threads) used by the executor.
+Routine %(uDefaultExecutorThreads%) returns the number of threads on the actor executor.
+Routine %(uDefaultExecutorRQueues%) returns the number of executor request-queues, which are distributed evenly across the worker threads.
+Routine %(uDefaultExecutorSepClus%) returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
+Routine %(uDefaultExecutorAffinity%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
+Currently, the defaults are 2 processors, 2 threads 2 request queues, and the actor executor runs in the user cluster without affinity.
 
 
 \section{Actor}
@@ -4081,30 +4105,14 @@ Instead of returning an %(unhandledMsg%) to the sender, it is possible to inform
 One approach is to explicitly deliver an exception (%(MyEvent%)) into the future;
 the other approach is to raise an exception, which is caught by the the thread executing the actor and this thread implicitly duplicates the exception into the %(FutureMessage%).
 
-Finally, the following routines control the actor executor by adjusting its thread pool.
-%[
-extern unsigned int uDefaultActorMailboxes();	// executor request queues
-extern unsigned int uDefaultActorThreads();		// user threads servicing executor thread-pool
-extern unsigned int uDefaultActorProcessors();	// kernel threads (processors) servicing executor thread-pool
-extern int uDefaultActorAffinity();				// affinity and offset (-1 => no affinity, default)
-extern bool uDefaultActorSepClus();				// create processors on separate cluster
-%]
-\index{uDefaultActorMailboxes@%(uDefaultActorMailboxes%)}%
-\index{uDefaultActorThreads@%(uDefaultActorThreads%)}%
-\index{uDefaultActorProcessors@%(uDefaultActorProcessors%)}%
-\index{uDefaultActorAffinity@%(uDefaultActorAffinity%)}%
-\index{uDefaultActorSepClus@%(uDefaultActorSepClus%)}%
-Routine %(uDefaultActorMailboxes%) returns the number of executor request-queues (mailboxes) written to by actors and serviced by the actor-executor threads.
-Routine %(uDefaultActorThreads%) returns the number of threads per processor on the actor executor.
-Routine %(uDefaultActorProcessors%) returns the number of processor (kernel threads) used by the actor executor (see \VRef{s:Executors}).
-Currently, the defaults are 4 request queues, 4 threads, 2 processors, and the actor executor runs in the user cluster.
-Routine %(uDefaultActorAffinity%) returns the CPU offset from CPU 0 and forces affinity (-1 $\Rightarrow$ no affinity, default)
-Routine %(uDefaultActorSepClus%) returns true if the actor executor runs on its own separate cluster, and false if the actor executor runs on the current cluster.
-
 Actors may inherit from other actors\index{actor!inheritance}:
+\begin{flushleft}
+\begin{tabular}{@{}l|l@{}}
 %[
 _Actor B {
-	Allocation receive( Message & ) { return Delete; }
+	Allocation receive( Message & ) {
+		return Delete;
+	}
   protected:
 	void preStart() { ... }
   public:
@@ -4112,17 +4120,21 @@ _Actor B {
 	B( int i ) {}
 };
 %]
+&
+\LGindent=0pt
 %[
 _Actor D : public B {
-	void preStart() { B::preStart(); }					// call base member
+	void preStart() { B::preStart(); }  // call base member
 	Allocation receive( Message & ) { return Delete; }
   public:
 	D() {}
 	D( int i ) : B( i ) {}
 };
-B b;	// B::preStart called after constructor
-D d;	// D::prestart called after constructor, which calls B::preStart
+B b; // B::preStart called after constructor
+D d; // D::prestart called after constructor, which calls B::preStart
 %]
+\end{tabular}
+\end{flushleft}
 For variable %(b%), only %(B::preStart%) is called;
 for variable %(d%), only %(D::preStart%) is called.
 In general, the most derived actor knows how it wants to initialize the entire actor object.
@@ -4156,15 +4168,27 @@ _Actor Hello {
 	}
 };
 int main() {
-    uActorStart();										// start actor system
+	uActorStart();										// start actor system
 	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
 	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
-    uActorStop();										// wait for all actors to terminate
+	uActorStop();										// wait for all actors to terminate
 }
 %]
 \caption{Hello Actor}
 \label{f:HelloActor}
 \end{figure}
+
+Finally, the Actor system must be started, which creates the actor thread-pool (executor), and control must wait for all actors to complete.
+Macro %(uActorStart%) is the default way to start an actor system:
+%[
+#define uActorStart() uExecutor __uExecutor__( 0, uThisCluster().getProcessors(), false, -1 ); \
+					uActor::start( __uExecutor__ )
+%]
+which creates an actor executor containing 0 processors, %(uThisCluster().getProcessors()%) worker threads and queues on the current cluster without affinity.
+Macro %(uActorStop%) is the default way to wait for the actor system to end:
+%[
+#define uActorStop() uActor::stop()
+%]
 
 \VRef[Figure]{f:HelloActor} shows a simple actor that receives a number of messages and then stops.
 There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
@@ -4323,7 +4347,7 @@ int main() {
 	Future_ISM< int > fi[Times];
 	Future_ISM< string > fs[Times];
 
-    uActorStart();										// start actor system
+	uActorStart();										// start actor system
 	Actor * actor = new Actor;
 
 	for ( int i = 0; i < Times; i += 1 ) {				// tell messages
@@ -4344,7 +4368,7 @@ int main() {
 		osacquire( cout ) << "futures " << fi[i]() << endl;
 	}
 	*actor | uActor::stopMsg;							// terminate actor
-    uActorStop();										// wait for all actors to terminate
+	uActorStop();										// wait for all actors to terminate
 }
 %]
 \caption{Future Actor}
@@ -8058,8 +8082,8 @@ int main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:23867) Attempt to create uTime( year=1970, month=0, day=0, hour=0, min=0, sec=-17, nsec=0 ), which exceeds range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
-Error occurred while executing task main (0x7ffc68620ca0).
+uC++ Runtime error (UNIX pid:2700) Attempt to create uTime( year=-17, month=0, day=0, hour=0, min=0, sec=0, nsec=0 ), which is not in the range 00:00:00 UTC, January 1, 1970 to 03:14:07 UTC, January 19, 2038.
+Error occurred while executing task main (0x7fffec02ac70).
 \end{quote}
 
 
@@ -8505,7 +8529,6 @@ class uProcessor {
 	uProcessor( uCluster &cluster, bool detached, unsigned int ms = uDefaultPreemption(),
 				unsigned int spin = uDefaultSpin() );
 
-	uClock &getClock() const;
 	uPid_t getPid() const;
 	uCluster &setCluster( uCluster &cluster );
 	uCluster &getCluster() const;
@@ -8520,7 +8543,6 @@ class uProcessor {
 
 uProcessor proc( clus );  // processor is attached to cluster clus
 %]
-\index{uProcessor@%(uProcessor%)!getClock@%(getClock%)}%
 \index{uProcessor@%(uProcessor%)!getPid@%(getPid%)}%
 \index{uProcessor@%(uProcessor%)!setCluster@%(setCluster%)}%
 \index{uProcessor@%(uProcessor%)!getCluster@%(getCluster%)}%
@@ -8554,8 +8576,6 @@ The indicator for detachment is %(false%) for non-detached and %(true%) for deta
 The indicator for detachment is %(false%) for non-detached and %(true%) for detached.
 \end{prefix}
 \end{sloppypar}
-
-The member routine %(getClock%))\index{getClock@%(getClock%)} returns the clock used to control timing on this processor (see \VRef{s:Clock}).
 
 The member routine %(getPid%)\index{getPid@%(getPid%)} returns the current UNIX process id that the processor is associated with.
 
@@ -9019,39 +9039,40 @@ The creation and manipulation of %(uDuration%) values are performed through the 
 %[
 class uDuration {
   public:
-	uDuration();
+	uDuration();				// initialize to zero
 	uDuration( long int sec );
 	uDuration( long int sec, long int nsec );
-	uDuration( const timeval &t );
-	uDuration( const timespec &t );
+	uDuration( const timeval tv );
+	uDuration( const timespec ts );
 
-	uDuration &operator=( const timeval &t ) {
-	uDuration &operator=( const timespec &t ) {
+	uDuration operator=( const timeval tv );
+	uDuration operator=( const timespec ts );
 	operator timeval() const;
 	operator timespec() const;
-	long long int nanoseconds() const;
+	long int seconds() const;
+	int64_t nanoseconds() const;
 
-	uDuration &operator-=( uDuration op );
-	uDuration &operator+=( uDuration op );
-	uDuration &operator*=( long long int op );
-	uDuration &operator/=( long long int op );
+	uDuration operator-=( uDuration op );
+	uDuration operator+=( uDuration op );
+	uDuration operator*=( int64_t op );
+	uDuration operator/=( int64_t op );
 }; // uDuration
 
-uDuration operator-( uDuration op );
-uDuration operator-( uDuration op1, uDuration op2 );
 uDuration operator+( uDuration op );
 uDuration operator+( uDuration op1, uDuration op2 );
+uDuration operator-( uDuration op );
+uDuration operator-( uDuration op1, uDuration op2 );
 uDuration operator*( uDuration op1, long long int op2 );
 uDuration operator*( long long int op1, uDuration op2 );
 uDuration operator/( uDuration op1, long long int op2 );
 long long int operator/( uDuration op1, uDuration op2 );
+bool operator==( uDuration op1, uDuration op2 );
+bool operator!=( uDuration op1, uDuration op2 );
 bool operator>( uDuration op1, uDuration op2 );
 bool operator<( uDuration op1, uDuration op2 );
 bool operator>=( uDuration op1, uDuration op2 );
 bool operator<=( uDuration op1, uDuration op2 );
-bool operator==( uDuration op1, uDuration op2 );
-bool operator!=( uDuration op1, uDuration op2 );
-ostream &operator<<( ostream &os, const uDuration op );
+ostream & operator<<( ostream & os, const uDuration op );
 %]
 \caption{Duration Class}
 \label{f:DurationClass}
@@ -9075,7 +9096,8 @@ d3 = d1;					// convert from timeval to uDuration (assignment)
 d1 = d3;					// convert from uDuration to timeval (implicit cast)
 %]
 Conversion is guaranteed to be exact.
-The member routine %(nanoseconds%) returns the duration value as a 64 bit number in nanoseconds.
+The member routine %(seconds%) returns the duration value in seconds.
+The member routine %(nanoseconds%) returns the duration value in nanoseconds.
 
 Arithmetic operations may be performed on %(uDuration%) values, e.g.:
 %[
@@ -9088,7 +9110,7 @@ x = y * n;					// multiply a uDuration n times
 x = n * y;					// multiply a uDuration n times
 x = y / n;					// divide a uDuration by n
 %]
-In addition, relational comparison operators are defined for %(uDuration%) objects.
+In addition, relational comparison operators are defined for %(uDuration%) values.
 
 %(uTime%)\index{uTime@%(uTime%)} is a class, whose instance represents an absolute time.
 Time can be specified using some combination of year, month, day, hour, minute, second, and nanosecond in UTC.
@@ -9099,38 +9121,37 @@ The creation and manipulation of %(uTime%) values are performed through the memb
 %[
 class uTime {
   public:
-	uTime();
-	explicit uTime( long int sec );	// explicit => unambiguous with uDuration( long int sec )
-	uTime( long int sec, long int nsec );
-	uTime( int min, int sec, long int nsec );
-	uTime( int hour, int min, int sec, long int nsec );
-	uTime( int day, int hour, int min, int sec, long int nsec );
-	uTime( int month, int day, int hour, int min, int sec, long int nsec );
-	uTime( int year, int month, int day, int hour, int min, int sec, long int nsec );
-	uTime( const timeval &t );
-	uTime( const timespec &t );
+	uTime();				// initialize to zero
+	// explicit => unambiguous with uDuration( long int sec )
+	explicit uTime( int year, int month = 1, int day = 1, int hour = 0, int min = 0,
+					int sec = 0, int64_t nsec = 0 );
+	uTime( timeval tv );
+	uTime( timespec ts );
 
-	uTime &operator=( const timeval &t );
-	uTime &operator=( const timespec &t );
+	uTime operator=( timeval tv );
+	uTime operator=( timespec ts );
 	operator timeval() const;
 	operator timespec() const;
-	long long int nanoseconds() const;
+	operator tm() const;
+	void convert( int & year, int & month, int & day, int & hour, int & minutes,
+					int & seconds, int64_t & nseconds ) const;
+	uint64_t nanoseconds() const;
 
-	uTime &operator-=( uDuration op );
-	uTime &operator+=( uDuration op );
+	uTime operator-=( uDuration op );
+	uTime operator+=( uDuration op );
 }; // uTime
 
-uDuration operator-( uTime op1, uTime op2 );
-uTime operator-( uTime op1, uDuration op2 );
 uTime operator+( uTime op1, uDuration op2 );
 uTime operator+( uDuration op1, uTime op2 );
+uDuration operator-( uTime op1, uTime op2 );
+uTime operator-( uTime op1, uDuration op2 );
+bool operator==( uTime op1, uTime op2 );
+bool operator!=( uTime op1, uTime op2 );
 bool operator>( uTime op1, uTime op2 );
 bool operator<( uTime op1, uTime op2 );
 bool operator>=( uTime op1, uTime op2 );
 bool operator<=( uTime op1, uTime op2 );
-bool operator==( uTime op1, uTime op2 );
-bool operator!=( uTime op1, uTime op2 );
-ostream &operator<<( ostream &os, const uTime op );
+ostream & operator<<( ostream & os, const uTime op );
 %]
 \caption{Time Class}
 \label{f:TimeClass}
@@ -9140,29 +9161,25 @@ The overloaded constructor routines %(uTime%) provide a choice of specifying a t
 The parameters have the following meanings:
 \begin{prefix}
 \item[%(year%)] -- a year greater than or equal to 1970 and less than or equal to 2038.
-\item[%(month%)] -- a number between 0 and 11 inclusive, where 0 represents January and 11 represents December.
-The default value for a constructor without this argument is 0.
-\item[%(day%)] -- a number between 0 and 30 inclusive, where 0 represents the first day of the month and 30 the last day.
-The default value for a constructor without this argument is 0.
+\item[%(month%)] -- a number between 1 and 12 inclusive, where 1 represents January and 12 represents December.
+\item[%(day%)] -- a number between 1 and 31 inclusive, where 1 represents the first day of the month and 31 the last day.
 \item[%(hour%)] -- a number between 0 and 23 inclusive, where 0 represents 12:00am and 23 represents 11:00pm.
-The default value for a constructor without this argument is 0.
 \item[%(min%)] -- a number between 0 and 59 inclusive, where 0 is the first minute of the hour and 59 the last.
-The default value for a constructor without this argument is 0.
-\item[%(sec%)] -- a number between 0 and 59 inclusive, where 0 is the first second of the minute and 59 the last.
+\item[%(sec%)] -- a number between 0 and 60 inclusive, where 0 is the first second of the minute and 59 the last, and 60 allows for a leap second.
 \item[%(nsec%)] -- a number between 0 and 999999999 inclusive, where 0 is the first nanosecond of the second and 999999999 the last.
 \item[%(timeval%) / %(timespec%)] -- a UNIX %(timeval%) or %(timespec%), which is converted to a %(uTime%) value.
 \end{prefix}
-It is permissible to \emph{exceed} the logical ranges for the time components;
-any excess is accumulative, e.g., the following declarations are valid:
+Values may be in any range (+/-) but the result must be in the UNIX epoch.
 %[
-uTime t1( 0,48,0,60,1000000000 );	// 1970 Jan 3 0:01:01:000000000 (GMT) 
-uTime t2( 818227413, 0 );			// 1995 Dec 6 05:23:33:000000000 (GMT)
+uTime t1( 2020, 1, 5, 9, 0, 0, 100000000000LL ); // 2020 Jan  5 09:01:40
+uTime t2( 1969, 13, 5, 9 );	// 1970 Jan  5 09:00:00
+uTime t3( 1970, 25, 366, 48, 120, -120, 60000000000LL ); // 1973 Jan  2 01:59:00
 %]
 
 A UNIX %(timeval%) and %(timespec%) value can be used to initialize or assign to a %(uTime%) value, and a %(uTime%) value may be cast into a %(timeval%) or %(timespec%) value, e.g.:
 %[
 timeval t1;
-gettimeofday( &t1, nullptr );	// current time (seconds / microseconds)
+gettimeofday( &t1, nullptr );\(}\Tab{28}{\)// current time (seconds / microseconds)
 uTime t2 = t1, t3;			// convert from timeval to uTime (initialization)
 timespec t4 = t2;			// convert from uTime to timespec (seconds / nanoseconds) (implicit cast)
 t3 = t1;					// convert from timeval to uTime (assignment)
@@ -9170,7 +9187,8 @@ t1 = (timeval)t2;			// convert from uTime to timeval (cast)
 t1 = t3;					// convert from uTime to timeval (implicit cast)
 %]
 Conversion is guaranteed to be exact.
-The member routine %(nanoseconds%) returns the absolute time value as a 64 bit number in nanoseconds from the start of the UNIX epoch.
+The member routine %(convert%) unpacks the time into its time components.
+The member routine %(nanoseconds%) returns the time value in nanoseconds.
 
 As for %(uDuration%) values, arithmetic and relational operations may be performed on %(uTime%) values.
 As well, mixed mode operations are possible involving durations and time.
@@ -9378,32 +9396,32 @@ The type %(uClock%) creates a clock object, and is defined:
 class uClock {
   public:
 	uClock();
-	uClock( uTime adj );
-	void resetClock();
-	void resetClock( uTime adj );
+	uClock( uDuration adj );
+	void resetClock( uDuration adj );
 	uTime getTime();
-	void getTime( int &year, int &month, int &day, int &hour, int &minutes,
-				  int &seconds, long int &nsec );
-	static void convertTime( uTime time, int &year, int &month, int &day, int &hour, int &minutes,
-							int &seconds, long int &nsec );
+	static uDuration getResNsec();
+	static uDuration getRes();
+	static uTime currTime();
+	static uTime getCPUTime();
 }; // uClock
 %]
 \index{uClock@%(uClock%)!resetClock@%(resetClock%)}%
 \index{uClock@%(uClock%)!getTime@%(getTime%)}%
-\index{uClock@%(uClock%)!convertTime@%(convertTime%)}%
+\index{uClock@%(uClock%)!getResNsec@%(getResNsec%)}%
+\index{uClock@%(uClock%)!getRes@%(getRes%)}%
+\index{uClock@%(uClock%)!currTime@%(currTime%)}%
+\index{uClock@%(uClock%)!getCPUTime@%(getCPUTime%)}%
 
 The overloaded constructor routine %(uClock%)\index{uBaseCoroutine@%(uBaseCoroutine%)} has the following forms:
 \begin{prefix}
 \item[%(uClock()%)]
--- creates a clock as a real-time clock running at the same time as the underlying virtual process.
-\item[%(uClock( uTime adj )%)]
--- creates a clock as a virtual clock starting at time %(adj%).
+-- creates a clock as a real-time clock running at the same time as the underlying operating system.
+\item[%(uClock( uDuration adj )%)]
+-- creates a clock as a virtual clock adjusted forward/backward by duration %(adj%).
 \end{prefix}
 
-The overloaded member routine %(resetClock%)\index{resetClock@%(resetClock%)} resets the kind of clock between real-time and virtual, and each routine has the following form:
+The member routine %(resetClock%)\index{resetClock@%(resetClock%)} resets the virtual clock adjustment:
 \begin{prefix}
-\item[%(resetClock()%)]
--- this form sets the clock to a real-time clock, so it returns the current time of the underlying virtual processor.
 \item[%(resetClock( uTime adj )%)]
 -- this form sets the clock to a virtual clock starting at time %(adj%).
 \end{prefix}
@@ -9416,11 +9434,8 @@ The overloaded member routine %(getTime%)\index{getTime@%(getTime%)} returns the
 -- this form returns the current time broken up into the traditional non-fixed radix units of time.
 \end{prefix}
 
+The static member routine %(currTime%)\index{currTime@%(currTime%)} returns the current time with nanoseconds accuracy from the start of the UNIX epoch.
 The static member routine %(convertTime%)\index{convertTime@%(convertTime%)} converts the specified time in nanoseconds from the start of the UNIX epoch into a traditional non-fixed radix units of time.
-
-As mentioned, each virtual processor has its own real-time clock.
-The current time is available from a virtual processor via the call %(uThisProcessor().getClock().getTime()%);
-hence, it is unnecessary to create a clock to get the current time.
 
 
 \section{Periodic Task}
@@ -9775,7 +9790,7 @@ hence, the task is simply deleted without a need to re-schedule.
 _PeriodicTask PeriodicTask1 {
   public:
 	PeriodicTask1( uDuration period, uTime endtime, uDuration deadline, uCluster &cluster ) :
-				uPeriodicBaseTask( period, uTime(0), endtime, deadline, cluster ) {
+				uPeriodicBaseTask( period, uTime(), endtime, deadline, cluster ) {
 	}
 	void main() {
 		// periodic task body
@@ -9785,7 +9800,7 @@ _PeriodicTask PeriodicTask1 {
 _PeriodicTask PeriodicTask2 {
   public:
 	PeriodicTask2( uDuration period, uTime endtime, uDuration deadline, uCluster &cluster ) :
-				uPeriodicBaseTask( period, uTime(0), endtime, deadline, cluster ) {
+				uPeriodicBaseTask( period, uTime(), endtime, deadline, cluster ) {
 	}
 	void main() {
 		// periodic task body
@@ -9801,7 +9816,7 @@ int main() {
 		// processor is created on the "RTClust" cluster.  This is ideal, as
 		// "addInitialize" is called as each task is added to the cluster.
 
-		uTime currTime = uThisProcessor().getClock().getTime();
+		uTime currTime = uClock::currTime();
 		PeriodicTask1 t1( 15, currTime+90,  5, RTClust );	// 15 sec period, 5  sec deadline
 		PeriodicTask2 t2( 30, currTime+90, 10, RTClust );	// 30 sec period, 5  sec deadline
 		PeriodicTask1 t3( 60, currTime+90, 20, RTClust );	// 60 sec period, 20 sec deadline
@@ -10177,16 +10192,24 @@ This approach avoids external fragmentation if large-object requests are infrequ
 
 The \uC allocator has the standard heap-operations:
 \begin{description}
-\item[%(malloc( size )%)] allocate %(size%) bytes and return a pointer to the allocated memory; memory is uninitialized.
-\item[%(calloc( N, size )%)] allocate %(N%) elements of %(size%) bytes (%(N%) $\times$ %(size%) bytes) and return a pointer to the allocated memory; memory is zero filled.
-\item[%(realloc( ptr, size )%)] change the size of the memory referenced by %(ptr%) to %(size%) bytes and return a pointer to the allocated memory; if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
+\item[%(malloc( size )%)] allocate %(size%) bytes and return a pointer to the allocated memory;
+memory is uninitialized.
+\item[%(calloc( N, size )%)] allocate %(N%) elements of %(size%) bytes (%(N%) $\times$ %(size%) bytes) and return a pointer to the allocated memory;
+memory is zero filled.
+\item[%(realloc( ptr, size )%)] change the size of the memory referenced by %(ptr%) to %(size%) bytes and return a pointer to the allocated memory;
+if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
 Any uncopied memory in the new storage is uninitialized.
-\item[%(posix_memalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory; the address returned is a multiple of %(alignment%) and memory is uninitialized.
+\item[%(posix_memalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory;
+the address returned is a multiple of %(alignment%) and memory is uninitialized.
 \item[%(free( ptr )%)] deallocate memory referenced by %(ptr%), which must have been allocated by a call to %(malloc%), %(calloc%) or %(realloc%).
 \end{description}
 The following extended routines (not defined by POSIX) are supported:
 \begin{description}
-\item[%(memalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory; the address returned is a multiple of %(alignment%) and memory is uninitialized.
+\item[%(memalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory;
+the address returned is a multiple of %(alignment%) and memory is uninitialized.
+\item[%(realloc( ptr, alignment, size )%)] change the alignment and size of the memory referenced by %(ptr%) to %(alignment%) boundary and %(size%) bytes and return a pointer to the aligned allocated memory;
+if the size change requires new storage (smaller or larger), as much data as possible it copied from the old storage and the old storage is freed.
+Any uncopied memory in the new storage is uninitialized.
 \item[%(mallopt( parameter, value )%)] adjust parameters of the memory allocator for a specific application.
 Supported parameters are (see also \VRef{s:DefaultValuesHeap}):
 \begin{description}
@@ -10214,7 +10237,8 @@ zero fill		& %(calloc%)	& \textbf{%(cmemalign%)}	\\
 Note the missing interface to allocate aligned storage that is zero filled;
 therefore, the interface is extended to complete the table with routine:
 \begin{description}
-\item[%(cmemalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory; the address returned is a multiple of %(alignment%) and memory is zero filled.
+\item[%(cmemalign( alignment, size )%)] allocate %(size%) bytes and return a pointer to the allocated memory;
+the address returned is a multiple of %(alignment%) and memory is zero filled.
 \end{description}
 This routine completes programmer expectation with respect to accessing the allocation properties.
 As well, current heap semantics do not preserve zero fill and alignment properties with respect to re-allocation.
@@ -10225,6 +10249,7 @@ This silent generation of a problem is unintuitive to programmers and difficult 
 Therefore, the semantics of %(realloc%) are augmented and some additional query routines are added:
 \begin{description}
 \item[%(realloc( ptr, size )%)] same semantics as before with the addition that zero fill and alignment properties are preserved if a new allocation is made.
+\item[%(realloc( ptr, alignment, size )%)] same semantics as before with the addition of new alignment and the zero fill property is preserved if a new allocation is made.
 \item[%(malloc_alignment( ptr )%)] returns the alignment of the memory referenced by %(ptr%).
 If %(ptr%) is %(nullptr%), the minimal alignment for any allocation is returned, e.g., multiple of 8.
 \item[%(malloc_zero_fill( ptr )%)] returns a boolean result indicating if memory referenced by %(ptr%) was allocated with zero fill (i.e., by %(calloc%)/%(cmemalign%)).
@@ -10654,7 +10679,7 @@ The following %(gdb%)\index{gdb@%(gdb%)} and Python macros allow %(gdb%) to unde
 
 These instructions assume the install %(<prefix>%) for \uC is %(/usr/local/u++-7.0.0%);
 if installed elsewhere, change %(<prefix>%).
-Copy %(<prefix>/.gdbinit%) to your home directory or merge it into your existing %(.gdbinit%) file.
+Copy %(<prefix>/gdb/.gdbinit%) to your home directory or merge it into your existing %(.gdbinit%) file.
 If installed elsewhere, edit the %(<prefix>%) within the %(.gdbinit%) file to the install location.
 Thereafter, %(gdb%) automatically loads the %(.gdbinit%) file from the home directory at start up making the following new %(gdb%) commands available.
 

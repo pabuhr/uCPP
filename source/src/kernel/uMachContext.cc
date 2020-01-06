@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:18:37 2019
-// Update Count     : 821
+// Last Modified On : Thu Nov 28 22:46:24 2019
+// Update Count     : 824
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -253,7 +253,7 @@ namespace UPP {
     /**************************************************************
 	s  |  ,-----------------. \
 	t  |  |                 | |
-	a  |  | __U_CONTEXT_T__ | } (multiple of 8)
+	a  |  |    uContext_t   | } (multiple of 8)
 	c  |  |                 | |
 	k  |  `-----------------' / <--- context (16 byte align)
 	   |  ,-----------------. \ <--- base (stack grows down)
@@ -265,11 +265,11 @@ namespace UPP {
 	h  V  ,-----------------.
 	      |   guard page    |   debug only
 	      | write protected |
-	      `-----------------'   <--- 4/8/16K page alignment
+	      `-----------------'   <--- storage, 4/8/16K page alignment
     **************************************************************/
 
     void uMachContext::createContext( unsigned int storageSize ) { // used by all constructors
-	size_t cxtSize = uCeiling( sizeof(__U_CONTEXT_T__), 8 ); // minimum alignment
+	size_t cxtSize = uCeiling( sizeof(uContext_t), 8 ); // minimum alignment
 	size_t size;
 
 	if ( storage == nullptr ) {
@@ -281,8 +281,7 @@ namespace UPP {
 		abort( "(uMachContext &)%p.createContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
 	    } // if
 #else
-	    // assume malloc has 8 byte alignment so add 8 to allow rounding up to 16 byte alignment
-	    storage = malloc( cxtSize + size + 8 );
+	    storage = malloc( cxtSize + size );		// assume malloc has 16 byte alignment
 #endif // __U_DEBUG__
 	    if ( storage == nullptr ) {
 		abort( "Attempt to allocate %zd bytes of storage for coroutine or task execution-state but insufficient memory available.", size );

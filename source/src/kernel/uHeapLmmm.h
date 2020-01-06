@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 19 16:40:00 2019
-// Update Count     : 387
+// Last Modified On : Mon Jan  6 11:52:09 2020
+// Update Count     : 423
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -56,27 +56,26 @@ extern "C" {
 
 namespace UPP {
     class uHeapManager {
-	friend class uKernelBoot;			// access: uHeap
-	friend class UPP::uMachContext;			// access: pageSize
-	friend class UPP::uSigHandlerModule;		// access: print
-	friend void * ::malloc( size_t size ) __THROW;	// access: boot
+	friend class uKernelBoot;			// uHeap
+	friend class UPP::uMachContext;			// pageSize
+	friend class UPP::uSigHandlerModule;		// print
+	friend void * ::malloc( size_t size ) __THROW;	// boot
 	friend void * ::calloc( size_t noOfElems, size_t elemSize ) __THROW;
-	friend void * ::cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW; // access: Storage
-	friend void * ::realloc( void * addr, size_t size ) __THROW; // access: boot
-	friend void * ::memalign( size_t alignment, size_t size ) __THROW; // access: boot
-	friend void * ::valloc( size_t size ) __THROW;	// access: pageSize
-	friend void ::free( void * addr ) __THROW;	// access: doFree
-	friend int ::mallopt( int param_number, int value ) __THROW; // access: heapManagerInstance, setHeapExpand, setMmapStart
-	friend bool ::malloc_zero_fill( void * addr ) __THROW; // access: Storage
+	friend void * ::realloc( void * addr, size_t size ) __THROW; // boot
+	friend void * ::memalign( size_t alignment, size_t size ) __THROW; // boot
+	friend void * ::cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW; // Storage
+	friend void * ::realloc( void * addr, size_t alignment, size_t size ) __THROW; // boot
+	friend void * ::valloc( size_t size ) __THROW;	// pageSize
+	friend void ::free( void * addr ) __THROW;	// doFree
+	friend int ::mallopt( int param_number, int value ) __THROW; // heapManagerInstance, setHeapExpand, setMmapStart
+	friend bool ::malloc_zero_fill( void * addr ) __THROW; // Storage
 	// paraenthesis required for typedef
-	friend size_t (::malloc_alignment)( void * addr ) __THROW; // access: Header, FreeHeader
-	friend size_t (::malloc_usable_size)( void * addr ) __THROW; // access: Header, FreeHeader
-	friend void ::malloc_stats() __THROW;
-	friend int ::malloc_stats_fd( int fd ) __THROW;
-	friend class uHeapControl;			// access: heapManagerInstance, boot
-	#ifdef __U_STATISTICS__
-	friend void UPP::Statistics::print();
-	#endif // __U_STATISTICS__
+	friend size_t (::malloc_alignment)( void * addr ) __THROW; // Header, FreeHeader
+	friend size_t (::malloc_usable_size)( void * addr ) __THROW; // Header, FreeHeader
+	friend void ::malloc_stats() __THROW;		// print, prtFree
+	friend int ::malloc_stats_fd( int fd ) __THROW;	// stats_fd
+	friend int ::malloc_info( int options, FILE * stream ); // printXML
+	friend class uHeapControl;			// heapManagerInstance, boot
 
 	struct FreeHeader;				// forward declaration
 
@@ -85,10 +84,10 @@ namespace UPP {
 		union Kind {
 		    struct RealHeader {
 			union {
-			    struct {			// 32-bit word => 64-bit header, 64-bit word => 128-bit header
-				#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
+			    struct {			// 4-byte word => 8-byte header, 8-byte word => 16-byte header
+				#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && __SIZEOF_POINTER__ == 4
 				uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
-				#endif // __ORDER_BIG_ENDIAN__ && __U_WORDSIZE__ == 32
+				#endif // __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ && __SIZEOF_POINTER__ == 4
 
 				union {
 				    FreeHeader * home;	// allocated block points back to home locations (must overlay alignment)
@@ -98,15 +97,15 @@ namespace UPP {
 				    #endif // SPINLOCK
 				};
 
-				#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
+				#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __SIZEOF_POINTER__ == 4
 				    uint32_t padding;	// unused, force home/blocksize to overlay alignment in fake header
-				#endif // __ORDER_LITTLE_ENDIAN__ && __U_WORDSIZE__ == 32
+				#endif // __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __SIZEOF_POINTER__ == 4
 			    };
 			    #if BUCKLOCK == LOCKFREE
 			    Stack<Storage>::Link next;	// freed block points next freed block of same size (double-wide)
 			    #endif // LOCKFREE
 			};
-		    } real;
+		    } real; // RealHeader
 		    struct FakeHeader {
 			#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
@@ -117,8 +116,8 @@ namespace UPP {
 			#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 			uint32_t alignment;		// low-order bits of home/blockSize used for tricks
 			#endif // __ORDER_BIG_ENDIAN__
-		    } fake;
-		} kind;
+		    } fake; // FakeHeader
+		} kind; // Kind
 		#if defined( __U_PROFILER__ )
 		// Used by uProfiler to find matching allocation data-structure for a deallocation.
 		size_t * profileMallocEntry;
@@ -145,18 +144,19 @@ namespace UPP {
 	    bool operator<( const size_t bsize ) const { return blockSize < bsize; }
 	}; // FreeHeader
 
-	enum { NoBucketSizes = 93,			// number of buckets sizes
+	// Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
+	// Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
+	enum { NoBucketSizes = 91,			// number of buckets sizes
 	       #ifdef FASTLOOKUP
 	       LookupSizes = 65536 + sizeof(uHeapManager::Storage), // number of fast lookup sizes
 	       #endif // FASTLOOKUP
 	};
-
+	static unsigned int bucketSizes[];		// different bucket sizes
 	static uHeapManager * heapManagerInstance;	// pointer to heap manager object
 	static size_t pageSize;				// architecture pagesize
 	static size_t heapExpand;			// sbrk advance
 	static size_t mmapStart;			// cross over point for mmap
 	static unsigned int maxBucketsUsed;		// maximum number of buckets in use
-	static unsigned int bucketSizes[NoBucketSizes];	// different bucket sizes
 	#ifdef FASTLOOKUP
 	static unsigned char lookup[LookupSizes];	// O(1) lookup for small sizes
 	#endif // FASTLOOKUP
@@ -187,6 +187,7 @@ namespace UPP {
 	static unsigned int realloc_calls;
 	static int stats_fd;
 	static void print();
+	static int printXML( FILE * stream );
 	#endif // __U_STATISTICS__
 
 	// The next variables are statically allocated => zero filled.
@@ -210,7 +211,9 @@ namespace UPP {
 	void * extend( size_t size );
 	void * doMalloc( size_t size );
 	static void * mallocNoStats( size_t size ) __THROW;
+	static void * callocNoStats( size_t noOfElems, size_t elemSize ) __THROW;
 	static void * memalignNoStats( size_t alignment, size_t size ) __THROW;
+	static void * cmemalignNoStats( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
 	void doFree( void * addr );
 	size_t prtFree();
 	uHeapManager();

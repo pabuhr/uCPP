@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Tue Jul 23 14:48:37 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:27:30 2016
-// Update Count     : 130
+// Last Modified On : Sat Jan  4 18:40:05 2020
+// Update Count     : 132
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,11 +44,11 @@ class AcrossCxtSw : public uContext {
     } // AcrossCxtSw::AcrossCxtSw
 
     void save(){
-	beginCxtSw = uThisProcessor().getClock().getTime();
+	beginCxtSw = uClock::currTime();
     } // AcrossCxtSw::save
 
     void restore(){
-	clock += uThisProcessor().getClock().getTime() - beginCxtSw;
+	clock += uClock::currTime() - beginCxtSw;
     } // AcrossCxtSw::restore
 }; // AcrossCxtSw
 
@@ -67,7 +67,7 @@ _PeriodicTask TestTask {
     void main() {
 	uTime starttime, delay, currtime, endtime;
 
-	starttime = uThisProcessor().getClock().getTime();
+	starttime = uClock::currTime();
 	osacquire( cout ) << setw(3) << starttime - ::Start << "\t" << id << " Beginning." << endl;
 
 	// The loop below must deal with asynchronous advancing of variable "delay" during context switches. A problem
@@ -77,21 +77,21 @@ _PeriodicTask TestTask {
 	// problem, the current time value is saved *before* the comparison.  Thus, whether the delay value is the old
 	// or new (i.e., becomes larger) value, the comparision does not cause a premature exit.
 
-	delay = uThisProcessor().getClock().getTime() + C;
+	delay = uClock::currTime() + C;
 	{
 	    AcrossCxtSw acrossCxtSw( delay );		// cause delay to advance across a context switch interval
 	    do {
 		for ( int i = 0; i < Delay; i += 1 );	// don't spend too much time in non-interruptible clock routine
-		currtime = uThisProcessor().getClock().getTime();
+		currtime = uClock::currTime();
 	    } while ( delay > currtime );
 	}
-	endtime = uThisProcessor().getClock().getTime();
+	endtime = uClock::currTime();
 	osacquire( cout ) << setw(3) << endtime - ::Start << "\t" << id << " Ending " <<
 	    setw(3) << endtime - starttime << " seconds later" << endl;
     } // TestTask::main
   public:
     TestTask( int id, uDuration period, uDuration deadline, uCluster &clust ) :
-	    uPeriodicBaseTask( period, uTime(0), uThisProcessor().getClock().getTime()+90, deadline, clust ),
+	    uPeriodicBaseTask( period, uTime(), uClock::currTime() + 90, deadline, clust ),
 	    C( deadline ), id( id ) {
     } // TestTask::TestTask
 }; // TestTask
@@ -107,7 +107,7 @@ int main() {
 
 	osacquire( cout ) << "Time  \t\tTaskID" << endl;
 
-	::Start = uThisProcessor().getClock().getTime();
+	::Start = uClock::currTime();
 	processor = new uProcessor( rtCluster );	// now create the processor to do the work
     } // wait for t1, t2, t3 to finish
     delete processor;

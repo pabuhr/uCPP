@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Thierry Delisle 2016
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2017
 // 
-// uDefaultActorProcessors.cc -- 
+// uDefaultExecutorAffinity.cc -- 
 // 
 // Author           : Peter A. Buhr
-// Created On       : Thu Nov 17 11:11:53 2016
+// Created On       : Thu Jan  2 20:50:47 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 10 22:02:30 2017
-// Update Count     : 8
+// Last Modified On : Thu Jan  2 20:51:29 2020
+// Update Count     : 1
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,20 +25,18 @@
 // 
 
 
-#include <uDefault.h>
+#include <uDefaultExecutor.h>
 
 
 // Must be a separate translation unit so that an application can redefine this routine and the loader does not link
 // this routine from the uC++ standard library.
 
 
-unsigned int uDefaultActorProcessors() {
-    if ( uDefaultActorSepClus() ) return __U_DEFAULT_ACTOR_PROCESSORS__;
-    else return __U_DEFAULT_ACTOR_PROCESSORS__ - 1;	// assume an existing processor so N+1
-} // uDefaultActorProcessors
+int uDefaultExecutorAffinity() {
+    return __U_DEFAULT_EXECUTOR_AFFINITY__;		// affinity and CPU offset (-1 => no affinity, default)
+} // uDefaultExecutorAffinity
 
 
 // Local Variables: //
 // compile-command: "make install" //
 // End: //
-

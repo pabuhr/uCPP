@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 10 15:03:46 2019
-// Update Count     : 1020
+// Last Modified On : Sat Jan  4 18:41:14 2020
+// Update Count     : 1031
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -209,16 +209,16 @@ void gen_main_prefix( token_t *before, symbol_t *symbol ) {
 	if ( table->symbol->data->attribute.rttskkind.kind.PERIODIC ) {
 	    gen_code( before,
 		      "uBaseTask :: sleep ( firstActivateTime ) ; "
-		      "if ( endTime == uTime( 0 ) || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
+		      "if ( endTime == uTime() || uClock :: currTime ( ) < endTime ) { "
 		      "for ( ; ; ) { "
-		      "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
+		      "uTime uStartTime = uClock :: currTime ( ) + getPeriod ( ) ;"
 		);
 	} else if ( table->symbol->data->attribute.rttskkind.kind.SPORADIC ) {
 	    gen_code( before,
 		      "uBaseTask :: sleep ( firstActivateTime ) ; "
-		      "if ( endTime == uTime( 0 ) || uThisProcessor ( ) . getClock ( ) . getTime ( ) < endTime ) { "
+		      "if ( endTime == uTime() || uClock :: currTime ( ) < endTime ) { "
 		      "for ( ; ; ) { "
-		      "uTime uStartTime = uThisProcessor ( ) . getClock ( ) . getTime ( ) + getPeriod ( ) ;"
+		      "uTime uStartTime = uClock :: currTime ( ) + getPeriod ( ) ;"
 		);
 	} else if ( table->symbol->data->attribute.rttskkind.kind.APERIODIC ) {
 	    gen_code( before,
@@ -240,13 +240,13 @@ void gen_main_suffix( token_t *before, symbol_t *symbol ) {
     if ( table->symbol->data->key == TASK ) {
 	if ( table->symbol->data->attribute.rttskkind.kind.PERIODIC ) {
 	    gen_code( before,
-		     "if ( endTime != uTime( 0 ) && endTime <= uStartTime ) break ; "
+		     "if ( endTime != uTime() && endTime <= uStartTime ) break ; "
 		     "uBaseTask :: sleep( uStartTime ) ;"
 		     );
 	    gen_code( before, "} }" );
 	} else if ( table->symbol->data->attribute.rttskkind.kind.SPORADIC ) {
 	    gen_code( before,
-		     "if ( endTime != uTime( 0 ) && endTime <= uStartTime ) break ;"
+		     "if ( endTime != uTime() && endTime <= uStartTime ) break ;"
 		     );
 	    gen_code( before, "} }" );
 	} else if ( table->symbol->data->attribute.rttskkind.kind.APERIODIC ) {
@@ -729,15 +729,15 @@ void gen_class_suffix( symbol_t *symbol ) {
 	} // while
     } // if
 
-    // if this is a mutex, coroutine or task, check for copy/assignment operator
+    // if this is a coroutine, mutex or task, check for copy/assignment operator
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) { // mutex type => task
 	gen_code( table->private_area, "UPP :: uAction uDestruct ;" );
 	if ( symbol->data->table->hascopy ) {		// copy operator ?
-	    gen_error( ahead, "copy constructor(s) not allowed for coroutine or mutex type." );
+	    gen_error( ahead, "copy constructor(s) not allowed for coroutine, mutex type or task as uncopyable (possibly try \"explicit\" specifier for other uses)." );
 	} // if
 	if ( symbol->data->table->hasassnop ) {		// assignment operator ?
-	    gen_error( ahead, "assignment operator(s) not allowed for coroutine or mutex type." );
+	    gen_error( ahead, "assignment operator(s) not allowed for coroutine, mutex or task type as uncopyable." );
 	} // if
     } // if
 } // gen_class_suffix

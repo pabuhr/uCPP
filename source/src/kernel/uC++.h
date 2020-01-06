@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  1 16:52:09 2019
-// Update Count     : 5882
+// Last Modified On : Mon Jan  6 11:43:01 2020
+// Update Count     : 5894
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -173,6 +173,8 @@ extern "C" {
     void malloc_stats() __THROW;
     int malloc_stats_fd( int fd ) __THROW;
 } // extern "C"
+// Must have C++ linkage to overload with C linkage realloc.
+void * realloc( void * addr, size_t alignment, size_t size ) __THROW;
 
 #if defined( __U_MULTI__ )
     typedef pthread_t uPid_t;
@@ -1061,7 +1063,6 @@ class uFloatingPointContext {
 //######################### uMachContext #########################
 
 
-#define __U_CONTEXT_T__ uContext_t
 extern "C" void uSwitch( void *from, void *to ) asm ("uSwitch"); // assembler routine that performs the context switch
 
 
@@ -2396,15 +2397,15 @@ template< int, int, int > class uAdaptiveLock;
 namespace UPP {
     _Coroutine uProcessorKernel {
 	friend class uKernelBoot;			// access: new, uProcessorKernel, ~uProcessorKernel
-	friend class uSerial;				// access: schedule, kernelClock
+	friend class uSerial;				// access: schedule
 	friend class uSerialDestructor;			// access: schedule
 	friend class ::uOwnerLock;			// access: schedule
 	template<int, int, int> friend class ::uAdaptiveLock; // access: entryRef, profileActive, wake
-	friend class ::uCondLock;			// access: schedule, kernelClock
+	friend class ::uCondLock;			// access: schedule
 	friend class uSemaphore;			// access: schedule
 	friend class ::uRWLock;				// access: schedule
-	friend class ::uBaseTask;			// access: schedule, kernelClock
-	friend _Task ::uProcessorTask;			// access: terminated, kernelClock
+	friend class ::uBaseTask;			// access: schedule
+	friend _Task ::uProcessorTask;			// access: terminated
 	friend class ::uProcessor;			// access: uProcessorKernel
 	friend class uNBIO;				// access: kernelClock
 
@@ -2440,8 +2441,6 @@ namespace UPP {
 	void *operator new( size_t size ) {
 	    return ::operator new( size );
 	} // uProcessorKernel::operator new
-
-	uClock kernelClock;
       public:
     }; // uProcessorKernel
 } // UPP
@@ -2515,8 +2514,6 @@ class uProcessor {
 	return storage;
     } // uProcessor::operator new
   protected:
-    uClock *processorClock;				// clock bound to processor
-
     uPid_t pid;
 
     unsigned int preemption;
@@ -2550,10 +2547,6 @@ class uProcessor {
     uProcessor( uCluster &cluster, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
     uProcessor( uCluster &cluster, bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
     ~uProcessor();
-
-    uClock &getClock() const {
-	return *processorClock;
-    } // uProcessor::getClock
 
     uPid_t getPid() const {
 	return pid;
@@ -2607,19 +2600,19 @@ class uProcessor {
 
 namespace UPP {
     inline bool uSerial::executeU( bool timeout, uDuration duration ) {
-	return executeU( timeout, activeProcessorKernel->kernelClock.getTime() + duration );
+	return executeU( timeout, uClock::currTime() + duration );
     } // uSerial::executeU
 
     inline bool uSerial::executeC( bool timeout, uDuration duration ) {
-	return executeC( timeout, activeProcessorKernel->kernelClock.getTime() + duration );
+	return executeC( timeout, uClock::currTime() + duration );
     } // uSerial::executeC
 
     inline bool uSerial::executeU( bool timeout, uDuration duration, bool else_ ) {
-	return executeU( timeout, activeProcessorKernel->kernelClock.getTime() + duration, else_ );
+	return executeU( timeout, uClock::currTime() + duration, else_ );
     } // uSerial::executeU
 
     inline bool uSerial::executeC( bool timeout, uDuration duration, bool else_ ) {
-	return executeC( timeout, activeProcessorKernel->kernelClock.getTime() + duration, else_ );
+	return executeC( timeout, uClock::currTime() + duration, else_ );
     } // uSerial::executeC
 } // UPP
 

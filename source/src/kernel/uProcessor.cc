@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:16:51 2019
-// Update Count     : 2143
+// Last Modified On : Sat Jan  4 18:43:08 2020
+// Update Count     : 2157
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -84,8 +84,6 @@ void uProcessorTask::main() {
 #endif // __U_MULTI__
 
     uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, starting pid:%lu\n", this, processor.pid ); )
-
-    processor.processorClock = &activeProcessorKernel->kernelClock;
 
     // Although the signal handlers are inherited by each child process, the alarm setting is not.
 
@@ -373,11 +371,11 @@ void uProcessorKernel::setTimer( uDuration dur ) {
 
     timeval conv = dur;
     // avoid rounding to zero for small nanosecond durations to prevent disabling the timer
-    if ( conv.tv_sec == 0 && conv.tv_XSEC == 0 && dur.nanoseconds() != 0 ) conv.tv_XSEC = 1;
+    if ( conv.tv_sec == 0 && conv.tv_usec == 0 && dur.nanoseconds() != 0 ) conv.tv_usec = 1;
     itimerval it;
     it.it_value = conv;					// fill in the value to the next expiry
     it.it_interval.tv_sec = 0;				// not periodic
-    it.it_interval.tv_XSEC = 0;
+    it.it_interval.tv_usec = 0;
 #ifdef __U_STATISTICS__
     uFetchAdd( Statistics::setitimer, 1 );
 #endif // __U_STATISTICS__
@@ -390,21 +388,11 @@ void uProcessorKernel::setTimer( uTime time ) {
 	char buffer[256];
 	uDebugPrtBuf( buffer, "uProcessorKernel::setTimer2, time:%lld\n", time.nanoseconds() );
     )
-  if ( time <= uTime( 0 ) ) return;			// if time is zero or negative, it is invalid
+  if ( time <= uTime() ) return;			// if time is zero or negative, it is invalid
 
     // The time parameter is always in real-time (not virtual time)
 
-#if defined( REALTIME_POSIX )
-    timespec curr;
-    if ( clocktype < 0 ) type = CLOCK_REALTIME;
-    clock_gettime( type, &curr );
-#else
-    timeval curr;
-    GETTIMEOFDAY( &curr );
-#endif
-    uTime currtime( curr.tv_sec, curr.tv_usec * 1000 );	// convert to nanoseconds
-
-    uDuration dur = time - currtime;
+    uDuration dur = time - uClock::currTime();
   if ( dur <= 0 ) return;				// if duration is zero or negative, it has already past
     setTimer( dur );
 } // uProcessorKernel::setTimer
@@ -970,17 +958,17 @@ void uProcessor::setContextSwitchEvent( uDuration duration ) {
     assert( duration >= 0 );
 
     if ( ! contextEvent->listed() && duration != 0 ) { // first context switch event ?
-	contextEvent->alarm = activeProcessorKernel->kernelClock.getTime() + duration;
+	contextEvent->alarm = uClock::currTime() + duration;
 	contextEvent->period = duration;
 	contextEvent->add();
     } else if ( duration > 0 && contextEvent->period != duration ) { // if event is different from previous ? change it
 	contextEvent->remove();
-	contextEvent->alarm = activeProcessorKernel->kernelClock.getTime() + duration;
+	contextEvent->alarm = uClock::currTime() + duration;
 	contextEvent->period = duration;
 	contextEvent->add();
-    } else if ( duration == 0 && contextEvent->alarm != uTime( 0 ) ) { // zero duration and current CS is nonzero ?
+    } else if ( duration == 0 && contextEvent->alarm != uTime() ) { // zero duration and current CS is nonzero ?
 	contextEvent->remove();
-	contextEvent->alarm = uTime( 0 );
+	contextEvent->alarm = uTime();
 	contextEvent->period = 0;
     } else {
 	// => no preemption, and event not added to event list.

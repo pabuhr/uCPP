@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:49:17 2019
-// Update Count     : 3156
+// Last Modified On : Fri Jan  3 17:25:09 2020
+// Update Count     : 3163
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -625,7 +625,7 @@ void uCondLock::wait( uOwnerLock &lock ) {
     uDEBUG(
 	uBaseTask *owner = lock.owner();		// owner could change
 	if ( owner != &task ) {
-	    abort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
+	    abort( "Attempt by waiting task %.256s (%p) to release mutex lock currently owned by task %.256s (%p).",
 		   task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
 	} // if
     )
@@ -648,7 +648,7 @@ void uCondLock::wait( uOwnerLock &lock, uintptr_t info ) {
 } // uCondLock::wait
 
 bool uCondLock::wait( uOwnerLock &lock, uDuration duration ) {
-    return wait( lock, activeProcessorKernel->kernelClock.getTime() + duration );
+    return wait( lock, uClock::currTime() + duration );
 } // uCondLock::wait
 
 bool uCondLock::wait( uOwnerLock &lock, uintptr_t info, uDuration duration ) {
@@ -661,7 +661,7 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     uDEBUG(
 	uBaseTask *owner = lock.owner();		// owner could change
 	if ( owner != &task ) {
-	    abort( "Attempt by waiting task %.256s (%p) to release condition lock currently owned by task %.256s (%p).",
+	    abort( "Attempt by waiting task %.256s (%p) to release mutex lock currently owned by task %.256s (%p).",
 		   task.getName(), &task, owner == nullptr ? "no-owner" : owner->getName(), owner );
 	} // if
     )
@@ -1581,7 +1581,7 @@ namespace UPP {
 
 
     void uSerial::acceptPause( uDuration duration ) {
-	acceptPause( activeProcessorKernel->kernelClock.getTime() + duration );
+	acceptPause( uClock::currTime() + duration );
     } // uSerial::acceptPause
 
 
@@ -1971,14 +1971,16 @@ void UPP::uKernelBoot::startup() {
 
     RealRtn::startup();					// must come before any call to uDebugPrt
 
-    uHeapControl::startup();
+    tzset();						// initialize time global variables
 
     // Force dynamic loader to (pre)load and initialize all the code to use C printf I/O. The stack depth to do this
     // initialization is significant as it includes all the calls to locale and can easily overflow the small stack of a
     // task.
 
-    char dummy[16];
-    sprintf( dummy, "dummy%d\n", 6 );			// force dynamic loading for this and associated routines
+//    char dummy[16];
+//    sprintf( dummy, "dummy%d\n", 6 );			// force dynamic loading for this and associated routines
+
+    uHeapControl::startup();
 
     uMachContext::pageSize = sysconf( _SC_PAGESIZE );
 

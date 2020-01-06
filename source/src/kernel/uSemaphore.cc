@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 11 12:16:43 2019
-// Update Count     : 126
+// Last Modified On : Fri Jan  3 17:23:48 2020
+// Update Count     : 127
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -90,12 +90,12 @@ namespace UPP {
 
 
     bool uSemaphore::P( uDuration duration ) {		// semaphore wait
-	return P( uThisProcessor().getClock().getTime() + duration );
+	return P( uClock::currTime() + duration );
     } // uSemaphore::P
 
     bool uSemaphore::P( uintptr_t info, uDuration duration ) { // semaphore wait
 	uThisTask().info = info;			// store the information with this task
-	return P( uThisProcessor().getClock().getTime() + duration );
+	return P( uClock::currTime() + duration );
     } // uSemaphore::P
 
 
@@ -152,12 +152,12 @@ namespace UPP {
 
 
     bool uSemaphore::P( uSemaphore & s, uDuration duration ) { // wait on semaphore and release another
-	return P( s, uThisProcessor().getClock().getTime() + duration );
+	return P( s, uClock::currTime() + duration );
     } // uSemaphore::P
 
     bool uSemaphore::P( uSemaphore & s, uintptr_t info, uDuration duration ) { // wait on semaphore and release another
 	uThisTask().info = info;			// store the information with this task
-	return P( s, uThisProcessor().getClock().getTime() + duration );
+	return P( s, uClock::currTime() + duration );
     } // uSemaphore::P
 
 

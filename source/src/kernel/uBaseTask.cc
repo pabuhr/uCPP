@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 11 18:06:19 2019
-// Update Count     : 320
+// Last Modified On : Fri Jan  3 17:22:48 2020
+// Update Count     : 321
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -232,7 +232,7 @@ uBaseTask::uBaseTask( uCluster &cluster ) : uBaseCoroutine( cluster.getStackSize
 
 
 void uBaseTask::sleep( uTime time ) {
-  if ( time <= activeProcessorKernel->kernelClock.getTime() ) return;
+  if ( time <= uClock::currTime() ) return;
     uWakeupHndlr handler( uThisTask() );		// handler to wake up blocking task
     uEventNode uRTEvent( uThisTask(), handler, time );	// event node for event list
     uRTEvent.add( true );				// block until time expires
@@ -240,7 +240,7 @@ void uBaseTask::sleep( uTime time ) {
 
 
 void uBaseTask::sleep( uDuration duration ) {
-    sleep( activeProcessorKernel->kernelClock.getTime() + duration );
+    sleep( uClock::currTime() + duration );
 } // uBaseTask::sleep
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 13:21:36 2019
-// Update Count     : 1082
+// Last Modified On : Sat Jan  4 18:53:48 2020
+// Update Count     : 1084
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1144,7 +1144,7 @@ extern "C" {
     int pthread_cond_timedwait( pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime ) {
 	uDEBUGPRT( uDebugPrt( "pthread_cond_timedwait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); )
 	pthread_testcancel();				// pthread_cond_timedwait is a cancellation point
-	return PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ), uTime( abstime->tv_sec, abstime->tv_nsec ) ) ? 0 : ETIMEDOUT;
+	return PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ), uTime( *abstime ) ) ? 0 : ETIMEDOUT;
     } // pthread_cond_timedwait
 
     int pthread_cond_signal( pthread_cond_t *cond ) __THROW {
