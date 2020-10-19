@@ -1,6 +1,6 @@
+#include "uBitSet.h"
 #include <iostream>
 using namespace std;
-#include "uBitSet.h"
 
 #define NBITS 128
 
@@ -63,5 +63,5 @@ int main() {
 }
 
 // Local Variables: //
-// compile-command: "g++-4.9 -g -Wall -std=c++11 example_BitSet.cc" //
+// compile-command: "g++ -g -Wall example_BitSet.cc" //
 // End: //

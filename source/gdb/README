@@ -7,13 +7,13 @@ file from the home directory making the following new gdb commands available.
 
 New commands:
 
-    clusters                        : print all clusters
-    processors                      : print all processors on all clusters
-    processors  <clusterName>       : print all processors on cluster
-    task                            : print userCluster tasks, application tasks only
-    task <clusterName>              : print cluster tasks, application tasks only
+    info clusters                   : print list of clusters
+    info vprocessors                : print virtual processors in userCluster
+    info vprocessors <clusterName>  : print virtual processors in cluster <clusterName>
+    task                            : print tasks (ids) in userCluster, application tasks only
+    task <clusterName>              : print tasks (ids) in  clusterName, application tasks only
     task all                        : print all clusters, all tasks
-    task <id>                       : switch stack to task id on userCluster
-    task 0x<address>	            : switch stack to task on any cluster
-    task <id> <clusterName>         : switch stack to task on specified cluster
-    prevtask                        : return to last switched task
+    task <id>                       : switch debugging stack to task id on userCluster
+    task 0x<address>	            : switch debugging stack to task 0x<address> on any cluster
+    task <id> <clusterName>         : switch debugging stack to task id on cluster clusterName
+

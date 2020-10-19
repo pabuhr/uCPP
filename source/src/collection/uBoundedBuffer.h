@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Apr  4 10:20:32 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:54:35 2019
-// Update Count     : 18
+// Last Modified On : Sat Feb 29 17:28:53 2020
+// Update Count     : 19
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@ template<typename ElemType> _Monitor uBoundedBuffer {
     const int size;					// number of buffer elements
     int front, back;					// position of front and back of queue
     int count;						// number of used elements in the queue
-    ElemType *elements;
+    ElemType * elements;
   public:
     uBoundedBuffer( const int size = 10 ) : size( size ) {
         front = back = count = 0;

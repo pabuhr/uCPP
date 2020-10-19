@@ -1,5 +1,6 @@
 #include "uStack.h"
-#include "stream.h"
+#include <iostream>
+using namespace std;
 
 class fred : public uColable {
   public:
@@ -12,7 +13,7 @@ class mary: public fred {
     mary( int i ) : fred( i ) {}
 };
 
-main() {
+int main() {
     uStack<fred> foo;
     uStackIter<fred> fooIter( foo );
     uStack<mary> bar;

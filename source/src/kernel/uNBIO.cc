@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 17:22:14 2020
-// Update Count     : 1504
+// Last Modified On : Sat Mar 14 18:40:44 2020
+// Update Count     : 1506
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -68,7 +68,7 @@ namespace UPP {
     /****************** countBits ********************
 	Purpose: Count number of bits with value 1
 	Parameter: unsigned long int (up to 128 bits)
-	Reference: Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive`
+	Reference: Bit Twiddling Hacks: http://graphics.stanford.edu/%7Eseander/bithacks.html#CountBitsSetNaive
     **************************************************/
     static inline int countBits( unsigned long int v ) {
       if ( v == 0 ) return 0;
@@ -86,10 +86,10 @@ namespace UPP {
 #if defined( __GNUC__ )					// GNU gcc compiler ?
 // O(1) polymorphic integer log2, using clz, which returns the number of leading 0-bits, starting at the most
 // significant bit (single instruction on x86). UNDEFINED FOR 0.
-#   define msbpos( n ) ( sizeof(n) * __CHAR_BIT__ - 1 - (	\
-	( sizeof(n) ==  4 ) ? __builtin_clz( n ) :		\
-	( sizeof(n) ==  8 ) ? __builtin_clzl( n ) :		\
-	( sizeof(n) == 16 ) ? __builtin_clzll( n ) :		\
+#   define msbpos( n ) ( sizeof(n) * __CHAR_BIT__ - 1 - ( \
+	( sizeof(n) == sizeof(int) ) ? __builtin_clz( n ) : \
+	( sizeof(n) == sizeof(long int) ) ? __builtin_clzl( n ) : \
+	( sizeof(n) == sizeof(long long int) ) ? __builtin_clzll( n ) :	\
 	-1 ) )
 #else
     int msbpos( int n ) {				// fallback integer log2( n )

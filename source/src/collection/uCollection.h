@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 14:18:43 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:58:58 2019
-// Update Count     : 108
+// Last Modified On : Sat Feb 29 17:28:19 2020
+// Update Count     : 109
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 class uColable {
     friend class uCFriend;
 
-    uColable *next;					// Next node in the list.
+    uColable * next;					// Next node in the list.
     // class invariant: (next != 0) <=> listed().
   public:
     inline uColable() {
@@ -43,7 +43,7 @@ class uColable {
     inline bool listed() const {			// pre:  this != 0
 	return next != 0;
     }
-    inline uColable *getnext() {
+    inline uColable * getnext() {
 	return next;
     }
 };
@@ -53,7 +53,7 @@ class uColable {
  
 class uCFriend {
   protected:
-    uColable *&uNext( uColable *cp ) const {
+    uColable *& uNext( uColable * cp ) const {
 	return cp->next;
     }
 };
@@ -68,12 +68,12 @@ class uCFriend {
 
 template<typename T> class uCollection : protected uCFriend {
   protected:
-    T *root;						// Pointer to root element of list.
+    T * root;						// Pointer to root element of list.
     // class invariant: root == 0 & empty() | *root in *this
   public:
     uCollection( const uCollection & ) = delete;	// no copy
     uCollection( uCollection && ) = delete;
-    uCollection &operator=( const uCollection & ) = delete; // no assignment
+    uCollection & operator=( const uCollection & ) = delete; // no assignment
 
     inline uCollection() {	
 	root = 0;
@@ -81,13 +81,13 @@ template<typename T> class uCollection : protected uCFriend {
     inline bool empty() const {				// 0 <=> *this contains no elements.
 	return root == 0;
     }
-    inline T *head() const {
+    inline T * head() const {
 	return root;
     }							// post: empty() & head() == 0 | !empty() & head() in *this
-    inline void add( T *n ) {				// pre: !n->listed();
+    inline void add( T * n ) {				// pre: !n->listed();
 	n = 0;
     }							// post: n->listed() & *n in *this
-    inline T *drop() {
+    inline T * drop() {
 	return 0;
     }							// post: empty() & drop() == 0 | !empty() & !drop()->listed()
 };
@@ -113,12 +113,12 @@ template<typename T> class uCollection : protected uCFriend {
 
 template<typename T> class uColIter : protected uCFriend {
   protected:
-    T *curr;						// Element to be returned by >>.
+    T * curr;						// Element to be returned by >>.
   public:
     inline uColIter() {
 	curr = 0;
     }							// post: elts = null.
-    bool operator>>( T *&tp ) {
+    bool operator>>( T *& tp ) {
 	tp = 0;
 	return 0;
     }

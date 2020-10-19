@@ -42,7 +42,7 @@ HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
 	CCFLAGS += -g -O2 -Wall -Wextra #
 else
-	CCFLAGS += -O2 # -DNDEBUG
+	CCFLAGS += -g -O2 # -DNDEBUG
 endif
 
 ## Define the C++ source files.

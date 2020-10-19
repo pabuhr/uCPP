@@ -43,6 +43,7 @@ DSLNodes \
 DSLStack \
 DSLQueue \
 DSLSequence \
+TraceMsg \
 }
 
 PROGRAMS = ${addsuffix .tex, \
@@ -62,9 +63,12 @@ ServerINETSTREAM \
 
 ## Define the documents that need to be made.
 
-DOCUMENT = ${SRCDIR}/uC++.ps
+DOCUMENT = ${SRCDIR}/uC++.pdf
+BASE = ${basename ${DOCUMENT}}
 
 # Directives #
+
+.PHONY : all clean					# not file names
 
 all : ${DOCUMENT}
 
@@ -86,10 +90,13 @@ uninstall :
 ${INSTALLDOCDIR} :
 	mkdir $@
 
-${DOCUMENT} : ${basename ${DOCUMENT}}.dvi
+${DOCUMENT} : ${BASE}.ps
+	ps2pdf $<
+
+${BASE}.ps : ${BASE}.dvi
 	dvips $< -o $@
 
-${basename ${DOCUMENT}}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${basename ${DOCUMENT}}.bbl \
+${BASE}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${BASE}.bbl \
 		../TeXmacros/mystyle.sty ../TeXmacros/lgrind.sty ../TeXmacros/myalpha.bst
 	${LaTeX} ${basename $@}.tex
 	if fgrep -s "Label(s) may have changed" ${basename $@}.log ; then ${LaTeX} ${basename $@}.tex ; fi
@@ -97,7 +104,7 @@ ${basename ${DOCUMENT}}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${basen
 	${LaTeX} ${basename $@}.tex
 	${LaTeX} ${basename $@}.tex		% to get index title in toc
 
-${basename ${DOCUMENT}}.bbl : ${basename ${DOCUMENT}}.tex
+${BASE}.bbl : ${BASE}.tex
 	if [ ! -r ${basename $@}.ind ] ; then touch ${basename $@}.ind ; fi
 	if [ ! -r ${basename $@}.aux ] ; then ${LaTeX} ${basename $@}.tex ; fi
 	-${BibTeX} ${basename $@}

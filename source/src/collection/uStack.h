@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Feb 13 19:35:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:57:44 2019
-// Update Count     : 68
+// Last Modified On : Sat Feb 29 16:58:47 2020
+// Update Count     : 69
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,30 +44,30 @@ template<typename T> class uStack: public uCollection<T> {
   public:
     uStack( const uStack & ) = delete;			// no copy
     uStack( uStack && ) = delete;
-    uStack &operator=( const uStack & ) = delete;	// no assignment
+    uStack & operator=( const uStack & ) = delete;	// no assignment
 
     using uCollection<T>::head;
     using uCollection<T>::uNext;
 
     uStack() : uCollection<T>() {}			// post: isEmpty().
-    inline T *top() const {
+    inline T * top() const {
 	return head();
     }
-    void addHead( T *n ) {
+    void addHead( T * n ) {
 #ifdef __U_DEBUG__
 	if ( n->listed() ) abort( "(uStack &)%p.addHead( %p ) node is already on another list.", this, n );
 #endif // __U_DEBUG__
 	uNext(n) = root ? root : n;
 	root = n;
     }
-    inline void add( T *n ) {
+    inline void add( T * n ) {
 	addHead( n );
     }
-    inline void push( T *n ) {
+    inline void push( T * n ) {
 	addHead( n );
     }
-    T *drop() {
-	T *t = root;
+    T * drop() {
+	T * t = root;
 	if (root) {
 	    root = ( T *)uNext(root);
 	    if (root == t) root = 0;			// There was only one element.
@@ -75,7 +75,7 @@ template<typename T> class uStack: public uCollection<T> {
 	} // if
 	return t;
     }
-    inline T *pop() {
+    inline T * pop() {
 	return drop();
     }
 };
@@ -91,18 +91,18 @@ template<typename T> class uStackIter : public uColIter<T> {
     using uColIter<T>::uNext;
   public:
     uStackIter() : uColIter<T>() {}			// post: elts = null.
-    // Create a iterator active in stack s.
-    uStackIter(const uStack<T> &s) {
+    // Create an iterator active in stack s.
+    uStackIter( const uStack<T> & s ) {
 	curr = s.head();
     }
     // Make the iterator active in stack s.
-    void over(const uStack<T> &s) {			// post: elts = {e in s}.
+    void over( const uStack<T> & s ) {			// post: elts = {e in s}.
 	curr = s.head();
     }
-    bool operator>>( T *&tp ) {
+    bool operator>>( T *& tp ) {
 	if (curr) {
 	    tp = curr;
-	    T *n = (T *)uNext(curr);
+	    T * n = (T *)uNext(curr);
 	    curr = (n == curr) ? 0 : n;
 	} else tp = 0;
 	return tp != 0;

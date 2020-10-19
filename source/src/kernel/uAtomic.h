@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:54:03 2019
-// Update Count     : 148
+// Last Modified On : Tue May 19 08:01:00 2020
+// Update Count     : 151
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -77,16 +77,8 @@ template< typename T > static inline T uFetchAdd( volatile T &counter, int incre
 
 
 template< typename T > static inline bool uCompareAssign( volatile T &loc, T comp, T replacement ) {
-#if defined( GLIBCXX_ENABLE_ATOMIC_BUILTINS ) && defined( __sync_bool_compare_and_swap ) // broken macro, replace it
-#if __U_WORDSIZE__ == 32
-    return __sync_bool_compare_and_swap_si((int *)(void *)(&loc),(int)(comp),(int)(replacement));
-#else
-    return __sync_bool_compare_and_swap_di((long *)(void *)(&loc),(long)(comp),(long)(replacement));
-#endif // __U_WORDSIZE__ == 32
-#else
     //return __sync_bool_compare_and_swap( &loc, comp, replacement );
     return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
-#endif
 } // uCompareAssign
 
 

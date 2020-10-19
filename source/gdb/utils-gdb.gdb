@@ -67,3 +67,6 @@ end
 server define hook-thread
 reset
 end
+
+alias -a clusters = info clusters
+alias -a vprocessors = info vprocessors

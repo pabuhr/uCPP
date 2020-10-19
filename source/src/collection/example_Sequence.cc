@@ -13,10 +13,11 @@ class mary: public fred {
     mary( int i ) : fred( i ) {}
 };
 
-main() {
+int main() {
     uSequence<fred> foo;
     uSeqIter<fred> fooIter( foo );
     uSequence<mary> bar;
+    uSequence<mary> baz;
     uSeqIter<mary> barIter( bar );
     fred *f;
     mary *m;
@@ -27,7 +28,7 @@ main() {
     for ( ; fooIter >> f; ) {
 	cout << f->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
     
     for ( i = 0; i < 10; i += 1 ) {
 	foo.add( new fred( 2 * i ) );
@@ -35,7 +36,7 @@ main() {
     for ( fooIter.over( foo ); fooIter >> f; ) {
 	cout << f->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
 
     for ( i = 0; i < 9; i += 1 ) {
 	foo.dropHead();
@@ -43,7 +44,7 @@ main() {
     for ( fooIter.over( foo ); fooIter >> f; ) {
 	cout << f->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
     
     for ( i = 0; i < 10; i += 1 ) {
 	foo.addTail( new fred( 2 * i + 1 ) );
@@ -51,7 +52,7 @@ main() {
     for ( fooIter.over( foo ); fooIter >> f; ) {
 	cout << f->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
 
     for ( i = 0; i < 9; i += 1 ) {
 	foo.dropTail();
@@ -59,22 +60,23 @@ main() {
     for ( fooIter.over( foo ); fooIter >> f; ) {
 	cout << f->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
 
     // mary test
 
     for ( ; barIter >> m; ) {
 	cout << m->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
     
     for ( i = 0; i < 10; i += 1 ) {
 	bar.add( new mary( 2 * i ) );
+	baz.add( new mary( 2 * i ) );
     }
     for ( barIter.over( bar ); barIter >> m; ) {
 	cout << m->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
     
     for ( i = 0; i < 9; i += 1 ) {
 	bar.dropHead();
@@ -82,7 +84,7 @@ main() {
     for ( barIter.over( bar ); barIter >> m; ) {
 	cout << m->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
     
     for ( i = 0; i < 10; i += 1 ) {
 	bar.addTail( new mary( 2 * i + 1 ) );
@@ -90,7 +92,7 @@ main() {
     for ( barIter.over( bar ); barIter >> m; ) {
 	cout << m->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
 
     for ( i = 0; i < 9; i += 1 ) {
 	bar.dropTail();
@@ -98,12 +100,17 @@ main() {
     for ( barIter.over( bar ); barIter >> m; ) {
 	cout << m->i << " ";
     }
-    cout << "\n";
+    cout<< endl;
 
-    bar.transfer( foo );
+    bar.transfer( baz );
+    for ( barIter.over( baz ); barIter >> m; ) {
+	cout << m->i << " ";
+    }
+    cout<< endl;
     for ( barIter.over( bar ); barIter >> m; ) {
 	cout << m->i << " ";
     }
+    cout<< endl;
 }
 
 // Local Variables: //

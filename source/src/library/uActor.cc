@@ -2,13 +2,13 @@
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr and Thierry Delisle 2016
 // 
-// actor.cc -- 
+// uActor.cc -- 
 // 
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:41:44 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 17:37:27 2019
-// Update Count     : 47
+// Last Modified On : Sun Oct 18 11:45:27 2020
+// Update Count     : 107
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,8 @@
 #define __U_KERNEL__
 #include <uC++.h>
 #include <uActor.h>
-
+#include <iostream>
+using namespace std;
 
 uExecutor * uActor::executor = nullptr;
 uSemaphore uActor::wait_( 0 );				// wait for all actors to be destroyed
@@ -35,6 +36,24 @@ unsigned long int uActor::alive_ = 0;			// number of actor objects in system
 uActor::StartMsg uActor::startMsg;			// start actor
 uActor::StopMsg uActor::stopMsg;			// terminate actor
 uActor::UnhandledMsg uActor::unhandledMsg;		// tell error
+
+void uActor::TraceMsg::print() {
+    enum { PerLine = 8 };
+    TraceMsg::Hop * route;
+
+    cout << "message " << this
+	 << " source:" << hops.head()
+	 << " cursor (node:" << cursor << ", actor:" << (cursor ? cursor->actor : nullptr) << ')'
+	 << endl << "  trace ";
+    unsigned int cnt = 0;
+    for ( uQueueIter<TraceMsg::Hop> iter(cursor); iter >> route; cnt += 1 ) { // print route
+	if ( cnt != 0 && cnt % PerLine == 0 ) cout << endl << "\t";
+	cout << route->actor;
+	// HACK, know queue is circular
+	if ( route->getnext() != route && (cnt + 1) % PerLine != 0 ) cout << " ";
+    } // for
+    cout << endl;
+} // uActor::TraceMsg::print
 
 
 // Local Variables: //

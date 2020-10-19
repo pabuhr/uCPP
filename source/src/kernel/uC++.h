@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 11:43:01 2020
-// Update Count     : 5894
+// Last Modified On : Sun Oct 18 20:29:02 2020
+// Update Count     : 5995
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -139,18 +139,6 @@ namespace UPP {
 } // UPP
 
 
-//######################### abnormal exit #########################
-
-
-void exit( int retcode, const char *fmt, ... ) __THROW __attribute__(( format (printf, 2, 3), noreturn ));
-// uAbort is deprecated
-extern void uAbort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn )) __attribute__(( deprecated( "uAbort is deprecated, use abort instead" ) ));
-extern void abort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn ));
-namespace std {
-    using ::abort;					// needed for replacing std::stream routines
-}
-
-
 //######################### start uC++ code #########################
 
 
@@ -166,14 +154,20 @@ namespace std {
 
 // C-heap allocation extensions
 extern "C" {
-    void *cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
+    void * aalloc( size_t dim, size_t elemSize ) __THROW;
+    void * resize( void * oaddr, size_t size ) __THROW;
+    void * amemalign( size_t align, size_t dim, size_t elemSize ) __THROW;
+    void * cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
     size_t malloc_alignment( void *addr ) __THROW;
-    bool malloc_zero_fill( void *addr ) __THROW;
-    size_t malloc_usable_size( void *addr ) __THROW;
+    bool malloc_zero_fill( void * addr ) __THROW;
+    size_t malloc_size( void * addr ) __THROW;
+    size_t malloc_dimension( void * addr ) __THROW;
+    size_t malloc_usable_size( void * addr ) __THROW;
     void malloc_stats() __THROW;
     int malloc_stats_fd( int fd ) __THROW;
 } // extern "C"
 // Must have C++ linkage to overload with C linkage realloc.
+void * resize( void * oaddr, size_t alignment, size_t size ) __THROW;
 void * realloc( void * addr, size_t alignment, size_t size ) __THROW;
 
 #if defined( __U_MULTI__ )
@@ -195,8 +189,8 @@ void * realloc( void * addr, size_t alignment, size_t size ) __THROW;
 namespace UPP {
     struct Statistics {
 	// Kernel, signed because of the atomic inc/dec
-	static long int ready_queue, spins, spin_sched, mutex_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
-	static long int uSpinLocks, uLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
+	static long int ready_queue, spins, spin_sched, mutex_queue, mutex_lock_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
+	static long int uSpinLocks, uLocks, uMutexLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
 
 	// I/O statistics
 	static unsigned long int select_syscalls, select_errors, select_eintr;
@@ -331,14 +325,7 @@ namespace UPP {
 	static sigset_t block_mask;			// block all signals
 
 	static void signal( int sig, void (*handler)(__U_SIGPARMS__), int flags = 0 );
-	static void *signalContextPC( __U_SIGCXT__ cxt );
-	static void *signalContextSP( __U_SIGCXT__ cxt );
-	static void *functionAddress( void (*function)() );
-	static void sigTermHandler( __U_SIGPARMS__ );
 	static void sigAlrmHandler( __U_SIGPARMS__ );
-	static void sigSegvBusHandler( __U_SIGPARMS__ );
-	static void sigIllHandler( __U_SIGPARMS__ );
-	static void sigFpeHandler( __U_SIGPARMS__ );
 
 	uSigHandlerModule( const uSigHandlerModule & ) = delete; // no copy
 	uSigHandlerModule( uSigHandlerModule && ) = delete;
@@ -346,8 +333,20 @@ namespace UPP {
 
 	uSigHandlerModule();
       public:
+	enum SignalAbort { Yes, No };
     }; // uSigHandlerModule
 } // UPP
+
+
+//######################### abnormal exit #########################
+
+
+void exit( int retcode, const char fmt[], ... ) __THROW __attribute__(( format (printf, 2, 3), noreturn ));
+extern void abort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn ));
+extern void abort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char * fmt, ... ) __attribute__(( format (printf, 2, 3), noreturn ));
+namespace std {
+    using ::abort;					// needed for replacing std::stream routines
+}
 
 
 //######################### uProcessor #########################
@@ -402,14 +401,15 @@ extern "C" {						// TEMPORARY: profiler allocating memory from the kernel issue
 
 
 class uKernelModule {
-    friend void abort( const char *fmt, ... );		// access: globalAbort, coreDumped
+    friend void uAbort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ); // access: globalAbort
     friend void exit( int retcode ) __THROW;		// access: globalAbort
-    friend class UPP::uSigHandlerModule;		// access: uKernelModuleBoot, globalAbort, coreDumped, rollForward
+    friend class UPP::uSigHandlerModule;		// access: uKernelModuleBoot, rollForward
     friend class UPP::uMachContext;			// access: everything
     friend class uBaseCoroutine;			// access: uKernelModuleBoot
     friend class uBaseTask;				// access: uKernelModuleBoot
     friend class UPP::uSerial;				// access: uKernelModuleBoot
     friend class uBaseSpinLock;				// access: uKernelModuleBoot
+    friend class uMutexLock;				// access: uKernelModuleBoot, initialized
     friend class uOwnerLock;				// access: uKernelModuleBoot, initialized
     template< int, int, int > friend class uAdaptiveLock; // access: uKernelModuleBoot, initialized
     friend class uCondLock;				// access: uKernelModuleBoot
@@ -556,9 +556,10 @@ class uKernelModule {
 
     static bool kernelModuleInitialized;
     static volatile __U_THREAD__ uKernelModuleData uKernelModuleBoot;
-    static bool initialized;				// initialization/finalization incomplete
+    uDEBUG( static bool initialized; )			// initialization/finalization incomplete
+#if __U_LOCALDEBUGGER_H__
     static unsigned int attaching;			// flag to signal the local kernel to start attaching.
-    static bool coreDumped;				// ensure only one core file
+#endif // __U_LOCALDEBUGGER_H__
 #ifndef __U_MULTI__
     static bool deadlock;				// deadlock detected in kernel
 #endif // ! __U_MULTI__
@@ -591,7 +592,6 @@ class uKernelModule {
     static uSystemTask *systemTask;			// pointer to system task for global constructors/destructors
 
     static bool afterMain;
-    static int retCode;
 }; // uKernelModule
 
 
@@ -738,7 +738,7 @@ _Event uKernelFailure {					// general event for kernel failures, inherit implic
     uKernelFailure( const char *const msg = "" );
   public:
     virtual ~uKernelFailure();
-    virtual void defaultTerminate() const override;
+    virtual void defaultTerminate() override;
 }; // uKernelFailure
 
 
@@ -762,7 +762,7 @@ _Event uMutexFailure::EntryFailure : public uMutexFailure {
     EntryFailure( const UPP::uSerial *const serial, const char *const msg = "" );
     EntryFailure( const char *const msg = "" );
     virtual ~EntryFailure();
-    virtual void defaultTerminate() const override;
+    virtual void defaultTerminate() override;
 }; // uMutexFailure::EntryFailure
 
 
@@ -772,7 +772,7 @@ _Event uMutexFailure::RendezvousFailure : public uMutexFailure {
     RendezvousFailure( const UPP::uSerial *const serial, const char *const msg = "" );
     virtual ~RendezvousFailure();
     const uBaseCoroutine *caller() const;
-    virtual void defaultTerminate() const override;
+    virtual void defaultTerminate() override;
 }; // uMutexFailure::RendezvousFailure
 
 
@@ -817,20 +817,62 @@ class uCxtSwtchHndlr : public uSignalHandler {
 }; // uCxtSwtchHndlr
 
 
+//######################### uMutexLock #########################
+
+// uMutexLock/uOwnerLock use wait morphing with uCondLock. uCondLock removes an unblocking task and moves it to the lock
+// queue for processing through the add_ member in the locks. Wait morphing eliminates the double blocking if the
+// unblocking thread must reacquire the mutex lock after the wait.
+
+class uMutexLock {
+    friend class uCondLock;                             // access: add_, release_
+  protected:
+    // These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
+    // pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uMutexLock).
+
+    uBaseSpinLock spinLock;                             // must be first field for alignment
+    unsigned int count;					// number of recursive entries; no overflow checking
+    uSequence<uBaseTaskDL> waiting;                     // sequence versus queue to reduce size to 24 bytes => more expensive
+
+    virtual void add_( uBaseTask &task );		// helper routines for uCondLock
+    void release_();
+  public:
+    uMutexLock( const uMutexLock & ) = delete;          // no copy
+    uMutexLock( uMutexLock && ) = delete;
+    uMutexLock &operator=( const uMutexLock & ) = delete; // no assignment
+
+    uMutexLock() {
+#ifdef __U_STATISTICS__
+        uFetchAdd( UPP::Statistics::uMutexLocks, 1 );
+#endif // __U_STATISTICS__
+        count = false;                              	// no one has acquired the lock
+    } // uMutexLock::uMutexLock
+
+    uDEBUG( ~uMutexLock(); )
+
+    void acquire();
+    bool tryacquire();
+    void release();
+
+    void *operator new( size_t size ) {
+	return ::operator new( size );
+    } // uMutexLock::operator new
+
+    void *operator new( size_t, void *storage ) {       // used in pthread_mutex
+	return storage;
+    } // uMutexLock::operator new
+}; // uMutexLock
+
+
 //######################### uOwnerLock #########################
 
 
-class uOwnerLock {
+class uOwnerLock : public uMutexLock {
     friend class uCondLock;				// access: add_, release_
 
     // These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
     // pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uOwnerLock).
 
-    uBaseSpinLock spinLock;				// must be first field for alignment
-    unsigned int count;					// number of recursive entries; no overflow checking
-
     uBaseTask *owner_;					// owner with respect to recursive entry
-    uSequence<uBaseTaskDL> waiting;			// sequence versus queue to reduce size to 24 bytes => more expensive
 
     void add_( uBaseTask &task );			// helper routines for uCondLock
     void release_();
@@ -902,6 +944,12 @@ class uCondLock {
     } // uCondLock::uCondLock
 
     uDEBUG( ~uCondLock(); )
+    void wait( uMutexLock &lock );
+    void wait( uMutexLock &lock, uintptr_t info );
+    bool wait( uMutexLock &lock, uDuration duration );
+    bool wait( uMutexLock &lock, uintptr_t info, uDuration duration );
+    bool wait( uMutexLock &lock, uTime time );
+    bool wait( uMutexLock &lock, uintptr_t info, uTime time );
     void wait( uOwnerLock &lock );
     void wait( uOwnerLock &lock, uintptr_t info );
     bool wait( uOwnerLock &lock, uDuration duration );
@@ -1149,7 +1197,7 @@ namespace UPP {
 	    createContext( storageSize );
 	} // uMachContext::uMachContext
 
-	virtual ~uMachContext() {
+	virtual ~uMachContext() noexcept(false) {	// noexcept(false) inherited by subclass destructors
 	    if ( ! ((uintptr_t)storage & 1) ) {		// check user stack storage mark
 		uDEBUG(
 		    if ( ::mprotect( storage, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
@@ -1203,6 +1251,7 @@ class uBaseCoroutine : public UPP::uMachContext {
     friend class uEHM::ResumeWorkHorseInit;		// access: resumedObj, topResumedType, handlerStackVisualTop
     friend class uEHM::uResumptionHandlers;		// access: handlerStackTop, handlerStackVisualTop
     friend class uEHM::uDeliverEStack;			// access: DEStack
+    // Deprecated C++17
     friend std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) throw(); // access: unexpectedRtn
     friend void uEHM::unexpected();			// access: unexpected
 
@@ -1300,21 +1349,17 @@ class uBaseCoroutine : public UPP::uMachContext {
 
     _Event UnhandledException : public uBaseCoroutine::Failure {
 	friend class uBaseCoroutine;			// access: all
+	friend class uBaseTask;				// access: all
 
-	uBaseEvent *cause;				// initial exception
-	uBaseCoroutine &origFailedCor;
-	char origFailedCorName[uEHMMaxName];
-	bool multiple;					// multiple exceptions ?
+	uBaseEvent * cause;				// initial exception
+	unsigned int multiple;				// multiple exceptions ?
 	mutable bool cleanup;				// => delete "cause"
-
-	UnhandledException( uBaseEvent *cause, const char *const msg = "" );
-	UnhandledException( UnhandledException *cause );
+	UnhandledException( uBaseEvent * cause, const char * const msg = "" );
       public:
-	UnhandledException( const uBaseCoroutine::UnhandledException &ex );
+	UnhandledException( const UnhandledException & ex );
+	unsigned int unhandled() const { return multiple; }
 	virtual ~UnhandledException();
-	const uBaseCoroutine &origSource() const;
-	const char *origName() const;
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
 	void triggerCause();
     }; // uBaseCoroutine::UnhandledException
   protected:
@@ -1337,7 +1382,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 	} // if
 	corCxtSw();					// always done for performance testing
 
-	_Enable <uBaseCoroutine::Failure>;		// implicit poll
+	_Enable <Failure>;				// implicit poll
     } // uBaseCoroutine::resume
 
     void suspend() {					// restarts the coroutine that most recently resumed this coroutine
@@ -1356,7 +1401,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 	    )
 	c.last->corCxtSw();
 
-	_Enable <uBaseCoroutine::Failure>;		// implicit poll
+	_Enable <Failure>;				// implicit poll
     } // uBaseCoroutine::suspend
 
     class uCoroutineConstructor {			// placed in the constructor of a coroutine
@@ -1420,8 +1465,8 @@ class uBaseCoroutine : public UPP::uMachContext {
     bool cancelled() { return cancelled_; }
     bool cancelInProgress() { return cancelInProgress_; }
   private:
-    void handleUnhandled( UnhandledException *ex );
-    void handleUnhandled( uBaseEvent *ex = nullptr );
+    void forwardUnhandled( UnhandledException & ex );
+    void handleUnhandled( uBaseEvent * ex = nullptr );
   public:
     // These members should be private but cannot be because they are referenced from user code.
 
@@ -1657,8 +1702,10 @@ class uBaseTask : public uBaseCoroutine {
     friend class UPP::uSerialConstructor;		// access: profileActive, setSerial
     friend class UPP::uSerialDestructor;		// access: mutexRef, profileActive, mutexRecursion, setState
     friend class UPP::uMachContext;			// access: currCoroutine, profileActive, setState, main
+//    friend class uTaskDestructor;			// cause
     friend class uBaseCoroutine;			// access: currCoroutine, profileActive, setState
     friend uBaseCoroutine &uThisCoroutine();		// access: currCoroutine
+    friend class uMutexLock;				// access: entryRef, profileActive, wake
     friend class uOwnerLock;				// access: entryRef, profileActive, wake
     template< int, int, int > friend class uAdaptiveLock; // access: entryRef, profileActive, wake
     friend class uCondLock;				// access: entryRef, ownerLock, profileActive, wake
@@ -1686,7 +1733,8 @@ class uBaseTask : public uBaseCoroutine {
     // exception handling
 
     friend void uEHM::terminateHandler();		// access: terminateRtn
-    friend std::terminate_handler std::set_terminate( std::terminate_handler func ) throw(); // access: terminateRtn
+    friend void std::terminate() noexcept;		// access: terminateRtn
+    friend std::terminate_handler std::set_terminate( std::terminate_handler func ) noexcept; // access: terminateRtn
 
     // debugging
 
@@ -1732,7 +1780,7 @@ class uBaseTask : public uBaseCoroutine {
     uBaseTaskDL mutexRef;				// double link field: mutex member, suspend stack, condition variable
     uProcessor &bound;					// processor to which this task is bound, if applicable
     uBasePrioritySeq *calledEntryMem;			// pointer to called mutex queue
-    uOwnerLock *ownerLock;				// pointer to owner lock used for signalling conditions
+    uMutexLock *ownerLock;				// pointer to owner lock used for signalling conditions
 
     // profiling : necessary for compatibility between non-profiling and profiling
 
@@ -1744,7 +1792,8 @@ class uBaseTask : public uBaseCoroutine {
     // exception handling
 
     UPP::uSerialMember *acceptedCall;			// pointer to the last mutex entry accepted by this thread
-    std::terminate_handler terminateRtn;		// per task handling termination action
+    std::terminate_handler terminateRtn __attribute__(( noreturn )); // per task handling termination action
+    uBaseCoroutine::UnhandledException * cause;		// forwarded unhandled exception
   protected:
     // real-time
 
@@ -1830,7 +1879,7 @@ class uBaseTask : public uBaseCoroutine {
 	uTaskDestructor( UPP::uAction f, uBaseTask &task ) : f( f ), task( task ) {
 	} // uTaskDestructor::uTaskDestructor
 
-	~uTaskDestructor();
+	~uTaskDestructor() noexcept(false);
     }; // uTaskDestructor
 
     class uTaskMain {					// placed in the main member of a task
@@ -1839,6 +1888,9 @@ class uBaseTask : public uBaseCoroutine {
 	uTaskMain( uBaseTask &task );
 	~uTaskMain();
     }; // uTaskMain
+
+    void forwardUnhandled( UnhandledException & ex );
+    void handleUnhandled( uBaseEvent * ex = nullptr );
   public:
     uBaseTask( const uBaseTask & ) = delete;		// no copy
     uBaseTask( uBaseTask && ) = delete;
@@ -2296,7 +2348,7 @@ class uCondition {
       public:
 	virtual ~WaitingFailure();
 	const uCondition &conditionId() const;
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uCondition::WaitingFailure 
 }; // uCondition
 
@@ -2399,6 +2451,7 @@ namespace UPP {
 	friend class uKernelBoot;			// access: new, uProcessorKernel, ~uProcessorKernel
 	friend class uSerial;				// access: schedule
 	friend class uSerialDestructor;			// access: schedule
+	friend class ::uMutexLock;			// access: schedule
 	friend class ::uOwnerLock;			// access: schedule
 	template<int, int, int> friend class ::uAdaptiveLock; // access: entryRef, profileActive, wake
 	friend class ::uCondLock;			// access: schedule

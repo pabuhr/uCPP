@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  4 18:41:14 2020
-// Update Count     : 1031
+// Last Modified On : Wed Feb 12 13:55:56 2020
+// Update Count     : 1036
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,7 +76,7 @@ token_t *gen_warning( token_t *before, const char *text ) {
 void gen_base_clause( token_t *before, symbol_t *symbol ) {
     uassert( symbol != nullptr );
 
-    if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EVENT || symbol->data->key == ACTOR ) &&
+    if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EVENT || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) &&
 	 ( symbol->data->base == nullptr ||
 	   ( symbol->data->base->data->attribute.Mutex && ( symbol->data->base->data->key == STRUCT || symbol->data->base->data->key == CLASS ) ) ) ) {
 	uassert( before != nullptr );
@@ -110,8 +110,12 @@ void gen_base_clause( token_t *before, symbol_t *symbol ) {
 	    } // if
 	} else if ( symbol->data->key == EVENT ) {
 	    gen_code( next, "public uBaseEvent" );
-	} else if ( symbol->data->key == ACTOR ) {
-	    gen_code( next, "public uActorType <" );
+	} else if ( symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
+	    if ( symbol->data->key == CORACTOR ) {
+		gen_code( next, "public uCorActorType <" );
+	    } else {
+		gen_code( next, "public uActorType <" );
+	    } // if
 	    gen_code( next, symbol->hash->text );
 	    // check for template arguments and add them
 	    if ( symbol->data->attribute.plate ) {
@@ -277,7 +281,7 @@ void gen_constructor_parameter( token_t *before, symbol_t *symbol, bool defarg )
     uassert( before->value == ')' );
     uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || ( symbol->data->key == ACTOR && gen_actor_prestart( symbol ) ) ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || ( (symbol->data->key == ACTOR || symbol->data->key == CORACTOR) && gen_actor_prestart( symbol ) ) ) {
 	token_t *prev = before->prev_parse_token();
 	uassert( prev != nullptr );
 
@@ -303,7 +307,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 
     if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex ) {
 	gen_code( before, "{ uDestruct = uConstruct ;" );
-    } else if ( symbol->data->key == ACTOR ) {
+    } else if ( symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	gen_code( before, "{" );
     } // if
 
@@ -345,7 +349,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 	    gen_code( before, ", false" );
 	} // if
 	gen_code( before, ") ;" );
-    } else if ( symbol->data->key == ACTOR && gen_actor_prestart( symbol ) ) {
+    } else if ( (symbol->data->key == ACTOR || symbol->data->key == CORACTOR) && gen_actor_prestart( symbol ) ) {
 	gen_code( before, "uActor :: uActorConstructor uActorConstructorInstance ( uConstruct, * this ) ;" );
     } // if
 } // gen_constructor_prefix
@@ -354,7 +358,7 @@ void gen_constructor_prefix( token_t *before, symbol_t *symbol ) {
 void gen_constructor_suffix( token_t *before, symbol_t *symbol ) {
     uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	gen_code( before, "}" );
     } // if
 } // gen_constructor_suffix
@@ -448,11 +452,11 @@ void gen_base_specifier_name( token_t *before, symbol_t *symbol ) {
 void gen_initializer( token_t *before, symbol_t *symbol, char prefix, bool after ) {
     uassert( symbol != nullptr );
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	symbol_t *base = symbol->data->base;
 	// If base->table is null, the type is incomplete; let g++ deal with it.
 	if ( base != nullptr && base->data->table != nullptr && base->data->table->hasdefault ) {
-	    if ( base->data->key == COROUTINE || base->data->attribute.Mutex || symbol->data->key == ACTOR ) {
+	    if ( base->data->key == COROUTINE || base->data->attribute.Mutex || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 		if ( ! after ) {
 		    gen_code( before, prefix );		// not entered as CODE
 		} // if
@@ -498,12 +502,12 @@ void gen_constructor( symbol_t *symbol ) {
 
     // if necessary, generate a default constructor
 
-    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT || symbol->data->key == ACTOR ) {
+    if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	symbol->data->table->hasdefault = true;
 	gen_hash( table->public_area, symbol->hash );
 
 	token_t *rp, *end;
-	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR ) {
+	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	    gen_code( table->public_area, "( UPP :: uAction uConstruct = UPP :: uYes )" );
 	    rp = table->public_area->prev_parse_token();
 	    gen_initializer( table->public_area, symbol, ':', false );
@@ -607,6 +611,7 @@ void gen_class_prefix( token_t *before, symbol_t *symbol ) {
       case TASK:
       case EVENT:
       case ACTOR:
+      case CORACTOR:
 	gen_code( before, "private :" );
 	break;
       default:
@@ -637,7 +642,7 @@ void gen_class_suffix( symbol_t *symbol ) {
 	return;
     } // if
 
-    if ( symbol->data->key == ACTOR ) {
+    if ( symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 	if ( symbol->data->table ) {			// local members ?
 	    // search for preStart routine, and create constructor to send preStart message
 	    for ( local_t *p = symbol->data->table->local; p; p = p->link ) {

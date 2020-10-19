@@ -87,6 +87,12 @@ T.~Baker and O.~Pazy.
 \newblock In {\em Proc. IEEE Real-Time Systems Symposium}, pages 172--180,
   1991.
 
+\bibitem[BP15]{Bauer15}
+Andrej Bauer and Matija Pretnar.
+\newblock Programming with Algebraic Effects and Handlers.
+\newblock {\em Journal of Logical and Algebraic Methods in Programming},
+  84(1):108--123, January 2015.
+
 \bibitem[{Bri}75]{ConcurrentPascal}
 Per {Brinch Hansen}.
 \newblock The Programming Language Concurrent Pascal.

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 17:28:12 2020
-// Update Count     : 4955
+// Last Modified On : Fri Jul 31 11:09:46 2020
+// Update Count     : 4966
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@
 using namespace std;
 
 uDEBUGPRT(
-    static void print_focus_change( const char *name, table_t *from, table_t *to ) {
+    static void print_focus_change( const char * name, table_t * from, table_t * to ) {
 	cerr << " top:" << top << " (" << (top->tbl->symbol != nullptr ? top->tbl->symbol->hash->text : (top->tbl == root) ? "root" : "template/compound") << ") " <<
 	    name << " change focus from:";
 	if ( from != nullptr ) {
@@ -84,9 +84,9 @@ uDEBUGPRT(
 #define ABSTRACT ((token_t *)1)
 
 
-static void move_tokens( token_t *to, token_t *start, token_t *end ) {
-    token_t *next;
-    for ( token_t *p = start; p != end; p = next ) {	// move tokens
+static void move_tokens( token_t * to, token_t * start, token_t * end ) {
+    token_t * next;
+    for ( token_t * p = start; p != end; p = next ) {	// move tokens
 	next = p->next_parse_token();
 	p->remove_token();
 	p->add_token_before( *to );
@@ -94,9 +94,9 @@ static void move_tokens( token_t *to, token_t *start, token_t *end ) {
 } // move_tokens
 
 
-static void move_tokens_all( token_t *to, token_t *start, token_t *end ) {
-    token_t *next;
-    for ( token_t *p = start; p != end; p = next ) {	// move tokens
+static void move_tokens_all( token_t * to, token_t * start, token_t * end ) {
+    token_t * next;
+    for ( token_t * p = start; p != end; p = next ) {	// move tokens
 	next = p->fore;
 	p->remove_token();
 	p->add_token_before( *to );
@@ -104,17 +104,17 @@ static void move_tokens_all( token_t *to, token_t *start, token_t *end ) {
 } // move_tokens
 
 
-static void copy_tokens( token_t *to, token_t *start, token_t *end ) {
-    token_t *next;
-    for ( token_t *p = start; p != end; p = next ) {	// copy tokens
+static void copy_tokens( token_t * to, token_t * start, token_t * end ) {
+    token_t * next;
+    for ( token_t * p = start; p != end; p = next ) {	// copy tokens
 	next = p->next_parse_token();
-	token_t *token = new token_t( *p );
+	token_t * token = new token_t( *p );
 	token->add_token_before( *to );
     } // for
 } // copy_tokens
 
 
-static const char *kind( symbol_t *symbol ) {
+static const char * kind( symbol_t * symbol ) {
     if ( ( symbol->data->key == STRUCT || symbol->data->key == CLASS || symbol->data->key == UNION ) && ! symbol->data->attribute.Mutex ) {
 	if ( symbol->data->key == STRUCT ) return "STRUCT";
 	else if ( symbol->data->key == CLASS ) return "CLASS";
@@ -130,6 +130,8 @@ static const char *kind( symbol_t *symbol ) {
 	return "EVENT";
     } else if ( symbol->data->key == ACTOR ) {
 	return "ACTOR";
+    } else if ( symbol->data->key == CORACTOR ) {
+	return "CORACTOR";
     } else {
 	return "*UNKNOWN*";
     } // if
@@ -155,7 +157,7 @@ static bool match( int token ) {
 } // match
 
 
-static token_t *type();
+static token_t * type();
 
 /*
 Closing template delimiter: if the nearest opening bracket is a '<', then the token '>>' means the same as the two tokens '>' '>'.
@@ -209,7 +211,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
     // assume starting character, "left", is already matched
 
     // ahead is one token after "left", so backup to the symbol before "left".
-    token_t *prev2 = ahead->prev_parse_token()->prev_parse_token();
+    token_t * prev2 = ahead->prev_parse_token()->prev_parse_token();
 
     // If "left" is not '<', continue looking for "right".
     // If "left" is '<', check kind of symbol before "left" to see if it binds with the '<':
@@ -241,14 +243,14 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 	    } else if ( match( LA ) ) {
 		if ( ! match_closing( LA, RA, false, true, Type ) ) break; // set LessThan to true
 	    } else if ( stdcpp11 && left == LA && check( RSH ) ) { // C++11 allows right-shift as closing delimiter for nested template
-		token_t *curr = ahead;
+		token_t * curr = ahead;
 		ahead = ahead->prev_parse_token();	// backup before >>
 		curr->remove_token();			// remove >>
 		delete curr;
 		curr = new token_t( '>', hash_table->lookup( ">" ) ); // replace with two '>'
-		curr->add_token_after( *ahead );
+		curr->add_token_after( * ahead );
 		curr = new token_t( '>', hash_table->lookup( ">" ) );
-		curr->add_token_after( *ahead );
+		curr->add_token_after( * ahead );
 		ahead = ahead->next_parse_token();	// advance to LA
 	    } else {
 		// must correctly parse type-names to allow the above check
@@ -271,7 +273,7 @@ static bool match_closing( char left, char right, bool semicolon = false, bool L
 
 
 static bool template_key() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( check( LA ) ) {
 	match( LA );
@@ -296,10 +298,10 @@ static bool typeof_specifier();
 
 bool templateSpecial = false;
 
-static token_t *nested_name_specifier() {
-    token_t *back = ahead;
-    token_t *token = nullptr;
-    token_t *prev = nullptr;
+static token_t * nested_name_specifier() {
+    token_t * back = ahead;
+    token_t * token = nullptr;
+    token_t * prev = nullptr;
 
     for ( ;; ) {
       if ( eof() ) break;
@@ -346,9 +348,9 @@ static token_t *nested_name_specifier() {
 } // nested_name_specifier
 
 
-static token_t *type() {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * type() {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( check( COLON_COLON ) ) {			// start search at the root
 	uDEBUGPRT( print_focus_change( "type1", focus, root ); )
@@ -373,9 +375,9 @@ static token_t *type() {
 } // type
 
 
-static token_t *epyt() {				// destructor
-    token_t *back = ahead;
-    token_t *token;
+static token_t * epyt() {				// destructor
+    token_t * back = ahead;
+    token_t * token;
 
     if ( check( COLON_COLON ) ) {			// start search at the root
 	uDEBUGPRT( print_focus_change( "epyt1", focus, root ); )
@@ -398,11 +400,11 @@ static token_t *epyt() {				// destructor
 } // epyt
 
 
-static void make_type( token_t *token, symbol_t *&symbol, table_t *locn = focus );
+static void make_type( token_t * token, symbol_t * & symbol, table_t * locn = focus );
 
-static token_t *identifier() {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * identifier() {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( check( COLON_COLON ) ) {			// start search at the root
 	uDEBUGPRT( print_focus_change( "identifier1", focus, root ); )
@@ -444,8 +446,8 @@ static token_t *identifier() {
 //   >? <?  g++
 //   () []
 
-static token_t *op() {
-    token_t *back = ahead;
+static token_t * op() {
+    token_t * back = ahead;
 
     // "operator new" and "operator new[]" are treated as "new", similarly for "delete".
 
@@ -513,7 +515,7 @@ static token_t *op() {
 } // op
 
 
-static bool specifier_list( attribute_t &attribute );
+static bool specifier_list( attribute_t & attribute );
 static bool ptr_operator();
 static bool cv_qualifier_list();
 static bool attribute_clause();
@@ -531,9 +533,9 @@ static bool exception_list();
 // conversion-declarator:
 //   ptr-operator conversion-declarator_opt
 
-static token_t *operater() {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * operater() {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( check( COLON_COLON ) ) {			// start search at the root
 	uDEBUGPRT( print_focus_change( "operater1", focus, root ); )
@@ -544,7 +546,7 @@ static token_t *operater() {
     nested_name_specifier();
 
     if ( match( OPERATOR ) ) {
-	token_t *start = ahead;
+	token_t * start = ahead;
 	if ( ( token = op() ) != nullptr ) {
 	    template_key();
 
@@ -559,11 +561,11 @@ static token_t *operater() {
 	    // assignment operator.
 
 	    if ( '=' == token->value && focus->symbol != nullptr ) {
-		token_t *save = ahead;
+		token_t * save = ahead;
 
 		if ( match( LP ) ) {
 		    cv_qualifier_list();		// optional pre qualifiers
-		    token_t *temp = type();
+		    token_t * temp = type();
 		    if ( temp != nullptr && temp->symbol == focus->symbol ) {
 			cv_qualifier_list();		// optional post qualifiers
 			if ( match( '&' ) ) {
@@ -583,7 +585,7 @@ static token_t *operater() {
 	    focus = top->tbl;
 	    return token;
 	} else {
-	    table_t *savefocus = focus;			// specifier_list changes focus
+	    table_t * savefocus = focus;		// specifier_list changes focus
 	    attribute_t attribute;			// dummy
 
 	    if ( specifier_list( attribute ) ) {
@@ -592,9 +594,9 @@ static token_t *operater() {
 		uDEBUGPRT( print_focus_change( "operater3", focus, savefocus ); )
 		focus = savefocus;
 		char name[256] = "\0";
-		for ( token_t *p = start; p != ahead; ) { // build a name for the conversion operator
+		for ( token_t * p = start; p != ahead; ) { // build a name for the conversion operator
 		    strcat( name, p->hash->text );
-		    token_t *c = p;
+		    token_t * c = p;
 		    p = p->next_parse_token();
 		    if ( p != ahead ) {
 			strcat( name, " " );
@@ -646,7 +648,7 @@ static token_t *operater() {
 
 
 static bool condition( bool semicolon = false ) {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( LP ) ) {
 	if ( match_closing( LP, RP, semicolon ) ) {	// semicolon allowed in "for" control clause
@@ -665,11 +667,11 @@ static bool condition( bool semicolon = false ) {
 // it is permissible for a declaration, which could begin with an attribute list, to be labelled in C++. Declarations
 // cannot be labelled in C90 or C99, so the ambiguity does not arise there.
 
-static void prefix_labels( token_t *before, token_t *after, token_t *label[], int cnt, bool contlabels ) {
+static void prefix_labels( token_t * before, token_t * after, token_t * label[], int cnt, bool contlabels ) {
     if ( cnt > 0 ) {					// prefix labels ?
 	gen_code( before, "{" );
 	char name[300];
-	token_t *l;
+	token_t * l;
 	if ( contlabels ) {				// continue labels ?
 	    for ( int i = 0; i < cnt; i += 1 ) {
 		l = label[i];				// optimization
@@ -691,9 +693,9 @@ static void prefix_labels( token_t *before, token_t *after, token_t *label[], in
 } // prefix_labels
 
 
-static bool statement( symbol_t *symbol );
+static bool statement( symbol_t * symbol );
 static bool null_statement();
-static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt );
+static bool compound_statement( symbol_t * symbol, token_t * label[], int cnt );
 
 
 // selection-statement:
@@ -701,8 +703,8 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt );
 //   "if" "(" condition ")" statement else statement
 //   "switch" "(" condition ")" statement
 
-static bool if_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool if_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     if ( match( IF ) && condition() ) {
 	if ( statement( symbol ) ) {
@@ -722,11 +724,11 @@ static bool if_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 } // if_statement
 
 
-static bool switch_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool switch_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     if ( match( SWITCH ) && condition() ) {
-	token_t *before = ahead;
+	token_t * before = ahead;
 	if ( statement( symbol ) ) {
 	    prefix_labels( before, ahead, label, cnt, false );
 	    return true;
@@ -746,11 +748,11 @@ static bool switch_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 //   expression-statement
 //   simple-declaration
 
-static bool while_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool while_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     if ( match( WHILE ) && condition() ) {
-	token_t *before = ahead;
+	token_t * before = ahead;
 	if ( statement( symbol ) ) {
 	    prefix_labels( before, ahead, label, cnt, true );
 	    return true;
@@ -761,13 +763,13 @@ static bool while_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 } // while_statement
 
 
-static bool do_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool do_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     if ( match( DO ) ) {
-	token_t *before = ahead;
+	token_t * before = ahead;
 	if ( statement( symbol ) ) {
-	    token_t *after = ahead;
+	    token_t * after = ahead;
 	    if ( match( WHILE ) && condition() && match( ';' ) ) {
 		prefix_labels( before, after, label, cnt, true );
 		return true;
@@ -779,11 +781,11 @@ static bool do_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 } // do_statement
 
 
-static bool for_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool for_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     if ( match( FOR ) && condition( true ) ) {		// parses all 3 expressions, separated by ';'
-	token_t *before = ahead;
+	token_t * before = ahead;
 	if ( statement( symbol ) ) {
 	    prefix_labels( before, ahead, label, cnt, true );
 	    return true;
@@ -801,12 +803,12 @@ static bool for_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 //   "goto" identifier ";"
 
 static bool break_statement() {
-    token_t *back = ahead;
-    token_t *blocn;
+    token_t * back = ahead;
+    token_t * blocn;
 
     blocn = ahead;					// remember start of break
     if ( match( BREAK ) ) {
-	token_t *label = ahead;
+	token_t * label = ahead;
 	if ( match( IDENTIFIER ) ) {
 	    if ( label->symbol != nullptr ) {		// prefix label ?
 		// cannot remove "break" token as there may be pointers to it
@@ -830,12 +832,12 @@ static bool break_statement() {
 
 
 static bool continue_statement() {
-    token_t *back = ahead;
-    token_t *clocn;
+    token_t * back = ahead;
+    token_t * clocn;
 
     clocn = ahead;					// remember start of continue
     if ( match( CONTINUE ) ) {
-	token_t *label = ahead;
+	token_t * label = ahead;
 	if ( match( IDENTIFIER ) ) {
 	    if ( label->symbol != nullptr && label->symbol->data->index == 1 ) { // prefix label ?
 		// cannot remove "continue" token as there may be pointers to it
@@ -856,7 +858,7 @@ static bool continue_statement() {
 
 
 static bool static_assert_declaration() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( STATIC_ASSERT ) && match( LP ) && match_closing( LP, RP ) ) return true; // C++11
 
@@ -865,8 +867,8 @@ static bool static_assert_declaration() {
 
 
 static bool wait_statement_body() {
-    token_t *back = ahead;
-    token_t *prefix, *suffix;
+    token_t * back = ahead;
+    token_t * prefix, * suffix;
 
     prefix = ahead;					// remember where to put the prefix
     for ( ;; ) {					// look for the end of the statement
@@ -914,11 +916,11 @@ static unsigned int accept_cnt = 0;			// count number of accept statements in tr
 
 struct jump_t {
     unsigned int index;					// unique value of mutex member in class
-    jump_t *link;
+    jump_t * link;
 }; //jump_t
 
 
-static void when_clause( token_t *&wstart, token_t *&wend ) {
+static void when_clause( token_t *& wstart, token_t *& wend ) {
     wstart = nullptr;					// null => no _When clause
     if ( match( WHEN ) ) {				// optional
 	wstart = ahead;					// includes opening parenthesis but not _When
@@ -933,14 +935,14 @@ static void when_clause( token_t *&wstart, token_t *&wend ) {
 } // when_clause
 
 
-static void accept_start( token_t *before ) {
+static void accept_start( token_t * before ) {
     gen_code( before, "{ UPP :: uSerial :: uProtectAcceptStmt uProtectAcceptStmtInstance ( this -> uSerialInstance" );
     // broken off from previous code fragment to allow subsequent insertion by timeout
     gen_code( before, ") ;" );
 } // accept_start
 
 
-static void accept_end( token_t *before, jump_t *&list, unsigned int &accept_no ) {
+static void accept_end( token_t * before, jump_t *& list, unsigned int & accept_no ) {
     char helpText[32];
 
     gen_code( before, "switch ( uProtectAcceptStmtInstance . mutexMaskPosn ) {" );
@@ -949,7 +951,7 @@ static void accept_end( token_t *before, jump_t *&list, unsigned int &accept_no 
 	gen_mask( before, list->index );
 	sprintf( helpText, ": goto _U_A%04x_%04x ;", accept_no, list->index );
 	gen_code( before, helpText );
-	jump_t *curr = list;				// remove node
+	jump_t * curr = list;				// remove node
 	list = list->link;
 	delete curr;
     } // for
@@ -957,9 +959,9 @@ static void accept_end( token_t *before, jump_t *&list, unsigned int &accept_no 
 } // accept_end
 
 
-static bool accept_mutex_list( jump_t *&list, symbol_t *symbol, const char *tryname = "acceptTry" ) {
-    token_t *start;
-    token_t *member;
+static bool accept_mutex_list( jump_t *& list, symbol_t * symbol, const char * tryname = "acceptTry" ) {
+    token_t * start;
+    token_t * member;
     unsigned int index;
 
     start = ahead;
@@ -968,13 +970,13 @@ static bool accept_mutex_list( jump_t *&list, symbol_t *symbol, const char *tryn
     gen_code( start, "(" );
     if ( ( member = identifier() ) != nullptr || ( member = operater() ) != nullptr || ( member = epyt() ) != nullptr ) {
 	while ( start != ahead ) {			// remove the member name from the token stream as it is not printed
-	    token_t *dump = start;
+	    token_t * dump = start;
 	    start = start->next_parse_token();
 	    dump->remove_token();
 	    delete dump;
 	} // while
 
-	symbol_t *msymbol = member->symbol;
+	symbol_t * msymbol = member->symbol;
 	uassert( msymbol != nullptr );
 
 	if ( msymbol->data->table != nullptr || msymbol->data->attribute.Mutex ) {
@@ -996,7 +998,7 @@ static bool accept_mutex_list( jump_t *&list, symbol_t *symbol, const char *tryn
 
 	    // check if multiple accepts for this member in the accept statement
 
-	    for ( jump_t *p = list; p != nullptr; p = p->link ) {
+	    for ( jump_t * p = list; p != nullptr; p = p->link ) {
 		if ( index == p->index ) {
 		    char msg[strlen(msymbol->hash->text) + 256];
 		    sprintf( msg, "multiple accepts of mutex member \"%s\".", msymbol->hash->text );
@@ -1011,7 +1013,7 @@ static bool accept_mutex_list( jump_t *&list, symbol_t *symbol, const char *tryn
 	    gen_error( ahead, msg );
 	} // if
 
-	jump_t *jump = new jump_t;			// create node
+	jump_t * jump = new jump_t;			// create node
 	jump->index = index;				// initialize node
 	jump->link = list;				// add node to head of list
 	list = jump;					// set top of list
@@ -1041,12 +1043,12 @@ static bool accept_mutex_list( jump_t *&list, symbol_t *symbol, const char *tryn
 } // accept_mutex_list
 
 
-static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol );
+static bool or_accept_clause( token_t * startposn, bool & uncondaccept, jump_t * & list, unsigned int & accept_no, symbol_t * symbol );
 
-static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *start;
-    token_t *wstart, *wend;
+static int accept_clause( token_t * startposn, bool & uncondaccept, jump_t *& list, unsigned int & accept_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * start;
+    token_t * wstart, * wend;
 
     when_clause( wstart, wend );			// optional
 
@@ -1059,7 +1061,7 @@ static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list,
 		accept_start( startposn );
 	    } // if
 
-	    jump_t *end = list;				// save current position on mutex member stack
+	    jump_t * end = list;			// save current position on mutex member stack
 	    if ( accept_mutex_list( list, symbol ) ) {
 		if ( wstart != nullptr ) {		// _When ?
 		    gen_code( wstart, "if (" );		// insert before condition
@@ -1071,7 +1073,7 @@ static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list,
 
 		// print labels for mutex-member list before completion statement
 		char helpText[64];
-		for ( jump_t *jump = list; jump != end; jump = jump->link ) {
+		for ( jump_t * jump = list; jump != end; jump = jump->link ) {
 		    sprintf( helpText, "_U_A%04x_%04x : __attribute__ (( unused )) ;", accept_no, jump->index );
 		    gen_code( ahead, helpText );
 		} // for
@@ -1091,14 +1093,14 @@ static int accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list,
 } // accept_clause
 
 
-static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *separator;
+static bool or_accept_clause( token_t * startposn, bool & uncondaccept, jump_t *& list, unsigned int & accept_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * separator;
 
     bool left = accept_clause( startposn, uncondaccept, list, accept_no, symbol );
     if ( left ) {
-	token_t *posn = ahead;
-	token_t *elsePosn = nullptr;
+	token_t * posn = ahead;
+	token_t * elsePosn = nullptr;
 
 	// if ( check( ELSE ) ) {
 	//     elsePosn = ahead;
@@ -1131,10 +1133,10 @@ static bool or_accept_clause( token_t *startposn, bool &uncondaccept, jump_t *&l
 } // or_accept_clause
 
 
-static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *wstart, *wend;
-    token_t *elsePosn = nullptr;
+static bool accept_timeout_clause( token_t * start, token_t *& timeout, bool & uncondaccept, jump_t *& list, unsigned int & accept_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * wstart, * wend;
+    token_t * elsePosn = nullptr;
 
     // if ( check( ELSE ) ) {
     // 	elsePosn = ahead;
@@ -1145,11 +1147,11 @@ static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &unco
 	when_clause( wstart, wend );			// optional
 
 	if ( match ( TIMEOUT ) ) {
-	    token_t *posn = ahead;
+	    token_t * posn = ahead;
 
 	    if ( condition() ) {
 		gen_code( start->prev_parse_token(), ", true" ); // add argument to uProtectAcceptStmtInstance
-		const char *kind = uncondaccept ? "U" : "C";
+		const char * kind = uncondaccept ? "U" : "C";
 		char helpText[64];
 		sprintf( helpText, "else { if ( this -> uSerialInstance . execute%s (", kind );
 		if ( wstart != nullptr ) {		// conditional timeout ?
@@ -1184,10 +1186,10 @@ static bool accept_timeout_clause( token_t *start, token_t *&timeout, bool &unco
 } // accept_timeout_clause
 
 
-static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&list, unsigned int &accept_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *wstart, *wend;
-    token_t *posn;
+static bool accept_else_clause( token_t * timeout, bool & uncondaccept, jump_t *& list, unsigned int & accept_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * wstart, * wend;
+    token_t * posn;
 
     when_clause( wstart, wend );			// optional
 
@@ -1198,7 +1200,7 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 		gen_code( timeout, "," );
 		move_tokens( timeout, wstart, wend );
 	    } else {
-		const char *kind = uncondaccept ? "U" : "C";
+		const char * kind = uncondaccept ? "U" : "C";
 		char helpText[64];
 		sprintf( helpText, "else { if ( this -> uSerialInstance . execute%s (", kind );
 		gen_code( wstart, helpText );
@@ -1219,7 +1221,7 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 		gen_code( posn, "}" );
 		gen_code( ahead, "{" );
 	    } else {
-		const char *kind = uncondaccept ? "U" : "C";
+		const char * kind = uncondaccept ? "U" : "C";
 		char helpText[64];
 		sprintf( helpText, "{ if ( ! this -> uSerialInstance . execute%s ( true ) ) {", kind );
 		gen_code( ahead, helpText );
@@ -1233,12 +1235,12 @@ static bool accept_else_clause( token_t *timeout, bool &uncondaccept, jump_t *&l
 } // accept_else_clause
 
 
-static bool accept_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *start = ahead;
-    jump_t *list = nullptr;
+static bool accept_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * start = ahead;
+    jump_t * list = nullptr;
     unsigned int accept_no;
-    token_t *timeout = nullptr;
+    token_t * timeout = nullptr;
     bool uncondaccept = false, hasTimeout, hasElse;
 
     bool root = or_accept_clause( start, uncondaccept, list, accept_no, symbol );
@@ -1256,7 +1258,7 @@ static bool accept_statement( symbol_t *symbol ) {
 	gen_code( ahead, "} } }" );			// closing brace for if-block/else-block/accept-block
 	return true;
     } else {
-	token_t *wstart, *wend;
+	token_t * wstart, * wend;
 
 	when_clause( wstart, wend );			// optional
 
@@ -1283,11 +1285,11 @@ static bool accept_statement( symbol_t *symbol ) {
 } // accept_statement
 
 
-static bool acceptreturn_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *start = ahead;
-    token_t *posn;
-    jump_t *list = nullptr;
+static bool acceptreturn_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * start = ahead;
+    token_t * posn;
+    jump_t * list = nullptr;
 
     if ( match( ACCEPTRETURN ) ) {
 	posn = ahead;
@@ -1311,7 +1313,7 @@ static bool acceptreturn_statement( symbol_t *symbol ) {
 	    } // for
 
 	    for ( ; list != nullptr; ) {		// remove mutex member nodes allocated for member list
-		jump_t *curr = list;
+		jump_t * curr = list;
 		list = list->link;
 		delete curr;
 	    } // for
@@ -1329,11 +1331,11 @@ static bool acceptreturn_statement( symbol_t *symbol ) {
 } // acceptreturn_statement
 
 
-static bool acceptwait_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *start = ahead;
-    token_t *posn;
-    jump_t *list = nullptr;
+static bool acceptwait_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * start = ahead;
+    token_t * posn;
+    jump_t * list = nullptr;
 
     if ( match( ACCEPTWAIT ) ) {
 	posn = ahead;
@@ -1348,7 +1350,7 @@ static bool acceptwait_statement( symbol_t *symbol ) {
 	    gen_code( ahead, "} else { this -> uSerialInstance . acceptSetMask ( ) ; }" ); // end of accept clause list
 
 	    for ( ; list != nullptr; ) {		// remove mutex member nodes allocated for member list
-		jump_t *curr = list;
+		jump_t * curr = list;
 		list = list->link;
 		delete curr;
 	    } // for
@@ -1376,12 +1378,12 @@ static bool acceptwait_statement( symbol_t *symbol ) {
 static unsigned int select_cnt = 0;			// count number of select statements in translation unit
 
 
-static int or_select_clause( token_t *startposn, token_t *&wlocn, unsigned int &select_no, unsigned int &selector, unsigned int &leaf, symbol_t *symbol );
+static int or_select_clause( token_t * startposn, token_t *& wlocn, unsigned int & select_no, unsigned int & selector, unsigned int & leaf, symbol_t * symbol );
 
-static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &select_no, unsigned int &selector, unsigned int &leaf, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *start;
-    token_t *wstart, *wend;
+static int select_clause( token_t * startposn, token_t *& wlocn, unsigned int & select_no, unsigned int & selector, unsigned int & leaf, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * start;
+    token_t * wstart, * wend;
 
     when_clause( wstart, wend );			// optional
 
@@ -1403,7 +1405,7 @@ static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &sel
 	start = ahead;
 	if ( condition() ) {				// selector expression
 	    char helpText[256];
-	    token_t *posn1, *posn2, *next;
+	    token_t * posn1, * posn2, * next;
 
 	    if ( selector == 0 ) {			// start of select statement ?
 		select_cnt += 1;			// next select statement
@@ -1425,13 +1427,13 @@ static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &sel
 	    gen_code( startposn, helpText );
 	    posn2 = startposn->prev_parse_token();
 
-	    for ( token_t *p = start; p != ahead; p = next ) { // move selector-expression tokens
+	    for ( token_t * p = start; p != ahead; p = next ) { // move selector-expression tokens
 		//printf( "p:%s startposn:%s\n", p->hash->text, startposn->hash->text );
 		next = p->next_parse_token();
 		p->remove_token();
 		p->add_token_before( *posn1 );
-		token_t *temp = new token_t( *p );	// copy future tokens
-		temp->add_token_before( *posn2 );
+		token_t * temp = new token_t( *p );	// copy future tokens
+		temp->add_token_before( * posn2 );
 	    } // for
 
 	    sprintf( helpText, "_U_S%04x_%04x : {", select_no, leaf );
@@ -1452,8 +1454,8 @@ static int select_clause( token_t *startposn, token_t *&wlocn, unsigned int &sel
 } // select_clause
 
 
-static int and_select_clause( token_t *startposn, token_t *&wlocn, unsigned int &select_no, unsigned int &selector, unsigned int &leaf, symbol_t *symbol ) {
-    token_t *back = ahead;
+static int and_select_clause( token_t * startposn, token_t *& wlocn, unsigned int & select_no, unsigned int & selector, unsigned int & leaf, symbol_t * symbol ) {
+    token_t * back = ahead;
 
     int left = select_clause( startposn, wlocn, select_no, selector, leaf, symbol );
     if ( left != -1 ) {
@@ -1485,12 +1487,12 @@ static int and_select_clause( token_t *startposn, token_t *&wlocn, unsigned int 
 } // and_select_clause
 
 
-static int or_select_clause( token_t *startposn, token_t *&wlocn, unsigned int &select_no, unsigned int &selector, unsigned int &leaf, symbol_t *symbol ) {
-    token_t *back = ahead;
+static int or_select_clause( token_t * startposn, token_t *& wlocn, unsigned int & select_no, unsigned int & selector, unsigned int & leaf, symbol_t * symbol ) {
+    token_t * back = ahead;
 
     int left = and_select_clause( startposn, wlocn, select_no, selector, leaf, symbol );
     if ( left != -1 ) {
-	token_t *posn = ahead;
+	token_t * posn = ahead;
 	if ( check( OR_OR ) && strcmp( ahead->hash->text, "or" ) == 0 ) {
 	    ahead->value = CONN_OR;			// change token kind
 	} // if
@@ -1519,10 +1521,10 @@ static int or_select_clause( token_t *startposn, token_t *&wlocn, unsigned int &
 } // or_select_clause
 
 
-static bool select_timeout_clause( token_t *start, unsigned int &select_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *wstart, *wend;
-    token_t *posn;
+static bool select_timeout_clause( token_t * start, unsigned int & select_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * wstart, * wend;
+    token_t * posn;
 
     if ( match( CONN_OR ) ) {
 	when_clause( wstart, wend );			// optional
@@ -1561,10 +1563,10 @@ static bool select_timeout_clause( token_t *start, unsigned int &select_no, symb
 } // select_timeout_clause
 
 
-static bool select_else_clause( token_t *start, unsigned int &select_no, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *wstart, *wend;
-    token_t *posn;
+static bool select_else_clause( token_t * start, unsigned int & select_no, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * wstart, * wend;
+    token_t * posn;
 
     when_clause( wstart, wend );			// optional
 
@@ -1594,10 +1596,10 @@ static bool select_else_clause( token_t *start, unsigned int &select_no, symbol_
 } // select_else_clause
 
 
-static bool select_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool select_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
     unsigned int select_no, selector = 0, leaf = 3;	//  0 => finished, 1 => else, 2 => timeout
-    token_t *start = ahead, *wlocn = nullptr;
+    token_t * start = ahead, * wlocn = nullptr;
 
     int root = or_select_clause( start, wlocn, select_no, selector, leaf, symbol );
     if ( root != -1 ) {
@@ -1641,10 +1643,10 @@ static bool select_statement( symbol_t *symbol ) {
 
 
 struct bound_t {
-    token_t *oleft = nullptr, *oright = nullptr;
-    token_t *exbegin = nullptr;
-    symbol_t *extype = nullptr;
-    token_t *idleft = nullptr, *idright = nullptr;
+    token_t * oleft = nullptr, * oright = nullptr;
+    token_t * exbegin = nullptr;
+    symbol_t * extype = nullptr;
+    token_t * idleft = nullptr, * idright = nullptr;
     bool pointer = false;
 }; // bound_t
 
@@ -1655,7 +1657,7 @@ typedef std::list<token_t *> tokenlist;
 static bool exception_declaration( attribute_t & attribute, bound_t & bound );
 static bool bound_exception_declaration( bound_t & bound, int kind );
 
-static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry, unsigned int handler, bound_t &bound, bool dotdotdot = false ) {
+static bool catchResume_body( symbol_t * symbol, token_t * back, token_t * startTry, unsigned int handler, bound_t & bound, bool dotdotdot = false ) {
     char buffer[128];
 
     // line-number directive for the hoisted _CatchResume clause
@@ -1663,7 +1665,7 @@ static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry
     char linedir[32 + strlen( file )];
     sprintf( linedir, "# %d \"%s\"%s\n", line, file, flags[flag] );
 
-    token_t *startblock = ahead;
+    token_t * startblock = ahead;
 
   if ( ! compound_statement( symbol, nullptr, 0 ) ) return false; // body ?
 
@@ -1703,13 +1705,13 @@ static bool catchResume_body( symbol_t *symbol, token_t *back, token_t *startTry
 } // catchResume_body
 
 
-static bool catchResume_clause( symbol_t *symbol, token_t *startTry, unsigned int handler, unsigned int &catchany ) {
-    token_t *back = ahead;
+static bool catchResume_clause( symbol_t * symbol, token_t * startTry, unsigned int handler, unsigned int & catchany ) {
+    token_t * back = ahead;
 
     if ( match( CATCHRESUME ) ) {
 	if ( match( LP ) ) {
 	    attribute_t attribute;
-	    token_t *dotdotdot = ahead;
+	    token_t * dotdotdot = ahead;
 	    bound_t bound;
 
 	    if ( exception_declaration( attribute, bound ) ) {
@@ -1732,9 +1734,9 @@ static bool catchResume_clause( symbol_t *symbol, token_t *startTry, unsigned in
 } // catchResume_clause
 
 
-static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t *&para_name, symbol_t *&exception_type, tokenlist &try_catches, tokenlist &if_rethrow ) {
-    token_t *back = ahead;
-    token_t *prefix;
+static bool catch_clause( symbol_t * symbol, bool & bflag, bool & optimized, hash_t *& para_name, symbol_t *& exception_type, tokenlist & try_catches, tokenlist & if_rethrow ) {
+    token_t * back = ahead;
+    token_t * prefix;
     bound_t bound;
     bflag = false;
     optimized = false;
@@ -1764,9 +1766,9 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 		} // if
 //		para_name = nullptr;			// prevent optimization
 	    } else if ( bound_exception_declaration( bound, CATCH ) ) {
-		token_t *p, *next;
-		token_t *start_catch;
-		hash_t *local_param_name = nullptr;
+		token_t * p, * next;
+		token_t * start_catch;
+		hash_t * local_param_name = nullptr;
 		prefix = ahead;
 
 		if ( compound_statement( symbol, nullptr, 0 ) ) {
@@ -1785,7 +1787,7 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 		    gen_code( prefix, ")" );
 		    gen_code( prefix, bound.pointer ? "->" : "." );
 		    gen_code( prefix, "getOriginalThrower ( ) ;" );
-		    token_t *realend = prefix->prev_parse_token(); // remember for optimization part
+		    token_t * realend = prefix->prev_parse_token(); // remember for optimization part
 		    gen_code( prefix, "if ( _U_bindingVal == & (" );
 		    // Move the tokens for the bound object expression from the catch clause argument to the if
 		    // statement within the catch body.
@@ -1838,7 +1840,7 @@ static bool catch_clause( symbol_t *symbol, bool &bflag, bool &optimized, hash_t
 } // catch_clause
 
 
-static bool split_try_statement( symbol_t *sym, symbolset &parents, symbolset &extypes ) {
+static bool split_try_statement( symbol_t * sym, symbolset & parents, symbolset & extypes ) {
     // given a symbol sym, and the two sets parents and extypes, decides whether a try-block splitting is necessary or
     // not, by checking if sym is in the parents, or any of its parents have catch clauses in the try block already
 
@@ -1853,7 +1855,7 @@ static bool split_try_statement( symbol_t *sym, symbolset &parents, symbolset &e
 
     // then check if any of sym's base types appeared already
     // only single inheritance for exception types, and exception types on special base list
-    for ( symbol_t *tmp = sym; tmp != 0; tmp = tmp->data->base ) {
+    for ( symbol_t * tmp = sym; tmp != 0; tmp = tmp->data->base ) {
 	if ( extypes.count( tmp ) != 0 ) {
 	    return true;
 	} //if
@@ -1863,10 +1865,10 @@ static bool split_try_statement( symbol_t *sym, symbolset &parents, symbolset &e
 } // split_try_statement
 
 
-static void register_extype( symbol_t *sym, symbolset &parents, symbolset &extypes ) {
+static void register_extype( symbol_t * sym, symbolset & parents, symbolset & extypes ) {
     // register sym's ancestors in parents set, and sym in extypes set
     // only single inheritance for exception types, and exception types on special base list
-    for ( symbol_t *tmp = sym->data->base; tmp != 0; tmp = tmp->data->base ) {
+    for ( symbol_t * tmp = sym->data->base; tmp != 0; tmp = tmp->data->base ) {
 	parents.insert( tmp );
     } // for
 
@@ -1874,11 +1876,11 @@ static void register_extype( symbol_t *sym, symbolset &parents, symbolset &extyp
 } // register_extype
 
 
-static bool finally_clause( symbol_t *symbol, token_t *start ) {
-    token_t *back = ahead;
+static bool finally_clause( symbol_t * symbol, token_t * start ) {
+    token_t * back = ahead;
 
     if ( match( FINALLY ) ) {
-	token_t *prev = ahead;
+	token_t * prev = ahead;
 
 	// line-number directive for the hoisted finally clause
 
@@ -1906,18 +1908,18 @@ static bool finally_clause( symbol_t *symbol, token_t *start ) {
 } // finally_clause
 
 
-static bool try_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
-    token_t *start, *prefix;
+static bool try_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
+    token_t * start, * prefix;
 
     symbolset parents, extypes;
-    symbol_t *exception_type = nullptr;
+    symbol_t * exception_type = nullptr;
 
     start = ahead;
     if ( match( TRY ) ) {
 	char linedir[32 + strlen( file )];
 	unsigned int resume_clauses = 0, catch_clauses = 0, finally_clauses = 0;
-	token_t *blockLC = gen_code( start, "{" );	// bracket try block
+	token_t * blockLC = gen_code( start, "{" );	// bracket try block
 
 	// line-number directive for the try clause
 
@@ -1926,21 +1928,21 @@ static bool try_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 	gen_code( ahead, linedir, '#' );
 
 	if ( compound_statement( symbol, nullptr, 0 ) ) {
-	    token_t *prev;
+	    token_t * prev;
 	    bool bound;					// is catch clause bound ?
 	    prev = ahead;				// location before catch clause
 
-	    hash_t *para_name;
+	    hash_t * para_name;
 	    bool optimized;
 	    bool split = false;
 	    tokenlist try_catches;
 	    tokenlist if_rethrow;
-	    token_t *t;
+	    token_t * t;
 
 	    if ( check( CATCHRESUME ) ) {
 		char buffer[20];
 		unsigned int catchany = UINT_MAX;
-		token_t *prev = ahead;
+		token_t * prev = ahead;
 
 		gen_code( prefix, "{" );
 		for ( resume_clauses = 0; catchResume_clause( symbol, prefix, resume_clauses, catchany ); resume_clauses += 1 ) { // resumption handlers
@@ -2034,7 +2036,7 @@ static bool try_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 
 
 static bool throw_expression() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( THROW ) ) {
 	for ( ;; ) {					// look for the end of the statement
@@ -2050,13 +2052,13 @@ static bool throw_expression() {
 } // throw_expression
 
 
-static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *prefix, *suffix;
+static bool raise_expression( key_value_t kind, symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * prefix, * suffix;
     char helpText[64];
 
     if ( match( kind ) ) {				// _Throw, _Resume or _ResumeTop ?
-	const char *kindstr = kind == UTHROW ? "Throw" : "Resume";
+	const char * kindstr = kind == UTHROW ? "Throw" : "Resume";
 	prefix = ahead;					// remember where to put the prefix
 	for ( ;; ) {					// look for the end of the statement
 	  if ( eof() ) break;
@@ -2117,9 +2119,9 @@ static bool raise_expression( key_value_t kind, symbol_t *symbol ) {
 
 
 static bool event_handler() {
-    token_t *back = ahead;
-    token_t *befparn;
-    token_t *startE;
+    token_t * back = ahead;
+    token_t * befparn;
+    token_t * startE;
 
     befparn = ahead;
     if ( match( LA ) ) {
@@ -2149,9 +2151,9 @@ static bool event_handler() {
 } // event_handler
 
 
-static bool enable_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *befEnable, *aftEnable;
+static bool enable_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * befEnable, * aftEnable;
     int event_clauses = 0;
 
     befEnable = ahead;
@@ -2187,9 +2189,9 @@ static bool enable_statement( symbol_t *symbol ) {
 } // enable_statement
 
 
-static bool disable_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *prefix;
+static bool disable_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * prefix;
     int event_clauses = 0;
 
     if ( match( DISABLE ) ) {
@@ -2226,9 +2228,9 @@ static bool disable_statement( symbol_t *symbol ) {
 //   "default" ":" statement
 
 static bool labelled_statement( symbol_t * symbol ) {
-    token_t *back = ahead;
+    token_t * back = ahead;
     const int labprefix = 32;				// maximum number of labels prefixing a statement
-    token_t *label[labprefix + 1];			// n+1 element holds the error case
+    token_t * label[labprefix + 1];			// n+1 element holds the error case
     int cnt;
 
     for ( cnt = 0;; ) {
@@ -2248,7 +2250,7 @@ static bool labelled_statement( symbol_t * symbol ) {
 	    int targetype;
 	    if ( check( SWITCH ) || check( IF ) || check( TRY ) || check( LC ) ) targetype = 2;
 	    else targetype = 1;
-	    token_t *l;
+	    token_t * l;
 	    for ( int i = 0; i < cnt; i += 1 ) {
 		l = label[i];				// optimization
 		// only need to create a symbol table for labels that need to be looked up by break and continue.
@@ -2278,8 +2280,8 @@ static bool labelled_statement( symbol_t * symbol ) {
 } // labelled_statement
 
 
-static bool case_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool case_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
 
     if ( match( CASE ) ) {
 	for ( ;; ) {
@@ -2296,8 +2298,8 @@ static bool case_statement( symbol_t *symbol ) {
 } // case_statement
 
 
-static bool default_statement( symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool default_statement( symbol_t * symbol ) {
+    token_t * back = ahead;
 
     if ( match( DEFAULT ) && match( ':' ) && statement( symbol ) ) {
 	return true;
@@ -2310,21 +2312,21 @@ static bool default_statement( symbol_t *symbol ) {
 // compound-statement:
 //   "{" statement-seq_opt "}"
 
-static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt ) {
-    token_t *back = ahead;
+static bool compound_statement( symbol_t * symbol, token_t * label[], int cnt ) {
+    token_t * back = ahead;
 
     // check for a {, don't match because a symbol table has to be built before scanning the next token, which may be an
     // identifier
 
     if ( check( LC ) ) {
-	table_t *table = new table_t( nullptr );	// no symbol to connect to
+	table_t * table = new table_t( nullptr );	// no symbol to connect to
 	uassert( focus == top->tbl );
 	table->lexical = top->tbl;
 	table->push_table();
 
 	match( LC );					// now scan passed the '{' for the next token
 
-	token_t *before = ahead;
+	token_t * before = ahead;
 	while ( statement( symbol ) );
 	prefix_labels( before, ahead, label, cnt, false );
 	delete pop_table();
@@ -2336,7 +2338,7 @@ static bool compound_statement( symbol_t *symbol, token_t *label[], int cnt ) {
 
 
 static bool null_statement() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( ';' ) ) return true;
     if ( match( LC ) && match( RC ) ) return true;
@@ -2357,8 +2359,8 @@ static bool object_declaration();
 //   declaration-statement
 //   expression-statement
 
-static bool statement( symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool statement( symbol_t * symbol ) {
+    token_t * back = ahead;
 
     for ( ;; ) {
 	if ( if_statement( symbol, nullptr, 0 ) ) return true;
@@ -2420,7 +2422,7 @@ static bool statement( symbol_t *symbol ) {
 //   "public"
 
 static unsigned int access_specifier() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( PRIVATE ) ) return PRIVATE;
     if ( match( PROTECTED ) ) return PROTECTED;
@@ -2435,9 +2437,9 @@ static unsigned int access_specifier() {
 //   virtual access-specifier_opt "::"_opt nested-name-specifier_opt class-name
 //   access-specifier virtual_opt "::"_opt nested-name-specifier_opt class-name
 
-static token_t *base_specifier( unsigned int &access ) {
-    token_t *back = ahead;
-    token_t *base;
+static token_t * base_specifier( unsigned int & access ) {
+    token_t * back = ahead;
+    token_t * base;
 
     if ( ( base = type() ) != nullptr ) {
 	base->left = back;
@@ -2446,7 +2448,7 @@ static token_t *base_specifier( unsigned int &access ) {
 	return base;
     } else if ( match( VIRTUAL ) ) {
 	access = access_specifier();
-	token_t *temp = ahead;
+	token_t * temp = ahead;
 	if ( ( base = type() ) != nullptr ) {
 	    base->left = temp;
 	    base->right = ahead->prev_parse_token();
@@ -2454,7 +2456,7 @@ static token_t *base_specifier( unsigned int &access ) {
 	} // if
     } else if ( ( access = access_specifier() ) != 0 ) {
 	match( VIRTUAL );
-	token_t *temp = ahead;
+	token_t * temp = ahead;
 	if ( ( base = type() ) != nullptr ) {
 	    base->left = temp;
 	    base->right = ahead->prev_parse_token();
@@ -2470,10 +2472,10 @@ static token_t *base_specifier( unsigned int &access ) {
 //   base-specifier
 //   base-specifier-list "," base-specifier
 
-static bool base_specifier_list( symbol_t *symbol ) {
-    token_t *back = ahead;
-    token_t *token;
-    symbol_t *base;
+static bool base_specifier_list( symbol_t * symbol ) {
+    token_t * back = ahead;
+    token_t * token;
+    symbol_t * base;
     unsigned int access;
 
     uassert( symbol != nullptr );
@@ -2487,7 +2489,7 @@ static bool base_specifier_list( symbol_t *symbol ) {
 		symbol->hash->text, kind( symbol ), symbol->data->key, symbol->data->attribute.Mutex, symbol->data->index,
 		base->hash->text, kind( base ), base->data->key, base->data->attribute.Mutex, base->data->index );
 #endif
-	if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EVENT || base->data->key == ACTOR ) {
+	if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EVENT || base->data->key == ACTOR || base->data->key == CORACTOR ) {
 
 	    // copy the left and right template delimiters from the scanned token
 
@@ -2553,8 +2555,8 @@ static bool base_specifier_list( symbol_t *symbol ) {
 // base-clause:
 //   ":" base-specifier-list
 
-static bool base_clause( symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool base_clause( symbol_t * symbol ) {
+    token_t * back = ahead;
 
     if ( match( ':' ) ) {
 	base_specifier_list( symbol );
@@ -2572,7 +2574,7 @@ static bool base_clause( symbol_t *symbol ) {
 } // base_clause
 
 
-static bool task_parameter_list( attribute_t &attribute );
+static bool task_parameter_list( attribute_t & attribute );
 
 
 // class-key:
@@ -2586,8 +2588,8 @@ static bool task_parameter_list( attribute_t &attribute );
 //   _SporadicTask
 //   _Event
 
-static int class_key( attribute_t &attribute ) {
-    token_t *back = ahead;
+static int class_key( attribute_t & attribute ) {
+    token_t * back = ahead;
 
     if ( match( CLASS ) ) return CLASS;
     if ( match( STRUCT ) ) return STRUCT;
@@ -2636,12 +2638,18 @@ static int class_key( attribute_t &attribute ) {
 	return ACTOR;
     } // if
 
+    if ( match( CORACTOR ) ) {
+	gen_code( ahead, "class" );
+	if ( check( LA ) && ! task_parameter_list( attribute ) ) goto fini;
+	return CORACTOR;
+    } // if
+
   fini:
     ahead = back; return 0;
 } // class_key
 
 
-static void make_type( token_t *token, symbol_t *&symbol, table_t *locn ) { // symbol is in/out parameter because it may be changed
+static void make_type( token_t * token, symbol_t *& symbol, table_t * locn ) { // symbol is in/out parameter because it may be changed
     uassert( token != nullptr );
     uassert( symbol != nullptr );
 
@@ -2668,7 +2676,7 @@ static void make_type( token_t *token, symbol_t *&symbol, table_t *locn ) { // s
 
 
 static bool template_qualifier( attribute_t & attribute );
-static token_t *declarator( attribute_t & attribute );
+static token_t * declarator( attribute_t & attribute );
 
 // template-parameter:
 //    type-parameter
@@ -2682,11 +2690,11 @@ static token_t *declarator( attribute_t & attribute );
 //    "template" "<" template-parameter-list ">" "class" identifier_opt
 //    "template" "<" template-parameter-list ">" "class" identifier_opt = id-expression
 
-static bool template_parameter( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool template_parameter( attribute_t & attribute ) {
+    token_t * back = ahead;
     unsigned int ckey;
-    token_t *token;
-    symbol_t *symbol;
+    token_t * token;
+    symbol_t * symbol;
 
   again:
     if ( match( CLASS ) || match( TYPENAME ) ) {
@@ -2842,8 +2850,8 @@ static bool template_parameter( attribute_t &attribute ) {
 //    template-parameter
 //    template-parameter-list "," template-parameter
 
-static bool template_parameter_list( attribute_t &attribute ) {
-    local_t *prev = attribute.plate->local;
+static bool template_parameter_list( attribute_t & attribute ) {
+    local_t * prev = attribute.plate->local;
 
     // template parameter may be empty so always return true (no backup)
 
@@ -2861,10 +2869,10 @@ static bool template_parameter_list( attribute_t &attribute ) {
 } // template_parameter_list
 
 
-static bool task_parameter_list( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *startP;
-    token_t *endP;
+static bool task_parameter_list( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * startP;
+    token_t * endP;
 
     if ( match( LA ) ) {
 	startP = ahead;
@@ -2897,11 +2905,11 @@ static bool task_parameter_list( attribute_t &attribute ) {
 } // task_parameter_list
 
 
-static bool mutex_parameter_list( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *startE;
-    token_t *startM;
-    token_t *endM;
+static bool mutex_parameter_list( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * startE;
+    token_t * startM;
+    token_t * endM;
 
     if ( match( LA ) ) {
 	startE = ahead;
@@ -2952,8 +2960,8 @@ static bool mutex_parameter_list( attribute_t &attribute ) {
 } // mutex_parameter_list
 
 
-static bool type_qualifier( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool type_qualifier( attribute_t & attribute ) {
+    token_t * back = ahead;
 
     if ( match( STATIC ) ) { attribute.dclqual.qual.STATIC = true; return true; }
     if ( match( EXTERN ) ) { attribute.dclqual.qual.EXTERN = true; return true; }
@@ -2998,12 +3006,12 @@ static bool type_qualifier( attribute_t &attribute ) {
 // template-qualifier:
 //    "export"_opt "template" "<" template-parameter-list ">"
 
-static bool template_qualifier( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool template_qualifier( attribute_t & attribute ) {
+    token_t * back = ahead;
 
     match( EXPORT );					// optional export clause
 
-    token_t *start = ahead;
+    token_t * start = ahead;
     if ( match( TEMPLATE ) ) {
 	if ( match( LA ) ) {
 	    if ( attribute.plate == nullptr ) {
@@ -3033,10 +3041,10 @@ static bool template_qualifier( attribute_t &attribute ) {
 } // template_qualifier
 
 
-static token_t *class_head( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
-    symbol_t *symbol;
+static token_t * class_head( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
+    symbol_t * symbol;
     unsigned int key;
 
     if ( ( key = class_key( attribute ) ) != 0 ) {	// class key found ?
@@ -3074,11 +3082,11 @@ static token_t *class_head( attribute_t &attribute ) {
 
 	    uassert( symbol->data->found != nullptr );
 
-	    table_t *containing = focus == attribute.plate ? focus->lexical : focus;
-	    symbol_t *checksym;
+	    table_t * containing = focus == attribute.plate ? focus->lexical : focus;
+	    symbol_t * checksym;
 
 	    // the scope that is (lexically) outside this declaration (for double lookup)
-	    table_t *outside = top->tbl == attribute.plate ? top->link->tbl : top->tbl;
+	    table_t * outside = top->tbl == attribute.plate ? top->link->tbl : top->tbl;
 
 	    // lookup the type name again to determine if it was specified using a nested name (qualified).  (this could
 	    // have been accomplished by creating a flag in attribute to indicate a nested name.)
@@ -3146,7 +3154,7 @@ static token_t *class_head( attribute_t &attribute ) {
 
 
 static bool access_declaration() {
-    token_t *back = ahead;
+    token_t * back = ahead;
     unsigned int access;
 
     if ( ( access = access_specifier() ) != 0 ) {
@@ -3165,7 +3173,7 @@ static bool access_declaration() {
 
 
 static bool member_module() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( access_declaration() ) return true;
     if ( object_declaration() ) return true;
@@ -3174,14 +3182,14 @@ static bool member_module() {
 } // member_module
 
 
-static void make_mutex_class( symbol_t *clss );
+static void make_mutex_class( symbol_t * clss );
 
 
-static bool class_specifier( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *clss;
-    table_t *table;
-    symbol_t *symbol;
+static bool class_specifier( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * clss;
+    table_t * table;
+    symbol_t * symbol;
 
     if ( ( clss = class_head( attribute ) ) != nullptr ) {
 	// specialized template: "template<...> class T<...>" => create new symbol table
@@ -3335,7 +3343,7 @@ static bool class_specifier( attribute_t &attribute ) {
 	    table->access = PRIVATE;
 
 	    if ( symbol->data->base != nullptr ) {	// check inheritance matching
-		symbol_t *base = symbol->data->base;
+		symbol_t * base = symbol->data->base;
 
 		// check that derived kind only inherits from appropriate base kind
 
@@ -3390,7 +3398,7 @@ static bool class_specifier( attribute_t &attribute ) {
 
 
 static bool enumerator() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( identifier() != nullptr || type() != nullptr ) {
 	if ( match( '=' ) ) {				// scan off optional enumerator initializer
@@ -3425,7 +3433,7 @@ static bool enumerator() {
 
 
 static bool enumerator_list() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( enumerator() ) {
 	if ( match( ',' ) ) {
@@ -3444,8 +3452,8 @@ static bool enumerator_list() {
 
 
 static bool enumerator_specifier() {
-    token_t *back = ahead;
-    token_t *token;
+    token_t * back = ahead;
+    token_t * token;
 
     if ( match( ENUM ) ) {
 	match( STRUCT ) || match( CLASS );
@@ -3475,11 +3483,11 @@ static bool enumerator_specifier() {
 } // enumerator_specifier
 
 
-static bool specifier( attribute_t &attribute, bool &rt );
+static bool specifier( attribute_t & attribute, bool & rt );
 
 
-static bool formal_parameter_empty( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool formal_parameter_empty( attribute_t & attribute ) {
+    token_t * back = ahead;
 
     if ( match( RP ) || ( match( VOID ) && match( RP ) ) ) {
 	attribute.emptyparms = true;
@@ -3490,10 +3498,10 @@ static bool formal_parameter_empty( attribute_t &attribute ) {
 } // formal_parameter_empty
 
 
-static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool formal_parameter( bool ctordtor, token_t * token, attribute_t & attribute ) {
+    token_t * back = ahead;
     bool pushflag = false;
-    symbol_t *symbol;
+    symbol_t * symbol;
 
     // check for a (, don't match because the focus has to be set before scanning the next token, which may be a type
 
@@ -3514,11 +3522,11 @@ static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attrib
 		} // if
 	    } else if ( symbol->data->found != nullptr ) { // not inlined definition ?
 		// if a template function, use the enclosing scope to store the symbol.
-		table_t *containing = focus == attribute.plate ? focus->lexical : focus;
+		table_t * containing = focus == attribute.plate ? focus->lexical : focus;
 
 		// lookup the function name again to determine if it was specified using a nested name (qualified).  (this
 		// could have been accomplished by creating a flag in attribute to indicate a nested name.)
-		symbol_t *checksym = containing->search_table( symbol->hash );
+		symbol_t * checksym = containing->search_table( symbol->hash );
 
 		// if not found or found in a different table => nested naming => push table identifier found in
 		if ( checksym == nullptr || checksym->data->found != symbol->data->found ) {
@@ -3582,7 +3590,7 @@ static bool formal_parameter( bool ctordtor, token_t *token, attribute_t &attrib
 
 
 static bool ptr_operator() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( '*' ) || match( '&' ) || match( AND_AND ) ) {
 	cv_qualifier_list();				// optional
@@ -3609,7 +3617,7 @@ static bool ptr_operator() {
 
 
 static bool typeof_specifier() {			// gcc typeof specifier
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( (match( TYPEOF ) || match( DECLTYPE )) && match( LP ) && match_closing( LP, RP ) ) return true;
 
@@ -3618,7 +3626,7 @@ static bool typeof_specifier() {			// gcc typeof specifier
 
 
 static bool underlying_type_specifier() {		// gcc underlying_type specifier
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( UNDERLYING_TYPE ) && match( LP ) && match_closing( LP, RP ) ) return true;
 
@@ -3627,7 +3635,7 @@ static bool underlying_type_specifier() {		// gcc underlying_type specifier
 
 
 static bool attribute_clause() {			// gcc/C++11 attribute clause
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( ATTRIBUTE ) && match( LP ) && match_closing( LP, RP ) )	return true;
     if ( match( ALIGNAS ) && match( LP ) && match_closing( LP, RP ) ) return true;
@@ -3644,7 +3652,7 @@ static bool attribute_clause_list() {
 
 
 static bool asm_clause() {				// gcc asm clause
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( ASM ) && match( LP ) && match_closing( LP, RP ) ) return true;
 
@@ -3662,7 +3670,7 @@ static bool cv_qualifier_list() {
 
 
 static bool throw_clause() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( THROW ) && match( LP ) && match_closing( LP, RP ) ) return true;
 
@@ -3671,7 +3679,7 @@ static bool throw_clause() {
 
 
 static bool noexcept_clause() {				// C++11
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( NOEXCEPT ) ) {
 	if ( ! match( LP ) ) return true;		// optional condition
@@ -3683,7 +3691,7 @@ static bool noexcept_clause() {				// C++11
 
 
 static bool exception_list() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( throw_clause() ) return true;
     if ( noexcept_clause() ) return true;		// C++11
@@ -3693,7 +3701,7 @@ static bool exception_list() {
 
 
 static bool array_dimension() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( LB ) && match_closing( LB, RB ) ) {
 	array_dimension();				// 1 or more
@@ -3704,7 +3712,7 @@ static bool array_dimension() {
 } // array_dimension
 
 
-static void more_declarator( attribute_t &attribute ) {
+static void more_declarator( attribute_t & attribute ) {
     if ( array_dimension() ) {				// array dimension
 	more_declarator( attribute );
     } else if ( match( LP ) ) {				// parameter list
@@ -3721,8 +3729,8 @@ static void more_declarator( attribute_t &attribute ) {
 } // more_declarator
 
 
-static token_t *declarator( attribute_t &attribute ) {
-    token_t *token;
+static token_t * declarator( attribute_t & attribute ) {
+    token_t * token;
 
     attribute_clause_list();				// optional
 
@@ -3761,9 +3769,9 @@ static token_t *declarator( attribute_t &attribute ) {
 } // declarator
 
 
-static token_t *paren_identifier( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * paren_identifier( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
 	return token;
@@ -3773,13 +3781,13 @@ static token_t *paren_identifier( attribute_t &attribute ) {
 } // paren_identifier
 
 
-static token_t *function_ptr( attribute_t &attribute );
-static token_t *function_no_ptr( attribute_t &attribute );
-static token_t *function_array( attribute_t &attribute );
+static token_t * function_ptr( attribute_t & attribute );
+static token_t * function_no_ptr( attribute_t & attribute );
+static token_t * function_array( attribute_t & attribute );
 
-static token_t *function_declarator( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * function_declarator( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     attribute_clause_list();				// optional
 
@@ -3793,15 +3801,15 @@ static token_t *function_declarator( attribute_t &attribute ) {
 } // function_declarator
 
 
-static token_t *function_no_ptr( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * function_no_ptr( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( ( token = paren_identifier( attribute ) ) && formal_parameter( false, token, attribute ) ) return token;
     else {
 	ahead = back;
 	if ( match( '(' ) ) {
-	    token_t *back = ahead;
+	    token_t * back = ahead;
 	    if ( ptr_operator() && match( ')' ) && formal_parameter( false, token, attribute ) ) return ABSTRACT;
 	    else if ( ( token = function_ptr( attribute ) ) && match( ')' ) && formal_parameter( false, token, attribute ) ) return token;
 	    else {
@@ -3815,9 +3823,9 @@ static token_t *function_no_ptr( attribute_t &attribute ) {
 } // function_no_ptr
 
 
-static token_t *function_ptr( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * function_ptr( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( ptr_operator() ) {
 	if ( ( token = function_declarator( attribute ) ) ) return token;
@@ -3829,12 +3837,12 @@ static token_t *function_ptr( attribute_t &attribute ) {
     ahead = back; return nullptr;
 } // function_ptr
 
-static token_t *function_array( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * function_array( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( match( '(' ) ) {
-	token_t *back = ahead;
+	token_t * back = ahead;
 	if ( ( token = function_ptr( attribute ) ) && match( ')' ) && array_dimension() ) return token;
 	else {
 	    ahead = back;
@@ -3849,13 +3857,13 @@ static token_t *function_array( attribute_t &attribute ) {
 } // function_array
 
 
-static bool copy_constructor( const bool explict, const token_t *token, attribute_t &attribute ) {
-    token_t *back = ahead;
-    symbol_t *symbol;
+static bool copy_constructor( const bool explict, const token_t * token, attribute_t & attribute ) {
+    token_t * back = ahead;
+    symbol_t * symbol;
     bool pushflag = false;
 
     symbol = token->symbol;
-    if ( symbol == nullptr || symbol->data->table == nullptr ) return false;
+    if ( symbol == nullptr || symbol->data == nullptr || symbol->data->table == nullptr ) return false;
 
     if ( check( LP ) ) {
 	if ( symbol != focus->symbol && ( focus->lexical == nullptr || symbol != focus->lexical->symbol ) ) { // not inlined definition ?
@@ -3872,7 +3880,7 @@ static bool copy_constructor( const bool explict, const token_t *token, attribut
 	match( LP );
 
 	cv_qualifier_list();				// optional
-	token_t *temp = type();
+	token_t * temp = type();
 	if ( temp != nullptr && temp->symbol == token->symbol ) {
 	    if ( (match( CONST ) && match( '&' )) || match( '&' ) || match( AND_AND ) ) { // looks good so far
 		int commas = 0;				// if a copy constructor, every comma has a corresponding '=' after it
@@ -3909,11 +3917,11 @@ static bool copy_constructor( const bool explict, const token_t *token, attribut
 } // copy_constructor
 
 
-static bool function_return_type( attribute_t &attribute );
+static bool function_return_type( attribute_t & attribute );
 
-static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * constructor_declarator( token_t *& rp, attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( ( token = type() ) != nullptr ) {
 	// constructors and destructors are not put in the symbol table.  the class symbol table is the one set for
@@ -3933,9 +3941,9 @@ static token_t *constructor_declarator( token_t *&rp, attribute_t &attribute ) {
 } // constructor_declarator
 
 
-static token_t *destructor_declarator( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static token_t * destructor_declarator( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( ( token = epyt() ) != nullptr ) {
 	if ( formal_parameter( true, token, attribute ) ) { // should be empty
@@ -3948,15 +3956,15 @@ static token_t *destructor_declarator( attribute_t &attribute ) {
 } // destructor_declarator
 
 
-static bool body( token_t *function, attribute_t &attribute, symbol_t *symbol ) {
-    token_t *back = ahead;
+static bool body( token_t * function, attribute_t & attribute, symbol_t * symbol ) {
+    token_t * back = ahead;
 
     // check for a {, don't match because a symbol table has to be built before scanning the next token, which may be an
     // identifier
 
     if ( check( LC ) ) {
 	uassert( symbol != nullptr );
-	table_t *table;
+	table_t * table;
 
 	if ( attribute.plate != nullptr ) {
 	    table = attribute.plate;			// already allocated & pushed
@@ -4004,7 +4012,7 @@ static bool body( token_t *function, attribute_t &attribute, symbol_t *symbol ) 
 
 
 static bool pure_specific() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( '=' ) ) {
 	if ( match( NUMBER ) ) {
@@ -4017,7 +4025,7 @@ static bool pure_specific() {
 
 
 static bool delete_default_specific() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( '=' ) ) {
 	if ( match( DELETE ) ) {
@@ -4032,7 +4040,7 @@ static bool delete_default_specific() {
 } // delete_default_specific
 
 
-static void make_mutex_class( symbol_t *clss ) {
+static void make_mutex_class( symbol_t * clss ) {
     uassert( clss != nullptr );
 
     // If there are no mutex members, make the type mutex (should be checked by caller). Notice, a derived type may find
@@ -4040,7 +4048,7 @@ static void make_mutex_class( symbol_t *clss ) {
     // type of the inheritance chain.
 
     if ( clss->data->base == nullptr || ! clss->data->base->data->attribute.Mutex ) {
-	table_t *table = clss->data->table;
+	table_t * table = clss->data->table;
 	uassert( table != nullptr );
 
 	gen_mutex( table->protected_area, clss );
@@ -4050,9 +4058,9 @@ static void make_mutex_class( symbol_t *clss ) {
 } // make_mutex_class
 
 
-static void make_mutex_member( symbol_t *symbol ) {
-    table_t *table;
-    symbol_t *clss;
+static void make_mutex_member( symbol_t * symbol ) {
+    table_t * table;
+    symbol_t * clss;
 
     uassert( symbol != nullptr );
     table = symbol->data->found;
@@ -4076,7 +4084,7 @@ static void make_mutex_member( symbol_t *symbol ) {
 
 // Constructs a string corresponding to the attribute.
 
-static const char *attr_string( attribute_t &attribute ) {
+static const char * attr_string( attribute_t & attribute ) {
     if ( attribute.dclkind.kind.TYPEDEF ) return "typedef";
     if ( attribute.dclkind.kind.FRIEND ) return "friend";
     if ( attribute.dclmutex.qual.MUTEX ) return "mutex";
@@ -4085,8 +4093,8 @@ static const char *attr_string( attribute_t &attribute ) {
 } // attr_string
 
 
-static bool function_return_type( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool function_return_type( attribute_t & attribute ) {
+    token_t * back = ahead;
 
     if ( match( ARROW ) ) {
 	if ( specifier_list( attribute ) ) {
@@ -4099,12 +4107,12 @@ static bool function_return_type( attribute_t &attribute ) {
 } // function_return_type
 
 
-static bool function_declaration( bool explict, attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *function;
-    symbol_t *symbol;
-    table_t *table;
-    token_t *prefix, *suffix;
+static bool function_declaration( bool explict, attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * function;
+    symbol_t * symbol;
+    table_t * table;
+    token_t * prefix, * suffix;
     bool nested_specifier = false;
 
     // template qualifier removed by specifier
@@ -4126,10 +4134,10 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 	uassert( symbol != nullptr );
 
 	// if a template function, use the class/namespace scope to store the symbol.
-	table_t *containing = focus == attribute.plate ? focus->lexical : focus;
+	table_t * containing = focus == attribute.plate ? focus->lexical : focus;
 
 	// the scope that is (lexically) outside this declaration (for double lookup)
-	table_t *outside = top->tbl == attribute.plate ? top->link->tbl : top->tbl;
+	table_t * outside = top->tbl == attribute.plate ? top->link->tbl : top->tbl;
 
 	if ( symbol->data->found == nullptr ) {
 	    // the symbol is not defined in the symbol table so define it
@@ -4327,7 +4335,7 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 			} // if
 			gen_code( suffix->prev_parse_token(), "return 0 ;" ); // add return to prevent warning
 			function->hash = hash_table->lookup( "uCpp_main" ); // change routine name
-			gen_code( suffix, "void uMain :: main ( ) { uRetCode = uCpp_main (" ); // generate uMain::main
+			gen_code( suffix, "void uMain :: main ( ) { try { uRetCode = uCpp_main (" ); // generate uMain::main
 
 			if ( commas >= 1 ) {		// has argc, argv ?
 			    gen_code( suffix, "(" );
@@ -4348,7 +4356,7 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 				gen_code( suffix, ") env" );
 			    } // if
 			} // if
-			gen_code( suffix, ") ; }" );
+			gen_code( suffix, ") ; } catch( uBaseCoroutine::UnhandledException & ex ) { ex.defaultTerminate(); } catch( ... ) { if ( ! cancelInProgress() ) cleanup( *this ); } }" );
 		    } // if
 		  fini: ;
 		} // if
@@ -4384,19 +4392,19 @@ static bool function_declaration( bool explict, attribute_t &attribute ) {
 } // function_declaration
 
 
-static bool member_initializer( symbol_t *symbol, token_t *&start ) {
-    token_t *back = ahead;
-    token_t *token;
-    token_t *rp;
+static bool member_initializer( symbol_t * symbol, token_t *& start ) {
+    token_t * back = ahead;
+    token_t * token;
+    token_t * rp;
 
     if ( ( token = type() ) != nullptr ) {
 	if ( condition() || ( match( LC ) && match_closing( LC, RC ) ) ) { // argument list
 	    uassert( symbol != nullptr );
-	    symbol_t *base = token->symbol;
+	    symbol_t * base = token->symbol;
 	    uassert( base != nullptr );
 	    if ( symbol->data->base == base ) {
 		base->data->used = true;
-		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == ACTOR ) {
+		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == ACTOR || base->data->key == CORACTOR ) {
 		    rp = ahead->prev_parse_token();
 		    if ( rp->prev_parse_token()->value == LP || rp->prev_parse_token()->value == LC ) {
 			gen_code( rp, "UPP :: uNo" );
@@ -4419,8 +4427,8 @@ static bool member_initializer( symbol_t *symbol, token_t *&start ) {
 } // member_initializer
 
 
-static bool member_initializer_list( symbol_t *symbol, token_t *&start ) {
-    token_t *back = ahead;
+static bool member_initializer_list( symbol_t * symbol, token_t *& start ) {
+    token_t * back = ahead;
 
     if ( member_initializer( symbol, start ) ) {
 	if ( match( ',' ) ) {
@@ -4436,8 +4444,8 @@ static bool member_initializer_list( symbol_t *symbol, token_t *&start ) {
 } // member_initializer_list
 
 
-static bool constructor_initializer( symbol_t *symbol, token_t *&start ) {
-    token_t *back = ahead;
+static bool constructor_initializer( symbol_t * symbol, token_t *& start ) {
+    token_t * back = ahead;
 
     if ( match( ':' ) ) {
 	uassert( symbol != nullptr );
@@ -4457,14 +4465,14 @@ static bool constructor_initializer( symbol_t *symbol, token_t *&start ) {
 } // constructor_initializer
 
 
-static bool constructor_declaration( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *constructor;
-    symbol_t *symbol;
-    table_t *table;
-    token_t *prefix, *suffix;
-    token_t *start = nullptr;
-    token_t *rp;
+static bool constructor_declaration( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * constructor;
+    symbol_t * symbol;
+    table_t * table;
+    token_t * prefix, * suffix;
+    token_t * start = nullptr;
+    token_t * rp;
 
     bool initializer;
 
@@ -4502,8 +4510,8 @@ static bool constructor_declaration( attribute_t &attribute ) {
 	    if ( body( nullptr, attribute, symbol ) ) {
 		bool dummy;
 		bool d1;
-		hash_t *d2;
-		symbol_t *d3;
+		hash_t * d2;
+		symbol_t * d3;
 		tokenlist d4,d5;
 		catch_clause( symbol, dummy, d1, d2, d3, d4, d5 ); // exception for initializers
 
@@ -4532,7 +4540,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 		    gen_constructor_suffix( suffix, symbol );
 		} else {
 		    // inline definition, do not know if mutex
-		    structor_t *structor = new structor_t;
+		    structor_t * structor = new structor_t;
 		    uassert( structor != nullptr );
 		    if ( ! initializer ) {
 			structor->separator = ':';
@@ -4559,7 +4567,7 @@ static bool constructor_declaration( attribute_t &attribute ) {
 
 		if ( ! table->defined ) {
 		    // inline definition, do not know if mutex
-		    structor_t *structor = new structor_t;
+		    structor_t * structor = new structor_t;
 		    uassert( structor != nullptr );
 		    structor->rp = rp;
 		    structor->defarg = true;
@@ -4577,12 +4585,12 @@ static bool constructor_declaration( attribute_t &attribute ) {
 } // constructor_declaration
 
 
-static bool destructor_declaration( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *destructor;
-    symbol_t *symbol;
-    table_t *table;
-    token_t *prefix, *suffix;
+static bool destructor_declaration( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * destructor;
+    symbol_t * symbol;
+    table_t * table;
+    token_t * prefix, * suffix;
 
     while ( type_qualifier( attribute ) || template_qualifier( attribute ) || attribute_clause() );
 
@@ -4614,7 +4622,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
 		    gen_destructor_prefix( prefix, symbol );
 		    gen_destructor_suffix( suffix, symbol );
 		} else {
-		    structor_t *structor = new structor_t();
+		    structor_t * structor = new structor_t();
 
 		    uassert( structor != nullptr );
 		    structor->prefix = prefix;
@@ -4632,7 +4640,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
 		uassert( table != nullptr );
 
 		if ( ! table->defined ) {
-		    structor_t *structor = new structor_t();
+		    structor_t * structor = new structor_t();
 		    uassert( structor != nullptr );
 
 		    structor->prefix = nullptr;
@@ -4651,7 +4659,7 @@ static bool destructor_declaration( attribute_t &attribute ) {
 
 
 static bool string_literal() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( STRING ) ) {
 	while ( match( STRING ) );
@@ -4663,7 +4671,7 @@ static bool string_literal() {
 
 
 static bool simple_type_specifier() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( INT ) ) return true;
     if ( match( CHAR ) ) return true;
@@ -4687,9 +4695,9 @@ static bool simple_type_specifier() {
 } // simple_type_specifier
 
 
-static bool elaborated_type_specifier( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
+static bool elaborated_type_specifier( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
 
     if ( class_key( attribute ) || match( ENUM ) || match( TYPENAME ) ) {
 	attribute_clause_list();			// optional
@@ -4737,9 +4745,9 @@ static bool elaborated_type_specifier( attribute_t &attribute ) {
 } // elaborated_type_specifier
 
 
-static bool type_specifier( attribute_t &attribute, bool &ts ) {
-    token_t *back = ahead;
-    token_t *name;
+static bool type_specifier( attribute_t & attribute, bool & ts ) {
+    token_t * back = ahead;
+    token_t * name;
 
     if ( simple_type_specifier() ) { ts = true; return true; }
     if ( ! ts && ( name = type() ) != nullptr ) { attribute.typedef_base = name->symbol; ts = true; return true; }
@@ -4755,8 +4763,8 @@ static bool type_specifier( attribute_t &attribute, bool &ts ) {
 } // type_specifier
 
 
-static bool specifier( attribute_t &attribute, bool &ts ) {
-    token_t *back = ahead;
+static bool specifier( attribute_t & attribute, bool & ts ) {
+    token_t * back = ahead;
 
     if ( template_qualifier( attribute ) ) return true;
     if ( type_qualifier( attribute ) ) return true;
@@ -4766,8 +4774,8 @@ static bool specifier( attribute_t &attribute, bool &ts ) {
 } // specifier
 
 
-static bool specifier_list( attribute_t &attribute ) {
-    token_t *back = ahead;
+static bool specifier_list( attribute_t & attribute ) {
+    token_t * back = ahead;
     bool ts = false;					// indicates when a type specifier is found
 
     if ( specifier( attribute, ts ) ) {
@@ -4782,7 +4790,7 @@ static bool specifier_list( attribute_t &attribute ) {
 
 
 static bool lambda() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( stdcpp11 && match( LB ) && match_closing( LB, RB ) ) {	// C++11 lambda
 	if ( match( LP ) && ! match_closing( LP, RP ) ) goto fini; // optional
@@ -4800,7 +4808,7 @@ static bool lambda() {
 
 
 static bool initexpr() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     lambda();
     for ( ;; ) {					// scan off the expression
@@ -4834,7 +4842,7 @@ static bool initexpr() {
 //    { expressionlist }
 
 static bool initializer() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( '=' ) ) {
 	if ( match( LC ) ) {
@@ -4851,9 +4859,9 @@ static bool initializer() {
 } // initializer
 
 
-static void declarator_list( attribute_t &attribute ) {
-    token_t *token;
-    symbol_t *symbol;
+static void declarator_list( attribute_t & attribute ) {
+    token_t * token;
+    symbol_t * symbol;
 
     token = declarator( attribute );
     if ( token != ABSTRACT && token != nullptr ) {
@@ -4869,7 +4877,7 @@ static void declarator_list( attribute_t &attribute ) {
 
 		//delete symbol->data;
 		symbol->data = attribute.typedef_base->data;
-		symbol->copied = true;
+		symbol->typname = symbol->copied = true;
 	    } // if
 	} // if
     } // if
@@ -4883,8 +4891,8 @@ static void declarator_list( attribute_t &attribute ) {
 } // declarator_list
 
 
-static bool exception_declaration( attribute_t &attribute, bound_t &bound ) {
-    token_t *back = ahead;
+static bool exception_declaration( attribute_t & attribute, bound_t & bound ) {
+    token_t * back = ahead;
 
     if ( specifier_list( attribute ) ) {
 	bound.oleft = bound.oright = nullptr;
@@ -4900,13 +4908,13 @@ static bool exception_declaration( attribute_t &attribute, bound_t &bound ) {
 
 
 static bool bound_exception_declaration( bound_t & bound, int kind ) {
-    token_t *back = ahead;
-    token_t *prefix;
+    token_t * back = ahead;
+    token_t * prefix;
 
     prefix = ahead;
     if ( match_closing( LP, RP ) ) {			// match entire catch argument
 	ahead = ahead->prev_parse_token();		// backup so closing RP is not matched
-	token_t *p;
+	token_t * p;
 	// Looking for T1 in: catch( d.T1::T2 e ) by scanning backwards from the closing ')' of the catch clause.
 	for ( p = ahead; ; p = p->prev_parse_token() ) {
 	  if ( p == prefix ) goto fini;			// at start so not a bound exception
@@ -4945,10 +4953,10 @@ static bool bound_exception_declaration( bound_t & bound, int kind ) {
 
 static bool using_definition();
 static bool using_directive();
-static bool using_alias( attribute_t &attribute );
+static bool using_alias( attribute_t & attribute );
 
 static bool object_declaration() {
-    token_t *back = ahead;
+    token_t * back = ahead;
     attribute_t attribute;
 
     if ( using_definition() ) return true;
@@ -4990,7 +4998,7 @@ static bool object_declaration() {
 
 
 static bool asm_declaration() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( ASM ) ) {
 	match( VOLATILE ); 				// optional
@@ -5008,9 +5016,9 @@ static bool declaration();
 //    named-namespace-definition unnamed-namespace-definition
 
 static bool namespace_definition() {
-    token_t *back = ahead;
-    token_t *token;
-    symbol_t *symbol;
+    token_t * back = ahead;
+    token_t * token;
+    symbol_t * symbol;
 
     bool inlne = match( INLINE );			// optional
 
@@ -5038,7 +5046,7 @@ static bool namespace_definition() {
 	    if ( token != nullptr ) pop_table();
 	    if ( match( RC ) ) {
 		if ( symbol->data->attribute.dclqual.qual.INLINE ) {
-		    local_t *use = new local_t;
+		    local_t * use = new local_t;
 		    use->useing = true;
 		    use->tblsym = true;
 		    use->kind.tbl = symbol->data->table;
@@ -5061,9 +5069,9 @@ static bool namespace_definition() {
 //    "namespace" identifier "=" qualified-namespace-specifier ";"
 
 static bool namespace_alias_definition() {
-    token_t *back = ahead;
-    token_t *lhs, *rhs;
-    symbol_t *symbol;
+    token_t * back = ahead;
+    token_t * lhs, * rhs;
+    symbol_t * symbol;
 
     if ( match( NAMESPACE ) && ( lhs = identifier() ) != nullptr && match( '=' ) && ( rhs = type() ) != nullptr && match( ';' ) ) {
 	symbol = lhs->symbol;
@@ -5085,20 +5093,21 @@ static bool namespace_alias_definition() {
 //    "using" "::" unqualified-id ";"
 
 static bool using_definition() {
-    token_t *back = ahead;
-    token_t *token;
+    token_t * back = ahead;
+    token_t * token;
 
     if ( match( USING ) ) {
 	bool typname = match( TYPENAME );		// optional
 	if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
+	    match( DOT_DOT_DOT );			// optional
 	    attribute_clause_list();			// optional
 	    if ( check( ';' ) ) {			// don't scan ahead yet
 		uassert( token->symbol != nullptr );
-		symbol_t *symbol = token->symbol;
+		symbol_t * symbol = token->symbol;
 		if ( typname ) {
 		    make_type( token, token->symbol );
 		} else if ( symbol != nullptr ) {
-		    local_t *use = new local_t;
+		    local_t * use = new local_t;
 		    use->useing = true;
 		    use->tblsym = false;
 		    use->kind.sym = symbol;
@@ -5122,15 +5131,15 @@ static bool using_definition() {
 //    "using" "namespace" "::"_opt nested-name-specifier_opt namespace-name ";"
 
 static bool using_directive() {
-    token_t *back = ahead;
-    token_t *token;
+    token_t * back = ahead;
+    token_t * token;
 
     if ( match( USING ) && match( NAMESPACE ) && ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) ) {
 	attribute_clause_list();			// optional
 	if ( check( ';' ) ) {				// don't scan ahead yet
-	    symbol_t *symbol = token->symbol;
+	    symbol_t * symbol = token->symbol;
 	    if ( symbol != nullptr && symbol->data->table != nullptr ) {
-		local_t *use = new local_t;
+		local_t * use = new local_t;
 		use->useing = true;
 		use->tblsym = true;
 		use->kind.tbl = symbol->data->table;
@@ -5154,17 +5163,17 @@ static bool using_directive() {
 //    "template" "<" template-parameter-list ">" "using" identifier attr(optional) "=" typename_opt type-id ";"
 
 
-static bool using_alias( attribute_t &attribute ) {
-    token_t *back = ahead;
-    token_t *token;
-    symbol_t *symbol;
+static bool using_alias( attribute_t & attribute ) {
+    token_t * back = ahead;
+    token_t * token;
+    symbol_t * symbol;
 
     if ( ( match( USING ) || ( template_qualifier( attribute ) && match( USING ) ) ) &&
 	 ( ( token = identifier() ) != nullptr || ( token = type() ) != nullptr ) ) {
 	uassert( token != nullptr );
 	symbol = token->symbol;
 	// place alias in current lexical context if there is a template qualifier
-	table_t *lexical = focus == attribute.plate ? focus->lexical : focus;
+	table_t * lexical = focus == attribute.plate ? focus->lexical : focus;
 	make_type( token, symbol, lexical );
 	attribute_clause_list();			// optional
 	if ( match( '=' ) ) {
@@ -5204,7 +5213,7 @@ static bool using_alias( attribute_t &attribute ) {
 //    "extern" string-literal declaration
 
 static bool linkage_specification() {
-    token_t *back = ahead;
+    token_t * back = ahead;
 
     if ( match( EXTERN ) && string_literal() ) {	// should be "C" or "C++"
 	if ( match( LC ) ) {

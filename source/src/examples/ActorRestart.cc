@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:42:01 2019
-// Update Count     : 11
+// Last Modified On : Sat Oct 17 11:58:26 2020
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,9 +33,9 @@ using namespace std;
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
 
-struct DummyMsg : public uActor::FutureMessage< int > {
+struct DummyMsg : public uActor::PromiseMsg< int > {
     int id;
-    DummyMsg( int id ) : FutureMessage( uActor::Delete ), id( id ) {}
+    DummyMsg( int id ) : PromiseMsg( uActor::Delete ), id( id ) {}
 }; // DummyMsg
 
 
@@ -69,31 +69,40 @@ _Actor Restart {
     } // Restart::receive2
 }; // Restart
 
+void idcb( int id ) { osacquire( cout ) << "callback id " << id << endl; };
+
 int main() {
+    srandom( getpid() );
     enum { NoOfMsgs = 10 };
-    Future_ISM< int > fi[NoOfMsgs];
+    uActor::Promise< int > pi[NoOfMsgs];
 
     uActorStart();					// start actor system
     Restart *restart = new Restart;			// create actor
 
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {
-	fi[i] = *restart || *new DummyMsg( i );		// send N future messages
+	pi[i] = *restart || *new DummyMsg( i );		// send N future messages
 	if ( i == 4 ) restart->restart();		// restart actor to initial state
     } // for
-
+    uThisTask().yield( random() % 7 );			// work asynchronously
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {		// access future values
-	int v = fi[i]();
-	osacquire( cout ) << "futures message " << i << " " << v << endl;
+	#ifdef THEN
+	pi[i].then( idcb );
+	#else
+	if ( pi[i].maybe( idcb ) ) osacquire( cout ) << "fullfilled id " << pi[i]() << endl;
+	#endif // THEN
     } // for
-    osacquire( cout ) << endl;
 
     restart->restart();					// restart actor to initial state
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {
-	fi[i] = *restart || *new DummyMsg( i );		// send N future messages
+	pi[i] = *restart || *new DummyMsg( i );		// send N future messages
     } // for
+    uThisTask().yield( random() % 7 );			// work asynchronously
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {		// access future values
-	int v = fi[i]();
-	osacquire( cout ) << "futures message " << i << " " << v << endl;
+	#ifdef THEN
+	pi[i].then( idcb );
+	#else
+	if ( pi[i].maybe( idcb ) ) osacquire( cout ) << "fullfilled id " << pi[i]() << endl;
+	#endif // THEN
     } // for
 
     *restart | uActor::stopMsg;				// stop restart actor

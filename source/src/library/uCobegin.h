@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 19 06:44:46 2019
-// Update Count     : 56
+// Last Modified On : Sun Oct 11 15:51:23 2020
+// Update Count     : 59
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,25 +41,7 @@
 #define BEGIN [&]( unsigned int uLid __attribute__(( unused )) ) {
 #define END } ,
 
-void uCobegin( std::initializer_list< std::function< void( unsigned int ) >> funcs ) {
-    unsigned int uLid = 0;
-    _Task Runner {
-	typedef std::function<void( unsigned int )> Func; // function type
-	unsigned int parm;				// local thread lid
-	Func f;						// function to run for each lid
-
-	void main() { f( parm ); }
-      public:
-	Runner( unsigned int parm, Func f ) : parm( parm ), f( f ) {}
-    }; // Runner
-
-    const unsigned int size = funcs.size();
-    Runner **runners = new Runner *[size];		// do not use up task stack
-
-    for ( auto f : funcs ) { runners[uLid] = new Runner( uLid, f ); uLid += 1; }
-    for ( uLid = 0; uLid < size; uLid += 1 ) delete runners[uLid];
-    delete [] runners;
-} // uCobegin
+void uCobegin( std::initializer_list< std::function< void ( unsigned int ) >> funcs );
 
 // COFOR
 
@@ -68,7 +50,7 @@ void uCobegin( std::initializer_list< std::function< void( unsigned int ) >> fun
 template<typename Low, typename High>			// allow bounds to have different types (needed for constants)
 void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
     _Task Runner {
-	typedef std::function<void( High )> Func;	// function type
+	typedef std::function<void ( High )> Func;	// function type
 	const Low low;					// work subrange
 	const High high;
 	Func f;						// function to run for each lid
@@ -130,7 +112,7 @@ _Task uWaitRunner {
 
 template<typename... Args>
 _Task uWaitRunner<void, Args...> {
-    std::function<void(Args...)> f;
+    std::function<void (Args...)> f;
     std::tuple<Args...> args;
 
     template<std::size_t... I>
@@ -142,7 +124,7 @@ _Task uWaitRunner<void, Args...> {
 	call( std::index_sequence_for<Args...>{} );
     } // uWaitRunner::main
   public:
-    uWaitRunner( std::function<void(Args...)> f, Args&&... args ) : f( f ), args( std::forward_as_tuple( args... ) ) {}
+    uWaitRunner( std::function<void (Args...)> f, Args&&... args ) : f( f ), args( std::forward_as_tuple( args... ) ) {}
     void join() {}
 }; // uWaitRunner
 

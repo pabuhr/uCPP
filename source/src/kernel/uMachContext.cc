@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 28 22:46:24 2019
-// Update Count     : 824
+// Last Modified On : Fri Jul 31 10:35:25 2020
+// Update Count     : 947
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,13 +54,13 @@ extern "C" void pthread_deletespecific_( void * );	// see pthread simulation
 
 
 namespace UPP {
-    void uMachContext::invokeCoroutine( uBaseCoroutine &This ) { // magically invoke the "main" of the most derived class
+    void uMachContext::invokeCoroutine( uBaseCoroutine & This ) { // magically invoke the "main" of the most derived class
 	// Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
 	This.setState( uBaseCoroutine::Active );	// set state of next coroutine to active
 	THREAD_GETMEM( This )->enableInterrupts();
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_postallocateMetricMemory ) {
 	    (*uProfiler::uProfiler_postallocateMetricMemory)( uProfiler::profilerInstance, uThisTask() );
 	} // if
@@ -68,29 +68,34 @@ namespace UPP {
 	if ( ! THREAD_GETMEM( disableInt ) && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
 	    (*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	// At this point, execution is on the stack of the new coroutine or task that has just been switched to by the
 	// kernel.  Therefore, interrupts can legitimately occur now.
 
 	try {
-	    This.corStarter();				// moved from uCoroutineMain to allow recursion on "main"
-	    uBaseCoroutine::asyncpoll();		// cancellation checkpoint
-	    This.main();				// start coroutine's "main" routine
-	} catch ( uBaseCoroutine::UnwindStack &u ) {
-	    u.exec_dtor = false;			// defuse the bomb or otherwise unwinding will continue
-	    This.notHalted = false;			// terminate coroutine
-	} catch( uBaseCoroutine::UnhandledException &ex ) {
-	    This.handleUnhandled( &ex );
-	} catch ( uBaseEvent &ex ) {
-	    This.handleUnhandled( &ex );
-	} catch( ... ) {				// unknown exception ?
-	    This.handleUnhandled();
+	    try {
+		This.corStarter();			// remember starter coroutine
+		uBaseCoroutine::asyncpoll();		// cancellation checkpoint
+		This.main();				// start coroutine's "main" routine
+	    } catch( uBaseCoroutine::UnwindStack & ex ) {	// cancellation to force stack unwind
+		ex.exec_dtor = false;			// defuse the unwinder
+		This.notHalted = false;			// terminate coroutine
+	    } catch( uBaseCoroutine::UnhandledException & ex ) {
+		This.forwardUnhandled( ex );		// continue forwarding
+	    } catch( uBaseEvent & ex ) {		// uC++ raise ?
+		ex.defaultTerminate();			// default defaultTerminate return here for forwarding
+		This.handleUnhandled( &ex );		// start forwarding
+	    } catch( ... ) {				// C++ exception ?
+		This.handleUnhandled();
+	    } // try
+	} catch (...) {
+	    uEHM::terminate();				// if defaultTerminate or std::terminate throws exception
 	} // try
 
 	// check outside handler so exception is freed before suspending
 	if ( ! This.notHalted ) {			// exceptional ending ?
-	    This.suspend();				// restart last resumer, which should immediately propagate the nonlocal exception
+	    This.suspend();				// restart last resumer, which should immediately propagate nonlocal exception
 	} // if
 	if ( &This != activeProcessorKernel ) {		// uProcessorKernel exit ?
 	    This.corFinish();
@@ -99,12 +104,12 @@ namespace UPP {
     } // uMachContext::invokeCoroutine
 
 
-    void uMachContext::invokeTask( uBaseTask &This ) {	// magically invoke the "main" of the most derived class
+    void uMachContext::invokeTask( uBaseTask & This ) {	// magically invoke the "main" of the most derived class
 	// Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
-#if defined(__U_MULTI__)
+	#if defined(__U_MULTI__)
 	assert( THREAD_GETMEM( activeTask ) == &This );
-#endif
+	#endif // __U_MULTI__
 
 	errno = 0;					// reset errno for each task
 	This.currCoroutine->setState( uBaseCoroutine::Active ); // set state of next coroutine to active
@@ -116,35 +121,38 @@ namespace UPP {
 
 //	uHeapControl::startTask();
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_postallocateMetricMemory ) {
 	    (*uProfiler::uProfiler_postallocateMetricMemory)( uProfiler::profilerInstance, uThisTask() );
 	} // if
-#endif // __U_PROFILER__
-
-	uPthreadable *pthreadable = dynamic_cast< uPthreadable * > (&This);
+	#endif // __U_PROFILER__
 
 	try {
 	    try {
 		uBaseCoroutine::asyncpoll();		// cancellation checkpoint
 		This.main();				// start task's "main" routine
-	    } catch( uBaseCoroutine::UnwindStack &evt ) {
-		evt.exec_dtor = false;			// defuse the unwinder	
-	    } catch( uBaseEvent &ex ) {
-		ex.defaultTerminate();
-		cleanup( This );			// preserve current exception
-	    } catch( ... ) {
-		if ( ! This.cancelInProgress() ) {
-		    cleanup( This );			// preserve current exception
-		    // CONTROL NEVER REACHES HERE!
-		} // if
-		if ( pthreadable ) {
+	    } catch( uBaseCoroutine::UnwindStack & ex ) {
+		ex.exec_dtor = false;			// defuse the unwinder
+	    } catch( uBaseCoroutine::UnhandledException & ex ) {
+		This.forwardUnhandled( ex );		// continue forwarding
+	    } catch( uBaseEvent & ex ) {		// uC++ raise ?
+		ex.defaultTerminate();			// default defaultTerminate return here for forwarding
+		This.handleUnhandled( &ex );		// start forwarding
+	    } catch( ... ) {				// C++ throw ?
+		// uMain::main, generated by the translator, handles:
+		//   catch( uBaseCoroutine::UnhandledException & ex ) { ex.defaultTerminate(); }
+		//   catch( ... ) { if ( ! cancelInProgress() ) std::terminate(); }
+		uPthreadable *pthreadable = dynamic_cast<uPthreadable *>( &This );
+		if ( pthreadable ) {			// pthread thread ?
 		    pthreadable->stop_unwinding = true;	// prevent continuation of unwinding
+		} else {
+		    This.handleUnhandled();		// start forwarding
 		} // if
 	    } // try
 	} catch (...) {
 	    uEHM::terminate();				// if defaultTerminate or std::terminate throws exception
 	} // try
+
 	// NOTE: this code needs further protection as soon as asynchronous cancellation is supported
 
 	// Clean up storage associated with the task for pthread thread-specific data, e.g., exception handling
@@ -196,15 +204,15 @@ namespace UPP {
 
 
     void uMachContext::startHere( void (*uInvoke)( uMachContext & ) ) {
-#if defined( __i386__ )
-// https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
-// The control bits of the MXCSR register are callee-saved (preserved across calls), while the status bits are
-// caller-saved (not preserved). The x87 status word register is caller-saved, whereas the x87 control word is
-// callee-saved.
+	#if defined( __i386__ )
+	// https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
+	// The control bits of the MXCSR register are callee-saved (preserved across calls), while the status bits are
+	// caller-saved (not preserved). The x87 status word register is caller-saved, whereas the x87 control word is
+	// callee-saved.
 
-// Bits 16 through 31 of the MXCSR register are reserved and are cleared on a power-up or reset of the processor;
-// attempting to write a non-zero value to these bits, using either the FXRSTOR or LDMXCSR instructions, will result in
-// a general-protection exception (#GP) being generated.
+	// Bits 16 through 31 of the MXCSR register are reserved and are cleared on a power-up or reset of the processor;
+	// attempting to write a non-zero value to these bits, using either the FXRSTOR or LDMXCSR instructions, will result in
+	// a general-protection exception (#GP) being generated.
 	struct FakeStack {
 	    void *fixedRegisters[3];			// fixed registers ebx, edi, esi (popped on 1st uSwitch, values unimportant)
 	    uint32_t mxcsr;				// MXCSR control and status register
@@ -224,7 +232,7 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
 	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
 
-#elif defined( __x86_64__ )
+	#elif defined( __x86_64__ )
 
 	struct FakeStack {
 	    void *fixedRegisters[5];			// fixed registers rbx, r12, r13, r14, r15
@@ -244,9 +252,9 @@ namespace UPP {
 	((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
 	((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
 
-#else
-	#error uC++ : internal error, unsupported architecture
-#endif
+	#else
+	    #error uC++ : internal error, unsupported architecture
+	#endif
     } // uMachContext::startHere
 
 
@@ -275,38 +283,38 @@ namespace UPP {
 	if ( storage == nullptr ) {
 	    size = uCeiling( storageSize, 16 );
 	    // use malloc/memalign because "new" raises an exception for out-of-memory
-#ifdef __U_DEBUG__
+	    #ifdef __U_DEBUG__
 	    storage = memalign( pageSize, cxtSize + size + pageSize );
 	    if ( ::mprotect( storage, pageSize, PROT_NONE ) == -1 ) {
 		abort( "(uMachContext &)%p.createContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
 	    } // if
-#else
+	    #else
 	    storage = malloc( cxtSize + size );		// assume malloc has 16 byte alignment
-#endif // __U_DEBUG__
+	    #endif // __U_DEBUG__
 	    if ( storage == nullptr ) {
 		abort( "Attempt to allocate %zd bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
 	    } // if
-#ifdef __U_DEBUG__
+	    #ifdef __U_DEBUG__
 	    limit = (char *)storage + pageSize;
-#else
+	    #else
 	    limit = (char *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
-#endif // __U_DEBUG__
+	    #endif // __U_DEBUG__
 	} else {
-#ifdef __U_DEBUG__
+	    #ifdef __U_DEBUG__
 	    if ( ((size_t)storage & (uAlign() - 1)) != 0 ) { // multiple of uAlign ?
 		abort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage, (int)uAlign() );
 	    } // if
-#endif // __U_DEBUG__
+	    #endif // __U_DEBUG__
 	    size = storageSize - cxtSize;
 	    if ( size % 16 != 0 ) size -= 8;
 	    limit = (void *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
 	    storage = (void *)((uintptr_t)storage | 1);	// add user stack storage mark
 	} // if
-#ifdef __U_DEBUG__
+	#ifdef __U_DEBUG__
 	if ( size < MinStackSize ) {			// below minimum stack size ?
 	    abort( "Stack size %zd provides less than minimum of %d bytes for a stack.", size, MinStackSize );
 	} // if
-#endif // __U_DEBUG__
+	#endif // __U_DEBUG__
 
 	base = (char *)limit + size;
 	context = base;
@@ -321,13 +329,13 @@ namespace UPP {
     void *uMachContext::stackPointer() const {
 	if ( &uThisCoroutine() == this ) {		// accessing myself ?
 	    void *sp;					// use my current stack value
-#if defined( __i386__ )
+	    #if defined( __i386__ )
 	    asm( "movl %%esp,%0" : "=m" (sp) : );
-#elif defined( __x86_64__ )
+	    #elif defined( __x86_64__ )
 	    asm( "movq %%rsp,%0" : "=m" (sp) : );
-#else
-	    #error uC++ : internal error, unsupported architecture
-#endif
+	    #else
+		#error uC++ : internal error, unsupported architecture
+	    #endif
 	    return sp;
 	} else {					// accessing another coroutine
 	    return ((uContext_t *)context)->SP;
@@ -355,12 +363,12 @@ namespace UPP {
 	    abort( "Stack overflow detected: stack pointer %p below limit %p.\n"
 		    "Possible cause is allocation of large stack frame(s) and/or deep call stack.",
 		    sp, limit );
-#define MINSTACKSIZE 1
+	    #define MINSTACKSIZE 1
 	} else if ( stackFree() < MINSTACKSIZE * 1024 ) {
 	    // Do not use fprintf because it uses a lot of stack space.
-#define xstr(s) str(s)
-#define str(s) #s
-#define MINSTACKSIZEWARNING "uC++ Runtime warning : within " xstr(MINSTACKSIZE) "K of stack limit.\n"
+	    #define xstr(s) str(s)
+	    #define str(s) #s
+	    #define MINSTACKSIZEWARNING "uC++ Runtime warning : within " xstr(MINSTACKSIZE) "K of stack limit.\n"
 	    uDebugWrite( STDERR_FILENO, MINSTACKSIZEWARNING, sizeof(MINSTACKSIZEWARNING) - 1 );
 	} else if ( sp > base ) {
 	    abort( "Stack underflow detected: stack pointer %p above base %p.\n"

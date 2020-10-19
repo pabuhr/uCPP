@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 06:59:54 2019
-// Update Count     : 893
+// Last Modified On : Thu Jan 30 14:51:02 2020
+// Update Count     : 937
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,6 @@
 
 #define __U_KERNEL__
 #include <uC++.h>
-#include <uHeapLmmm.h>
 #include <uDebug.h>					// access: uDebugWrite
 #undef __U_DEBUG_H__					// turn off debug prints
 
@@ -49,6 +48,13 @@ namespace UPP {
 	sigemptyset( &act.sa_mask );
 	sigaddset( &act.sa_mask, SIGALRM );		// disabled during signal handler
 	sigaddset( &act.sa_mask, SIGUSR1 );
+	sigaddset( &act.sa_mask, SIGSEGV );
+	sigaddset( &act.sa_mask, SIGBUS );
+	sigaddset( &act.sa_mask, SIGILL );
+	sigaddset( &act.sa_mask, SIGFPE );
+	sigaddset( &act.sa_mask, SIGHUP );		// revert to default on second delivery
+	sigaddset( &act.sa_mask, SIGTERM );
+	sigaddset( &act.sa_mask, SIGINT );
 
 #ifdef __U_PROFILER__
 	sigaddset( &act.sa_mask, SIGVTALRM );
@@ -70,29 +76,7 @@ namespace UPP {
     } // uSigHandlerModule::signal
 
 
-    void uSigHandlerModule::sigTermHandler( __U_SIGTYPE__ ) {
-	// This routine handles a SIGHUP, SIGINT, or a SIGTERM signal.  The signal is delivered to the root process as
-	// the result of some action on the part of the user attempting to terminate the application.  It must be caught
-	// here so that all processes in the application may be terminated.
-
-	uDEBUGPRT(
-	    char buffer[256];
-	    uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
-			  uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
-	)
-
-#ifdef __U_STATISTICS__
-	if ( Statistics::prtStatTerm() ) Statistics::print();
-	if ( uHeapControl::prtHeapTerm() ) uHeapManager::print();
-#endif // __U_STATISTICS__
-
-      if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
-
-	abort( "Application interrupted by a termination signal." );
-    } // uSigHandlerModule::sigTermHandler
-
-
-    inline void * uSigHandlerModule::signalContextPC( __U_SIGCXT__ cxt ) {
+    static inline void * signalContextPC( __U_SIGCXT__ cxt ) {
 #if defined( __i386__ )
 	return (void *)(cxt->uc_mcontext.gregs[REG_EIP]);
 #elif defined( __x86_64__ )
@@ -100,10 +84,10 @@ namespace UPP {
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif // architecture
-    } // uSigHandlerModule::signalContextPC
+    } // signalContextPC
 
 
-    inline void * uSigHandlerModule::signalContextSP( __U_SIGCXT__ cxt ) {
+    static inline void * signalContextSP( __U_SIGCXT__ cxt ) {
 	return (void *)cxt->uc_mcontext.gregs[
 #if __U_WORDSIZE__ == 32
 	    REG_ESP
@@ -111,7 +95,7 @@ namespace UPP {
 	    REG_RSP
 #endif // __U_WORDSIZE__ == 32
 	    ];
-    } // uSigHandlerModule::signalContextSP
+    } // signalContextSP
 
 
     void uSigHandlerModule::sigAlrmHandler( __U_SIGPARMS__ ) {
@@ -135,8 +119,6 @@ namespace UPP {
 	    abort( "UNKNOWN ALARM SIGNAL\n" );
 	} // if
 #endif // __U_STATISTICS__
-
-      if ( uKernelModule::globalAbort ) return;		// close down in progress, ignore signal
 
 	int terrno = errno;				// preserve errno at point of interrupt
 
@@ -216,28 +198,25 @@ namespace UPP {
     } // uSigHandlerModule::sigAlrmHandler
 
 
-    void uSigHandlerModule::sigSegvBusHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
+    void sigSegvBusHandler( __U_SIGPARMS__ ) {
 	if ( sfp->si_addr == nullptr ) {
-	    abort( "Null pointer (nullptr) dereference." );
+	    abort( uSigHandlerModule::Yes, "Null pointer (nullptr) dereference." );
 	} else {
-	    abort( "Addressing invalid memory at location %p\n"
+	    abort( uSigHandlerModule::Yes, "%s at memory location %p.\n"
 		   "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
-		   sfp->si_addr );
+		   (sig == SIGSEGV ? "Segment fault" : "Bus error"), sfp->si_addr );
 	} // if
-    } // uSigHandlerModule::sigSegvBusHandler
+    } // sigSegvBusHandler
 
 
-    void uSigHandlerModule::sigIllHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
-	abort( "Executing illegal instruction at location %p.\n"
+    void sigIllHandler( __U_SIGPARMS__ ) {
+	abort( uSigHandlerModule::Yes, "Executing illegal instruction at location %p.\n"
 	       "Possible cause is stack corruption.",
 	       sfp->si_addr );
-    } // uSigHandlerModule::sigIllHandler
+    } // sigIllHandler
 
 
-    void uSigHandlerModule::sigFpeHandler( __U_SIGPARMS__ ) {
-      if ( uKernelModule::globalAbort ) _exit( EXIT_FAILURE ); // close down in progress and failed, shutdown immediately!
+    void sigFpeHandler( __U_SIGPARMS__ ) {
 	const char * msg;
 	switch ( sfp->si_code ) {
 	  case FPE_INTDIV:
@@ -248,21 +227,39 @@ namespace UPP {
 	  case FPE_FLTINV: msg = "invalid operation"; break;
 	  default: msg = "unknown";
 	} // switch
-	abort( "Computation error %s at location %p.\n", msg, sfp->si_addr );
-    } // uSigHandlerModule::sigFpeHandler
+	abort( uSigHandlerModule::Yes, "Computation error %s at location %p.\n", msg, sfp->si_addr );
+    } // sigFpeHandler
+
+
+    void sigTermHandler( __U_SIGPARMS__ ) {
+	// This routine handles a SIGHUP, SIGINT, or a SIGTERM signal.  The signal is delivered to the root process as
+	// the result of some action on the part of the user attempting to terminate the application.  It must be caught
+	// here so that all processes in the application may be terminated.
+
+	uDEBUGPRT(
+	    char buffer[256];
+	    uDebugPrtBuf( buffer, "sigTermHandler, cluster:%.128s (%p), processor:%p\n",
+			  uThisCluster().getName(), &uThisCluster(), &uThisProcessor() );
+	)
+
+	abort( uSigHandlerModule::Yes, "Application interrupted by signal: %s.", strsignal( sig ) );
+    } // sigTermHandler
 
 
     uSigHandlerModule::uSigHandlerModule() {
 	// As a precaution (and necessity), errors that result in termination are delivered on a separate stack because
 	// task stacks might be very small (4K) and the signal delivery corrupts memory to the point that a clean
 	// shutdown is impossible. Also, when a stack overflow encounters the non-accessible sentinel page (debug only)
-	// and generates a segment fault, the signal cannot be delivered on the sentinel page.
-	static char stack[SIGSTKSZ] __attribute__(( aligned (16) ));
+	// and generates a segment fault, the signal cannot be delivered on the sentinel page. Finally, calls to abort
+	// print a stack trace that uses substantial stack space.
+
+	#define MINSTKSZ SIGSTKSZ * 8
+	static char stack[MINSTKSZ] __attribute__(( aligned (16) ));
 	static stack_t ss;
-	uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + SIGSTKSZ ); )
+	uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + MINSTKSZ ); )
 
 	ss.ss_sp = stack;
-	ss.ss_size = SIGSTKSZ;
+	ss.ss_size = MINSTKSZ;
 	ss.ss_flags = 0;
 	if ( sigaltstack( &ss, nullptr ) == -1 ) {
 	    abort( "uSigHandlerModule::uSigHandlerModule : internal error, sigaltstack error(%d) %s.", errno, strerror( errno ) );
@@ -271,13 +268,14 @@ namespace UPP {
 	// Associate handlers with the set of signals that this application is interested in.  These handlers are
 	// inherited by all unix processes that are subsequently created so they are not installed again.
 
-	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGINT,  sigTermHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGTERM, sigTermHandler, SA_SIGINFO | SA_ONSTACK );
 	signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
 	signal( SIGBUS,  sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
 	signal( SIGILL,  sigIllHandler, SA_SIGINFO | SA_ONSTACK );
 	signal( SIGFPE,  sigFpeHandler, SA_SIGINFO | SA_ONSTACK );
+	signal( SIGTERM, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // one shot handler, return to default
+	signal( SIGINT,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND );
+	signal( SIGABRT, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND );
+	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // terminal hangup
 
 	// Do NOT specify SA_RESTART for SIGALRM because "select" does not wake up when sent a SIGALRM from another UNIX
 	// process, which means non-blocking I/O does not work correctly in multiprocessor mode.

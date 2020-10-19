@@ -1,5 +1,6 @@
 #include "uFlexArray.h"
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 int main() {
     uFlexArray<int> a( 1 ), b( 1 );
@@ -26,5 +27,5 @@ int main() {
 }
 
 // Local Variables: //
-// compile-command: "g++ example_FlexArray.cc" //
+// compile-command: "u++ example_FlexArray.cc" //
 // End: //

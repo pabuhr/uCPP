@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 17:21:41 2020
-// Update Count     : 457
+// Last Modified On : Sun Jan 26 21:09:43 2020
+// Update Count     : 458
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -80,11 +80,11 @@ namespace UPP {
 
 
     // remove unnecessary warnings for SelectorDL::client
-#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#endif // __GNUC__ >= 7
+    #if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+    #pragma GCC diagnostic ignored "-Wuninitialized"
+    #endif // __GNUC__ >= 7
 
     // Each UnarySelector owns a SelectorDL, it is used for registering. 
     struct SelectorDL : public BaseFutureDL {
@@ -93,9 +93,9 @@ namespace UPP {
 	virtual void signal() { client->sem.V(); }	// SelectorDL::signal
     }; // SelectorDL
 
-#if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic pop
-#endif // __GNUC__ >= 7
+    #if __GNUC__ >= 7					// valid GNU compiler diagnostic ?
+    #pragma GCC diagnostic pop
+    #endif // __GNUC__ >= 7
 
     struct Condition {					// represent And and Or condition
 	enum Type { And, Or };

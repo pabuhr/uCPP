@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:47:21 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:18:50 2019
-// Update Count     : 73
+// Last Modified On : Sat Jul 18 06:51:44 2020
+// Update Count     : 74
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,9 +40,9 @@ const unsigned int DESTRUCTORPOSN = 1;			// bit 1 is reserved for destructor
 const unsigned int MAXENTRYBITS = __U_MAXENTRYBITS__ - 1; // N mutex members including destructor
 
 struct symbol_data_t {
-    table_t *found;					// parent (back pointer) symbol table (where defined)
-    table_t *table;					// nested symbol table for symbols defining scope
-    symbol_t *base;					// special base class if single inheritance of mutex, coroutine, task, exception
+    table_t * found;					// parent (back pointer) symbol table (where defined)
+    table_t * table;					// nested symbol table for symbols defining scope
+    symbol_t * base;					// special base class if single inheritance of mutex, coroutine, task, exception
     std::list<symbol_t *> base_list;			// list of all base classes (including special base class) if inheritance
 
     unsigned int key;					// kind of class, e.g., class, coroutine, task, exception, routine, member
@@ -50,21 +50,21 @@ struct symbol_data_t {
     unsigned int index;					// for mutex type: number of mutex members in this type
 							// for mutex member: position of mutex member in mutex bit mask
     bool used;						// indicates if explicit call to constructor in initializer list
-    token_t *base_token;				// location to insert implicit base class (e.g., uBaseTask)
-    token_t *left;					// start of base_specifier
-    token_t *right;					// end of base_specifier
+    token_t * base_token;				// location to insert implicit base class (e.g., uBaseTask)
+    token_t * left;					// start of base_specifier
+    token_t * right;					// end of base_specifier
 
     symbol_data_t();
 };
 
 struct symbol_t {
     int value;						// symbol is an identifier or operator or type
-    hash_t *hash;					// name of symbol in hash table
-    symbol_data_t *data;				// shared data for typedef
+    hash_t * hash;					// name of symbol in hash table
+    symbol_data_t * data;				// shared data for typedef
     bool copied;					// mark if "data" copied for typedef
     bool typname;					// mark if typename
 
-    symbol_t( int v, hash_t *h );
+    symbol_t( int v, hash_t * h );
     symbol_t( const symbol_t & );
     ~symbol_t();
 };

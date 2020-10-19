@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  2 10:57:22 2020
-// Update Count     : 813
+// Last Modified On : Sun Aug  2 23:07:58 2020
+// Update Count     : 831
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,7 +52,7 @@ void uEHM::terminate() {
     uBaseEvent * curr = getCurrentException();		// optimization
     bool msg = curr != nullptr && curr->msg[0] != '\0';
 
-    abort( "%s%s%s%s%s%s%s%s",
+    abort( "%s%s%s%s%s%s%s%s%s",
 	    ( uThisCoroutine().unexpected ?
 	      "Exception propagated through a function whose exception-specification does not permit exceptions of that type.\n" :
 	      "Propagation failed to find a matching handler.\n"
@@ -60,7 +60,7 @@ void uEHM::terminate() {
 	      "or throwing an exception from within a destructor while propagating an exception.\n" ),
 	    (exception  ? "Type of last active termination: "  : ""), (exception  ? ExName  : ""), (exception && resumption ? "\n" : ""),
 	    (resumption ? "Type of last active resumption: " : ""), (resumption ? ResName : ""),
-	    (msg ? ", Exception message: " : ""), (msg ? curr->msg : "") ); // abort puts a "\n"
+	   (msg ? ", Exception message: " : ""), (msg ? curr->msg : ""), "." ); // abort puts a "\n"
 } // uEHM::terminate
 
 void uEHM::terminateHandler() {
@@ -82,6 +82,10 @@ void uEHM::unexpectedHandler() {
     std::terminate();
 } // uEHM::unexpectedHandler
 
+void std::terminate() noexcept {
+    (*uThisTask().terminateRtn)();
+} // std::terminate
+
 std::terminate_handler std::set_terminate( std::terminate_handler func ) throw() {
     uBaseTask & task = uThisTask();			// optimization
     std::terminate_handler prev = task.terminateRtn;
@@ -89,6 +93,7 @@ std::terminate_handler std::set_terminate( std::terminate_handler func ) throw()
     return prev;
 } // std::set_terminate
 
+// Deprecated C++17
 std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) throw() {
     uBaseCoroutine & coroutine = uThisCoroutine();	// optimization
     std::unexpected_handler prev = coroutine.unexpectedRtn;
@@ -165,7 +170,7 @@ void uBaseEvent::setMsg( const char * const msg ) {
 uBaseEvent::~uBaseEvent() {}
 
 void uBaseEvent::setSrc( uBaseCoroutine & coroutine ) {
-    src = & coroutine;
+    src = &coroutine;
     uEHM::strncpy( srcName, coroutine.getName(), uEHMMaxName ); // copy source name
 } // uBaseEvent::setSrc
 
@@ -178,12 +183,12 @@ void uBaseEvent::reraise() {
     uEHM::Resume( *this );
 } // uBaseEvent::reraise
 
-void uBaseEvent::defaultTerminate() const {
-    // do nothing so per thread "terminate()" is called
+void uBaseEvent::defaultTerminate() {
+    // do nothing so invoke coroutine/task handles it
 } // uBaseEvent::defaultTerminate
 
-void uBaseEvent::defaultResume() const {
-    stackThrow();
+void uBaseEvent::defaultResume() {
+    stackThrow();					// throw exception at raise
     // CONTROL NEVER REACHES HERE!
     assert( false );
 } // uBaseEvent::defaultResume
@@ -259,16 +264,15 @@ class uEHM::ResumeWorkHorseInit {
 
 #ifdef __U_DEBUG__
 static void Check( uBaseCoroutine & target, const char * kind ) {
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress"
-#if __GNUC__ >= 6					// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic ignored "-Wnonnull-compare"
-#endif // __GNUC__ >= 6
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Waddress"
+    #if __GNUC__ >= 6					// valid GNU compiler diagnostic ?
+    #pragma GCC diagnostic ignored "-Wnonnull-compare"
+    #endif // __GNUC__ >= 6
     // SKULLDUGGERY: simplify call with reference parameter then treat as pointer to check for overwritten memory.
     if ( &target == nullptr || &target == (uBaseCoroutine *)-1 ||
 	 *((void **)&target) == nullptr || *((void **)&target) == (void *)-1 ) {
-#pragma GCC diagnostic pop
+    #pragma GCC diagnostic pop
 
 	abort( "Attempt by task %.256s (%p) to %s a nonlocal exception at target %p, but the target is invalid or has been deleted",
 		uThisTask().getName(), &uThisTask(), kind, &target );
@@ -352,7 +356,7 @@ void uEHM::ReResume( bool conseq ) {
 	abort( "Attempt to reresume but no active exception.\n"
 	       "Possible cause is a reresume not directly or indirectly performed from a _CatchResume clause." );
     } // if
-    resumeWorkHorse( *r, conseq );	
+    resumeWorkHorse( *r, conseq );
 }; // uEHM::ReResume
 
 

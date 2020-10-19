@@ -1,5 +1,6 @@
 #include "uQueue.h"
-#include "iostream.h"
+#include <iostream>
+using namespace std;
 
 class fred : public uColable {
   public:
@@ -12,7 +13,7 @@ class mary: public fred {
     mary( int i ) : fred(i) {}
 };
 
-main() {
+int main() {
     uQueue<fred> foo;
     uQueueIter<fred> fooIter( foo );
     uQueue<mary> bar;

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:06:42 2019
-// Update Count     : 51
+// Last Modified On : Tue May 19 12:10:12 2020
+// Update Count     : 52
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,6 +47,10 @@ _Mutex _Coroutine uBarrier {
 	resume();
     } // uBarrier::last
   public:
+    uBarrier() {					// for use with reset
+	init( 0 );
+    } // uBarrier::uBarrier
+
     uBarrier( unsigned int total ) {
 	init( total );
     } // uBarrier::uBarrier

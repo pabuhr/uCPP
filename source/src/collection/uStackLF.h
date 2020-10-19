@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr  4 22:46:32 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:58:21 2019
-// Update Count     : 6
+// Last Modified On : Sun Jun 14 13:22:18 2020
+// Update Count     : 109
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,42 +32,45 @@ template<typename T> class StackLF {
   public:
     union Link {
 	struct {					// 32/64-bit x 2
-	    T *top;					// pointer to stack top
+	    T * volatile top;				// pointer to stack top
 	    uintptr_t count;				// count each push
 	};
-	#if _GLIBCXX_USE_INT128 == 1
+	#if __SIZEOF_INT128__ == 16
 	__int128					// gcc, 128-bit integer
 	#else
 	uint64_t					// 64-bit integer
-	#endif // _GLIBCXX_USE_INT128 == 1
+	#endif // __SIZEOF_INT128__ == 16
 	atom;
     };
   private:
-    Link link;
+    Link stack;
   public:
-    T *top() { return link.top; }
-    void push( T &n ) {
-	n.header.kind.real.next = link;			// atomic assignment unnecessary, or use CAA
+    StackLF() { stack.atom = 0; }
+
+    T * top() { return stack.top; }
+
+    void push( T & n ) {
+	*n.getNext() = stack;				// atomic assignment unnecessary, or use CAA
 	for ( ;; ) {					// busy wait
-	  if ( uCompareAssignValue( link.atom, n.header.kind.real.next.atom, (Link){ &n, n.header.kind.real.next.count + 1 }.atom ) ) break; // attempt to update top node
+	  // if ( __atomic_compare_exchange_n( &stack.atom, &n.getNext()->atom, (Link){ {&n, n.getNext()->count + 1} }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) break; // attempt to update top node
+	  if ( uCompareAssignValue( stack.atom, n.getNext()->atom, (Link){ {&n, n.getNext()->count + 1} }.atom ) ) break; // attempt to update top node
 	    #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::spins, 1 );
 	    #endif // __U_STATISTICS__
 	} // for
     } // StackLF::push
 
-    T *pop() {
-	Link t = link;					// atomic assignment unnecessary, or use CAA
+    T * pop() {
+	Link t = stack;					// atomic assignment unnecessary, or use CAA
 	for ( ;; ) {					// busy wait
-	  if ( t.top == NULL ) return NULL;		// empty stack ?
-	  if ( uCompareAssignValue( link.atom, t.atom, (Link){ t.top->header.kind.real.next.top, t.count }.atom ) ) return t.top; // attempt to update top node
+	  if ( t.top == nullptr ) return nullptr;	// empty stack ?
+	  // if ( __atomic_compare_exchange_n( &stack.atom, &t.atom, (Link){ {t.top->getNext()->top, t.count} }.atom, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) ) return t.top; // attempt to update top node
+	  if ( uCompareAssignValue( stack.atom, t.atom, (Link){ {t.top->getNext()->top, t.count} }.atom ) ) return t.top; // attempt to update top node
 	    #ifdef __U_STATISTICS__
 	    uFetchAdd( UPP::Statistics::spins, 1 );
 	    #endif // __U_STATISTICS__
 	} // for
     } // StackLF::pop
-
-    StackLF() { link.atom = 0; }
 }; // StackLF
 
 

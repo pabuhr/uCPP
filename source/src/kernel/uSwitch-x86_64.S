@@ -1,4 +1,3 @@
-//                               -*- Mode: Asm -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -7,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Feb 28 13:36:42 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 15:25:03 2017
-// Update Count     : 18
+// Last Modified On : Sun Sep  6 18:13:41 2020
+// Update Count     : 27
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,23 +23,25 @@
 // along  with this library.
 // 
 
-// This context switch routine depends on the fact that the stack of a new
-// thread has been set up to look like the thread has saved its context in
-// the normal manner.
-//
-// void uSwitch( uMachContext *from, uMachContext *to );
+// The context switch routine requires the initial the stack of a thread to
+// look like the thread has saved its context in the normal manner.
 
-// Offsets in the context structure. This needs to be synchronized with the
-// high level code a little better.
+// Offsets must synchronized with the uMachContext::uContext_t in uC++.h.
 
 #define PTR_BYTE	8
 #define SP_OFFSET	( 0 * PTR_BYTE )
 #define FP_OFFSET	( 1 * PTR_BYTE )
-#define PC_OFFSET	( 2 * PTR_BYTE )
+//#define PC_OFFSET	( 2 * PTR_BYTE ) debugger
 
-.text
+// Context switch between coroutines/tasks.
+//   void uSwitch( uMachContext::uContext_t * from, uMachContext::uContext_t * to );
+// Arguments "from" in register rdi, "to" in register rsi.
+
+	.file "uSwitch-x64.S"
+	.text
 	.align 2
-.globl	uSwitch
+	.global uSwitch
+	.type uSwitch, @function
 uSwitch:
 
 	// Save volatile registers on the stack.
@@ -61,8 +62,8 @@ uSwitch:
 
 	// Load new context from the "to" area.
 
-	movq FP_OFFSET(%rsi),%rbp
 	movq SP_OFFSET(%rsi),%rsp
+	movq FP_OFFSET(%rsi),%rbp
 
 	// Load volatile registers from the stack.
 
@@ -78,14 +79,20 @@ uSwitch:
 	// Return to thread.
 
 	ret
+	.size uSwitch, .-uSwitch
 
-.text
+// Stub to create new stacks which can be context switched to
+//   void uInvokeStub( uMachContext * );
+
+	.text
 	.align 2
-.globl	uInvokeStub
+	.global uInvokeStub
+	.type uInvokeStub, @function
 uInvokeStub:
-	movq %rbx, %rdi
-	jmp *%r12
+	movq %rbx, %rdi		// move this to first argument
+	jmp *%r12		// jmp to invoke
 
 // Local Variables: //
+// mode: asm //
 // compile-command: "make install" //
 // End: //

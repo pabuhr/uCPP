@@ -21,11 +21,12 @@ uFile \
 uPoll \
 uSocket \
 uDefaultExecutorProcessors \
-uDefaultExecutorThreads \
+uDefaultExecutorWorkers \
 uDefaultExecutorRQueues \
 uDefaultExecutorSepClus \
 uDefaultExecutorAffinity \
 uFuture \
+uCobegin \
 uActor \
 pthread \
 Unix \

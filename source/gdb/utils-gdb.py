@@ -6,8 +6,8 @@
 # Author           : Lynn Tran
 # Created On       : Mon Oct 1 22:06:09 2018
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Sat Jan 19 14:16:10 2019
-# Update Count     : 11
+# Last Modified On : Sun Oct 11 11:55:08 2020
+# Update Count     : 25
 # 
 
 """
@@ -40,16 +40,11 @@ not_supported_error_msg = "Not a supported command for this language"
 
 def get_uCPP_types():
     # GDB types for various structures/types in uC++
-    uCluster_ptr_type = gdb.lookup_type('uCluster').pointer()
-    uClusterDL_ptr_type = gdb.lookup_type('uClusterDL').pointer()
-    uBaseTask_ptr_type = gdb.lookup_type('uBaseTask').pointer()
-    uBaseTaskDL_ptr_type = gdb.lookup_type('uBaseTaskDL').pointer()
-    int_ptr_type = gdb.lookup_type('int').pointer()
-    return uCPPTypes(uCluster_ptr_type = uCluster_ptr_type,
-                     uClusterDL_ptr_type = uClusterDL_ptr_type,
-                     uBaseTask_ptr_type = uBaseTask_ptr_type,
-                     uBaseTaskDL_ptr_type = uBaseTaskDL_ptr_type,
-                     int_ptr_type = int_ptr_type)
+    return uCPPTypes(uCluster_ptr_type = gdb.lookup_type('uCluster').pointer(),
+                     uClusterDL_ptr_type = gdb.lookup_type('uClusterDL').pointer(),
+                     uBaseTask_ptr_type = gdb.lookup_type('uBaseTask').pointer(),
+                     uBaseTaskDL_ptr_type = gdb.lookup_type('uBaseTaskDL').pointer(),
+                     int_ptr_type = gdb.lookup_type('int').pointer())
 
 def get_addr(addr):
     """
@@ -71,7 +66,7 @@ def print_usage(msg):
     """
     print('Usage: ' + msg)
 
-def get_argv_list(args):
+def parse_argv_list(args):
     """
     Split the argument list in string format, where each argument is separated
     by whitespace delimiter, to a list of arguments like argv
@@ -136,16 +131,17 @@ def adjust_stack(pc, fp, sp):
 ############################ COMMAND IMPLEMENTATION #########################
 
 class Clusters(gdb.Command):
-    """Print out the list of available clusters"""
-    usage_msg = 'cluster'
-    str_format = '{:>20}{:>18}'
+    """Print list of clusters"""
+    usage_msg = """
+    info clusters                   : print list of clusters"""
 
     def __init__(self):
-        super(Clusters, self).__init__('clusters', gdb.COMMAND_USER)
+        super(Clusters, self).__init__('info clusters', gdb.COMMAND_USER)
 
-    def print_cluster(self, str_format, cluster_name, cluster_address):
-        print(self.str_format.format(cluster_name, cluster_address))
+    def print_cluster(self, cluster_name, cluster_address):
+        print('{:>20}  {:>20}'.format(cluster_name, cluster_address))
 
+    #entry point from gdb
     def invoke(self, arg, from_tty):
         """
         Iterate through a circular linked list of clusters and print out its
@@ -160,7 +156,7 @@ class Clusters(gdb.Command):
             print(not_supported_error_msg)
             return
 
-        argv = get_argv_list(arg)
+        argv = parse_argv_list(arg)
         if len(argv) != 0:
             print_usage(self.usage_msg)
             return
@@ -169,27 +165,26 @@ class Clusters(gdb.Command):
         if cluster_root.address == 0x0:
             return
         curr = cluster_root
-        self.print_cluster(self.str_format, 'Name', 'Address')
+        self.print_cluster('Name', 'Address')
 
         while True:
-            self.print_cluster(self.str_format, curr['cluster_']['name'].string(),
+            self.print_cluster(curr['cluster_']['name'].string(),
                     str(curr['cluster_'].reference_value())[1:])
             curr = curr['next'].cast(uCPPTypes.uClusterDL_ptr_type)
             if curr == cluster_root:
                 break
 
 class ClusterProcessors(gdb.Command):
-    """Display a list of all info about all available processors on a particular cluster"""
+    """Print virtual processors in a given cluster (default userCluster)"""
     usage_msg = """
-    processors                 : print out all the processors in userCluster
-    processors <cluster_name>  : print out all processors in a given cluster"""
-    str_format = '{:>18}{:>20}{:>20}{:>20}'
+    info vprocessors                : print virtual processors in userCluster
+    info vprocessors <clusterName>  : print virtual processors in cluster <clusterName>"""
 
     def __init__(self):
-        super(ClusterProcessors, self).__init__('processors', gdb.COMMAND_USER)
+        super(ClusterProcessors, self).__init__('info vprocessors', gdb.COMMAND_USER)
 
-    def print_processor(self, str_format, processor_address, pid, preemption, spin):
-        print(str_format.format(processor_address, pid, preemption, spin))
+    def print_processor(self, processor_address, pid, preemption, spin):
+        print('{:>18}{:>20}{:>20}{:>20}'.format(processor_address, pid, preemption, spin))
 
     def invoke(self, arg, from_tty):
         """
@@ -205,7 +200,7 @@ class ClusterProcessors(gdb.Command):
             print(not_supported_error_msg)
             return
 
-        argv = get_argv_list(arg)
+        argv = parse_argv_list(arg)
         if len(argv) > 1:
             print_usage(self.usage_msg)
             return
@@ -224,12 +219,12 @@ class ClusterProcessors(gdb.Command):
             return
 
         uProcessorDL_ptr_type = gdb.lookup_type('uProcessorDL').pointer()
-        self.print_processor(self.str_format, 'Address', 'PID', 'Preemption', 'Spin')
+        self.print_processor('Address', 'PID', 'Preemption', 'Spin')
         curr = processor_root
 
         while True:
             processor = curr['processor_']
-            self.print_processor(self.str_format, get_addr(processor.address),
+            self.print_processor(get_addr(processor.address),
                         str(processor['pid']), str(processor['preemption']),
                         str(processor['spin']))
 
@@ -238,20 +233,21 @@ class ClusterProcessors(gdb.Command):
                 break
 
 class Task(gdb.Command):
+    """Print information and switch stacks for tasks"""
     usage_msg = """
-    task                            : print userCluster tasks, application tasks only
-    task <clusterName>              : print cluster tasks, application tasks only
+    task                            : print tasks (ids) in userCluster, application tasks only
+    task <clusterName>              : print tasks (ids) in  clusterName, application tasks only
     task all                        : print all clusters, all tasks
-    task <id>                       : switch stack to task id on userCluster
-    task 0x<address>	            : switch stack to task on any cluster
-    task <id> <clusterName>         : switch stack to task on specified cluster
+    task <id>                       : switch debugging stack to task id on userCluster
+    task 0x<address>	            : switch debugging stack to task 0x<address> on any cluster
+    task <id> <clusterName>         : switch debugging stack to task id on cluster clusterName
     """
     task_str_format = '{:>4}{:>20}{:>18}{:>25}'
     cluster_str_format = '{:>20}{:>18}'
 
     def __init__(self):
         # The first parameter of the line below is the name of the command. You
-        # can call it 'uc++ task'
+        # can call it 'uC++ task'
         super(Task, self).__init__('task', gdb.COMMAND_USER)
 
     ############################ AUXILIARY FUNCTIONS #########################
@@ -274,10 +270,13 @@ class Task(gdb.Command):
 
     def find_curr_breakpoint_addr(self):
         btstr = gdb.execute('bt', to_string = True).splitlines()
-        if len(btstr) == 0:
-            print('error')
+        if len(btstr) < 3:
+            print('Cannot locate current breakpoint')
             return None
-        return btstr[0].split('this=',1)[1].split(',')[0].split(')')[0]
+        #1  0x000055555557745f in uMain::main (this=0x7fffffffe3e0) at driver.cc:86 <------ this address
+        #2  0x000055555557ffa6 in UPP::uMachContext::invokeTask (This=...) at /usr/local/u++-7.0.0/src/kernel/uMachContext.cc:130
+        #3  0x0000000000000000 in ?? ()
+        return btstr[-3].split('this=',1)[1].split(',')[0].split(')')[0]
 
     def print_tasks_by_cluster_all(self, cluster_address):
         """
@@ -512,7 +511,7 @@ class Task(gdb.Command):
                 # find the equivalent thread from info thread
                 gdb_thread_id = find_matching_gdb_thread_id()
                 if gdb_thread_id is None:
-                    print('cannot find the thread id to switch to')
+                    print('Cannot find the thread id to switch to')
                     return
                 # switch to that thread based using thread command
                 gdb.execute('thread {}'.format(gdb_thread_id))
@@ -629,7 +628,7 @@ class Task(gdb.Command):
         @from_tty: bool
         """
 
-        argv = get_argv_list(arg)
+        argv = parse_argv_list(arg)
         if len(argv) == 0:
             # print tasks
             self.print_user_tasks() # only tasks and main

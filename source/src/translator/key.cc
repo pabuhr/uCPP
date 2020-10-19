@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 16:58:53 2020
-// Update Count     : 125
+// Last Modified On : Wed Feb 12 12:58:01 2020
+// Update Count     : 127
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -138,6 +138,7 @@ keyword_t key[] = {
     { "_At", AT },
     { "_Catch", CATCH },
     { "_CatchResume", CATCHRESUME },
+    { "_CorActor", CORACTOR },
     { "_Coroutine", COROUTINE },
     { "_Disable", DISABLE },
     { "_Else", UELSE },

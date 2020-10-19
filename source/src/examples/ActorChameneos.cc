@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 08:41:13 2020
-// Update Count     : 8
+// Last Modified On : Wed Sep 30 21:23:54 2020
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -79,19 +79,19 @@ _Actor Mall {
 	Case( MeetMsg, msg ) {
 	    if ( n > 0 ) {
 		if ( waitingChameneo ) {
-		    PRT( osacquire( cout ) << ((Chameneos *)(msg.sender))->cid << " arrived at mall and matched with " << waitingChameneo->cid << endl; )
+		    PRT( osacquire( cout ) << ((Chameneos *)(msg.sender()))->cid << " arrived at mall and matched with " << waitingChameneo->cid << endl; )
 		    n -= 1;
 		    assert( ((void)"mall, MeetMsg waitingChameneo == nullptr", waitingChameneo) );
-		    waitingChameneo->tell( *new MeetMsg( msg_d->colour ), msg.sender );
+		    waitingChameneo->tell( *new MeetMsg( msg_d->colour ), msg.sender() );
 		    waitingChameneo = nullptr;
 		} else {
-		    waitingChameneo = dynamic_cast<Chameneos *>(msg.sender);
+		    waitingChameneo = dynamic_cast<Chameneos *>(msg.sender());
 		    PRT( osacquire( cout ) << waitingChameneo->cid << " arrived at mall but no partner (waiting)" << endl; )
 		    assert( ((void)"mall, MeetMsg not Chameneos", waitingChameneo) );
 		} // if
 	    } else {
-		PRT( osacquire( cout ) << ((Chameneos *)(msg.sender))->cid << " exit" << endl; )
-		msg.sender->tell( exitMsg, this );
+		PRT( osacquire( cout ) << ((Chameneos *)(msg.sender()))->cid << " exit" << endl; )
+		*msg.sender() | exitMsg;
 	    } // if
 	} else Case( MeetingCountMsg, msg ) {
 	    numFaded += 1;
@@ -115,27 +115,27 @@ _Actor Mall {
 
 
 void Chameneos::preStart() {
-    mall->tell( *new MeetMsg( colour ), this );
+    *mall | *new MeetMsg( colour );
 } // Chameneos::preStart
 
 uActor::Allocation Chameneos::receive( Message &msg ) {
     Case( MeetMsg, msg ) {
 	Colour prev = colour;
 	colour = complement( colour, msg_d->colour);
-	assert( ((void)"Chameneos, sender == nullptr", msg_d->sender) );
-	assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg_d->sender)) );
-	PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg.sender))->cid << " " << ColourNames[msg_d->colour]
+	assert( ((void)"Chameneos, sender == nullptr", msg_d->sender()) );
+	assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg_d->sender())) );
+	PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg.sender()))->cid << " " << ColourNames[msg_d->colour]
 	     << " and changes to " << ColourNames[colour] << endl; )
 	meetings += 1;
-	msg_d->sender->tell( *new ChangeMsg( colour ), this );
-	mall->tell( *new MeetMsg( colour ), this );
+	*msg_d->sender() | *new ChangeMsg( colour );
+	*mall | *new MeetMsg( colour );
     } else Case( ChangeMsg, msg ) {
 	PRT( osacquire( cout ) << cid << " change from " << ColourNames[colour] << " to " << ColourNames[msg_d->colour] << endl; )
 	colour = msg_d->colour;
 	meetings += 1;
-	mall->tell( *new MeetMsg( colour ), this );
+	*mall | *new MeetMsg( colour );
     } else Case( ExitMsg, msg ) {
-	msg.sender->tell( *new MeetingCountMsg( meetings ), this );
+	*msg.sender() | *new MeetingCountMsg( meetings );
 	return Delete;
     } else {
 	assert( ((void)"Mall, unhandled message", false) );

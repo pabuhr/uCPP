@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Nov 20 17:17:52 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 17:23:48 2020
-// Update Count     : 127
+// Last Modified On : Thu May 14 16:07:47 2020
+// Update Count     : 128
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -250,8 +250,8 @@ namespace UPP {
 		abort( "Attempt to access user data on an empty semaphore lock.\n"
 		       "Possible cause is not checking if the condition lock is empty before reading stored data." );
 	    } // if
-	    )
-	    return waiting.head()->task().info;		// return condition information stored with blocked task
+	)
+	return waiting.head()->task().info;		// return condition information stored with blocked task
     } // uCondition::front
 } // UPP
 

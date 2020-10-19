@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 11 18:06:20 2019
-// Update Count     : 607
+// Last Modified On : Fri Jul 31 07:43:40 2020
+// Update Count     : 673
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -80,11 +80,12 @@ void uBaseCoroutine::createCoroutine() {
     state = Start;
     notHalted = true;					// must be a non-zero value so detectable after memory is scrubbed
 
+    // start_ is initialized to last resumer at the start of invokeCoroutine
     last = nullptr;					// see ~uCoroutineDestructor
-#ifdef __U_DEBUG__
+    #ifdef __U_DEBUG__
     currSerialOwner = nullptr;				// for error checking
     currSerialCount = 0;
-#endif // __U_DEBUG__
+    #endif // __U_DEBUG__
 
     // exception handling / cancellation
 
@@ -102,11 +103,11 @@ void uBaseCoroutine::createCoroutine() {
     cancelState = CancelEnabled;
     cancelType = CancelPoll;				// not used yet, but makes uPthread cancellation easier
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     // profiling
 
     profileTaskSamplerInstance = nullptr;
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 } // uBaseCoroutine::createCoroutine
 
 
@@ -126,11 +127,11 @@ void uBaseCoroutine::taskCxtSw() {			// switch between a task and the kernel
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     uBaseTask &currTask = uThisTask();
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( currTask.profileActive && uProfiler::uProfiler_builtinRegisterTaskBlock ) { // uninterruptable hooks
 	(*uProfiler::uProfiler_builtinRegisterTaskBlock)( uProfiler::profilerInstance, currTask );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 
     coroutine.setState( Inactive );			// set state of current coroutine to inactive
 
@@ -148,11 +149,11 @@ void uBaseCoroutine::taskCxtSw() {			// switch between a task and the kernel
     coroutine.setState( Active );			// set state of new coroutine to active
     currTask.setState( uBaseTask::Running );
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( currTask.profileActive && uProfiler::uProfiler_builtinRegisterTaskUnblock ) { // uninterruptable hooks
 	(*uProfiler::uProfiler_builtinRegisterTaskUnblock)( uProfiler::profilerInstance, currTask );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 } // uBaseCoroutine::taskCxtSw
 
 
@@ -160,7 +161,7 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     uBaseTask &currTask = uThisTask();
 
-#ifdef __U_DEBUG__
+    #ifdef __U_DEBUG__
     // reset task in current coroutine?
     if ( coroutine.currSerialCount == currTask.currSerialLevel ) {
 	coroutine.currSerialOwner = nullptr;
@@ -183,13 +184,13 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
 	    currSerialCount = currTask.currSerialLevel;
 	} // if
     } // if
-#endif // __U_DEBUG__
+    #endif // __U_DEBUG__
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( currTask.profileActive && uProfiler::uProfiler_registerCoroutineBlock ) {
 	(*uProfiler::uProfiler_registerCoroutineBlock)( uProfiler::profilerInstance, currTask, *this );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 
     THREAD_GETMEM( This )->disableInterrupts();
 
@@ -200,9 +201,9 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
     coroutine.save();					// save user specified contexts
     currTask.currCoroutine = this;			// set new coroutine that task is executing
 
-#ifdef __U_STATISTICS__
+    #ifdef __U_STATISTICS__
     uFetchAdd( UPP::Statistics::coroutine_context_switches, 1 );
-#endif // __U_STATISTICS__
+    #endif // __U_STATISTICS__
 
     uSwitch( coroutine.context, context );		// context switch to specified coroutine
 
@@ -211,70 +212,71 @@ void uBaseCoroutine::corCxtSw() {			// switch between two coroutine contexts
 
     THREAD_GETMEM( This )->enableInterrupts();
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
 	(*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 } // uBaseCoroutine::corCxtSw
 
 
 void uBaseCoroutine::corFinish() {			// resumes the coroutine that first resumed this coroutine
-    notHalted = false;
-#ifdef __U_DEBUG__
+    #ifdef __U_DEBUG__
     if ( ! starter_->notHalted ) {			// check if terminated
 	    abort( "Attempt by coroutine %.256s (%p) to resume back to terminated starter coroutine %.256s (%p).\n"
 		    "Possible cause is terminated coroutine's main routine has already returned.",
 		    uThisCoroutine().getName(), &uThisCoroutine(), starter_->getName(), starter_ );
     } // if
-#endif // __U_DEBUG__
+    #endif // __U_DEBUG__
+
+    notHalted = false;
     starter_->corCxtSw();
     // CONTROL NEVER REACHES HERE!
     abort( "(uBaseCoroutine &)%p.corFinish() : internal error, attempt to return.", this );
 } // uBaseCoroutine::corFinish
 
 
-const char *uBaseCoroutine::setName( const char *name ) {
-    const char *prev = name;
+const char * uBaseCoroutine::setName( const char name[] ) {
+    const char * prev = name;
     uBaseCoroutine::name = name;
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( uThisTask().profileActive && uProfiler::uProfiler_registerSetName ) { 
 	(*uProfiler::uProfiler_registerSetName)( uProfiler::profilerInstance, *this, name ); 
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
     return prev;
 } // uBaseCoroutine::setName
 
-const char *uBaseCoroutine::getName() const {
+const char * uBaseCoroutine::getName() const {
     // storage might be uninitialized or scrubbed
     return name == nullptr
-#ifdef __U_DEBUG__
+	#ifdef __U_DEBUG__
 	     || name == (const char *)-1		// only scrub in debug
-#endif // __U_DEBUG__
+	#endif // __U_DEBUG__
 	? "*unknown*" : name;
 } // uBaseCoroutine::getName
 
 
 void uBaseCoroutine::setCancelState( CancellationState state ) {
-#ifdef __U_DEBUG__
+    #ifdef __U_DEBUG__
     if ( this != &uThisCoroutine() && uBaseCoroutine::state != Start ) {
 	abort( "Attempt to set the cancellation state of coroutine %.256s (%p) by coroutine %.256s (%p).\n"
 		"A coroutine/task may only change its own cancellation state.",
 		getName(), this, uThisCoroutine().getName(), &uThisCoroutine() );
     } // if
-#endif // __U_DEBUG__
+    #endif // __U_DEBUG__
     cancelState = state;
 } // uBaseCoroutine::setCancelState
 
 void uBaseCoroutine::setCancelType( CancellationType type ) {
-#ifdef __U_DEBUG__
+    #ifdef __U_DEBUG__
     if ( this != &uThisCoroutine() && uBaseCoroutine::state != Start ) {
 	abort( "Attempt to set the cancellation state of coroutine %.256s (%p) by coroutine %.256s (%p).\n"
 		"A coroutine/task may only change its own cancellation state.",
 		getName(), this, uThisCoroutine().getName(), &uThisCoroutine() );
     } // if
-#endif // __U_DEBUG__
+    #endif // __U_DEBUG__
     cancelType = type;
 } // uBaseCoroutine::setCancelType
 
@@ -283,20 +285,12 @@ uBaseCoroutine::Failure::Failure( const char *const msg ) : uKernelFailure( msg 
 } // uBaseCoroutine::Failure::Failure
 
 
-uBaseCoroutine::UnhandledException::UnhandledException( uBaseEvent *cause, const char *const msg ) :
-	Failure( msg ), cause( cause ), origFailedCor( uThisCoroutine() ), multiple( false ) {
+uBaseCoroutine::UnhandledException::UnhandledException( uBaseEvent * cause, const char * const msg ) : Failure( msg ), cause( cause ), multiple( 1 ) {
     cleanup = true;
-    uEHM::strncpy( origFailedCorName, origFailedCor.getName(), uEHMMaxName );
-} // uBaseCoroutine::UnhandledException::UnhandledException
-
-uBaseCoroutine::UnhandledException::UnhandledException( UnhandledException *cause ) :
-	Failure( cause->message() ), cause( cause ), origFailedCor( cause->origFailedCor ), multiple( true ) {
-    cleanup = true;
-    uEHM::strncpy( origFailedCorName, cause->origFailedCorName, uEHMMaxName );
 } // uBaseCoroutine::UnhandledException::UnhandledException
 
 
-uBaseCoroutine::UnhandledException::UnhandledException( const uBaseCoroutine::UnhandledException &ex ) : Failure(), origFailedCor( ex.origFailedCor ) {
+uBaseCoroutine::UnhandledException::UnhandledException( const UnhandledException & ex ) : Failure() {
     memcpy( (void *)this, (void *)&ex, sizeof(*this) );	// relies on all fields having trivial copy constructors
     ex.cleanup = false;					// then prevent the original from deleting the cause
 } // uBaseCoroutine::UnhandledException::UnhandledException
@@ -307,75 +301,63 @@ uBaseCoroutine::UnhandledException::~UnhandledException() {
     } // if
 } // uBaseCoroutine::UnhandledException::~UnhandledException
 
-const uBaseCoroutine &uBaseCoroutine::UnhandledException::origSource() const {
-    return origFailedCor;
-} // uBaseCoroutine::origSource
-
-const char *uBaseCoroutine::UnhandledException::origName() const {
-    return origFailedCorName;
-} // uBaseCoroutine::origName
-
 void uBaseCoroutine::UnhandledException::triggerCause() {
     if ( cause != nullptr ) cause->reraise();
 } // uBaseCoroutine::UnhandledException::triggerCause
 
-void uBaseCoroutine::UnhandledException::defaultTerminate() const {
-    if ( ! multiple ) {
-	abort( "(uBaseCoroutine &)%p : Unhandled exception in coroutine %.256s raised non-locally from resumed coroutine %.256s (%p), which was terminated due to %s.",
-		&uThisCoroutine(), uThisCoroutine().getName(), sourceName(), &source(), message() );
-    } else {
-	abort( "(uBaseCoroutine &)%p : Unhandled exception in coroutine %.256s raised non-locally from coroutine %.256s (%p), "
-		"which was terminated due to a series of unhandled exceptions -- originally %s inside coroutine %.256s (%p).",
-		&uThisCoroutine(), uThisCoroutine().getName(), sourceName(), &source(), message(), origName(), &origSource() );
-    } // if
+void uBaseCoroutine::UnhandledException::defaultTerminate() {
+    size_t len = cause == nullptr ? 0 : strlen( cause->message() );
+    abort( "(uBaseCoroutine &)%p : Unhandled exception in task %.256s raised non-locally through %d unhandled exception(s)\nfrom coroutine/task %.256s (%p) because of %s%s%s.",
+	   &uThisCoroutine(), uThisCoroutine().getName(), multiple, sourceName(), &source(), message(), len == 0 ? "" : " indicating ", len == 0 ? "" : cause->message() );
 } // uBaseCoroutine::UnhandledException::defaultTerminate
 
-void uBaseCoroutine::handleUnhandled( UnhandledException *event ) {
-    _Resume uBaseCoroutine::UnhandledException( event->duplicate() ) _At resumer();
+void uBaseCoroutine::forwardUnhandled( UnhandledException & ex ) {
+    ex.multiple += 1;
     notHalted = false;					// terminate coroutine
-} // uBaseCoroutine::handleUnhandled
+    _Resume _At resumer();				// forward original exception at resumer
+} // uBaseCoroutine::forwardUnhandled
 
-void uBaseCoroutine::handleUnhandled( uBaseEvent *event ) {
-#   define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
-#   define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
+void uBaseCoroutine::handleUnhandled( uBaseEvent * ex ) {
+    #define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
+    #define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
     char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
-    uBaseEvent::RaiseKind raisekind = event == nullptr ? uBaseEvent::ThrowRaise : event->getRaiseKind();
+    uBaseEvent::RaiseKind raisekind = ex == nullptr ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
     strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
     uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
-    _Resume uBaseCoroutine::UnhandledException( event == nullptr ? event : event->duplicate(), msg ) _At resumer();
     notHalted = false;					// terminate coroutine
+    _Resume UnhandledException( ex == nullptr ? ex : ex->duplicate(), msg ) _At resumer();
 } // uBaseCoroutine::handleUnhandled
 
 
 uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor( UPP::uAction f, UPP::uSerial &serial, uBaseCoroutine &coroutine, const char *name ) {
     if ( f == UPP::uYes ) {
-#pragma GCC diagnostic push
-#if __GNUC__ >= 8					// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif // __GNUC__ >= 8
+	#pragma GCC diagnostic push
+	#if __GNUC__ >= 8				// valid GNU compiler diagnostic ?
+	#pragma GCC diagnostic ignored "-Wcast-function-type"
+	#endif // __GNUC__ >= 8
 	coroutine.startHere( reinterpret_cast<void (*)( uMachContext & )>(uMachContext::invokeCoroutine) );
-#pragma GCC diagnostic pop
+	#pragma GCC diagnostic pop
 	coroutine.name = name;
 	coroutine.serial = &serial;			// set cormonitor's serial instance
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutine && // profiling & coroutine registered for profiling ?
 	     dynamic_cast<uProcessorKernel *>(&coroutine) == nullptr ) { // and not kernel coroutine
 	    (*uProfiler::uProfiler_registerCoroutine)( uProfiler::profilerInstance, coroutine, serial );
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
     } // if
 } // uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor
 
 
 uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor(
-#ifdef __U_PROFILER__
-	UPP::uAction f,
-#endif // __U_PROFILER__
-	uBaseCoroutine &coroutine )
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
+    UPP::uAction f,
+    #endif // __U_PROFILER__
+    uBaseCoroutine &coroutine )
+    #ifdef __U_PROFILER__
 	: f( f ), coroutine( coroutine )
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 {
     // Clean up the stack of a non-terminated coroutine (i.e., run its destructors); a terminated coroutine's stack is
     // already cleaned up. Ignore the uProcessorKernel coroutine because it has a special shutdown sequence.

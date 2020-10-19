@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 17:25:09 2020
-// Update Count     : 3163
+// Last Modified On : Sun Oct 18 20:34:29 2020
+// Update Count     : 3218
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -55,8 +55,8 @@ using namespace UPP;
 #ifdef __U_STATISTICS__
 // Kernel, signed because of the atomic inc/dec
 long int Statistics::ready_queue = 0, Statistics::spins = 0, Statistics::spin_sched = 0, Statistics::mutex_queue = 0,
-    Statistics::owner_lock_queue = 0, Statistics::adaptive_lock_queue = 0, Statistics::io_lock_queue = 0,
-    Statistics::uSpinLocks = 0, Statistics::uLocks = 0, Statistics::uOwnerLocks = 0, Statistics::uCondLocks = 0, Statistics::uSemaphores = 0, Statistics::uSerials = 0;
+    Statistics::mutex_lock_queue = 0, Statistics::owner_lock_queue = 0, Statistics::adaptive_lock_queue = 0, Statistics::io_lock_queue = 0,
+    Statistics::uSpinLocks = 0, Statistics::uLocks = 0, Statistics::uMutexLocks = 0, Statistics::uOwnerLocks = 0, Statistics::uCondLocks = 0, Statistics::uSemaphores = 0, Statistics::uSerials = 0;
 
 // I/O statistics
 unsigned long int Statistics::select_syscalls = 0, Statistics::select_errors = 0, Statistics::select_eintr = 0;
@@ -94,6 +94,7 @@ void UPP::Statistics::print() {
 		    " / spins %ld"
 		    " / schedules %ld"
 		    " / uLocks %ld"
+		    " / uMutexLocks %ld"
 		    " / uOwnerLocks %ld"
 		    " / uCondLocks %ld"
 		    " / uSemaphores %ld"
@@ -105,6 +106,7 @@ void UPP::Statistics::print() {
 		    Statistics::spins,
 		    Statistics::spin_sched,
 		    Statistics::uLocks,
+		    Statistics::uMutexLocks,
 		    Statistics::uOwnerLocks,
 		    Statistics::uCondLocks,
 		    Statistics::uSemaphores,
@@ -206,7 +208,9 @@ void UPP::Statistics::print() {
 
 bool uKernelModule::kernelModuleInitialized = false;
 uDEBUG( bool uKernelModule::initialized = false; )
-bool uKernelModule::coreDumped = false;
+#if __U_LOCALDEBUGGER_H__
+unsigned int uKernelModule::attaching = 0;
+#endif // __U_LOCALDEBUGGER_H__
 #ifndef __U_MULTI__
 bool uKernelModule::deadlock = false;
 #endif // ! __U_MULTI__
@@ -224,8 +228,6 @@ uCluster *uKernelModule::userCluster = nullptr;
 uProcessor **uKernelModule::userProcessors = nullptr;
 unsigned int uKernelModule::numUserProcessors = 0;
 
-unsigned int uKernelModule::attaching = 0; // debugging
-
 char uKernelModule::systemClusterStorage[sizeof(uCluster)] __attribute__(( aligned (128) ));
 char uKernelModule::systemProcessorStorage[sizeof(uProcessor)] __attribute__(( aligned (16) ));
 char uKernelModule::bootTaskStorage[sizeof(uBootTask)] __attribute__(( aligned (16) ));
@@ -239,7 +241,6 @@ uProcessorSeq *uKernelModule::globalProcessors = nullptr;
 uClusterSeq *uKernelModule::globalClusters = nullptr;
 
 bool uKernelModule::afterMain = false;
-int uKernelModule::retCode = 0;
 
 size_t uMachContext::pageSize;				// architecture pagesize
 #if defined( __i386__ ) || defined( __x86_64__ )
@@ -278,15 +279,13 @@ extern "C" void pthread_pid_destroy_( void );
 // returns the result code to the OS.  Define in this translation unit so it cannot be replaced by a user.
 
 int uCpp_real_main( int argc, char *argv[], char *env[] ) {
+    int retCode;
     {
-	uMain uUserMain( argc, argv, env, uKernelModule::retCode ); // created on user cluster
+	uMain uUserMain( argc, argv, env, retCode );	// created on user cluster
     }
-
     uKernelModule::afterMain = true;
-
     // Return the program return code to the operating system.
-
-    return uKernelModule::retCode;
+    return retCode;
 } // uCpp_real_main
 
 
@@ -297,7 +296,7 @@ uKernelFailure::uKernelFailure( const char *const msg ) { setMsg( msg ); }
 
 uKernelFailure::~uKernelFailure() {}
 
-void uKernelFailure::defaultTerminate() const {
+void uKernelFailure::defaultTerminate() {
 #   define uKernelFailureSuffixMsg "Unhandled exception of type "
     char msg[sizeof(uKernelFailureSuffixMsg) - 1 + uEHMMaxName];
     strcpy( msg, uKernelFailureSuffixMsg );
@@ -319,7 +318,7 @@ uMutexFailure::EntryFailure::EntryFailure( const char *const msg ) : uMutexFailu
 
 uMutexFailure::EntryFailure::~EntryFailure() {}
 
-void uMutexFailure::EntryFailure::defaultTerminate() const {
+void uMutexFailure::EntryFailure::defaultTerminate() {
     if ( src == nullptr ) {				// raised synchronously ?
 	abort( "(uSerial &)%p : Entry failure while executing mutex destructor: %.256s.",
 		serialId(), message() );
@@ -336,7 +335,7 @@ uMutexFailure::RendezvousFailure::~RendezvousFailure() {}
 
 const uBaseCoroutine *uMutexFailure::RendezvousFailure::caller() const { return caller_; }
 
-void uMutexFailure::RendezvousFailure::defaultTerminate() const {
+void uMutexFailure::RendezvousFailure::defaultTerminate() {
     abort( "(uSerial &)%p : Rendezvous failure in %.256s from task %.256s (%p) to mutex member of task %.256s (%p).",
 	    serialId(), message(), sourceName(), &source(), uThisTask().getName(), &uThisTask() );
 } // uMutexFailure::RendezvousFailure::defaultTerminate
@@ -467,6 +466,106 @@ bool uLock::tryacquire() {
 	return true;
     } // if
 } // uLock::tryacquire
+
+
+//######################### uMutexLock #########################
+
+
+void uMutexLock::add_( uBaseTask &task ) {		// used by uCondLock::signal
+    spinLock.acquire();
+    task.wake();					// restart acquiring task
+    spinLock.release();
+} // uMutexLock::add_
+
+
+void uMutexLock::release_() {				// used by uCondLock::wait
+    spinLock.acquire();
+    if ( ! waiting.empty() ) {				// waiting tasks ?
+	waiting.dropHead()->task().wake();		// remove task at head of waiting list and start it
+    } else {
+	count = false;					// release, not in use
+    } // if
+    spinLock.release();
+} // uMutexLock::release_
+
+
+uDEBUG(
+    uMutexLock::~uMutexLock() {
+	spinLock.acquire();
+	if ( ! waiting.empty() ) {
+	    uBaseTask *task = &(waiting.head()->task()); // waiting list could change as soon as spin lock released
+	    spinLock.release();
+	    abort( "Attempt to delete mutex lock with task %.256s (%p) still on it.", task->getName(), task );
+	} // if
+	spinLock.release();
+    } // uMutexLock::uMutexLock
+)
+
+
+void uMutexLock::acquire() {
+    assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+
+    uBaseTask &task = uThisTask();			// optimization
+    spinLock.acquire();
+#ifdef KNOT
+    task.setActivePriority( task.getActivePriorityValue() + 1 );
+#endif // KNOT
+    if ( count ) {					// but if lock in use
+	waiting.addTail( &(task.entryRef) );		// suspend current task
+#ifdef __U_STATISTICS__
+	uFetchAdd( Statistics::mutex_lock_queue, 1 );
+#endif // __U_STATISTICS__
+	uProcessorKernel::schedule( &spinLock );	// atomically release owner spin lock and block
+#ifdef __U_STATISTICS__
+	uFetchAdd( Statistics::mutex_lock_queue, -1 );
+#endif // __U_STATISTICS__
+	// count set in release
+	return;
+    } // if
+    count = true;
+    spinLock.release();
+} // uMutexLock::acquire
+
+
+bool uMutexLock::tryacquire() {
+    assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+
+    if ( count ) return false;				// don't own lock yet
+
+    spinLock.acquire();
+#ifdef KNOT
+    task.setActivePriority( task.getActivePriorityValue() + 1 );
+#endif // KNOT
+    if ( count ) {					// but if lock in use
+	spinLock.release();
+	return false;					// don't wait for the lock
+    } // if
+    count = true;
+    spinLock.release();
+    return true;
+} // uMutexLock::tryacquire
+
+
+void uMutexLock::release() {
+    assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+
+    spinLock.acquire();
+    uDEBUG(
+	if ( ! count ) {
+	    spinLock.release();
+	    abort( "Attempt to release mutex lock (%p) that is not locked.", this );
+	} // if
+    )
+    if ( ! waiting.empty() ) {				// waiting tasks ?
+	waiting.dropHead()->task().wake();		// remove task at head of waiting list and start it
+    } else {
+	count = false;
+    } // if
+#ifdef KNOT
+    uThisTask().setActivePriority( uThisTask().getActivePriorityValue() - 1 );
+#endif // KNOT
+    spinLock.release();
+} // uMutexLock::release
 
 
 //######################### uOwnerLock #########################
@@ -619,6 +718,67 @@ uDEBUG(
     } // uCondLock::uCondLock
 )
 
+void uCondLock::wait( uMutexLock & lock ) {
+    uBaseTask &task = uThisTask();			// optimization
+    task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
+    spinLock.acquire();
+    waiting.addTail( &(task.entryRef) );		// queue current task
+    // Must add to the condition queue first before releasing the lock because testing for empty condition can occur
+    // immediately after the lock is released.
+    lock.release_();					// release mutex lock
+    uProcessorKernel::schedule( &spinLock );		// atomically release condition spin lock and block
+    // spin released by schedule, owner lock is acquired when task restarts
+} // uCondLock::wait
+
+
+void uCondLock::wait( uMutexLock &lock, uintptr_t info ) {
+    uThisTask().info = info;				// store the information with this task
+    wait( lock );
+} // uCondLock::wait
+
+
+bool uCondLock::wait( uMutexLock &lock, uDuration duration ) {
+    return wait( lock, uClock::currTime() + duration );
+} // uCondLock::wait
+
+
+bool uCondLock::wait( uMutexLock &lock, uintptr_t info, uDuration duration ) {
+    uThisTask().info = info;				// store the information with this task
+    return wait( lock, duration );
+} // uCondLock::wait
+
+
+bool uCondLock::wait( uMutexLock &lock, uTime time ) {
+    uBaseTask &task = uThisTask();			// optimization
+
+    task.ownerLock = &lock;				// task remembers this lock before blocking for use in signal
+    spinLock.acquire();
+
+    uDEBUGPRT( uDebugPrt( "(uCondLock &)%p.wait, task:%p\n", this, &task ); )
+
+    TimedWaitHandler handler( task, *this );		// handler to wake up blocking task
+    uEventNode timeoutEvent( task, handler, time, 0 );
+    timeoutEvent.executeLocked = true;
+    timeoutEvent.add();
+
+    waiting.addTail( &(task.entryRef) );		// queue current task
+    // Must add to the condition queue first before releasing the owner lock because testing for empty condition can
+    // occur immediately after the owner lock is released.
+    lock.release_();					// release owner lock
+    uProcessorKernel::schedule( &spinLock );		// atomically release owner spin lock and block
+    // spin released by schedule, owner lock is acquired when task restarts
+
+    timeoutEvent.remove();
+
+    return ! handler.timedout;
+} // uCondLock::wait
+
+
+bool uCondLock::wait( uMutexLock &lock, uintptr_t info, uTime time ) {
+    uThisTask().info = info;			// store the information with this task
+    return wait( lock, time );
+} // uCondLock::wait
+
 
 void uCondLock::wait( uOwnerLock &lock ) {
     uBaseTask &task = uThisTask();			// optimization
@@ -633,28 +793,31 @@ void uCondLock::wait( uOwnerLock &lock ) {
     unsigned int prevcnt = lock.count;			// remember this lock's recursive count before blocking
     spinLock.acquire();
     waiting.addTail( &(task.entryRef) );		// queue current task
-    // Must add to the condition queue first before releasing the owner lock because testing for empty condition can
-    // occur immediately after the owner lock is released.
+    // Must add to the condition queue first before releasing the lock because testing for empty condition can occur
+    // immediately after the lock is released.
     lock.release_();					// release owner lock
     uProcessorKernel::schedule( &spinLock );		// atomically release condition spin lock and block
     // spin released by schedule, owner lock is acquired when task restarts
-//    assert( &task == lock.owner() );
     lock.count = prevcnt;				// reestablish lock's recursive count after blocking
 } // uCondLock::wait
+
 
 void uCondLock::wait( uOwnerLock &lock, uintptr_t info ) {
     uThisTask().info = info;				// store the information with this task
     wait( lock );
 } // uCondLock::wait
 
+
 bool uCondLock::wait( uOwnerLock &lock, uDuration duration ) {
     return wait( lock, uClock::currTime() + duration );
 } // uCondLock::wait
+
 
 bool uCondLock::wait( uOwnerLock &lock, uintptr_t info, uDuration duration ) {
     uThisTask().info = info;				// store the information with this task
     return wait( lock, duration );
 } // uCondLock::wait
+
 
 bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     uBaseTask &task = uThisTask();			// optimization
@@ -690,10 +853,12 @@ bool uCondLock::wait( uOwnerLock &lock, uTime time ) {
     return ! handler.timedout;
 } // uCondLock::wait
 
+
 bool uCondLock::wait( uOwnerLock &lock, uintptr_t info, uTime time ) {
     uThisTask().info = info;			// store the information with this task
     return wait( lock, time );
 } // uCondLock::wait
+
 
 uintptr_t uCondLock::front() const {			// return task information
     uDEBUG(
@@ -1931,7 +2096,7 @@ uCondition::WaitingFailure::~WaitingFailure() {}
 
 const uCondition &uCondition::WaitingFailure::conditionId() const { return cond; }
 
-void uCondition::WaitingFailure::defaultTerminate() const {
+void uCondition::WaitingFailure::defaultTerminate() {
     abort( "(uCondition &)%p : Waiting failure as task %.256s (%p) found blocked task %.256s (%p) on condition variable during deletion.",
 	    &conditionId(), sourceName(), &source(), uThisTask().getName(), &uThisTask() );
 } // uCondition::WaitingFailure::defaultTerminate
@@ -1943,16 +2108,18 @@ void uCondition::WaitingFailure::defaultTerminate() const {
 // Needed for friendship with uKernelModule and uBaseTask because using uMain is too broad.
 // This routine is still accessible in UPP, but I can't seem to hide it further.
 
-inline void UPP::umainProfile() {
 #ifdef __U_PROFILER__
+inline void UPP::umainProfile() {
     // task uMain is always profiled when the profiler is active
     uThisTask().profileActivate( *uKernelModule::bootTask ); // make boot task the parent
-#endif // __U_PROFILER__
 } // umainProfile
+#endif // __U_PROFILER__
 
 uMain::uMain( int argc, char *argv[], char *env[], int &retcode ) : uPthreadable( uMainStackSize() ), argc( argc ), argv( argv ), env( env ), uRetCode( retcode ) {
-    setName( "main" );					// pretend to be user's uCpp_main
+    setName( "program main" );				// pretend to be user's uCpp_main
+#ifdef __U_PROFILER__
     umainProfile();
+#endif // __U_PROFILER__
 } // uMain::uMain
 
 
@@ -2088,6 +2255,18 @@ void UPP::uKernelBoot::startup() {
     )
     uKernelModule::userProcessors = new uProcessor*[ uKernelModule::numUserProcessors ];
     uKernelModule::userProcessors[0] = new uProcessor( *uKernelModule::userCluster );
+
+#ifdef __U_MULTI__
+    // SKULLDUGGERY: Block all system processor signals on the system cluster to redirected them to the user cluster,
+    // except SIGALRM and SIGUSR1, which are needed by the discreet event-engine and waking up the blocked system
+    // processor.
+    sigset_t mask = UPP::uSigHandlerModule::block_mask;	// block all signals
+    sigdelset( &mask, SIGALRM );			// delete => allow signal in block set
+    sigdelset( &mask, SIGUSR1 );
+    if ( sigprocmask( SIG_BLOCK, &mask, nullptr ) == -1 ) {
+    	abort( "internal error, sigprocmask" );
+    } // if
+#endif // __U_MULTI__
 
     // uOwnerLock has a runtime check testing if locking is attempted from inside the kernel. This check only applies
     // once the system becomes concurrent. During the previous boot-strapping code, some locks may be invoked (and hence

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:38:54 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:08:27 2019
-// Update Count     : 208
+// Last Modified On : Tue Jun 30 22:40:57 2020
+// Update Count     : 211
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -92,21 +92,21 @@ class uFile {
       public:
 	const uFile &file() const;
 	const char *getName() const;
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uFile::Failure
 
     _Event TerminateFailure : public Failure {
 	const int accessCnt;
       public:
 	TerminateFailure( const uFile &f, int errno_, const int accessCnt, const char *const msg );
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uFile::TerminateFailure
 
     _Event StatusFailure : public Failure {
 	const struct stat &buf;
       public:
 	StatusFailure( const uFile &f, int errno_, const struct stat &buf, const char *const msg );
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uFile::StatusFailure
 
     class FileAccess : public uFileIO {		// monitor
@@ -138,7 +138,7 @@ class uFile {
 	  public:
 	    const FileAccess &fileAccess() const { return fa; }
 	    int fileDescriptor() const { return fd; }
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::Failure
 
 	friend _Event Failure;
@@ -148,13 +148,13 @@ class uFile {
 	    const int mode;
 	  public:
 	    OpenFailure( FileAccess &fa, int errno_, int flags, int mode, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::OpenFailure
 
 	_Event CloseFailure : public Failure {
 	  public:
 	    CloseFailure( FileAccess &fa, int errno_, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::CloseFailure
 
 	_Event SeekFailure : public Failure {
@@ -162,13 +162,13 @@ class uFile {
 	    const int whence;
 	  public:
 	    SeekFailure( const FileAccess &fa, int errno_, const off_t offset, const int whence, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::SeekFailure
 
 	_Event SyncFailure : public Failure {
 	  public:
 	    SyncFailure( const FileAccess &fa, int errno_, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::SyncFailure
 
 	_Event ReadFailure : public Failure {
@@ -178,7 +178,7 @@ class uFile {
 	    const uDuration *timeout;
 	  public:
 	    ReadFailure( const FileAccess &fa, int errno_, const char *buf, const int len, const uDuration *timeout, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::ReadFailure
 
 	_Event ReadTimeout : public ReadFailure {
@@ -193,8 +193,8 @@ class uFile {
 	    const uDuration *timeout;
 	  public:
 	    WriteFailure( const FileAccess &fa, int errno_, const char *buf, const int len, const uDuration *timeout, const char *const msg );
-	    //virtual void defaultResume() const;		// handle special case when errno == EIO
-	    virtual void defaultTerminate() const override;
+	    //virtual void defaultResume();		// handle special case when errno == EIO
+	    virtual void defaultTerminate() override;
 	}; // FileAccess::WriteFailure
 
 	_Event WriteTimeout : public WriteFailure {
@@ -248,19 +248,19 @@ class uPipe {
 	Failure( const uPipe &pipe, int errno_, const char *const msg );
       public:
 	const uPipe &pipe() const { return p; }
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uPipe::Failure
 
     _Event OpenFailure : public Failure {
       public:
 	OpenFailure( const uPipe &pipe, int errno_, const char *const msg );
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uPipe::OpenFailure
 
     _Event CloseFailure : public Failure {
       public:
 	CloseFailure( const uPipe &pipe, int errno_, const char *const msg );
-	virtual void defaultTerminate() const override;
+	virtual void defaultTerminate() override;
     }; // uPipe::CloseFailure
 
     class End : public uFileIO {
@@ -285,7 +285,7 @@ class uPipe {
 	  public:
 	    const End &pipeend() const { return end; }
 	    int fileDescriptor() const { return end.access.fd; }
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // End::Failure
 
 	_Event ReadFailure : public Failure {
@@ -295,7 +295,7 @@ class uPipe {
 	    const uDuration *timeout;
 	  public:
 	    ReadFailure( const End &end, int errno_, const char *buf, const int len, const uDuration *timeout, const char *const msg );
-	    virtual void defaultTerminate() const override;
+	    virtual void defaultTerminate() override;
 	}; // End::ReadFailure
 
 	_Event ReadTimeout : public ReadFailure {
@@ -310,8 +310,8 @@ class uPipe {
 	    const uDuration *timeout;
 	  public:
 	    WriteFailure( const End &end, int errno_, const char *buf, const int len, const uDuration *timeout, const char *const msg );
-	    //virtual void defaultResume() const;		// handle special case when errno == EIO
-	    virtual void defaultTerminate() const override;
+	    //virtual void defaultResume();		// handle special case when errno == EIO
+	    virtual void defaultTerminate() override;
 	}; // End::WriteFailure
 
 	_Event WriteTimeout : public WriteFailure {

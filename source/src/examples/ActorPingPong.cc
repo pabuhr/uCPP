@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 08:36:05 2020
-// Update Count     : 25
+// Last Modified On : Wed Sep 30 21:27:01 2020
+// Update Count     : 66
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,37 +33,32 @@ using namespace std;
 #define PRT( stmt ) stmt
 #endif // NOOUTPUT
 
-struct PingPongMsg : public uActor::Message {} pingpongMsg;
+struct Token : public uActor::Message { int cnt; } tokenMsg;
+
+// Pass a counter message between a pair of actors. Each actor decrements the counter by 1 before forwarding to its
+// partner. Both actors terminate when the counter reaches 0.
 
 _Actor Ping {
     int cycle = 0, cycles;
 
     Allocation receive( Message & msg ) {
-	if ( cycle < cycles ) {				// keep cycling ?
-	    cycle += 1;
-	    PRT( cout << "ping "; );
-	    msg.sender->tell( pingpongMsg, this );	// return to sender
-	} else {
-	    PRT( cout << "ping stop" << endl; );	// stop cycling
-	    msg.sender->tell( stopMsg, this );		// return to sender
-	    return Finished;
-	} // if
-	return Nodelete;				// reuse actor
+	int & cnt = ((Token &)msg).cnt;		// optimization
+	PRT( cout << "ping " << cnt << endl; );
+	cnt -= 1;
+	if ( cnt > 0 ) { *msg.sender() | tokenMsg; return Nodelete; }
+	if ( cnt == 0 ) { *msg.sender() | tokenMsg; }	// special case to stop partner
+	return Finished;
     } // Ping::receive
-  public:
-    Ping( int cycles = 10 ) : cycles( cycles ) {}
 }; // Ping
 
 _Actor Pong {
     Allocation receive( Message & msg ) {
-	Case( PingPongMsg, msg ) {			// determine message kind
-	    PRT( cout << "pong" << endl; )
-	    msg.sender->tell( pingpongMsg, this );	// respond to sender
-	} else Case( StopMsg, msg ) {			// stop cycling
-	    PRT( cout << "pong stop" << endl; )
-	    return Finished;
-	} // Case
-	return Nodelete;				// reuse actor
+	int & cnt = ((Token &)msg).cnt;		// optimization
+	PRT( cout << "pong " << cnt << endl; )
+	cnt -= 1;
+	if ( cnt > 0 ) { *msg.sender() | tokenMsg; return Nodelete; }
+	if ( cnt == 0 ) { *msg.sender() | tokenMsg; }	// special case to stop partner
+	return Finished;
     } // Pong::receive
 }; // Pong
 
@@ -85,10 +80,11 @@ int main( int argc, char * argv[] ) {
 	exit( EXIT_SUCCESS );
     } // try
 
+    tokenMsg.cnt = Cycles;
     uActorStart();					// start actor system
-    Ping ping( Cycles );
+    Ping ping;
     Pong pong;
-    ping.tell( pingpongMsg, &pong );			// start cycling
+    ping.tell( tokenMsg, &pong );			// start cycling
     uActorStop();					// wait for all actors to terminate
 } // main
 

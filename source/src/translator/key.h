@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 17:16:13 2020
-// Update Count     : 99
+// Last Modified On : Wed Feb 12 11:20:59 2020
+// Update Count     : 100
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -168,6 +168,7 @@ enum key_value_t {
     ACTOR,
     AT,
     CATCHRESUME,
+    CORACTOR,
     COROUTINE,
     DISABLE,
     UELSE,

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:18:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 19:11:21 2019
-// Update Count     : 75
+// Last Modified On : Sat Jul 18 06:51:57 2020
+// Update Count     : 76
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,7 +47,7 @@ symbol_data_t::symbol_data_t() {
 } // symbol_data_t::symbol_data_t
 
 
-symbol_t::symbol_t( int v, hash_t *h ) {
+symbol_t::symbol_t( int v, hash_t * h ) {
     value = v;
     hash = h;
     copied = typname = false;

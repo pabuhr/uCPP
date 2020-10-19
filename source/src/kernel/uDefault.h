@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  2 20:41:21 2020
-// Update Count     : 69
+// Last Modified On : Sun Sep 27 23:16:52 2020
+// Update Count     : 73
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,10 +58,10 @@
 // particular cluster.
 
 //#define __U_DEFAULT_STACK_SIZE__ 30000
-#define __U_DEFAULT_STACK_SIZE__ 240000
+#define __U_DEFAULT_STACK_SIZE__ 250 * 1000
 
 // often large automatic arrays for setting up the program
-#define __U_DEFAULT_MAIN_STACK_SIZE__ 500000
+#define __U_DEFAULT_MAIN_STACK_SIZE__ 500 * 1000
 
 
 // Define the default number of processors created on the user cluster. Must be greater than 0.

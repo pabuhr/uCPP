@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 26 23:06:25 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:43:59 2016
-// Update Count     : 256
+// Last Modified On : Mon Jul 27 20:59:31 2020
+// Update Count     : 265
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -203,11 +203,13 @@ int main() {
 	try {
 	    dummy1.mem();
 	} catch( uBaseCoroutine::UnhandledException &ex ) {
-	    osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << "), which was terminated due to an " << ex.message() << endl << endl;
+	    osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << "." << endl << endl;
 	    try {
+		osacquire( cout ) << "before trigger" << endl;
 		ex.triggerCause();
 		osacquire( cout ) << "after trigger" << endl;
 	    } _CatchResume( YYY & ) {
+		osacquire( cout ) << "CatchResume YYY" << endl;
 	    } // try
 	} catch( ... ) {
 	    abort( "invalid exception" );
@@ -219,7 +221,7 @@ int main() {
 	try {
 	    dummy2.mem();
 	} catch( uBaseCoroutine::UnhandledException &ex ) {
-	    osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << "), which was terminated due to a series of unhandled exceptions -- originally " << ex.message() << " inside coroutine " << ex.origName() << " (" << &(ex.origSource()) << ")." << endl << endl;
+	    osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << " through " << ex.unhandled() << " unhandled exceptions." << endl << endl;
 
 	    osacquire( cout ) << "Now triggering exception" << endl;
 	    try {

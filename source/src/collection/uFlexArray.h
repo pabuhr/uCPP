@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 25 07:50:19 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:55:43 2019
-// Update Count     : 65
+// Last Modified On : Sat Feb 29 17:38:15 2020
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,11 +28,9 @@
 #pragma once
 
 
-#include <uC++.h>
-
 template<typename T> class uFlexArray {
     int NoOfElems, InitMaxNoOfElems, MaxNoOfElems;
-    T *elems;
+    T * elems;
     void init( int max ) {
         if ( max < 1 ) max = 1;				// pathological case
 	MaxNoOfElems = InitMaxNoOfElems = max;
@@ -44,7 +42,7 @@ template<typename T> class uFlexArray {
 	NoOfElems = 0;
     } // uFlexArray::uFlexArray
 
-    uFlexArray( const uFlexArray &rhs ) {
+    uFlexArray( const uFlexArray & rhs ) {
 	init( rhs.MaxNoOfElems );
 	memcpy( elems, rhs.elems, sizeof(T) * rhs.NoOfElems ); // copy old data to new array
 	NoOfElems = rhs.NoOfElems;
@@ -54,7 +52,7 @@ template<typename T> class uFlexArray {
 	delete [] elems;
     } // uFlexArray::uFlexArray
     
-    uFlexArray &operator=( const uFlexArray &rhs ) {
+    uFlexArray & operator=( const uFlexArray & rhs ) {
 	if ( this != &rhs ) {				// x = x ?
 	    delete [] elems;
 	    init( rhs.MaxNoOfElems );
@@ -68,11 +66,11 @@ template<typename T> class uFlexArray {
 	return NoOfElems;
     } // uFlexArray::size
 
-    const T &operator[]( int pos ) const {
+    const T & operator[]( int pos ) const {
 	return const_cast<uFlexArray*>(this)->operator[]( pos );
     } // uFlexArray::operator[]
 
-    T &operator[]( int pos ) {
+    T & operator[]( int pos ) {
 	if ( 0 <= pos && pos < NoOfElems ) {		// in range ?
 	    return elems[pos];
 	} else {
@@ -83,7 +81,7 @@ template<typename T> class uFlexArray {
     void reserve( int size ) {
 	if ( size > MaxNoOfElems ) {
 	    int tempMaxNoOfElems = size + MaxNoOfElems;
-	    T *temp = new T[tempMaxNoOfElems];
+	    T * temp = new T[tempMaxNoOfElems];
 	    memcpy( temp, elems, sizeof(T) * MaxNoOfElems ); // copy old data to new array
 	    delete [] elems;
 	    MaxNoOfElems = tempMaxNoOfElems;

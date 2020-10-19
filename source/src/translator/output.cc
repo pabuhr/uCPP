@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 17:31:26 2020
-// Update Count     : 244
+// Last Modified On : Fri Jul 17 18:25:31 2020
+// Update Count     : 246
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -55,7 +55,7 @@ void context() {
       if ( p->hash == nullptr ) continue;
 	cerr << p->hash->text << " ";
     } // for
-    cerr << " @ " << ahead->hash->text << " @ ";
+    cerr << " @ " << (ahead->hash ? ahead->hash->text : "EOF") << " @ ";
     // print up to 10 tokens after problem area
     for ( i = 0, p = ahead->fore; i < 10 && p != nullptr; i += 1, p = p->fore ) {
       if ( p->hash == nullptr ) continue;
@@ -148,6 +148,7 @@ void putoutput( token_t * token ) {
 	break;
       case ACTOR:
       case EVENT:
+      case CORACTOR:
       case COROUTINE:
       case TASK:
       case PTASK:

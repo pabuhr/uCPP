@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 12:29:33 2020
-// Update Count     : 416
+// Last Modified On : Sun Sep 20 17:14:45 2020
+// Update Count     : 424
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,7 +37,7 @@ using namespace std;
 
 enum { N = 2 };
 unsigned int uDefaultExecutorProcessors() { return N; }
-unsigned int uDefaultExecutorThreads() { return N; }
+unsigned int uDefaultExecutorWorkers() { return N; }
 unsigned int uDefaultExecutorRQueues() { return N; }
 bool uDefaultExecutorSepClus() { return true; }
 int uDefaultExecutorAffinity() { return 0; }
@@ -100,14 +100,14 @@ _Actor Prod {
 
 size_t Prod::stops = 0;
 
-void check( const char *arg, int &value ) {
+void check( const char * arg, int & value ) {
 	if ( strcmp( arg, "d" ) != 0 ) {					// user default ?
 		value = stoi( arg );
 		if ( value < 1 ) throw 1;
 	} // if
 } // check
 
-int main( int argc, char *argv[] ) {
+int main( int argc, char * argv[] ) {
 	int prods = 1, cons = 1, times = 10;
 	try {
 		switch ( argc ) {
@@ -128,10 +128,8 @@ int main( int argc, char *argv[] ) {
 	} // try
 	cout << "producers " << prods << " consumers " << cons << " times " << times << endl;
 
-	uExecutor executor;									// use defaults
-	uActor::start( executor );							// start actor system
-//	uProcessor p;
-//	uActorStart();										// wait for all actors to terminate
+	uProcessor p[prods + cons - 1];
+	uActorStart();										// wait for all actors to terminate
 	consumers = new Cons *[cons];						// large size => use heap
 	for ( int i = 0; i < cons; i += 1 ) consumers[i] = new Cons; // create consumers
 	for ( int i = 0; i < prods; i += 1 ) *(new Prod( prods, cons, times ) ) | uActor::startMsg; // create and start producers

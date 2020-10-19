@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Tue Jun 20 11:12:58 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:57:15 2019
-// Update Count     : 64
+// Last Modified On : Sat Feb 29 17:39:54 2020
+// Update Count     : 66
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,6 @@
 #pragma once
 
 
-#include <uC++.h>
 //#include <uDebug.h>
 
 
@@ -47,14 +46,14 @@ template<int MaxSize> struct uStaticHeapArray {
       public:
 	ArrayType() {}
     
-	const Elt &operator[]( int index ) const {
+	const Elt & operator[]( int index ) const {
 #ifdef __U_DEBUG__
 	    assert( 0 < index && index <= MaxSize );
 #endif // __U_DEBUG__
 	    return A[ index ];
 	} // ArrayType::operator[]
     
-	Elt &operator[]( int index ) {
+	Elt & operator[]( int index ) {
 #ifdef __U_DEBUG__
 	    assert( 0 < index && index <= MaxSize );
 #endif // __U_DEBUG__
@@ -73,11 +72,11 @@ template<typename Elt> class uDynamicHeapArray {
     uDynamicHeapArray() {}
     uDynamicHeapArray( int size ) : A( size + 1 ) {}
 
-    const Elt &operator[]( int index ) const {
+    const Elt & operator[]( int index ) const {
 	return A[ index ];
     } // uDynamicHeapArray::operator[]
 
-    Elt &operator[]( int index ) {
+    Elt & operator[]( int index ) {
 	A.reserve( index + 1 );				// ensure sufficient space allocated
 	return A[ index ];
     } // uDynamicHeapArray::operator[]
@@ -89,9 +88,9 @@ template<typename Elt> class uDynamicHeapArray {
 
 template<typename KeyType, typename DataType, template<typename Elt> class Array> class uGenericHeap {
   protected:
-    typedef int (*CompareFn)( KeyType x, KeyType y );
-    typedef void (*ExchangeFn)( uHeapable<KeyType,DataType> &x, uHeapable<KeyType,DataType> &y );
-    static void defaultExchange( uHeapable<KeyType,DataType> &x, uHeapable<KeyType,DataType> &y ) {
+    typedef int (* CompareFn)( KeyType x, KeyType y );
+    typedef void (* ExchangeFn)( uHeapable<KeyType,DataType> & x, uHeapable<KeyType,DataType> & y );
+    static void defaultExchange( uHeapable<KeyType,DataType> & x, uHeapable<KeyType,DataType> & y ) {
 	uHeapable<KeyType,DataType> temp = x;
 	x = y;   
 	y = temp;
@@ -148,7 +147,7 @@ template<typename KeyType, typename DataType, template<typename Elt> class Array
 	cerr << "Heap::~Heap() - Total Number of Heapify Operations = " << NumHeapifies << "\n";
     } // uGenericHeap::display_counts
     
-    void accumulate_counts( int &C, int &E, int &T, int &H ) {
+    void accumulate_counts( int & C, int & E, int & T, int & H ) {
 	C += NumCompares;
 	E += NumExchg;
 	T += NumTransfers;
@@ -160,7 +159,7 @@ template<typename KeyType, typename DataType, template<typename Elt> class Array
 	return heapSize;
     } // uGenericHeap::size
 
-    void getRoot( uHeapable<KeyType,DataType> &root ) const {
+    void getRoot( uHeapable<KeyType,DataType> & root ) const {
 	root = A[1];
 #ifdef DEBUG_SHOW_COUNT
 	NumTransfers += 1;
@@ -193,7 +192,7 @@ template<typename KeyType, typename DataType, template<typename Elt> class Array
 	heapify( 1 );
     } // uGenericHeap::extractRoot
 
-    void deletenode( uHeapable<KeyType,DataType> &node ) {
+    void deletenode( uHeapable<KeyType,DataType> & node ) {
 	exchange( node, A[size()] );
 	heapSize -= 1;
 	heapify( 1 );
@@ -356,7 +355,7 @@ class uDynamicHeap : public uGenericHeap<KeyType, DataType, uDynamicHeapArray> {
 
 template<typename KeyType, typename DataType, int MaxSize> class uHeapPtrSort {
   public:
-    uHeapPtrSort( uHeap<KeyType,DataType,MaxSize> *h, DataType DataRecords, DataType tempRecPtr ) {
+    uHeapPtrSort( uHeap<KeyType,DataType,MaxSize> * h, DataType DataRecords, DataType tempRecPtr ) {
 	sortRecs( h, DataRecords, tempRecPtr );
     } // uHeapPtrSort::uHeapPtrSort
     
@@ -365,7 +364,7 @@ template<typename KeyType, typename DataType, int MaxSize> class uHeapPtrSort {
     // IMPORTANT: this is destructive - wipes out the Data fields in the heap...  The records are assumed to be to
     // stored in array DataRecords.  Algorithm based on discussions with Anna Lubiw/Ian Munro - akg
     
-    void sortRecs( uHeap<KeyType,DataType,MaxSize> *h, DataType DataRecords, DataType tempRecPtr ) {
+    void sortRecs( uHeap<KeyType,DataType,MaxSize> * h, DataType DataRecords, DataType tempRecPtr ) {
 #ifdef DEBUG_SHOW_COUNT
 	int recsMoved = 0;
 #endif

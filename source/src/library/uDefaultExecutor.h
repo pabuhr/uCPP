@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan  2 20:45:32 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 14:08:48 2020
-// Update Count     : 5
+// Last Modified On : Wed May 20 16:53:43 2020
+// Update Count     : 8
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,30 +28,30 @@
 #pragma once
 
 
-// Define the default number of processors created in the actor executor. Must be greater than 0.
+// Define the default number of processors created in the executor. Must be greater than 0.
 
 #define __U_DEFAULT_EXECUTOR_PROCESSORS__ 2
 
-// Define the default number of threads created in the actor executor. Must be greater than 0.
+// Define the default number of threads created in the executor. Must be greater than 0.
 
-#define __U_DEFAULT_EXECUTOR_THREADS__ 2
+#define __U_DEFAULT_EXECUTOR_WORKERS__ 2
 
 // Define the default number of executor request-queues (mailboxes) written to by actors and serviced by the
 // actor-executor threads. Must be greater than 0.
 
 #define __U_DEFAULT_EXECUTOR_RQUEUES__ 2
 
-// Define if actor executor is created in a separate cluster
+// Define if executor is created in a separate cluster
 
 #define __U_DEFAULT_EXECUTOR_SEPCLUS__ false
 
-// Define affinity for actor executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
+// Define affinity for executor kernel threads and the offset from CPU 0 to start binding. -1 implies no affinity.
 
 #define __U_DEFAULT_EXECUTOR_AFFINITY__ -1
 
 
 extern unsigned int uDefaultExecutorProcessors();	// kernel threads (processors) servicing executor thread-pool
-extern unsigned int uDefaultExecutorThreads();		// user threads servicing executor thread-pool
+extern unsigned int uDefaultExecutorWorkers();		// worker threads servicing executor thread-pool
 extern unsigned int uDefaultExecutorRQueues();		// executor request queues
 extern bool uDefaultExecutorSepClus();			// create processors on separate cluster
 extern int uDefaultExecutorAffinity();			// affinity and offset (-1 => no affinity, default)

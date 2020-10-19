@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 08:43:10 2020
-// Update Count     : 20
+// Last Modified On : Thu Sep 17 08:36:10 2020
+// Update Count     : 23
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,11 +36,14 @@ using namespace std;
 struct Token : public uActor::Message { unsigned int cnt = 0; } token; // token passed around ring
 int RingSize = 3, Times = 10;				// default values
 
+// A general version of the ping/pong pattern with N actors arranged in a ring passing a positive integer
+// token T times.
+
 _Actor Passer {
     int id;
-    Passer *partner;					// chain actors
+    Passer * partner;					// chain actors
 
-    Allocation receive( Message &msg ) {
+    Allocation receive( Message & msg ) {
 	Case( Token, msg ) {				// determine message kind
 	    // msg_d is an implicit new variable of type "Token *"
 	    PRT( osacquire( cout ) << id << " " << msg_d->cnt << endl; )
@@ -62,7 +65,7 @@ _Actor Passer {
     void close( Passer *partner ) { Passer::partner = partner; }
 }; // Passer
 
-int main( int argc, char *argv[] ) {
+int main( int argc, char * argv[] ) {
     try {
 	switch ( argc ) {
 	  case 3:
@@ -81,7 +84,7 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_FAILURE );
     } // try
 
-    Passer *passers[RingSize];				// actors in cycle
+    Passer * passers[RingSize];				// actors in cycle
 
     uActorStart();					// start actor system
     // create cycle of actor; special case to close cycle

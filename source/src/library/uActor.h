@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 09:15:55 2020
-// Update Count     : 425
+// Last Modified On : Sun Oct 18 21:52:47 2020
+// Update Count     : 978
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,11 +29,32 @@
 
 
 #include <uDefaultExecutor.h>
-#include <uFuture.h>
+#include <uFuture.h>					// uExecutor
 #include <uSemaphore.h>
+#include <uQueue.h>
+
+#include <functional>
+
+
+//############################## uActor ##############################
+
+
+#if __GNUC__ >= 7					// C++17
+template<typename T>
+auto uReference(T & t) {
+    if constexpr( std::is_pointer<T>::value ) return t;
+    else return &t;
+} // uReference
+#else							// C++11
+template<typename T, typename std::enable_if<std::is_pointer<T>::value, int>::type = 0>
+T & uReference(T & t) { return t; }
+
+template<typename T, typename std::enable_if<!std::is_pointer<T>::value, int>::type = 0>
+T * uReference(T & t) { return &t; }
+#endif
 
 #ifndef Case
-    #define Case( type, msg ) if ( type *msg##_d __attribute__(( unused )) = dynamic_cast< type * >( &msg ) )
+    #define Case( type, msg ) if ( type * msg##_d __attribute__(( unused )) = dynamic_cast< type * >( uReference(msg) ) )
 #else
     #error actor provides a "Case" macro and macro name "Case" already in use.
 #endif // ! Case
@@ -48,42 +69,206 @@ class uActor {
     static uSemaphore wait_;				// wait for all actors to delete
     static unsigned long int alive_;			// number of actor objects in system
   public:
-    enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation actions
+    enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
   private:
-    unsigned long int ticket_;				// executor-queue handle to provide FIFO message execution
     Allocation allocation;				// allocation action
+  protected:
+    unsigned long int ticket;				// executor-queue handle to provide FIFO message execution
   public:
-    struct Message {
+    class Message {
+	friend class uActor;
+      public:
 	Allocation allocation;				// allocation action
-	uActor * sender;				// delegated sender
-
-	Message( Allocation allocation = Nodelete, uActor * sender = nullptr ) : allocation( allocation ), sender( sender ) {}
-	Message( uActor * sender ) : allocation( Delete ), sender( sender ) {}
+      protected:
+	uActor * sender_;				// delegated sender
+      public:
+	Message( Allocation allocation = Nodelete, uActor * sender = nullptr ) : allocation( allocation ), sender_( sender ) {}
+	Message( uActor * sender ) : allocation( Delete ), sender_( sender ) {}
 	virtual ~Message() {}
+	uActor * sender() { return sender_; }		// sender actor
     }; // Message
 
-    struct ReplyMsg : public Message {			// base future message
-	ReplyMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
-	ReplyMsg( uActor * sender ) : Message( sender ) {}
-	virtual bool available() = 0;
-	virtual bool cancelled() = 0;
-	virtual void cancel() = 0;
-	virtual void delivery( uBaseEvent * ex ) = 0;
-	virtual void reset() = 0;
-    }; // ReplyMsg
+    class TraceMsg : public Message {
+	friend class uActor;
+	struct Hop : public uColable {			// intrusive node
+	    uActor * actor;
+	    Hop( uActor * actor ) : actor( actor ) {}
+	}; // Hop
 
-    template< typename Result > struct FutureMessage : public ReplyMsg {
-	Future_ISM< Result > result;
+	// Trace always has an actor hop, except for trace message sent from program main, which is not an actor.
+	uQueue<Hop> hops;				// intrusive singlely-linked queue, head and tail pointers
+	Hop * cursor = nullptr;				// current location of returns along message trace
 
-	FutureMessage( Allocation allocation = Nodelete, uActor * sender = nullptr ) : ReplyMsg( allocation, sender ) {}
-	FutureMessage( uActor * sender ) : ReplyMsg( Delete, sender ) {}
-	bool available() { return result.available(); }
-	bool cancelled() { return result.cancelled(); }
-	void cancel() { result.cancel(); }
-	void delivery( Result res ) { result.delivery( res ); } // raises uDelivered
-	void delivery( uBaseEvent * ex ) { result.delivery( ex ); } // raises uDelivered
-	void reset() { result.reset(); }
-    }; // FutureMessage
+	void pushTrace( uActor * receiver ) {
+	    if ( ! cursor ) {				// singleton pattern for program main
+		uActor * sender = uActor::sender();	// actor receiving by executor thread
+		if ( sender ) hops.addHead( new Hop( sender ) ); // program main not an actor => not part of trace
+	    } // if
+	    cursor = new Hop( receiver );
+	    hops.addHead( cursor );			// program main not an actor => not part of trace
+	} // TraceMsg::pushTrace
+      public:
+	TraceMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
+	TraceMsg( uActor * sender ) : Message( sender ) {}
+	~TraceMsg() { erase(); delete hops.dropHead(); }
+
+	void erase() {					// delete all message hops except cursor hop
+	    while ( ! hops.empty() ) {
+		if ( cursor == hops.head() ) hops.dropHead(); // do not delete cursor node
+		else delete hops.dropHead();
+	    } // while
+	    hops.addHead( cursor );			// add cursor node back
+	} // TraceMsg::erase
+
+	void reset() {					// delete all message hops from head to cursor
+	    while ( hops.head() != cursor ) delete hops.dropHead();
+	} // TraceMsg::reset
+
+	bool Return() {					// keyword "return" conflict
+	    Hop * temp = (Hop *)cursor->getnext();	// start point
+	    if ( temp ) {
+		cursor = temp;				// change before send
+		*temp->actor | *(Message *)this;	// ignore hop via cast
+		return true;
+	    } // if
+	    return false;
+	} // TraceMsg::Return
+
+	void retSender() {
+	    cursor = hops.tail();			// start point
+	    *cursor->actor | *(Message *)this;		// ignore hop via cast
+	} // TraceMsg::retSender
+
+	bool returned() { return hops.head() != cursor; } // messaged been returned ?
+
+	void resume() {
+	    cursor = hops.head();			// reset cursor back to head
+	    *cursor->actor | *(Message *)this;		// ignore hop via cast
+	} // TraceMsg::resume
+
+	void print();					// print message trace, useful for debugging
+    }; // TraceMsg
+
+    // Promise is responsible for storage management by using reference counts. Can be copied.
+    template<typename T> class Promise {
+	class Impl {
+	    enum Status { EMPTY, CHAINED, FULFILLED };
+	    std::function< void ( T & ) > callback;
+	    volatile Status lock = EMPTY;
+	    volatile unsigned int refCnt = 1;		// number of references to promise
+	    T result_;					// promise result
+	  public:
+	    void incRef() {
+		uFetchAdd( refCnt, 1 );
+	    } // Impl::incRef
+
+	    bool decRef() {
+	      if ( uFetchAdd( refCnt, -1 ) != 1 ) return false; // old value 1 => new value 0
+		return true;
+	    } // Impl::decRef
+
+	    template< typename Func > bool maybe( Func callback_ ) { // check result
+	      if ( lock == FULFILLED ) return true;
+		Status comp = EMPTY;
+		// Race on assignment, but only one thread sets the callback. Multiple assignments from the same or
+		// different threads is detected by the lock.
+		callback = callback_;
+	      if ( uCompareAssignValue( lock, comp, CHAINED ) ) return false; // empty ?
+		if ( comp == CHAINED ) abort( "chained" ); // _Throw DupCallback(); // duplicate chaining
+		assert( comp == FULFILLED && lock == FULFILLED );
+		return true;
+	    } // Impl::maybe
+
+	    template< typename Func > void then( Func callback_ ) { // access result
+		if ( maybe( callback_ ) ) callback_( result_ );
+	    } // Impl::then
+
+	    void delivery( T & res ) {			// make result available in promise
+		// Race on assignment, but only one thread sets the callback. Multiple assignments from the same or
+		// different threads is detected by the lock.
+		result_ = res;				// store result
+		Status prev = uFetchAssign( lock, FULFILLED ); // mark delivered
+		if ( prev == FULFILLED ) abort( "dup delivery" ); //_Throw DupDelivery(); // duplicate delivery
+		if ( prev == CHAINED ) callback( res );	// process result
+	    } // Impl::delivery
+
+	    void delivery( T && res ) {			// make result available in promise
+		// Race on assignment, but only one thread sets the callback. Multiple assignments from the same or
+		// different threads is detected by the lock.
+		result_ = res;				// store result
+		Status prev = uFetchAssign( lock, FULFILLED ); // mark delivered
+		if ( prev == FULFILLED ) abort( "dup delivery" ); //_Throw DupDelivery(); // duplicate delivery
+		if ( prev == CHAINED ) callback( res );	// process result
+	    } // Impl::delivery
+
+	    T result() {
+		if ( lock != FULFILLED ) abort( "no result %d", lock );// _Throw NoResult(); // no result
+		return result_;
+	    } // Impl::access
+
+	    void reset() {					// mark promise as empty (for reuse)
+		if ( lock == CHAINED ) abort( "dup delivery" );	// _Throw ChainedReset();
+		lock = EMPTY;
+	    } // Impl::reset
+	}; // Impl
+
+	Impl * impl;					// storage for implementation
+      public:
+	_Event PromiseFailure {};
+	_Event DupCallback : public PromiseFailure {};	// raised if duplicate callback
+	_Event DupDelivery : public PromiseFailure {};	// raised if duplicate delivery
+	_Event NoResult : public PromiseFailure {};	// raised if no result
+	_Event ChainedReset : public PromiseFailure {};	// raised if pending chained callback
+
+	Promise() : impl( new Impl() ) {}
+
+	~Promise() {
+	    if ( impl->decRef() ) delete impl;
+	} // Promise::~Promise
+
+	Promise( const Promise<T> & rhs ) {
+	    impl = rhs.impl;				// point at new impl
+	    impl->incRef();				//   and increment reference count
+	} // Promise::Promise
+
+	Promise<T> & operator=( const Promise<T> & rhs ) {
+	    if ( rhs.impl == impl ) return *this;
+	    if ( impl->decRef() ) delete impl;		// no references => delete current impl
+	    impl = rhs.impl;				// point at new impl
+	    impl->incRef();				//   and increment reference count
+	    return *this;
+	} // Promise::operator=
+
+	// USED BY CLIENT
+
+	bool maybe( std::function<void ( T )> callback_ ) { // access result
+	    return impl->maybe( callback_ );
+	} // Promise::maybe
+
+	void then( std::function<void ( T )> callback_ ) { // access result
+	    impl->then( callback_ );
+	} // Promise::then
+
+	T result() { return impl->result(); }
+	T operator()() { return result(); }		// alternate syntax for result
+
+	void reset() { impl->reset(); }			// mark promise as empty (for reuse)
+
+	// USED BY SERVER
+
+	void delivery( T result ) { impl->delivery( result ); }	// make result available in the promise
+    }; // Promise
+
+    template< typename Result > class PromiseMsg : public Message {
+	friend class uActor;
+	Promise< Result > result_;			// delivered promise (should be private to ask)
+      public:
+	PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
+	PromiseMsg( uActor * sender ) : Message( Delete, sender ) {}
+	void delivery( Result res ) { result_.delivery( res ); } // make result available in promise
+	Result result() { return result_.result(); }
+	Result operator()() { return result(); }	// alternate syntax for result
+    }; // PromiseMsg
   private:
     static inline void lastActor() {
 	if ( uFetchAdd( alive_, -1 ) == 1 ) wait_.V();	// 1 => count is zero
@@ -113,83 +298,123 @@ class uActor {
 		  case Destroy: actor.~uActor(); break;
 		  case Finished: lastActor(); break;
 		} // switch
-	    } catch ( uBaseEvent &ex ) {
-		Case( uActor::ReplyMsg, msg ) {		// unknown future message
-		    msg_d->delivery( ex.duplicate() );	// complain in future
-		} else {
-		    checkMsg( msg );			// process message
-		    _Throw;				// fail to worker thread
-		} // Case
+	    } catch ( uBaseEvent & ex ) {
+		// To have a zero-cost try block, the checkMsg call is duplicated above/below.
+		checkMsg( msg );			// process message
+		_Throw;					// fail to worker thread
 	    } catch ( ... ) {
-		abort( "C++ exceptions unsupported from throw in actor for future message" );
-	    // To have a zero-cost try block, the checkMsg call is duplicated above/below.
-	    // } _Finally {
-	    // 	checkMsg( msg );			// process message
+		abort( "C++ exception unsupported from throw in actor for promise message" );
 	    } // try
 	    checkMsg( msg );				// process message
 	} // Deliver_::operator()
     }; // Deliver_
 
     virtual Allocation process_( Message & msg ) = 0;	// type-safe access to subclass receivePtr
-  protected:
     // Do NOT make pure to allow replacement by "become" in constructor.
     virtual Allocation receive( Message & ) {		// user supplied message handler
 	abort( "must supply receive routine for actor" );
 	return Delete;
     };
-    template< typename Func > void send_( Func action ) { executor->send( action, ticket_ ); }
+  protected:
+    template< typename Func > void send_( Func action ) { executor->send( action, ticket ); }
     virtual void preStart() { /* default empty */ };	// user supplied actor initialization
 
     struct uActorConstructor {				// translator creates instance in actor constructor
-	uActorConstructor( UPP::uAction action, uActor &actor ) {
+	UPP::uAction action;
+	uActor &actor;
+	uActorConstructor( UPP::uAction action, uActor &actor ) : action( action ), actor( actor ) {}
+	~uActorConstructor( ) {
+	    uActor &actor = uActorConstructor::actor;
 	    if ( action == UPP::uYes ) {
 		actor.send_( [&actor]() { actor.preStart(); } ); // send preStart call
 	    } // if
 	} // uActorConstructor::uActorConstructor
     }; // uActorConstructor
   public:
-    uActor() {
+    uActor( const uActor & ) = delete;			// no copy
+    uActor( uActor && ) = delete;
+    uActor & operator=( const uActor & ) = delete;	// no assignment
+
+    uActor() : ticket( executor->tickets() ) {		// get executor queue handle
 	uFetchAdd( alive_, 1 );				// number of actors in system
 	uDEBUG( if ( ! executor ) { abort( "Attempt to create actor but no actor executor exists.\nPossible cause is not calling uActorStart() or calling it to late." ); } );
-	ticket_ = executor->tickets();			// get executor queue handle
+	//printf( "actor %p ticket %ld processor %p\n", this, ticket, &uThisProcessor() );
+
+	// Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
+	// member must be called to end it, and therefore, the "allocation" field is always initialized by the executor
+	// using the return value from "receive" meaning "allocation" does not need to be initialized here.
     } // uActor::uActor
 
-    virtual ~uActor() {
+    virtual ~uActor() noexcept(false) {			// Unhandled Exception from destructor in uCorActorType
 	if ( allocation != Finished ) lastActor();	// check for last actor ?
     } // uActor::~uActor
 
     // Communication
 
-    uActor & tell( Message & msg, uActor * sender = nullptr ) { // async call, no return
-	msg.sender = sender;
-	executor->send( Deliver_( *this, msg ), ticket_ ); // copy functor
+    static inline uActor * sender() {
+	// Obtain sender from the executor thread processing the actor performing the send because the "this" variable
+	// for this call is the receiver.
+	uExecutor::Worker * thread = dynamic_cast<uExecutor::Worker *>(&uThisTask());
+	if ( thread == nullptr ) return nullptr;
+	return &((uExecutor::VRequest<Deliver_> *)(thread->uThisRequest()))->action.actor;
+    } // uActor::sender
+
+    uActor & tell( Message & msg, uActor * sender ) {	// async call, no return
+	msg.sender_ = sender;
+	executor->send( Deliver_( *this, msg ), ticket ); // copy functor
 	return *this;
     } // uActor::tell
 
-    uActor & operator|( Message & msg ) {		// operator async call, no return
-	return tell( msg, nullptr );
+    uActor & tell( Message & msg ) {			// async call, no return
+	return tell( msg, sender() );			// automatically insert sender into message
+    } // uActor::tell
+
+    uActor & tell( TraceMsg & msg ) {			// async call, no return
+	msg.pushTrace( this );
+	return tell( msg, sender() );			// automatically insert sender into message
+    } // uActor::tell
+
+    uActor & operator | ( Message & msg ) {		// operator async call, no return
+	return tell( msg );
     } // uActor::operator|
 
-    template< typename Result > Future_ISM< Result > ask( FutureMessage< Result > & msg, uActor * sender = nullptr ) { // async call, return future
-	msg.sender = sender;
-	executor->send( Deliver_( *this, msg ), ticket_ );
-	return msg.result;
+    uActor & operator | ( TraceMsg & msg ) {		// operator async call, no return
+	return tell( msg );
+    } // uActor::operator|
+
+    uActor & forward( Message & msg ) {			// async call, no return
+	return tell( msg, msg.sender_ );		// do not update message sender
+    } // uActor::forward
+
+    uActor & forward( TraceMsg & msg ) {		// async call, no return
+	msg.pushTrace( this );
+	return tell( msg, msg.sender_ );			// do not update message sender
+    } // uActor::forward
+
+    template< typename Result > Promise< Result > ask( PromiseMsg< Result > & msg, uActor * sender = nullptr ) { // async call, return promise
+	msg.sender_ = sender;
+	// Race on send, which publishes the message to this actor. This actor can process and delete the promise result
+	// in the message before it is copied by value at the return. Hence, the promise result is copied before
+	// publishing and the copy returned.
+	auto ret = msg.result_;				// copy
+	executor->send( Deliver_( *this, msg ), ticket ); // publish
+	return ret;
     } // uActor::ask
 
-    template< typename Result > Future_ISM< Result > operator||( FutureMessage< Result > &msg ) { // operator async call, return future
+    template< typename Result > Promise< Result > operator || ( PromiseMsg< Result > &msg ) { // operator async call, return promise
 	return ask( msg, nullptr );
     } // uActor::operator||
 
     // Administration
 
     // use processors on current cluster
-#   define uActorStart() uExecutor __uExecutor__( 0, uThisCluster().getProcessors(), false, -1 ); uActor::start( __uExecutor__ )
+    #define uActorStart() uExecutor __uExecutor__( 0, uThisCluster().getProcessors(), false, -1 ); uActor::start( __uExecutor__ )
     static void start( uExecutor & executor ) {		// wait for all actors to terminate or timeout
 	assert( ! uActor::executor );
 	uActor::executor = &executor;
     } // uActor::start
 
-#   define uActorStop() uActor::stop()
+    #define uActorStop() uActor::stop()
     static bool stop( uDuration duration = 0 ) {	// wait for all actors to terminate or timeout
 	bool stopped = true;
 	if ( duration == 0 ) {				// optimization
@@ -201,20 +426,16 @@ class uActor {
 	return stopped;					// true => stop, false => timeout
     } // uActor::stop
 
+    // Messages
+
     static struct StartMsg : public uActor::Message {} startMsg; // start actor
     static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
-
-    // Error handling
-
     static struct UnhandledMsg : public uActor::Message {} unhandledMsg; // tell error
-
-    _Event Unhandled {					// ask error
-      public:
-	Message * msg;
-	Unhandled( Message * msg ) : msg( msg ) {}
-    }; // uActor::Unhandled
 }; // uActor
 
+
+// Next two classes allow receivePtr_ to be initialized to the default "receive" member in the actor, where receivePtr_
+// is needed to make "become" work.
 
 template< typename Actor > class uActorType : public uActor {
   protected:
@@ -231,8 +452,8 @@ template< typename Actor > class uActorType : public uActor {
 	preStart();					// rerun preStart
     } // uActorType::restart_
   protected:
-    // Must be done from within the actor not from outside the actor.
-    // Does not provide a stack of message handlers => no "unbecome".
+    // Must be done from within the actor not from outside the actor.  Does not provide a stack of message handlers =>
+    // no "unbecome".
     Handler become( Handler handler ) {			// dynamically change message handler
 	Handler temp = receivePtr_;
 	receivePtr_ = handler;
@@ -245,6 +466,39 @@ template< typename Actor > class uActorType : public uActor {
 	send_( [this]() { this->restart_(); } );	// run restart message
     } // uActorType::restart
 }; // uActorType
+
+
+// Multiple inheritance between uBaseCoroutine and uActor, where uBaseCoroutine is first. Hence, coroutine is the
+// default address for coroutine actors, so cast to uActor is necessary to match actor address with trace.
+template< typename Actor > _Coroutine uCorActorType : public uActor {
+  protected:
+    typedef Allocation (Actor:: * Handler)( Message & msg ); // message handler type
+  private:
+    Handler receivePtr_ = &uCorActorType<Actor>::receive; // message handler pointer
+
+    virtual Allocation process_( Message & msg ) override final {
+	return (((Actor *)this)->*receivePtr_)(msg);
+    } // uCorActorType::process
+
+    void restart_() {
+	receivePtr_ = &uCorActorType<Actor>::receive;	// restart message-handler pointer
+	preStart();					// rerun preStart
+    } // uCorActorType::restart_
+  protected:
+    // Must be done from within the actor not from outside the actor.  Does not provide a stack of message handlers =>
+    // no "unbecome".
+    Handler become( Handler handler ) {			// dynamically change message handler
+	Handler temp = receivePtr_;
+	receivePtr_ = handler;
+	return temp;					// return previous message handler
+    } // uCorActorType::become
+  public:
+    // Administration
+
+    void restart() {					// reset actor to initial state
+	send_( [this]() { this->restart_(); } );	// run restart message
+    } // uCorActorType::restart
+}; // uCorActorType
 
 
 // Local Variables: //

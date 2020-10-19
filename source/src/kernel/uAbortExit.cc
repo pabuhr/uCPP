@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 13:18:56 2019
-// Update Count     : 578
+// Last Modified On : Thu Aug  6 22:51:08 2020
+// Update Count     : 651
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,6 +31,7 @@
 
 
 #include <uC++.h>
+#include <uHeapLmmm.h>
 #ifdef __U_PROFILER__
 #include <uProfiler.h>
 #endif // __U_PROFILER__
@@ -48,10 +49,9 @@ using namespace UPP;
 #include <execinfo.h>					// backtrace, backtrace_symbols
 #include <cxxabi.h>					// __cxa_demangle
 
-static void uBacktrace() {
+static void uBacktrace( int start ) {
     enum {
 	Frames = 50,					// maximum number of stack frames
-	Start = 3,					// skip first N stack frames
 	Last = 2,					// skip last N stack frames
     };
 
@@ -66,9 +66,10 @@ static void uBacktrace() {
     uDebugWrite( STDERR_FILENO, helpText, len );
 
     // skip last stack frame after uMain
-    for ( unsigned int i = Start; i < size - Last && messages != nullptr; i += 1 ) {
+    for ( unsigned int i = start; i < size - Last && messages != nullptr; i += 1 ) {
 	char * mangled_name = nullptr, * offset_begin = nullptr, * offset_end = nullptr;
-	for ( char *p = messages[i]; *p; ++p ) {	// find parantheses and +offset
+
+	for ( char * p = messages[i]; *p; ++p ) {	// find parantheses and +offset
 	    if ( *p == '(' ) {
 		mangled_name = p;
 	    } else if ( *p == '+' ) {
@@ -80,7 +81,7 @@ static void uBacktrace() {
 	} // for
 
 	// if line contains symbol, attempt to demangle
-	int frameNo = i - Start;
+	int frameNo = i - start;
 	if ( mangled_name && offset_begin && offset_end && mangled_name < offset_begin ) {
 	    *mangled_name++ = '\0';			// delimit strings
 	    *offset_begin++ = '\0';
@@ -103,19 +104,16 @@ static void uBacktrace() {
 	} // if
 	uDebugWrite( STDERR_FILENO, helpText, len );
     } // for
-
     free( messages );
 } // uBacktrace
 
 
 void exit( int retcode ) __THROW {			// interpose
-    uKernelModule::retCode = retcode;
     RealRtn::exit( retcode );				// call the real exit
     // CONTROL NEVER REACHES HERE!
 } // exit
 
-void exit( int retcode, const char *fmt, ... ) __THROW { // interpose
-    uKernelModule::retCode = retcode;
+void exit( int retcode, const char fmt[], ... ) __THROW {
     va_list args;
     va_start( args, fmt );
     vfprintf( stderr, fmt, args );
@@ -125,23 +123,8 @@ void exit( int retcode, const char *fmt, ... ) __THROW { // interpose
 } // exit
 
 
-void abort() __THROW {					// interpose
-    abort( nullptr );
-    // CONTROL NEVER REACHES HERE!
-} // abort
-
-
-// Only one processor should call abort and succeed.  Once a processor calls abort, all other processors quietly exit
-// while the aborting processor cleans up the system and possibly dumps core.
-
-void uAbort( const char *fmt, ... ) {			// deprecated
-    va_list args;
-    va_start( args, fmt );
-    abort( fmt, args );
-    va_end( args );
-} // uAbort
-
-void abort( const char *fmt, ... ) {
+void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ) __attribute__(( __nothrow__, __leaf__, __noreturn__ ));
+void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ) {
 #if defined( __U_MULTI__ )
     // abort cannot be recursively entered by the same or different processors because all signal handlers return when
     // the globalAbort flag is true.
@@ -159,6 +142,13 @@ void abort( const char *fmt, ... ) {
 	uKernelModule::globalAbortLock->release();
     } // if
 #endif // __U_MULTI__
+
+    signal( SIGABRT, SIG_DFL );				// prevent final "real" abort from recursing to handler
+
+#ifdef __U_STATISTICS__
+    if ( Statistics::prtStatTerm() ) Statistics::print();
+    if ( uHeapControl::prtHeapTerm() ) uHeapManager::printStats();
+#endif // __U_STATISTICS__
 
     uBaseTask &task = uThisTask();			// optimization
 
@@ -178,16 +168,12 @@ void abort( const char *fmt, ... ) {
     int len = snprintf( helpText, BufferSize, "uC++ Runtime error (UNIX pid:%ld) ", (long int)getpid() ); // use UNIX pid (versus getPid)
     uDebugWrite( STDERR_FILENO, helpText, len );
 
-    if ( fmt != nullptr ) {
-	// Display the relevant shut down information.
-	va_list args;
-	va_start( args, fmt );
-	len = vsnprintf( helpText, BufferSize, fmt, args );
-	va_end( args );
-	uDebugWrite( STDERR_FILENO, helpText, len );
-	if ( fmt[strlen( fmt ) - 1] != '\n' ) {		// add optional newline if missing at the end of the format text
-	    uDebugWrite( STDERR_FILENO, "\n", 1 );
-	} // if
+    assert( fmt );
+    // Display the relevant shut down information.
+    len = vsnprintf( helpText, BufferSize, fmt, args );
+    uDebugWrite( STDERR_FILENO, helpText, len );
+    if ( fmt[strlen( fmt ) - 1] != '\n' ) {		// add optional newline if missing at the end of the format text
+	uDebugWrite( STDERR_FILENO, "\n", 1 );
     } // if
 
     len = snprintf( helpText, BufferSize, "Error occurred while executing task %.256s (%p)", task.getName(), &task );
@@ -199,7 +185,14 @@ void abort( const char *fmt, ... ) {
 	uDebugWrite( STDERR_FILENO, ".\n", 2 );
     } // if
 
-    uBacktrace();
+    uBacktrace( signalAbort == uSigHandlerModule::Yes ?
+		// SKULLDUGGERY: the active frame varies and some of these are ignored.
+#if defined( __U_MULTI__ )
+		3 : 1
+#else
+		4 : 2
+#endif // __U_MULTI__
+	);
 
     // In debugger mode, tell the global debugger to stop the application.
 
@@ -209,16 +202,33 @@ void abort( const char *fmt, ... ) {
     } // if
 #endif // __U_LOCALDEBUGGER_H__
 
-    // After having killed off the other processors, dump core if required, otherwise, quietly call "_exit". Cannot call
-    // "exit" because of global destructors.
+    // After having killed off the other processors, dump core
 
-    if ( ! uKernelModule::coreDumped ) {		// child process may have failed and dumped core already
-	uKernelModule::coreDumped = true;		// prevent other UNIX processes from dumping core
-	RealRtn::abort();				// call the real abort
-    } // if
-
-    _exit( EXIT_FAILURE );
+    RealRtn::abort();					// call the real abort
     // CONTROL NEVER REACHES HERE!
+} // abort
+
+// Only one processor should call abort and succeed.  Once a processor calls abort, all other processors quietly exit
+// while the aborting processor cleans up the system and possibly dumps core.
+
+void abort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], ... ) {
+    va_list args;
+    va_start( args, fmt );
+    uAbort( signalAbort, fmt, args );
+    // CONTROL NEVER REACHES HERE!
+    va_end( args );
+}
+
+void abort( void ) {					// interpose
+    abort( uSigHandlerModule::No, "%s", "" );
+} // abort
+
+void abort( const char fmt[], ... ) {
+    va_list args;
+    va_start( args, fmt );
+    uAbort( uSigHandlerModule::No, fmt, args );
+    // CONTROL NEVER REACHES HERE!
+    va_end( args );
 } // abort
 
 

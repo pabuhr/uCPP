@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 17:22:48 2020
-// Update Count     : 321
+// Last Modified On : Mon Jul 27 20:56:07 2020
+// Update Count     : 414
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,25 +52,26 @@ void uBaseTask::createTask( uCluster &cluster ) {
     recursion = mutexRecursion = 0;
     currCluster = &cluster;				// remember the cluster task is created on
     currCoroutine = this;				// the first coroutine that a task executes is itself
-    acceptedCall = nullptr;				// no accepted mutex entry yet
     priority = activePriority = 0;
     inheritTask = this;
 
     // exception handling
 
+    acceptedCall = nullptr;				// no accepted mutex entry yet
     terminateRtn = uEHM::terminate;			// initialize default terminate routine
+    cause = nullptr;
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     // profiling
 
     profileActive = false;				// can be read before uTaskConstructor is called
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 
     // debugging
-#if __U_LOCALDEBUGGER_H__
+    #if __U_LOCALDEBUGGER_H__
     DebugPCandSRR = nullptr;
     uProcessBP = false;					// used to prevent triggering breakpoint while processing one
-#endif // __U_LOCALDEBUGGER_H__
+    #endif // __U_LOCALDEBUGGER_H__
 
     // pthreads
 
@@ -93,11 +94,11 @@ uBaseTask::uBaseTask( uCluster &cluster, uProcessor &processor ) : uBaseCoroutin
 void uBaseTask::setState( uBaseTask::State s ) {
     state = s;
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( profileActive && uProfiler::uProfiler_registerTaskExecState ) { 
 	(*uProfiler::uProfiler_registerTaskExecState)( uProfiler::profilerInstance, *this, state ); 
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 } // uBaseTask::setState
 
 
@@ -106,30 +107,30 @@ uBaseTask::uTaskConstructor::uTaskConstructor( uAction f, uSerial &serial, uBase
 			  this, f, &serial, &task, &piq, n, profile ); )
 
     if ( f == uYes ) {
-#pragma GCC diagnostic push
-#if __GNUC__ >= 8					// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif // __GNUC__ >= 8
+	#pragma GCC diagnostic push
+	#if __GNUC__ >= 8				// valid GNU compiler diagnostic ?
+	#pragma GCC diagnostic ignored "-Wcast-function-type"
+	#endif // __GNUC__ >= 8
 	task.startHere( reinterpret_cast<void (*)( uMachContext & )>(uMachContext::invokeTask) );
-#pragma GCC diagnostic pop
+	#pragma GCC diagnostic pop
 	task.name = n;
-	task.serial = &serial;			// set task's serial instance
+	task.serial = &serial;				// set task's serial instance
 	task.setSerial( serial );
 	task.uPIQ = &piq;
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	task.profileActive = profile;
 
 	if ( task.profileActive && uProfiler::uProfiler_registerTask ) { // profiling this task & task registered for profiling ? 
 	    (*uProfiler::uProfiler_registerTask)( uProfiler::profilerInstance, task, serial, uThisTask() );
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	serial.acceptSignalled.add( &(task.mutexRef) );
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
 
 	task.currCluster->taskAdd( task );		// add task to the list of tasks on this cluster
     } // if
@@ -149,7 +150,7 @@ uBaseTask::uTaskConstructor::~uTaskConstructor() {
 } // uBaseTask::uTaskConstructor::~uTaskConstructor
 
 
-uBaseTask::uTaskDestructor::~uTaskDestructor() {
+uBaseTask::uTaskDestructor::~uTaskDestructor() noexcept(false) {
     if ( f == uYes ) {
 	uDEBUG(
 	    if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
@@ -160,21 +161,26 @@ uBaseTask::uTaskDestructor::~uTaskDestructor() {
 	)
 
 	cleanup( task );
+	if ( task.cause ) {				// join task end with unhandled exception ?
+	    UnhandledException copy( *task.cause );	// SKULLDUGGERY, convert from pointer to value 
+	    delete task.cause;
+	    _Resume copy;				// C++ deletes value exception
+	} // if
     } // if
-} // uBaseTask::uTaskDestructor::uTaskDestructor
+} // uBaseTask::uTaskDestructor::~uTaskDestructor
 
 
 void uBaseTask::uTaskDestructor::cleanup( uBaseTask &task ) {
-#if __U_LOCALDEBUGGER_H__
+    #if __U_LOCALDEBUGGER_H__
     if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
+    #endif // __U_LOCALDEBUGGER_H__
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     task.profileActive = false;
     if ( task.profileTaskSamplerInstance && uProfiler::uProfiler_deregisterTask ) { // task registered for profiling ?
 	(*uProfiler::uProfiler_deregisterTask)( uProfiler::profilerInstance, task );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 
     task.currCluster->taskRemove( task );		// remove the task from the list of tasks that live on this cluster.
 } // uBaseTask::uTaskDestructor::cleanup
@@ -186,20 +192,19 @@ uBaseTask::uTaskMain::uTaskMain( uBaseTask &task ) : task( task ) {
 
     task.recursion += 1;
     if ( task.recursion == 1 ) {			// first call ?
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( task.profileActive && uProfiler::uProfiler_registerTaskStartExecution ) { 
 	    (*uProfiler::uProfiler_registerTaskStartExecution)( uProfiler::profilerInstance, task ); 
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	// Registering a task with the global debugger must occur in this routine for the register set to be
 	// correct.
-
 	if ( uLocalDebugger::uLocalDebuggerActive ) {
 	    uLocalDebugger::uLocalDebuggerInstance->createULThread();
 	} // if
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
     } // if
 } // uBaseTask::uTaskMain::uTaskMain
 
@@ -207,17 +212,35 @@ uBaseTask::uTaskMain::uTaskMain( uBaseTask &task ) : task( task ) {
 uBaseTask::uTaskMain::~uTaskMain() {
     task.recursion -= 1;
     if ( task.recursion == 0 ) {
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( task.profileActive && uProfiler::uProfiler_registerTaskEndExecution ) {
 	    (*uProfiler::uProfiler_registerTaskEndExecution)( uProfiler::profilerInstance, task ); 
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->destroyULThread();
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
     } // if
 } // uBaseTask::uTaskMain::~uTaskMain
+
+
+void uBaseTask::forwardUnhandled( UnhandledException & ex ) {
+    cause = new uBaseCoroutine::UnhandledException( ex );
+    cause->multiple = ex.multiple + 1;
+} // uBaseTask::forwardUnhandled
+
+
+void uBaseTask::handleUnhandled( uBaseEvent * ex ) {
+    #define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
+    #define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
+    char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
+    uBaseEvent::RaiseKind raisekind = ex == nullptr ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
+    strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
+    uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
+    cause = new uBaseCoroutine::UnhandledException( ex == nullptr ? ex : ex->duplicate(), msg );
+    cause->setSrc( *this );				// set source of non-local raise
+} // uBaseTask::handleUnhandled
 
 
 void uBaseTask::wake() {
@@ -255,24 +278,24 @@ uCluster &uBaseTask::migrate( uCluster &cluster ) {
 
   if ( &cluster == task.currCluster ) return cluster;
 
-#if defined( __U_DEBUG__ ) && defined( __U_MULTI__ )
+    #if defined( __U_DEBUG__ ) && defined( __U_MULTI__ )
     volatile uKernelModule::uKernelModuleData *before = THREAD_GETMEM( This );
-#endif // __U_DEBUG__ && __U_MULTI__
+    #endif // __U_DEBUG__ && __U_MULTI__
 
-#if __U_LOCALDEBUGGER_H__
+    #if __U_LOCALDEBUGGER_H__
     if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
+    #endif // __U_LOCALDEBUGGER_H__
 
     // Remove the task from the list of tasks that live on this cluster, and add it to the list of tasks that live on
     // the new cluster.
 
     uCluster &prevCluster = *task.currCluster;		// save for return
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     if ( task.profileActive && uProfiler::uProfiler_registerTaskMigrate ) { // task registered for profiling ?
 	(*uProfiler::uProfiler_registerTaskMigrate)( uProfiler::profilerInstance, task, prevCluster, cluster );
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 
     // Interrupts are disabled because once the task is removed from a cluster it is dangerous for it to be placed back
     // on that cluster during an interrupt.  Therefore, interrupts are disabled until the task is on its new cluster.
@@ -285,17 +308,17 @@ uCluster &uBaseTask::migrate( uCluster &cluster ) {
 
     THREAD_GETMEM( This )->enableInterrupts();
 
-#if __U_LOCALDEBUGGER_H__
+    #if __U_LOCALDEBUGGER_H__
     if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->migrateULThread( cluster );
-#endif // __U_LOCALDEBUGGER_H__
+    #endif // __U_LOCALDEBUGGER_H__
 
     // Force a context switch so the task is scheduled on the new cluster.
 
     yield();
 
-#if defined( __U_DEBUG__ ) && defined( __U_MULTI__ )
+    #if defined( __U_DEBUG__ ) && defined( __U_MULTI__ )
     assert( before != THREAD_GETMEM( This ) );
-#endif // __U_DEBUG__ && __U_MULTI__
+    #endif // __U_DEBUG__ && __U_MULTI__
 
     return prevCluster;					// return reference to previous cluster
 } // uBaseTask::migrate
@@ -317,7 +340,7 @@ void uBaseTask::uYieldYield( unsigned int times ) {	// inserted by translator fo
 void uBaseTask::uYieldInvoluntary() {
     assert( ! THREAD_GETMEM( disableIntSpin ) );
 
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     // Are the uC++ kernel memory allocation hooks active?
     if ( profileActive && uProfiler::uProfiler_preallocateMetricMemory ) {
 	// create a preallocated memory array on the stack
@@ -328,7 +351,7 @@ void uBaseTask::uYieldInvoluntary() {
 	THREAD_GETMEM( This )->disableInterrupts();
 	(*uProfiler::uProfiler_setMetricMemoryPointers)( uProfiler::profilerInstance, ptrs, *this ); // force task to use local memory array
 	activeProcessorKernel->scheduleInternal( this ); // find someone else to execute; wake on kernel stack
-	(*uProfiler::uProfiler_resetMetricMemoryPointers)( uProfiler::profilerInstance, *this );     // reset task to use its native memory array
+	(*uProfiler::uProfiler_resetMetricMemoryPointers)( uProfiler::profilerInstance, *this ); // reset task to use its native memory array
 	THREAD_GETMEM( This )->enableInterrupts();
 
 	// free any blocks of memory not used by metrics
@@ -336,13 +359,13 @@ void uBaseTask::uYieldInvoluntary() {
 	    free( ptrs[metric] );
 	} // for
     } else {
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 	THREAD_GETMEM( This )->disableInterrupts();
 	activeProcessorKernel->scheduleInternal( this ); // find someone else to execute; wake on kernel stack
 	THREAD_GETMEM( This )->enableInterrupts();
-#ifdef __U_PROFILER__
+    #ifdef __U_PROFILER__
     } // if
-#endif // __U_PROFILER__
+    #endif // __U_PROFILER__
 } // uBaseTask::uYieldInvoluntary
 
 

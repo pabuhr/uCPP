@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 17:28:14 2020
-// Update Count     : 515
+// Last Modified On : Sun Jul 26 23:21:22 2020
+// Update Count     : 521
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,13 +47,12 @@ class uBaseEvent {
     enum RaiseKind { ThrowRaise, ResumeRaise };
   protected:
     const uBaseCoroutine * src;				// source execution for async raise, set at raise
-    char srcName[uEHMMaxName];				//    and this field, too
-    char msg[uEHMMaxMsg];				// message to print if exception uncaught
+    char srcName[uEHMMaxName + 1];			//    and this field, too (+1 for string terminator)
+    char msg[uEHMMaxMsg + 1];				// message to print if exception uncaught
     mutable void * staticallyBoundObject;		// bound object for matching, set at raise
     mutable RaiseKind raiseKind;			// how the exception is raised
 
     uBaseEvent( const char * const msg = "" ) { src = nullptr; setMsg( msg ); }
-    void setSrc( uBaseCoroutine & coroutine );
     const std::type_info * getEventType() const { return &typeid( *this ); };
     void setMsg( const char * const msg );
     virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
@@ -63,12 +62,13 @@ class uBaseEvent {
     const char * message() const { return msg; }
     const uBaseCoroutine & source() const { return *src; }
     const char * sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
+    void setSrc( uBaseCoroutine & coroutine );
     RaiseKind getRaiseKind() const { return raiseKind; }
     const void * getOriginalThrower() const { return staticallyBoundObject; }
     void reraise();
     virtual uBaseEvent * duplicate() const = 0;		// translator generated => object specific
-    virtual void defaultTerminate() const;
-    virtual void defaultResume() const;
+    virtual void defaultTerminate();
+    virtual void defaultResume();
 }; // uBaseEvent
 
 

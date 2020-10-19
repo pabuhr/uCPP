@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 10 15:08:22 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:03:02 2017
-// Update Count     : 43
+// Last Modified On : Sun Oct 18 23:32:02 2020
+// Update Count     : 54
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,6 +32,7 @@ using std::endl;
 
 const unsigned int NoOfTimes = 50000;
 
+uMutexLock sharedLock0;
 uOwnerLock sharedLock1;
 uAdaptiveLock<> sharedLock2;
 volatile uBaseTask *checkID;
@@ -121,8 +122,38 @@ _Task testerAL_TAR {
     }
 };
 
+_Task testerML_AR {
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    sharedLock0.acquire();
+	    checkID = &uThisTask();
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    yield();
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    sharedLock0.release();
+	    yield(2);
+	} // for
+    }
+};
+
+_Task testerML_TAR {
+    void main() {
+	for ( unsigned int i = 0; i < 100; i += 1 ) {
+	    while ( ! sharedLock0.tryacquire() ) yield();
+	    checkID = &uThisTask();
+	    yield();
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    yield();
+	    if ( checkID != &uThisTask() ) abort( "interference" );
+	    sharedLock0.release();
+	    yield(2);
+	} // for
+    }
+};
+
 class monitor {
     uOwnerLock lock;
+    uMutexLock m_lock;
     uCondLock cond1, cond2;
     unsigned int cnt;
   public:
@@ -175,15 +206,77 @@ class monitor {
 	lock.release();
 	lock.release();
     }
-    void mS() {
+    void mS() {						// same for both uMutexLock and uOwnerLock
 	cond1.signal();
     }
-    void mB() {
+    void mB() {						// same for both uMutexLock and uOwnerLock
 	cond1.broadcast();
+    }
+
+    // uMutexLock testing methods
+    void m_mS2W1() {
+	m_lock.acquire();
+	if ( ! cond2.empty() ) {
+	    cond2.signal();
+	    m_lock.release();
+	} else {
+	    cond1.wait( m_lock );
+	}
+    }
+    void m_mLS1W2() {
+	m_lock.acquire();
+	if ( ! cond1.empty() ) {
+	    cond1.signal();
+	    m_lock.release();
+	} else {
+	    cond2.wait( m_lock );
+	}
+    }
+    void m_mLB() {
+	m_lock.acquire();
+	cond1.broadcast();
+	m_lock.release();
+    }
+    void m_mLWSem() {
+	m_lock.acquire();
+	cnt += 1;
+	if ( cnt == 3 ) {
+	    start.V();
+	    cnt = 0;
+	}
+	cond1.wait( m_lock );
+    }
+    void m_mLW() {
+	m_lock.acquire();
+	cond1.wait( m_lock );
     }
 };
 
-_Task testerCL_S2W1 {
+_Task testerCL_S2W1_M {
+    monitor &m;
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    m.m_mS2W1();
+	    yield(2);
+	} // for
+    }
+  public:
+    testerCL_S2W1_M( monitor &m ) : m( m ) {}
+};
+
+_Task testerCL_S1W2_M {
+    monitor &m;
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    m.m_mLS1W2();
+	    yield(2);
+	} // for
+    }
+  public:
+    testerCL_S1W2_M( monitor &m ) : m( m ) {}
+};
+
+_Task testerCL_S2W1_O {
     monitor &m;
     void main() {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
@@ -192,10 +285,10 @@ _Task testerCL_S2W1 {
 	} // for
     }
   public:
-    testerCL_S2W1( monitor &m ) : m(m) {}
+    testerCL_S2W1_O( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_S1W2 {
+_Task testerCL_S1W2_O {
     monitor &m;
     void main() {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
@@ -204,10 +297,47 @@ _Task testerCL_S1W2 {
 	} // for
     }
   public:
-    testerCL_S1W2( monitor &m ) : m(m) {}
+    testerCL_S1W2_O( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_LB {
+_Task testerCL_LB_M {  
+    monitor &m;
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    start.P();
+	    m.m_mLB();
+	    yield(2);
+	} // for
+    }
+  public:
+    testerCL_LB_M( monitor &m ) : m( m ) {}
+};
+
+_Task testerCL_LWSem_M {
+    monitor &m;
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    m.m_mLWSem();
+	    yield(2);
+	} // for
+    }
+  public:
+    testerCL_LWSem_M( monitor &m ) : m( m ) {}
+};
+
+_Task testerCL_LW_M {
+    monitor &m;
+    void main() {
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    m.m_mLW();
+	    yield(2);
+	} // for
+    }
+  public:
+    testerCL_LW_M( monitor &m ) : m( m ) {}
+};
+
+_Task testerCL_LB_O {
     monitor &m;
     void main() {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
@@ -217,10 +347,10 @@ _Task testerCL_LB {
 	} // for
     }
   public:
-    testerCL_LB( monitor &m ) : m(m) {}
+    testerCL_LB_O( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_LWSem {
+_Task testerCL_LWSem_O {
     monitor &m;
     void main() {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
@@ -229,10 +359,10 @@ _Task testerCL_LWSem {
 	} // for
     }
   public:
-    testerCL_LWSem( monitor &m ) : m(m) {}
+    testerCL_LWSem_O( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_LW {
+_Task testerCL_LW_O {
     monitor &m;
     void main() {
 	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
@@ -241,10 +371,10 @@ _Task testerCL_LW {
 	} // for
     }
   public:
-    testerCL_LW( monitor &m ) : m(m) {}
+    testerCL_LW_O( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_S {
+_Task testerCL_S {					// same for both uMutexLock and uOwnerLock
     monitor &m;
     void main() {
 	for ( ;; ) {
@@ -256,10 +386,10 @@ _Task testerCL_S {
 	} // for
     }
   public:
-    testerCL_S( monitor &m ) : m(m) {}
+    testerCL_S( monitor &m ) : m( m ) {}
 };
 
-_Task testerCL_B {
+_Task testerCL_B {					// same for both uMutexLock and uOwnerLock
     monitor &m;
     void main() {
 	for ( ;; ) {
@@ -271,11 +401,25 @@ _Task testerCL_B {
 	} // for
     }
   public:
-    testerCL_B( monitor &m ) : m(m) {}
+    testerCL_B( monitor &m ) : m( m ) {}
 };
 
 int main() {
     uProcessor processor[1] __attribute__(( unused ));	// more than one processor
+#if 1
+    {							// test uMutexLock
+	testerML_AR t1[2] __attribute__(( unused ));
+	testerML_TAR t2[2] __attribute__(( unused ));
+
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+	    sharedLock0.acquire();
+	    uBaseTask::yield();
+	    sharedLock0.release();
+	    uBaseTask::yield( 2 );
+	} // for
+	}
+	cout << "completion uMutexLock test" << endl;
+#endif
 #if 1
     {							// test uOwnerLock
 	testerOL_AR t1[2] __attribute__(( unused ));
@@ -308,52 +452,101 @@ int main() {
 	monitor m;
 #if 1
 	{						// signal/wait
-	    testerCL_S2W1 t1( m );
-	    testerCL_S1W2 t2( m );
+	    testerCL_S2W1_M t1( m );
+	    testerCL_S1W2_M t2( m );
 	}
-	cout << "completion uCondLock test: signal/wait, locked signal" << endl;
+	cout << "completion uCondLock with uMutexLock test: signal/wait, locked signal" << endl;
+#endif
+#if 1
+	{						// signal/wait
+	    testerCL_S2W1_O t1( m );
+	    testerCL_S1W2_O t2( m );
+	}
+	cout << "completion uCondLock with uOwnerLock test: signal/wait, locked signal" << endl;
 #endif
 #if 1
 	{						// signal/wait
 	    const unsigned int N = 5;
 	    testerCL_S t1( m );
-	    testerCL_LW *ti[N];
+	    testerCL_LW_M *ti[N];
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
-		ti[i] = new testerCL_LW(m);
+			ti[i] = new testerCL_LW_M( m );
+	    } // for
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+			delete ti[i];
+	    } // for
+	}
+	cout << "completion uCondLock with uMutexLock test: signal/wait, unlocked signal" << endl;
+#endif
+#if 1
+	{						// signal/wait
+	    const unsigned int N = 5;
+	    testerCL_S t1( m );
+	    testerCL_LW_O *ti[N];
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+		ti[i] = new testerCL_LW_O( m );
 	    } // for
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
 		delete ti[i];
 	    } // for
 	}
-	cout << "completion uCondLock test: signal/wait, unlocked signal" << endl;
+	cout << "completion uCondLock with uOwnerLock test: signal/wait, unlocked signal" << endl;
 #endif
 #if 1
 	{						// broadcast/wait
 	    const unsigned int N = 3;
-	    testerCL_LB t1( m );
-	    testerCL_LWSem *ti[N];
+	    testerCL_LB_M t1( m );
+	    testerCL_LWSem_M *ti[N];
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
-		ti[i] = new testerCL_LWSem(m);
+		ti[i] = new testerCL_LWSem_M( m );
 	    } // for
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
 		delete ti[i];
 	    } // for
 	}
-	cout << "completion uCondLock test: broadcast/wait, locked broadcast" << endl;
+	cout << "completion uCondLock with uMutexLock test: broadcast/wait, locked broadcast" << endl;
+#endif
+#if 1
+	{						// broadcast/wait
+	    const unsigned int N = 3;
+	    testerCL_LB_O t1( m );
+	    testerCL_LWSem_O *ti[N];
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+		ti[i] = new testerCL_LWSem_O( m );
+	    } // for
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+		delete ti[i];
+	    } // for
+	}
+	cout << "completion uCondLock with uOwnerLock test: broadcast/wait, locked broadcast" << endl;
 #endif
 #if 1
 	{						// broadcast/wait
 	    const unsigned int N = 5;
 	    testerCL_B t1( m );
-	    testerCL_LW *ti[N];
+	    testerCL_LW_M *ti[N];
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
-		ti[i] = new testerCL_LW(m);
+		ti[i] = new testerCL_LW_M( m );
 	    } // for
 	    for ( unsigned int i = 0; i < N; i += 1 ) {
 		delete ti[i];
 	    } // for
 	}
-	cout << "completion uCondLock test: broadcast/wait, unlocked broadcast" << endl;
+	cout << "completion uCondLock with uMutexLock test: broadcast/wait, unlocked broadcast" << endl;
+#endif
+#if 1
+	{						// broadcast/wait
+	    const unsigned int N = 5;
+	    testerCL_B t1( m );
+	    testerCL_LW_O *ti[N];
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+		ti[i] = new testerCL_LW_O( m );
+	    } // for
+	    for ( unsigned int i = 0; i < N; i += 1 ) {
+		delete ti[i];
+	    } // for
+	}
+	cout << "completion uCondLock with uOwnerLock test: broadcast/wait, unlocked broadcast" << endl;
 #endif
     }
 }

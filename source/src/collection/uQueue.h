@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 17:35:59 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:55:02 2019
-// Update Count     : 116
+// Last Modified On : Sun Oct 18 11:46:43 2020
+// Update Count     : 120
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,11 +41,11 @@ template<typename T> class uQueue : public uCollection<T> {
   protected:
     using uCollection<T>::root;
 
-    T *last;						// last element, or 0 if queue is empty.
+    T * last;						// last element, or 0 if queue is empty.
   public:
     uQueue( const uQueue & ) = delete;			// no copy
     uQueue( uQueue && ) = delete;
-    uQueue &operator=( const uQueue & ) = delete;	// no assignment
+    uQueue & operator=( const uQueue & ) = delete;	// no assignment
 
     using uCollection<T>::empty;
     using uCollection<T>::head;
@@ -54,16 +54,16 @@ template<typename T> class uQueue : public uCollection<T> {
     inline uQueue() {					// post: isEmpty().
 	last = 0;
     }
-    inline T *tail() const {
+    inline T * tail() const {
 	return last;
     }
-    inline T *succ( T *n ) const {			// pre: *n in *this
+    inline T * succ( T * n ) const {			// pre: *n in *this
 #ifdef __U_DEBUG__
 	if ( ! n->listed() ) abort( "(uQueue &)%p.succ( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
 	return (uNext(n) == n) ? 0 : (T *)uNext(n);
     }							// post: n == tail() & succ(n) == 0 | n != tail() & *succ(n) in *this
-    void addHead( T *n ) {
+    void addHead( T * n ) {
 #ifdef __U_DEBUG__
 	if ( n->listed() ) abort( "(uQueue &)%p.addHead( %p ) : Node is already on another list.", this, n );
 #endif // __U_DEBUG__
@@ -75,7 +75,7 @@ template<typename T> class uQueue : public uCollection<T> {
 	    uNext(n) = n;				// last node points to itself
 	}
     }
-    void addTail( T *n ) {
+    void addTail( T * n ) {
 #ifdef __U_DEBUG__
 	if ( n->listed() ) abort( "(uQueue &)%p.addTail( %p ) : Node is already on another list.", this, n );
 #endif // __U_DEBUG__
@@ -84,11 +84,11 @@ template<typename T> class uQueue : public uCollection<T> {
 	last = n;
 	uNext(n) = n;					// last node points to itself
     }
-    inline void add( T *n ) {
+    inline void add( T * n ) {
 	addTail( n );
     }
-    T *dropHead() {
-	T *t = head();
+    T * dropHead() {
+	T * t = head();
 	if (root) {
 	    root = (T *)uNext(root);
 	    if (root == t) {
@@ -98,19 +98,19 @@ template<typename T> class uQueue : public uCollection<T> {
 	}
 	return t;
     }
-    inline T *drop() {
+    inline T * drop() {
 	return dropHead();
     }
-    inline T *dropTail() {				// O(n)
-	T *n = tail();
+    inline T * dropTail() {				// O(n)
+	T * n = tail();
 	return n ? remove( n ), n : 0;
     }
-    void remove( T *n ) {				// O(n)
+    void remove( T * n ) {				// O(n)
 #ifdef __U_DEBUG__
 	if ( ! n->listed() ) abort( "(uQueue &)%p.remove( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
-	T *prev = 0;
-	T *curr = root;
+	T * prev = 0;
+	T * curr = root;
 	for ( ;; ) {
 	    if (n == curr) {				// found => remove
 		if (root == n) {
@@ -133,7 +133,7 @@ template<typename T> class uQueue : public uCollection<T> {
 	}
     }							// post: !n->listed().
     // Transfer the "from" list to the end of this sequence; the "from" list is empty after the transfer.
-    void transfer( uQueue<T> &from ) {
+    void transfer( uQueue<T> & from ) {
 	if ( from.empty() ) return;			// "from" list empty ?
 	if ( empty() ) {				// "to" list empty ?
 	    root = from.root;
@@ -145,7 +145,7 @@ template<typename T> class uQueue : public uCollection<T> {
     }
     // Transfer the "from" list up to node "n" to the end of this list; the "from" list becomes the list after node "n".
     // Node "n" must be in the "from" list.
-    void split( uQueue<T> &from, T *n ) {
+    void split( uQueue<T> & from, T * n ) {
 #ifdef __U_DEBUG__
 	if ( ! n->listed() ) abort( "(uQueue &)%p.split( %p ) : Node is not on a list.", this, n );
 #endif // __U_DEBUG__
@@ -170,20 +170,24 @@ template<typename T> class uQueue : public uCollection<T> {
 template<typename T> class uQueueIter : public uColIter<T> {
   protected:
     using uColIter<T>::curr;
+    using uColIter<T>::uNext;
   public:
     uQueueIter():uColIter<T>() {}			// post: elts = null.
     // Create an iterator active in queue q.
-    inline uQueueIter( const uQueue<T> &q ) {		// post: elts = {e in q}.
+    uQueueIter( const uQueue<T> & q ) {			// post: elts = {e in q}.
 	curr = q.head();
+    }
+    uQueueIter( T * start ) {				// post: elts = {e in q}.
+	curr = start;
     }
     // Make the iterator active in queue q.
-    inline void over( const uQueue<T> &q ) {		// post: elts = {e in q}.
+    void over( const uQueue<T> & q ) {			// post: elts = {e in q}.
 	curr = q.head();
     }
-    bool operator>>( T *&tp ) {
+    bool operator>>( T *& tp ) {
 	if (curr) {
 	    tp = curr;
-	    T *n = (T *)uNext(curr);
+	    T * n = (T *)uNext(curr);
 	    curr = (n == curr) ? 0 : n;
 	} else tp = 0;
 	return tp != 0;

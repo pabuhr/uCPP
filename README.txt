@@ -89,8 +89,9 @@ MANUAL uC++ BUILD
     the top level make file.
 
   * Type "make xxx", where xxx is one of the listed configurations, e.g.,
-    "make sun-sparc" to configure for a SUN Sparc running Solaris. A CONFIG
-    file is created and all Makefiles are modified with appropriate path names.
+    "make linux-x86_64" to configure for a 64-bit x86 processor running linux.
+    A CONFIG file is created and all Makefiles are modified with appropriate
+    path names.
 
   * Type "make install" to compile and install uC++. To compile and install
     separately, type "make" to compile uC++ and then "make install" to move the

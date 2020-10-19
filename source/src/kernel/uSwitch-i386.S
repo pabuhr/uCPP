@@ -1,4 +1,3 @@
-//                               -*- Mode: Asm -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct  9 11:46:38 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 15:26:11 2017
-// Update Count     : 36
+// Last Modified On : Sun Sep  6 18:23:34 2020
+// Update Count     : 38
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,28 +23,30 @@
 // along  with this library.
 // 
 
-// This context switch routine depends on the fact that the stack of a new
-// thread has been set up to look like the thread has saved its context in
-// the normal manner.
-//
-// void uSwitch( uMachContext *from, uMachContext *to );
+// The context switch routine requires the initial the stack of a thread to
+// look like the thread has saved its context in the normal manner.
 
-// Offsets in the context structure. This needs to be synchronized with the
-// high level code a little better.
+// Offsets must synchronized with the uMachContext::uContext_t in uC++.h.
 
 #define PTR_BYTE	4
 #define SP_OFFSET	( 0 * PTR_BYTE )
 #define FP_OFFSET	( 1 * PTR_BYTE )
-#define PC_OFFSET	( 2 * PTR_BYTE )
+//#define PC_OFFSET	( 2 * PTR_BYTE ) debugger
 
-.text
+// Context switch between coroutines/tasks.
+//   void uSwitch( uMachContext::uContext_t * from, uMachContext::uContext_t * to );
+// Arguments "from" in register 4(%esp), "to" in register 28(%esp)
+
+	.file "uSwitch-i386.S"
+	.text
 	.align 2
-.globl	uSwitch
+	.global uSwitch
+	.type uSwitch, @function
 uSwitch:
 
-	// Copy the "from" context argument from the stack to register eax Return
-	// address is at 0(%esp), with parameters following.
-	
+	// Copy the "from" context argument from the stack to register eax
+	// Return address is at 0(%esp), with parameters following.
+
 	movl 4(%esp),%eax
 
 	// Save volatile registers on the stack.
@@ -65,15 +66,15 @@ uSwitch:
 //	movl %ebx,PC_OFFSET(%eax)
 
 	// Copy the "to" context argument from the stack to register eax. Having
-	// pushed 5 words (= 20 bytes) on the stack (see FakeStack), the argument
-	// is now at 8 + 20 = 28(%esp).
+	// pushed 5 words (= 20 bytes) on the stack, the argument is now at
+	// 8 + 20 = 28(%esp).
 
 	movl 28(%esp),%eax
 
 	// Load new context from the "to" area.
 
-	movl FP_OFFSET(%eax),%ebp
 	movl SP_OFFSET(%eax),%esp
+	movl FP_OFFSET(%eax),%ebp
 
 	// Load volatile registers from the stack.
 
@@ -87,6 +88,7 @@ uSwitch:
 	// Return to thread.
 
 	ret
+	.size uSwitch, .-uSwitch
 
 // Local Variables: //
 // compile-command: "make install" //

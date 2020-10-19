@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 11 20:30:58 2019
-// Update Count     : 622
+// Last Modified On : Fri Feb  7 09:46:40 2020
+// Update Count     : 623
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -131,7 +131,7 @@ void uCluster::processorPause() {
 void uCluster::makeProcessorIdle( uProcessor &processor ) {
     assert( readyIdleTaskLock.value != 0 );		// readyIdleTaskLock must be acquired
     idleProcessorsCnt += 1;
-    idleProcessors.addTail( &(processor.idleRef) );
+    idleProcessors.addHead( &(processor.idleRef) );	// stack to keep processors warm
 } // uCluster::makeProcessorIdle
 
 
