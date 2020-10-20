@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Oct 19 15:42:41 2020
-%% Update Count     : 8139
+%% Last Modified On : Tue Oct 20 18:34:53 2020
+%% Update Count     : 8141
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -10321,9 +10321,9 @@ Routine %(uDefaultMmapStart%) returns the division point after which allocation 
 \uC comes configured to run on any of the following platforms (single and multiple processor):
 \begin{itemize}[parsep=0pt,itemsep=0pt]
 \item
-linux-x86\_32 : Linux 2.4.x or greater, AMD/Intel 32-bit
+linux-x86\_32 : Linux 4.x.x or greater, AMD/Intel 32-bit
 \item
-linux-x86\_64 : Linux 2.4.x or greater, AMD/Intel 64-bit
+linux-x86\_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
 % \item
 % linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
 % \item
@@ -10331,7 +10331,7 @@ linux-x86\_64 : Linux 2.4.x or greater, AMD/Intel 64-bit
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
 \end{itemize}
-\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-4.9.0 or greater.
+\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-6.0.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)} flag.
 \Emph{\uC does NOT compile using other compilers or operating systems.}

@@ -1,0 +1,63 @@
+(*ANNOUNCEMENT*.
+
+Version 7.0.0 of uC++ (pronounced micro-C++) is an extended C++ providing
+light-weight concurrency on uniprocessor and multiprocessor computers running
+the UNIX operating system.  uC++ extends C++ in somewhat the same way that C++
+extends C.  The extensions introduce new objects that augment the existing
+control flow facilities and provide concurrency.  uC++ provides both direct and
+indirect communication using the traditional routine call mechanism.  All
+aspects of uC++ are statically type-checked.  Furthermore, uC++ provides
+mechanisms for precisely controlling the order in which requests are serviced
+and for postponing work on already-accepted requests.
+
+
+*NEW FEATURES*
+
+0. fixed a number of bugs and removed warnings
+1. add uMutexLock and update uCondLock to support uMutexLock
+2. updates and cleanup of python gdb commands for uC++
+3. task forwards unhandled exception to joiner task via UnhandledException
+4. add allocation routines aalloc, resize, amemalign; add realloc with alignment
+5. abort when out of memory, return 0p for zero size allocation request
+6. add call to defaultTerminate() before forwarding UnhandledException
+7. replace malloc_dimension with malloc_size
+8. add coroutine actor
+9. add actor promise, promise message, and trace messages
+10. add _ResumeTop for algebraic effects with bidirectional resumption control-flow
+11. support g++-10
+12. turn on build STATISTICS
+13. replace uThisProcessor().getClock().getTime() with uClock::currTime()
+
+*REQUIREMENTS*
+
+uC++ requires at least:
+
+  * g++-6 or greater. uC++ does NOT compile using other compilers or operating
+    systems.
+
+  * gmake-3.79.1 or greater, which is available by anonymous ftp from any FSF
+    mirror site.
+
+
+*FTP SITE*
+
+Version 7.0.0 of uC++ can be obtained by one of:
+
+  $ git clone https://github.com/pabuhr/uCPP.git
+  $ wget http://plg.uwaterloo.ca/~usystem/pub/uSystem/u++-7.0.0.sh
+
+See the README file for instructions on building and installing.
+
+
+*PORTABILITY*
+
+uC++ comes configured to run on the following platforms (single and multiple
+processor):
+
+	linux-x86_32 : Linux 4.x.x or greater, AMD/Intel 32-bit
+	linux-x86_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
+
+*PAPERS*
+
+See http://plg.uwaterloo.ca/~usystem/uC++.html for additional information,
+papers and updates.

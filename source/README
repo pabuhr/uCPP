@@ -5,7 +5,7 @@ REQUIREMENTS
 
 uC++ requires at least:
 
-  * g++-4.9 or greater. uC++ does NOT compile using other compilers or operating systems.
+  * g++-6.0 or greater. uC++ does NOT compile using other compilers or operating systems.
 
   * gmake-3.79.1 or greater, which is available by anonymous ftp from any FSF mirror
     site. (All instructions below assume the "make" command is "gmake".)
