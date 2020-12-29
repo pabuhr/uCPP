@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jul 28 14:42:29 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:07:16 2019
-// Update Count     : 44
+// Last Modified On : Mon Nov 16 08:49:52 2020
+// Update Count     : 47
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -45,19 +45,21 @@ namespace std {
 	typedef typename streamtype::char_type char_type;
 	typedef typename streamtype::traits_type traits_type;
 
-	streamtype &lockedStream;
+	streamtype & lockedStream;
 
-	basic_acquire( const basic_acquire & );
-	basic_acquire &operator=( const basic_acquire & );
+	basic_acquire( const basic_acquire & ) = delete; // no copy
+	basic_acquire( basic_acquire && ) = delete;
+	basic_acquire & operator=( const basic_acquire & ) = delete; // no assignment
+	basic_acquire & operator=( basic_acquire && ) = delete;
       public:
-	basic_acquire( streamtype &ios ) : lockedStream( ios ) {
+	basic_acquire( streamtype & ios ) : lockedStream( ios ) {
 #ifdef __U_DEBUG__
-	    filebuf *buf = dynamic_cast<filebuf *>( ios.rdbuf() );
+	    filebuf * buf = dynamic_cast<filebuf *>( ios.rdbuf() );
 	    if ( buf == nullptr ) {
 		abort( "Attempt to acquire mutual exclusion for a non-concurrent stream." );
 	    } // if
 #else
-	    filebuf *buf = (filebuf *)ios.rdbuf();
+	    filebuf * buf = (filebuf *)ios.rdbuf();
 #endif // __U_DEBUG__
 	    buf->ownerlock.acquire();
 	} // basic_acquire

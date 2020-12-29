@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 16 22:56:44 2020
-// Update Count     : 291
+// Last Modified On : Wed Nov 11 20:43:00 2020
+// Update Count     : 305
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -323,11 +323,11 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 	const char * args[argc + 100];						// leave space for 100 additional u++ command line values
 	int nargs = 1;										// number of arguments in args list; 0 => command name
-	const char * uargs[20];								// leave space for 20 additional u++-cpp command line values
-	int nuargs = 1;										// 0 => command name
+	const char * cargs[20];								// leave space for 20 additional u++-cpp command line values
+	int ncargs = 1;										// 0 => command name
 
 	uDEBUGPRT( cerr << "Stage2" << endl; );
-	checkEnv2( uargs, nuargs );							// arguments passed via environment variables
+	checkEnv2( cargs, ncargs );							// arguments passed via environment variables
 	uDEBUGPRT(
 		for ( int i = 1; i < argc; i += 1 ) {
 			cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
@@ -358,12 +358,12 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 			} else if ( arg == "-D__U_PROFILE__" || arg == "-D__U_STD_CPP11__" ) {
 				args[nargs++] = argv[i];				// pass the flag to cpp
-				uargs[nuargs++] = argv[i];				// pass the flag to upp
+				cargs[ncargs++] = argv[i];				// pass the flag to upp
 			} else if ( arg == "-D" && ( string( argv[i + 1] ) == "__U_PROFILE__" || string( argv[i + 1] ) == "__U_STD_CPP11__" ) ) {
 				args[nargs++] = argv[i];				// pass flag to cpp
 				args[nargs++] = argv[i + 1];			// pass argument to cpp
-				uargs[nuargs++] = argv[i];				// pass flag to upp
-				uargs[nuargs++] = argv[i + 1];			// pass argument to upp
+				cargs[ncargs++] = argv[i];				// pass flag to upp
+				cargs[ncargs++] = argv[i + 1];			// pass argument to upp
 				i += 1;									// and argument
 
 				// all other flags
@@ -435,29 +435,29 @@ static void Stage2( const int argc, const char * const * argv ) {
 	// output.  Otherwise, run the u++-cpp preprocessor on the temporary file and save the result into the output file.
 
 	if ( fork() == 0 ) {								// child runs uC++ preprocessor
-		uargs[0] = ( *new string( bprefix + "u++-cpp" ) ).c_str();
-		uargs[nuargs++] = cpp_in;
+		cargs[0] = ( *new string( bprefix + "u++-cpp" ) ).c_str();
+		cargs[ncargs++] = cpp_in;
 
 		if ( UPP_flag ) {								// run u++-cpp ?
 			if ( o_file.size() != 0 ) {					// location for output
-				uargs[nuargs++] = ( *new string( o_file.c_str() ) ).c_str();
+				cargs[ncargs++] = ( *new string( o_file.c_str() ) ).c_str();
 			} // if
 		} else {
-			uargs[nuargs++] = upp_cpp_out.c_str();
+			cargs[ncargs++] = upp_cpp_out.c_str();
 		} // if
 
-		uargs[nuargs] = nullptr;						// terminate argument list
+		cargs[ncargs] = nullptr;						// terminate argument list
 
 		uDEBUGPRT(
-			for ( int i = 0; uargs[i] != nullptr; i += 1 ) {
-				cerr << uargs[i] << " ";
+			for ( int i = 0; cargs[i] != nullptr; i += 1 ) {
+				cerr << cargs[i] << " ";
 			} // for
 			cerr << endl;
 		);
 
-		execvp( uargs[0], (char * const *)uargs );		// should not return
+		execvp( cargs[0], (char * const *)cargs );		// should not return
 		perror( "CC1plus Translator error: stage 2 u++-cpp, execvp" );
-		cerr << " invoked " << uargs[0] << endl;
+		cerr << " invoked " << cargs[0] << endl;
 		exit( EXIT_FAILURE );
 	} // if
 

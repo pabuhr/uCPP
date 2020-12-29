@@ -7,8 +7,8 @@
 // Author           : Glen Ditchfield
 // Created On       : Sun Feb 13 14:18:43 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 29 17:28:19 2020
-// Update Count     : 109
+// Last Modified On : Sun Nov 22 11:20:10 2020
+// Update Count     : 112
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,12 +33,12 @@
 class uColable {
     friend class uCFriend;
 
-    uColable * next;					// Next node in the list.
-    // class invariant: (next != 0) <=> listed().
+    uColable * next;					// next node in the list
+    // class invariant: (next != 0) <=> listed()
   public:
     inline uColable() {
 	next = 0;
-    }							// post: ! listed().
+    }							// post: ! listed()
     // Return true iff *this is an element of any collection.
     inline bool listed() const {			// pre:  this != 0
 	return next != 0;
@@ -68,17 +68,18 @@ class uCFriend {
 
 template<typename T> class uCollection : protected uCFriend {
   protected:
-    T * root;						// Pointer to root element of list.
+    T * root;						// pointer to root element of list
     // class invariant: root == 0 & empty() | *root in *this
   public:
     uCollection( const uCollection & ) = delete;	// no copy
     uCollection( uCollection && ) = delete;
     uCollection & operator=( const uCollection & ) = delete; // no assignment
+    uCollection & operator=( uCollection && ) = delete;
 
     inline uCollection() {	
 	root = 0;
-    }							// post: empty().
-    inline bool empty() const {				// 0 <=> *this contains no elements.
+    }							// post: empty()
+    inline bool empty() const {				// 0 <=> *this contains no elements
 	return root == 0;
     }
     inline T * head() const {
@@ -113,11 +114,11 @@ template<typename T> class uCollection : protected uCFriend {
 
 template<typename T> class uColIter : protected uCFriend {
   protected:
-    T * curr;						// Element to be returned by >>.
+    T * curr;						// element to be returned by >>
   public:
     inline uColIter() {
 	curr = 0;
-    }							// post: elts = null.
+    }							// post: elts = null
     bool operator>>( T *& tp ) {
 	tp = 0;
 	return 0;

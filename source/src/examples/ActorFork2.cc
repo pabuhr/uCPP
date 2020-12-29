@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jan 11 08:18:18 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  2 21:25:52 2019
-// Update Count     : 13
+// Last Modified On : Sun Nov  1 23:33:17 2020
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -101,10 +101,10 @@ int main( int argc, char *argv[] ) {
 
     PRT( cout << "MaxLevel " << MaxLevel << endl; )
     MaxLevel -= 1;					// decrement to handle created leaves
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     root = new Fork();
     *root | uActor::startMsg;
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
     cout << ((2 << MaxLevel) - 1) << " actors created" << endl;
 } // main
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 18 21:52:47 2020
-// Update Count     : 978
+// Last Modified On : Thu Nov 12 13:51:09 2020
+// Update Count     : 1000
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -334,10 +334,16 @@ class uActor {
     uActor( const uActor & ) = delete;			// no copy
     uActor( uActor && ) = delete;
     uActor & operator=( const uActor & ) = delete;	// no assignment
+    uActor & operator=( uActor && ) = delete;
 
-    uActor() : ticket( executor->tickets() ) {		// get executor queue handle
+    uActor() {
+	uDEBUG(
+	    if ( ! executor ) {
+		abort( "Creating actor before calling uActor::start()." );
+	    } // if
+	);
+	ticket = executor->tickets();			// get executor queue handle
 	uFetchAdd( alive_, 1 );				// number of actors in system
-	uDEBUG( if ( ! executor ) { abort( "Attempt to create actor but no actor executor exists.\nPossible cause is not calling uActorStart() or calling it to late." ); } );
 	//printf( "actor %p ticket %ld processor %p\n", this, ticket, &uThisProcessor() );
 
 	// Once an actor is allocated it must be sent a message or the actor system cannot stop. Hence, its receive
@@ -408,20 +414,38 @@ class uActor {
     // Administration
 
     // use processors on current cluster
-    #define uActorStart() uExecutor __uExecutor__( 0, uThisCluster().getProcessors(), false, -1 ); uActor::start( __uExecutor__ )
-    static void start( uExecutor & executor ) {		// wait for all actors to terminate or timeout
-	assert( ! uActor::executor );
-	uActor::executor = &executor;
+    #define uActorStart() uActor::start()		  // deprecated
+    static void start( uExecutor * executor = nullptr ) { // create executor to run actors
+	uDEBUG(
+	    if ( uActor::executor ) {
+		abort( "Duplicate call to uActor::start()." );
+	    } // if
+	);
+	if ( ! executor ) {
+	    uActor::executor = new uExecutor( 0, uThisCluster().getProcessors(), false, -1 );
+	} else {
+	    uActor::executor = executor;
+	} // if
     } // uActor::start
 
-    #define uActorStop() uActor::stop()
+    #define uActorStop() uActor::stop()			// deprecated
     static bool stop( uDuration duration = 0 ) {	// wait for all actors to terminate or timeout
+	uDEBUG(
+	    if ( ! uActor::executor ) {
+		abort( "Calling uActor::stop before calling uActor::start()." );
+	    } // if
+	);
+
 	bool stopped = true;
-	if ( duration == 0 ) {				// optimization
-	    uActor::wait_.P();
-	} else {
-	    stopped = uActor::wait_.P( duration );	// true => Ved, false => timeout
+	if ( alive_ != 0 ) {				// actors running ?
+	    if ( duration == 0 ) {			// optimization
+		uActor::wait_.P();
+	    } else {
+		stopped = uActor::wait_.P( duration );	// true => Ved, false => timeout
+	    } // if
 	} // if
+
+	delete uActor::executor;
 	uActor::executor = nullptr;
 	return stopped;					// true => stop, false => timeout
     } // uActor::stop

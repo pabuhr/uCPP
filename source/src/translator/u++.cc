@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 16 22:59:41 2020
-// Update Count     : 1014
+// Last Modified On : Mon Nov 16 08:34:00 2020
+// Update Count     : 1023
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -90,7 +90,7 @@ int main( int argc, char * argv[] ) {
 	} // if
 
 	string installincdir( INSTALLINCDIR );				// fixed location of include files
-	string installlibdir( INSTALLLIBDIR );				// fixed location of the cc1 and cfa-cpp commands
+	string installlibdir( INSTALLLIBDIR );				// fixed location of the cc1 and u++-cpp commands
 
 	string tvendor( TVENDOR );
 	string tos( TOS );
@@ -98,7 +98,7 @@ int main( int argc, char * argv[] ) {
 
 	string Multi( MULTI );
 
-	string heading;										// banner printed at start of cfa compilation
+	string heading;										// banner printed at start of u++ compilation
 	string arg;											// current command-line argument during command-line parsing
 	string bprefix;										// path where g++ looks for compiler steps
 	string langstd;										// language standard
@@ -121,6 +121,7 @@ int main( int argc, char * argv[] ) {
 	bool openmp = false;								// -openmp flag
 	bool profile = false;								// -profile flag
 	bool exact = true;									// profile type: exact | statistical
+	int o_file = 0;										// -o filename position
 
 	const char * args[argc + 100];						// u++ command line values, plus some space for additional flags
 	int sargs = 1;										// starting location for arguments in args list
@@ -165,13 +166,14 @@ int main( int argc, char * argv[] ) {
 				i += 1;
 				if ( i == argc ) continue;				// next argument available ?
 				args[nargs++] = argv[i];				// pass argument along
+				if ( arg == "-o" ) o_file = i;			// remember file
 
 				// uC++ specific arguments
 
 			} else if ( arg == "-U++" ) {
 				upp_flag = true;						// strip the -U++ flag
 				link = false;
-				args[nargs++] = "-E";					// replace the argument with -E
+				args[nargs++] = "-fsyntax-only";		// stop after stage 2
 			} else if ( arg == "-debug" ) {
 				debug = true;							// strip the debug flag
 			} else if ( arg == "-nodebug" ) {
@@ -215,7 +217,7 @@ int main( int argc, char * argv[] ) {
 				args[nargs++] = argv[i];				// pass flag along
 			} else if ( arg == "-save-temps" ) {
 				args[nargs++] = argv[i];				// pass flag along
-				Putenv( argv, arg );					// save cfa-cpp output
+				Putenv( argv, arg );					// save u++-cpp output
 			} else if ( prefix( arg, "-x" ) ) {			// file suffix ?
 				string lang;
 				args[nargs++] = argv[i];				// pass flag along
@@ -312,10 +314,10 @@ int main( int argc, char * argv[] ) {
 		cerr << endl;
 	);
 
-	// -E flag stops at cc1 stage 1, so cfa-cpp in cc1 stage 2 is never executed.
+	// -E flag stops at cc1 stage 1, so u++-cpp in cc1 stage 2 is never executed.
 	if ( cpp_flag && upp_flag ) {
 		upp_flag = false;
-		cerr << argv[0] << " warning, both -E and -CFA flags specified, using -E and ignoring -CFA." << endl;
+		cerr << argv[0] << " warning, both -E and -U++ flags specified, using -E and ignoring -U++." << endl;
 	} // if
 
 	string d;
@@ -565,7 +567,8 @@ int main( int argc, char * argv[] ) {
 	} // if
 
 	if ( upp_flag ) {
-		args[nargs++] = "-D__U_UPP__";
+		Putenv( argv, "-UPP" );
+		if ( o_file ) Putenv( argv, string( "-o=" ) + argv[o_file] );
 	} // if
 
 	if ( multi ) {

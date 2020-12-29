@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 18 20:29:02 2020
-// Update Count     : 5995
+// Last Modified On : Thu Nov 12 13:48:32 2020
+// Update Count     : 6001
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -329,7 +329,8 @@ namespace UPP {
 
 	uSigHandlerModule( const uSigHandlerModule & ) = delete; // no copy
 	uSigHandlerModule( uSigHandlerModule && ) = delete;
-	uSigHandlerModule &operator=( const uSigHandlerModule & ) = delete; // no assignment
+	uSigHandlerModule & operator=( const uSigHandlerModule & ) = delete; // no assignment
+	uSigHandlerModule & operator=( uSigHandlerModule && ) = delete;
 
 	uSigHandlerModule();
       public:
@@ -634,7 +635,8 @@ class uBaseSpinLock {					// non-yielding spinlock
   public:
     uBaseSpinLock( const uBaseSpinLock & ) = delete;	// no copy
     uBaseSpinLock( uBaseSpinLock && ) = delete;
-    uBaseSpinLock &operator=( const uBaseSpinLock & ) = delete;	// no assignment
+    uBaseSpinLock & operator=( const uBaseSpinLock & ) = delete; // no assignment
+    uBaseSpinLock & operator=( uBaseSpinLock && ) = delete;
 
     uBaseSpinLock() {
 #ifdef __U_STATISTICS__
@@ -675,7 +677,8 @@ class uCSpinLock {
   public:
     uCSpinLock( const uCSpinLock & ) = delete;		// no copy
     uCSpinLock( uCSpinLock && ) = delete;
-    uCSpinLock &operator=( const uCSpinLock & ) = delete; // no assignment
+    uCSpinLock & operator=( const uCSpinLock & ) = delete; // no assignment
+    uCSpinLock & operator=( uCSpinLock && ) = delete;
 
     uCSpinLock( uSpinLock &spinLock ) : spinLock( spinLock ) {
 	spinLock.acquire();
@@ -696,7 +699,8 @@ class uLock {						// yielding spinlock
   public:
     uLock( const uLock & ) = delete;			// no copy
     uLock( uLock && ) = delete;
-    uLock &operator=( const uLock & ) = delete;		// no assignment
+    uLock & operator=( const uLock & ) = delete;	// no assignment
+    uLock & operator=( uLock && ) = delete;
 
     uLock() {
 	value = 1;
@@ -838,7 +842,8 @@ class uMutexLock {
   public:
     uMutexLock( const uMutexLock & ) = delete;          // no copy
     uMutexLock( uMutexLock && ) = delete;
-    uMutexLock &operator=( const uMutexLock & ) = delete; // no assignment
+    uMutexLock & operator=( const uMutexLock & ) = delete; // no assignment
+    uMutexLock & operator=( uMutexLock && ) = delete;
 
     uMutexLock() {
 #ifdef __U_STATISTICS__
@@ -879,7 +884,8 @@ class uOwnerLock : public uMutexLock {
   public:
     uOwnerLock( const uOwnerLock & ) = delete;		// no copy
     uOwnerLock( uOwnerLock && ) = delete;
-    uOwnerLock &operator=( const uOwnerLock & ) = delete; // no assignment
+    uOwnerLock & operator=( const uOwnerLock & ) = delete; // no assignment
+    uOwnerLock & operator=( uOwnerLock && ) = delete;
 
     uOwnerLock() {
 #ifdef __U_STATISTICS__
@@ -935,7 +941,8 @@ class uCondLock {
   public:
     uCondLock( const uCondLock & ) = delete;		// no copy
     uCondLock( uCondLock && ) = delete;
-    uCondLock &operator=( const uCondLock & ) = delete;	// no assignment
+    uCondLock & operator=( const uCondLock & ) = delete; // no assignment
+    uCondLock & operator=( uCondLock && ) = delete;
 
     uCondLock() {
 #ifdef __U_STATISTICS__
@@ -1000,7 +1007,8 @@ namespace UPP {
       public:
 	uSemaphore( const uSemaphore & ) = delete;	// no copy
 	uSemaphore( uSemaphore && ) = delete;
-	uSemaphore &operator=( const uSemaphore & ) = delete; // no assignment
+	uSemaphore & operator=( const uSemaphore & ) = delete; // no assignment
+	uSemaphore & operator=( uSemaphore && ) = delete;
 
 	uSemaphore( int count = 1 ) : count( count ) {
 #ifdef __U_STATISTICS__
@@ -1183,7 +1191,8 @@ namespace UPP {
       public:
 	uMachContext( const uMachContext & ) = delete;	// no copy
 	uMachContext( uMachContext && ) = delete;
-	uMachContext &operator=( uMachContext & ) = delete; // no assignment
+	uMachContext & operator=( const uMachContext & ) = delete; // no assignment
+	uMachContext & operator=( uMachContext && ) = delete;
 
 	uMachContext( unsigned int stackSize ) {
 	    // stack storage provides a minimum of stackSize memory for the stack plus ancillary storage
@@ -1428,7 +1437,8 @@ class uBaseCoroutine : public UPP::uMachContext {
   public:
     uBaseCoroutine( const uBaseCoroutine & ) = delete;	// no copy
     uBaseCoroutine( uBaseCoroutine && ) = delete;
-    uBaseCoroutine &operator=( const uBaseCoroutine & ) = delete; // no assignment
+    uBaseCoroutine & operator=( const uBaseCoroutine & ) = delete; // no assignment
+    uBaseCoroutine & operator=( uBaseCoroutine && ) = delete;
 
     uBaseCoroutine();
 
@@ -1894,7 +1904,8 @@ class uBaseTask : public uBaseCoroutine {
   public:
     uBaseTask( const uBaseTask & ) = delete;		// no copy
     uBaseTask( uBaseTask && ) = delete;
-    uBaseTask &operator=( const uBaseTask & ) = delete;	// no assignment
+    uBaseTask & operator=( const uBaseTask & ) = delete; // no assignment
+    uBaseTask & operator=( uBaseTask && ) = delete;
 
     uBaseTask() : clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
 	createTask( uThisCluster() );
@@ -2111,7 +2122,8 @@ namespace UPP {
       public:
 	uSerial( const uSerial & ) = delete;		// no copy
 	uSerial( uSerial && ) = delete;
-	uSerial &operator=( const uSerial & ) = delete;	// no assignment
+	uSerial & operator=( const uSerial & ) = delete; // no assignment
+	uSerial & operator=( uSerial && ) = delete;
 
 	uSerial( uBasePrioritySeq &entryList );
 	~uSerial();
@@ -2309,7 +2321,8 @@ class uCondition {
   public:
     uCondition( const uCondition & ) = delete;		// no copy
     uCondition( uCondition && ) = delete;
-    uCondition &operator=( const uCondition & ) = delete; // no assignment
+    uCondition & operator=( const uCondition & ) = delete; // no assignment
+    uCondition & operator=( uCondition && ) = delete;
 
     uCondition() : owner( nullptr ) {
     } // uCondition::uCondition
@@ -2593,7 +2606,8 @@ class uProcessor {
   public:
     uProcessor( const uProcessor & ) = delete;		// no copy
     uProcessor( uProcessor && ) = delete;
-    uProcessor &operator=( const uProcessor & ) = delete; // no assignment
+    uProcessor & operator=( const uProcessor & ) = delete; // no assignment
+    uProcessor & operator=( uProcessor && ) = delete;
 
     uProcessor( unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
     uProcessor( bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
@@ -2773,7 +2787,8 @@ class uCluster {
   public:
     uCluster( const uCluster & ) = delete;		// no copy
     uCluster( uCluster && ) = delete;
-    uCluster &operator=( const uCluster & ) = delete;	// no assignment
+    uCluster & operator=( const uCluster & ) = delete;	// no assignment
+    uCluster & operator=( uCluster && ) = delete;
 
     uCluster( unsigned int stackSize = uDefaultStackSize(), const char *name = "*unnamed*" );
     uCluster( const char *name );
@@ -2904,7 +2919,8 @@ _Task uPthreadable {					// abstract class (inheritance only)
 
     // uPthreadable( const uPthreadable & ) = delete;	// no copy
     // uPthreadable( uPthreadable && ) = delete;
-    // uPthreadable &operator=( const uPthreadable & ) = delete; // no assignment
+    // uPthreadable & operator=( const uPthreadable & ) = delete; // no assignment
+    // uPthreadable & operator=( uPthreadable && ) = delete;
     void createPthreadable( const pthread_attr_t *attr_ = nullptr );
 
     static Pthread_attr_t *&get( const pthread_attr_t *attr ) {

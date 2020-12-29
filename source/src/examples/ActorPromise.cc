@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:37 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 17 11:57:17 2020
-// Update Count     : 702
+// Last Modified On : Sun Nov  1 23:34:41 2020
+// Update Count     : 703
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -193,7 +193,7 @@ int main() {
 
     Server * server;
     for ( unsigned int t  = 0; t < Times; t += 1 ) {
-	uActorStart();					// wait for all actors to terminate
+	uActor::start();				// wait for all actors to terminate
 
 	for ( unsigned int s = 0; s < NoOfServers; s += 1 ) {
 	    server = new Server( NoOfClients );
@@ -202,7 +202,7 @@ int main() {
 	    } // for
 	} // for
 
-	uActorStop();					// wait for all actors to terminate
+	uActor::stop();					// wait for all actors to terminate
     } // for
     // malloc_stats();
     // UPP::Statistics::print();

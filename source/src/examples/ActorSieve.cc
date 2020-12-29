@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 08:43:16 2020
-// Update Count     : 15
+// Last Modified On : Sun Nov  1 23:35:26 2020
+// Update Count     : 16
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -104,9 +104,9 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_FAILURE );
     } // try
 
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     new Sieve( Max );
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 17 11:58:26 2020
-// Update Count     : 31
+// Last Modified On : Sun Nov  1 23:35:09 2020
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,7 +76,7 @@ int main() {
     enum { NoOfMsgs = 10 };
     uActor::Promise< int > pi[NoOfMsgs];
 
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     Restart *restart = new Restart;			// create actor
 
     for ( int i = 0; i < NoOfMsgs; i += 1 ) {
@@ -106,7 +106,7 @@ int main() {
     } // for
 
     *restart | uActor::stopMsg;				// stop restart actor
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

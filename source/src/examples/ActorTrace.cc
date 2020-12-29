@@ -40,10 +40,10 @@ _CorActor Trace {
 }; // Sender
 
 int main() {
-	uActorStart();										// start actor system
+	uActor::start();									// start actor system
 	Trace trace;
 	trace | tmsg;
-	uActorStop();										// wait for all actors to terminate
+	uActor::stop();										// wait for all actors to terminate
 } // main
 
 // Local Variables: //

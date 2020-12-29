@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 30 21:27:01 2020
-// Update Count     : 66
+// Last Modified On : Sun Nov  1 23:33:50 2020
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -81,11 +81,11 @@ int main( int argc, char * argv[] ) {
     } // try
 
     tokenMsg.cnt = Cycles;
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     Ping ping;
     Pong pong;
     ping.tell( tokenMsg, &pong );			// start cycling
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

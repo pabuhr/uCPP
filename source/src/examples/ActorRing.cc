@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 17 08:36:10 2020
-// Update Count     : 23
+// Last Modified On : Sun Nov  1 23:35:17 2020
+// Update Count     : 24
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,7 +86,7 @@ int main( int argc, char * argv[] ) {
 
     Passer * passers[RingSize];				// actors in cycle
 
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     // create cycle of actor; special case to close cycle
     passers[RingSize - 1] = new Passer( RingSize - 1 );	// player without partner
     for ( int p = RingSize - 2; 0 <= p; p -= 1 ) {	// link all but one player
@@ -95,7 +95,7 @@ int main( int argc, char * argv[] ) {
     passers[RingSize - 1]->close( passers[0] );		// close cycle by linking head to tail
     
     *passers[0] | token;				// start cycling token
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

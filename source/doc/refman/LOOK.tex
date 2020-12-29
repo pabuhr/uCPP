@@ -1,6 +1,6 @@
 % Remember to use the lgrind style
 
-\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1LOOK.cc},{11:26},{Jul  8 2017}
+\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1LOOK.cc},{13:33},{Nov 12 2020}
 \L{\LB{\C{}\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\-\*\-\0Mode:\0C++\0\-\*\-\0}}
 \CE{}\L{\LB{\C{}\1\1\0}}
 \CE{}\L{\LB{\C{}\1\1\0uC++\0Version\07.0.0,\0Copyright\0(C)\0Peter\0A.\0Buhr\01994}}
@@ -13,8 +13,8 @@
 \CE{}\L{\LB{\C{}\1\1\0Author\0\0\0\0\0\0\0\0\0\0\0:\0Peter\0A.\0Buhr}}
 \CE{}\L{\LB{\C{}\1\1\0Created\0On\0\0\0\0\0\0\0:\0Thu\0Aug\029\021:46:11\01991}}
 \CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0By\0:\0Peter\0A.\0Buhr}}
-\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Mon\0Dec\019\008:51:38\02016}}
-\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\0286}}
+\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Thu\0Nov\012\013:33:58\02020}}
+\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\0288}}
 \CE{}\L{\LB{\C{}\1\1}}
 \CE{}\L{\LB{\C{}\1\1\0This\0\0library\0is\0free\0\0software;\0you\0\0can\0redistribute\0\0it\0and\1or\0\0modify\0it}}
 \CE{}\L{\LB{\C{}\1\1\0under\0the\0terms\0of\0the\0GNU\0Lesser\0General\0Public\0License\0as\0published\0by\0the}}
@@ -57,8 +57,9 @@
 \CE{}\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{WaitingRequest}(\0\K{const}\0\V{WaitingRequest}\0\&\0)\0=\0\K{delete};}\Tab{56}{\C{}\1\1\0no\0copy}}
 \CE{}\L{\LB{}\Tab{4}{\V{WaitingRequest}(\0\V{WaitingRequest}\0\&\&\0)\0=\0\K{delete};}}
-\L{\LB{}\Tab{4}{\V{WaitingRequest}\0\&\K{operator}=(\0\K{const}\0\V{WaitingRequest}\0\&\0)\0=\0\K{delete};\0\C{}\1\1\0no\0assignment}}
-\CE{}\L{\LB{}}
+\L{\LB{}\Tab{4}{\V{WaitingRequest}\0\&\0\K{operator}=(\0\K{const}\0\V{WaitingRequest}\0\&\0)\0=\0\K{delete};\0\C{}\1\1\0no\0assignment}}
+\CE{}\L{\LB{}\Tab{4}{\V{WaitingRequest}\0\&\0\K{operator}=(\0\V{WaitingRequest}\0\&\&\0)\0=\0\K{delete};}}
+\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{uCondition}\0\V{block};}}
 \L{\LB{}\Tab{4}{\V{IOStatus}\0\V{status};}}
 \L{\LB{}\Tab{4}{\V{IORequest}\0\V{req};}}
@@ -73,8 +74,9 @@
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\V{Elevator}(\0\K{const}\0\V{Elevator}\0\&\0)\0=\0\K{delete};}\Tab{56}{\C{}\1\1\0no\0copy}}
 \CE{}\L{\LB{}\Tab{4}{\V{Elevator}(\0\V{Elevator}\0\&\&\0)\0=\0\K{delete};}}
-\L{\LB{}\Tab{4}{\V{Elevator}\0\&\K{operator}=(\0\K{const}\0\V{Elevator}\0\&\0)\0=\0\K{delete};}\Tab{56}{\C{}\1\1\0no\0assignment}}
-\CE{}\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{Elevator}\0\&\0\K{operator}=(\0\K{const}\0\V{Elevator}\0\&\0)\0=\0\K{delete};}\Tab{56}{\C{}\1\1\0no\0assignment}}
+\CE{}\L{\LB{}\Tab{4}{\V{Elevator}\0\&\0\K{operator}=(\0\V{Elevator}\0\&\&\0)\0=\0\K{delete};}}
+\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{Elevator}()\0\{}}
 \L{\LB{}\Tab{8}{\V{Direction}\0=\01;}}
 \L{\LB{}\Tab{4}{\}\0\C{}\1\1\0Elevator::Elevator}}

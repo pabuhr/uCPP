@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Feb 13 19:35:33 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 29 16:58:47 2020
-// Update Count     : 69
+// Last Modified On : Sun Dec 27 21:28:56 2020
+// Update Count     : 77
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,83 +30,95 @@
 
 #include "uCollection.h"
 
-// A uStack<T> is a uCollection<T> that defines an ordering among the elements:
-// they are returned by drop() in the reverse order that they are added by
-// add().
+// A uStack<T> is a uCollection<T> defining the ordering that nodes are returned by drop() in the reverse order from
+// those added by add(). T must be a public descendant of uColable.
 
-// The implementation is a typical singly-linked list, except that uStack
-// maintains uColable's invariant by having the next field of the last element
-// of the list point to itself instead of being null.
+// The implementation is a typical singly-linked list, except the next field of the last element points to itself
+// instead of being null.
 
 template<typename T> class uStack: public uCollection<T> {
   protected:
-    using uCollection<T>::root;
+	using uCollection<T>::root;
   public:
-    uStack( const uStack & ) = delete;			// no copy
-    uStack( uStack && ) = delete;
-    uStack & operator=( const uStack & ) = delete;	// no assignment
+	uStack( const uStack & ) = delete;					// no copy
+	uStack( uStack && ) = delete;
+	uStack & operator=( const uStack & ) = delete;		// no assignment
+	uStack & operator=( uStack && ) = delete;
 
-    using uCollection<T>::head;
-    using uCollection<T>::uNext;
+	using uCollection<T>::head;
+	using uCollection<T>::uNext;
 
-    uStack() : uCollection<T>() {}			// post: isEmpty().
-    inline T * top() const {
-	return head();
-    }
-    void addHead( T * n ) {
-#ifdef __U_DEBUG__
-	if ( n->listed() ) abort( "(uStack &)%p.addHead( %p ) node is already on another list.", this, n );
-#endif // __U_DEBUG__
-	uNext(n) = root ? root : n;
-	root = n;
-    }
-    inline void add( T * n ) {
-	addHead( n );
-    }
-    inline void push( T * n ) {
-	addHead( n );
-    }
-    T * drop() {
-	T * t = root;
-	if (root) {
-	    root = ( T *)uNext(root);
-	    if (root == t) root = 0;			// There was only one element.
-	    uNext(t) = 0;
-	} // if
-	return t;
-    }
-    inline T * pop() {
-	return drop();
-    }
+	uStack() : uCollection<T>() {}						// post: isEmpty()
+
+	T * top() const {
+		return head();
+	}
+
+	T * addHead( T * n ) {
+		#ifdef __U_DEBUG__
+		if ( n->listed() ) abort( "(uStack &)%p.addHead( %p ) node is already on another list.", this, n );
+		#endif // __U_DEBUG__
+		uNext(n) = root ? root : n;
+		root = n;
+		return n;
+	}
+
+	T * add( T * n ) {
+		return addHead( n );
+	}
+
+	T * push( T * n ) {
+		addHead( n );
+		return n;
+	}
+
+	T * drop() {
+		T * t = root;
+		if (root) {
+			root = ( T *)uNext(root);
+			if (root == t) root = 0;					// only one element ?
+			uNext(t) = 0;
+		} // if
+		return t;
+	}
+
+	T * pop() {
+		return drop();
+	}
 };
 
-
-// A uStackIter<T> is a subclass of uColIter<T> that generates the elements of a
-// uStack<T>.  It returns the elements in the order that they would be returned
-// by drop().
+// A uStackIter<T> is a subclass of uColIter<T> that generates the elements of a uStack<T>.  It returns the elements in
+// the order returned by drop().
 
 template<typename T> class uStackIter : public uColIter<T> {
   protected:
-    using uColIter<T>::curr;
-    using uColIter<T>::uNext;
+	using uColIter<T>::curr;
+	using uColIter<T>::uNext;
   public:
-    uStackIter() : uColIter<T>() {}			// post: elts = null.
-    // Create an iterator active in stack s.
-    uStackIter( const uStack<T> & s ) {
-	curr = s.head();
-    }
-    // Make the iterator active in stack s.
-    void over( const uStack<T> & s ) {			// post: elts = {e in s}.
-	curr = s.head();
-    }
-    bool operator>>( T *& tp ) {
-	if (curr) {
-	    tp = curr;
-	    T * n = (T *)uNext(curr);
-	    curr = (n == curr) ? 0 : n;
-	} else tp = 0;
-	return tp != 0;
-    }
+	uStackIter() : uColIter<T>() {}						// post: elts = null.
+
+	// create an iterator active in stack s
+	uStackIter( const uStack<T> & s ) {
+		curr = s.head();
+	}
+
+	uStackIter( const uStack<T> & s, T * start ) {
+		curr = start;
+	}
+
+	// make existing iterator active in stack s
+	void over( const uStack<T> & s ) {					// post: elts = {e in s}.
+		curr = s.head();
+	}
+
+	bool operator>>( T *& tp ) {
+		if (curr) {
+			tp = curr;
+			T * n = (T *)uNext(curr);
+			curr = (n == curr) ? nullptr : n;
+		} else tp = nullptr;
+		return tp != nullptr;
+	}
 };
 
 

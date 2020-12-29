@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 29 21:46:11 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:51:38 2016
-// Update Count     : 286
+// Last Modified On : Thu Nov 12 13:33:58 2020
+// Update Count     : 288
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,7 +54,8 @@ class WaitingRequest : public uSeqable {				// element for a waiting request lis
   public:
 	WaitingRequest( const WaitingRequest & ) = delete;	// no copy
 	WaitingRequest( WaitingRequest && ) = delete;
-	WaitingRequest &operator=( const WaitingRequest & ) = delete; // no assignment
+	WaitingRequest & operator=( const WaitingRequest & ) = delete; // no assignment
+	WaitingRequest & operator=( WaitingRequest && ) = delete;
 
 	uCondition block;
 	IOStatus status;
@@ -70,7 +71,8 @@ class Elevator : public uSequence<WaitingRequest> {
 
 	Elevator( const Elevator & ) = delete;				// no copy
 	Elevator( Elevator && ) = delete;
-	Elevator &operator=( const Elevator & ) = delete;	// no assignment
+	Elevator & operator=( const Elevator & ) = delete;	// no assignment
+	Elevator & operator=( Elevator && ) = delete;
   public:
 	Elevator() {
 		Direction = 1;

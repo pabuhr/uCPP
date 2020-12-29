@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Oct 23 16:10:01 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:49:01 2016
-// Update Count     : 103
+// Last Modified On : Thu Nov 12 13:32:47 2020
+// Update Count     : 104
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,8 @@ class Node : public uSeqable {
   public:
 	Node( const Node & ) = delete;						// no copy
 	Node( Node && ) = delete;
-	Node &operator=( const Node & ) = delete;			// no assignment
+	Node & operator=( const Node & ) = delete;			// no assignment
+	Node & operator=( Node && ) = delete;
 
 	int ticks;
 	uCondition block;

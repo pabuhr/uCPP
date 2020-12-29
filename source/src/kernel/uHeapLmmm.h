@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 20 22:23:33 2020
-// Update Count     : 499
+// Last Modified On : Sun Nov  1 11:25:32 2020
+// Update Count     : 500
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -85,7 +85,7 @@ namespace UPP {
 		friend int ::mallopt( int param_number, int value ) __THROW; // heapManagerInstance, setMmapStart
 		friend bool ::malloc_zero_fill( void * addr ) __THROW; // Storage
 		friend size_t ::malloc_size( void * addr ) __THROW; // Storage
-		// paraenthesis required for typedef
+		// parenthesis required for typedef
 		friend size_t (::malloc_alignment)( void * addr ) __THROW; // Header, FreeHeader
 		friend size_t (::malloc_usable_size)( void * addr ) __THROW; // Header, FreeHeader
 		friend void ::malloc_stats() __THROW;			// print, prtFree

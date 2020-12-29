@@ -1,6 +1,6 @@
 % Remember to use the lgrind style
 
-\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1SemaphoreBB.cc},{11:26},{Jul  8 2017}
+\File{\1u0\1usystem\1software\1u++\-7.0.0\1src\1examples\1SemaphoreBB.cc},{13:33},{Nov 12 2020}
 \L{\LB{\C{}\1\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\-\*\-\0Mode:\0C++\0\-\*\-\0}}
 \CE{}\L{\LB{\C{}\1\1\0}}
 \CE{}\L{\LB{\C{}\1\1\0uC++\0Version\07.0.0,\0Copyright\0(C)\0Peter\0A.\0Buhr\01994}}
@@ -10,8 +10,8 @@
 \CE{}\L{\LB{\C{}\1\1\0Author\0\0\0\0\0\0\0\0\0\0\0:\0Peter\0A.\0Buhr}}
 \CE{}\L{\LB{\C{}\1\1\0Created\0On\0\0\0\0\0\0\0:\0Thu\0Aug\015\016:42:42\01991}}
 \CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0By\0:\0Peter\0A.\0Buhr}}
-\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Mon\0Dec\019\023:03:06\02016}}
-\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\059}}
+\CE{}\L{\LB{\C{}\1\1\0Last\0Modified\0On\0:\0Thu\0Nov\012\013:33:14\02020}}
+\CE{}\L{\LB{\C{}\1\1\0Update\0Count\0\0\0\0\0:\060}}
 \CE{}\L{\LB{\C{}\1\1}}
 \CE{}\L{\LB{\C{}\1\1\0This\0\0library\0is\0free\0\0software;\0you\0\0can\0redistribute\0\0it\0and\1or\0\0modify\0it}}
 \CE{}\L{\LB{\C{}\1\1\0under\0the\0terms\0of\0the\0GNU\0Lesser\0General\0Public\0License\0as\0published\0by\0the}}
@@ -38,8 +38,9 @@
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{BoundedBuffer}(\0\K{const}\0\V{BoundedBuffer}\0\&\0)\0=\0\K{delete};}\Tab{56}{\C{}\1\1\0no\0copy}}
 \CE{}\L{\LB{}\Tab{4}{\V{BoundedBuffer}(\0\V{BoundedBuffer}\0\&\&\0)\0=\0\K{delete};}}
-\L{\LB{}\Tab{4}{\V{BoundedBuffer}\0\&\K{operator}=(\0\K{const}\0\V{BoundedBuffer}\0\&\0)\0=\0\K{delete};}\Tab{64}{\C{}\1\1\0no\0assignment}}
-\CE{}\L{\LB{}}
+\L{\LB{}\Tab{4}{\V{BoundedBuffer}\0\&\0\K{operator}=(\0\K{const}\0\V{BoundedBuffer}\0\&\0)\0=\0\K{delete};\0\C{}\1\1\0no\0assignment}}
+\CE{}\L{\LB{}\Tab{4}{\V{BoundedBuffer}\0\&\0\K{operator}=(\0\V{BoundedBuffer}\0\&\&\0)\0=\0\K{delete};}}
+\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{BoundedBuffer}(\0\K{const}\0\K{unsigned}\0\K{int}\0\V{size}\0=\010\0)\0:\0\V{size}(\0\V{size}\0),\0\V{full}(\00\0),\0\V{empty}(\0\V{size}\0)\0\{}}
 \L{\LB{}\Tab{8}{\V{front}\0=\0\V{back}\0=\00;}}
 \L{\LB{}\Tab{8}{\V{Elements}\0=\0\K{new}\0\V{ELEMTYPE}[\V{size}];}}

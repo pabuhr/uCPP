@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 23:16:52 2020
-// Update Count     : 73
+// Last Modified On : Wed Dec 16 11:02:46 2020
+// Update Count     : 74
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,7 +31,7 @@
 // Define the default extension heap amount in units of bytes. When the uC++ supplied heap reaches the brk address, the
 // brk address is extended by the extension amount.
 
-#define __U_DEFAULT_HEAP_EXPANSION__ (1 * 1024 * 1024)
+#define __U_DEFAULT_HEAP_EXPANSION__ (10 * 1024 * 1024)
 
 
 // Define the mmap crossover point during allocation. Allocations less than this amount are allocated from buckets;

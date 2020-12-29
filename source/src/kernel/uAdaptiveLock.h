@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 08:42:00 2019
-// Update Count     : 40
+// Last Modified On : Thu Nov 12 13:35:25 2020
+// Update Count     : 41
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -84,7 +84,8 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
   public:
     uAdaptiveLock( const uAdaptiveLock & ) = delete;	// no copy
     uAdaptiveLock( uAdaptiveLock && ) = delete;
-    uAdaptiveLock &operator=( const uAdaptiveLock & ) = delete;	// no assignment
+    uAdaptiveLock & operator=( const uAdaptiveLock & ) = delete; // no assignment
+    uAdaptiveLock & operator=( uAdaptiveLock && ) = delete;
 
     void *operator new( size_t, void *storage ) {
 	return storage;

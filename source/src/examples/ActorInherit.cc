@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 23 17:05:06 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  5 12:48:25 2019
-// Update Count     : 11
+// Last Modified On : Sun Nov  1 23:33:35 2020
+// Update Count     : 12
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,13 +51,13 @@ _Actor D : public B {
 }; // D
 
 int main() {
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     B b;
     D d;
     // Output is non-deterministic because actor b or d may run first.
     b | uActor::stopMsg;
     d | uActor::stopMsg;
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

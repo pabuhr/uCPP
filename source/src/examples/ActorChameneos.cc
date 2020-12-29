@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 30 21:23:54 2020
-// Update Count     : 14
+// Last Modified On : Sun Nov  1 23:31:41 2020
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -165,9 +165,9 @@ int main( int argc, char *argv[] ) {
 	exit( EXIT_SUCCESS );
     } // try
 
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     new Mall( nHost, nCham );
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

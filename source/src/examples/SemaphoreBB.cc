@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug 15 16:42:42 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:03:06 2016
-// Update Count     : 59
+// Last Modified On : Thu Nov 12 13:33:14 2020
+// Update Count     : 60
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,8 @@ template<typename ELEMTYPE> class BoundedBuffer {
   public:
 	BoundedBuffer( const BoundedBuffer & ) = delete;	// no copy
 	BoundedBuffer( BoundedBuffer && ) = delete;
-	BoundedBuffer &operator=( const BoundedBuffer & ) = delete;	// no assignment
+	BoundedBuffer & operator=( const BoundedBuffer & ) = delete; // no assignment
+	BoundedBuffer & operator=( BoundedBuffer && ) = delete;
 
 	BoundedBuffer( const unsigned int size = 10 ) : size( size ), full( 0 ), empty( size ) {
 		front = back = 0;

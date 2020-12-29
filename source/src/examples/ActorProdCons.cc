@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 20 17:14:45 2020
-// Update Count     : 424
+// Last Modified On : Sun Nov  1 23:34:29 2020
+// Update Count     : 425
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -129,11 +129,11 @@ int main( int argc, char * argv[] ) {
 	cout << "producers " << prods << " consumers " << cons << " times " << times << endl;
 
 	uProcessor p[prods + cons - 1];
-	uActorStart();										// wait for all actors to terminate
+	uActor::start();									// wait for all actors to terminate
 	consumers = new Cons *[cons];						// large size => use heap
 	for ( int i = 0; i < cons; i += 1 ) consumers[i] = new Cons; // create consumers
 	for ( int i = 0; i < prods; i += 1 ) *(new Prod( prods, cons, times ) ) | uActor::startMsg; // create and start producers
-    uActorStop();										// wait for all actors to terminate
+    uActor::stop();										// wait for all actors to terminate
 	delete [] consumers;
 	malloc_stats();										// print memory statistics
 } // main

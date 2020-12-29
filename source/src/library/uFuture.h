@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 20 17:43:19 2020
-// Update Count     : 970
+// Last Modified On : Thu Nov 12 13:53:31 2020
+// Update Count     : 973
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -478,7 +478,8 @@ class uWaitQueue_ISM {
   public:
     uWaitQueue_ISM( const uWaitQueue_ISM & ) = delete;	// no copy
     uWaitQueue_ISM( uWaitQueue_ISM && ) = delete;
-    uWaitQueue_ISM &operator=( const uWaitQueue_ISM & ) = delete; // no assignment
+    uWaitQueue_ISM & operator=( const uWaitQueue_ISM & ) = delete; // no assignment
+    uWaitQueue_ISM & operator=( uWaitQueue_ISM && ) = delete;
 
     uWaitQueue_ISM() {}
 
@@ -571,7 +572,8 @@ class uWaitQueue_ESM {
   public:
     uWaitQueue_ESM( const uWaitQueue_ESM & ) = delete;	// no copy
     uWaitQueue_ESM( uWaitQueue_ESM && ) = delete;
-    uWaitQueue_ESM &operator=( const uWaitQueue_ESM & ) = delete; // no assignment
+    uWaitQueue_ESM & operator=( const uWaitQueue_ESM & ) = delete; // no assignment
+    uWaitQueue_ESM & operator=( uWaitQueue_ESM && ) = delete;
 
     uWaitQueue_ESM() {}
 
@@ -737,6 +739,7 @@ class uExecutor {
 	unsigned int start, range;
 
 	void main() {
+	    setName( "Executor Worker" );
 	    for ( int i = 0;; i = (i + 1) % range ) {	// cycle through set of requests buffers
 		request = requests[i + start].remove();
 	      if ( ! request ) {

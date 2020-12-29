@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 23:29:02 2020
-// Update Count     : 1672
+// Last Modified On : Wed Dec 16 12:28:23 2020
+// Update Count     : 1718
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -65,8 +65,8 @@ namespace UPP {
 	// Bucket size must be multiple of 16.
 	// Powers of 2 are common allocation sizes, so make powers of 2 generate the minimum required size.
 	const unsigned int uHeapManager::bucketSizes[] = {	// different bucket sizes
-		16+ sizeof(uHeapManager::Storage), 32 + sizeof(uHeapManager::Storage), 48 + sizeof(uHeapManager::Storage), 64 + sizeof(uHeapManager::Storage), // 4
-		96+ sizeof(uHeapManager::Storage), 112 + sizeof(uHeapManager::Storage), 128 + sizeof(uHeapManager::Storage), // 3
+		16 + sizeof(uHeapManager::Storage), 32 + sizeof(uHeapManager::Storage), 48 + sizeof(uHeapManager::Storage), 64 + sizeof(uHeapManager::Storage), // 4
+		96 + sizeof(uHeapManager::Storage), 112 + sizeof(uHeapManager::Storage), 128 + sizeof(uHeapManager::Storage), // 3
 		160, 192, 224, 256 + sizeof(uHeapManager::Storage), // 4
 		320, 384, 448, 512 + sizeof(uHeapManager::Storage), // 4
 		640, 768, 896, 1024 + sizeof(uHeapManager::Storage), // 4
@@ -200,11 +200,11 @@ namespace UPP {
 			   "Possible cause is very large memory allocation and/or large amount of unfreed storage allocated by the program or system/library routines.",
 			   ((char *)(sbrk( 0 )) - (char *)(uHeapManager::heapManagerInstance->heapBegin)) );
 	} // uHeapManager::noMemory
- 
+
 
 	bool uHeapManager::setMmapStart( size_t value ) {	// true => mmapped, false => sbrk
 	  if ( value < pageSize || bucketSizes[NoBucketSizes - 1] < value ) return false;
-		mmapStart = value;				// set global
+		mmapStart = value;								// set global
 
 		// find the closest bucket size less than or equal to the mmapStart size
 		maxBucketsUsed = std::lower_bound( bucketSizes, bucketSizes + (NoBucketSizes - 1), mmapStart ) - bucketSizes; // binary search
@@ -268,7 +268,7 @@ namespace UPP {
 		} // if
 
 		#ifdef __U_DEBUG__
-		checkHeader( addr < heapBegin || header < heapBegin, name, addr ); // bad low address ?
+		checkHeader( header < heapBegin, name, addr );	// bad low address ?
 		#endif // __U_DEBUG__
 
 		// header may be safe to dereference
@@ -289,6 +289,26 @@ namespace UPP {
 		return false;
 	} // uHeapManager::headers
 
+
+	// #ifdef __U_DEBUG__
+	// #if __SIZEOF_POINTER__ == 4
+	// #define MASK 0xdeadbeef
+	// #else
+	// #define MASK 0xdeadbeefdeadbeef
+	// #endif
+	// #define STRIDE size_t
+
+	// static void * Memset( void * addr, STRIDE size ) { // debug only
+	// 	if ( size % sizeof(STRIDE) != 0 ) abort( "Memset() : internal error, size %zd not multiple of %zd.", size, sizeof(STRIDE) );
+	// 	if ( (STRIDE)addr % sizeof(STRIDE) != 0 ) abort( "Memset() : internal error, addr %p not multiple of %zd.", addr, sizeof(STRIDE) );
+
+	// 	STRIDE * end = (STRIDE *)addr + size / sizeof(STRIDE);
+	// 	for ( STRIDE * p = (STRIDE *)addr; p < end; p += 1 ) *p = MASK;
+	// 	return addr;
+	// } // Memset
+	// #endif // __U_DEBUG__
+
+	
 	#define NO_MEMORY_MSG "insufficient heap memory available for allocating %zd new bytes."
 
 	inline void * uHeapManager::extend( size_t size ) {
@@ -304,7 +324,7 @@ namespace UPP {
 				uDEBUGPRT( uDebugPrt( "0x%zx = (uHeapManager &)%p.extend( %zu ), heapBegin:%p, heapEnd:%p, heapRemaining:0x%zx, sbrk:%p\n",
 									  nullptr, this, size, heapBegin, heapEnd, heapRemaining, sbrk(0) ); )
 				extlock.release();
-				abort( NO_MEMORY_MSG, size );			// give up
+				uDebugPrt( NO_MEMORY_MSG, size );		// give up
 			} // if
 			#ifdef __U_STATISTICS__
 			sbrk_calls += 1;
@@ -312,7 +332,8 @@ namespace UPP {
 			#endif // __U_STATISTICS__
 			#ifdef __U_DEBUG__
 			// Set new memory to garbage so subsequent uninitialized usages might fail.
-			memset( (char *)heapEnd + heapRemaining, '\377', increase );
+			memset( (char *)heapEnd + heapRemaining, '\xde', increase );
+			//Memset( (char *)heapEnd + heapRemaining, increase );
 			#endif // __U_DEBUG__
 			rem = heapRemaining + increase - size;
 		} // if
@@ -337,7 +358,7 @@ namespace UPP {
 
 	  if ( UNLIKELY( size > ULONG_MAX - sizeof(Storage) ) ) return nullptr;
 		size_t tsize = size + sizeof(Storage);
-		if ( LIKELY( tsize < mmapStart ) ) {		// small size => sbrk
+		if ( LIKELY( tsize < mmapStart ) ) {			// small size => sbrk
 			FreeHeader * freeElem =
 				#ifdef FASTLOOKUP
 				tsize < LookupSizes ? &freeLists[lookup[tsize]] :
@@ -374,7 +395,7 @@ namespace UPP {
 
 			block->header.kind.real.home = freeElem;	// pointer back to free list of apropriate size
 		} else {										// large size => mmap
-			if ( UNLIKELY( size > ULONG_MAX - pageSize ) ) return nullptr;
+	  if ( UNLIKELY( size > ULONG_MAX - pageSize ) ) return nullptr;
 			tsize = uCeiling( tsize, pageSize );		// must be multiple of page size
 			#ifdef __U_STATISTICS__
 			uFetchAdd( mmap_calls, 1 );
@@ -389,7 +410,8 @@ namespace UPP {
 			} // if
 			#ifdef __U_DEBUG__
 			// Set new memory to garbage so subsequent uninitialized usages might fail.
-			memset( block, '\377', tsize );
+			memset( block, '\xde', tsize );
+			//Memset( block, tsize );
 			#endif // __U_DEBUG__
 			block->header.kind.real.blockSize = tsize;	// storage size for munmap
 		} // if
@@ -431,11 +453,9 @@ namespace UPP {
 			uFetchAdd( munmap_storage, size );
 			#endif // __U_STATISTICS__
 			if ( munmap( header, size ) == -1 ) {
-				#ifdef __U_DEBUG__
 				abort( "Attempt to deallocate storage %p not allocated or with corrupt header.\n"
 					   "Possible cause is invalid pointer.",
 					   addr );
-				#endif // __U_DEBUG__
 			} // if
 		} else {
 			#ifdef __U_PROFILER__
@@ -446,7 +466,8 @@ namespace UPP {
 
 			#ifdef __U_DEBUG__
 			// Set free memory to garbage so subsequent usages might fail.
-			memset( ((Storage *)header)->data, '\377', freeElem->blockSize - sizeof( Storage ) );
+			memset( ((Storage *)header)->data, '\xde', freeElem->blockSize - sizeof( Storage ) );
+			//Memset( ((Storage *)header)->data, freeElem->blockSize - sizeof( Storage ) );
 			#endif // __U_DEBUG__
 
 			uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeElem:%p\n", this, addr, &header, &freeElem ); )
@@ -470,7 +491,7 @@ namespace UPP {
 		if ( uHeapControl::traceHeap() ) {
 			char helpText[64];
 			int len = snprintf( helpText, sizeof(helpText), "Free( %p ) size:%zu\n", addr, size );
-			uDebugWrite( STDERR_FILENO, helpText, len );
+			uDebugWrite( STDERR_FILENO, helpText, len ); // print debug/nodebug
 		} // if
 		#endif // __U_DEBUG__
 	} // uHeapManager::doFree
@@ -568,7 +589,6 @@ namespace UPP {
 
 		#ifdef __U_DEBUG__
 		if ( uHeapBoot ) {								// check for recursion during system boot
-			// DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
 			abort( "uHeapManager::boot() : internal error, recursively invoked during system boot." );
 		} // if
 		uHeapBoot = true;
@@ -801,10 +821,10 @@ extern "C" {
 		UPP::uHeapManager::FreeHeader * freeElem;
 		size_t bsize, oalign;
 		UPP::uHeapManager::heapManagerInstance->headers( "resize", oaddr, header, freeElem, bsize, oalign );
-
 		size_t odsize = dataStorage( bsize, oaddr, header ); // data storage available in bucket
+
 		// same size, DO NOT preserve STICKY PROPERTIES.
-		if ( oalign <= uAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
+		if ( oalign == uAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
 			header->kind.real.blockSize &= -2; // no alignment and turn off 0 fill
 			header->kind.real.size = size;	// reset allocation size
 			return oaddr;
@@ -843,11 +863,11 @@ extern "C" {
 
 		size_t odsize = dataStorage( bsize, oaddr, header ); // data storage available in bucket
 		size_t osize = header->kind.real.size;			// old allocation size
-		bool ozfill = (header->kind.real.blockSize & 2) != 0; // old allocation zero filled
-	  if ( UNLIKELY( size <= odsize ) && size > odsize / 2 ) {	// allow up to 50% wasted storage
+		bool ozfill = (header->kind.real.blockSize & 2); // old allocation zero filled
+	  if ( UNLIKELY( size <= odsize ) && odsize <= size * 2 ) { // allow up to 50% wasted storage
 	  		header->kind.real.size = size;				// reset allocation size
 	  		if ( UNLIKELY( ozfill ) && size > osize ) {	// previous request zero fill and larger ?
-	  			memset( (char *)oaddr + osize, (int)'\0', size - osize ); // initialize added storage
+	  			memset( (char *)oaddr + osize, '\0', size - osize ); // initialize added storage
 	  		} // if
 			return oaddr;
 		} // if
@@ -873,7 +893,7 @@ extern "C" {
 	  if ( UNLIKELY( ozfill ) ) {						// previous request zero fill ?
 		  header->kind.real.blockSize |= 2;				// mark new request as zero filled
 		  if ( size > osize ) {							// previous request larger ?
-			  memset( (char *)naddr + osize, (int)'\0', size - osize ); // initialize added storage
+			  memset( (char *)naddr + osize, '\0', size - osize ); // initialize added storage
 		  } // if
 	  } // if
 	  return naddr;
@@ -1208,7 +1228,7 @@ void * realloc( void * oaddr, size_t nalign, size_t size ) __THROW {
 	if ( UNLIKELY( ozfill ) ) {							// previous request zero fill ?
 		header->kind.real.blockSize |= 2;				// mark new request as zero filled
 		if ( size > osize ) {							// previous request larger ?
-			memset( (char *)naddr + osize, (int)'\0', size - osize ); // initialize added storage
+			memset( (char *)naddr + osize, '\0', size - osize ); // initialize added storage
 		} // if
 	} // if
 	return naddr;

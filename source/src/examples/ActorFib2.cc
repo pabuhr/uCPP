@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:21:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Sep 30 21:21:08 2020
-// Update Count     : 38
+// Last Modified On : Sun Nov  1 23:32:40 2020
+// Update Count     : 39
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -113,9 +113,9 @@ int main( int argc, char * argv[] ) {
 		exit( EXIT_FAILURE );
 	} // try
 
-	uActorStart();										// start actor system
+	uActor::start();									// start actor system
 	Generator fib1, fib2;
-	uActorStop();										// wait for all actors to terminate
+	uActor::stop();										// wait for all actors to terminate
 } // main
 
 // Local Variables: //

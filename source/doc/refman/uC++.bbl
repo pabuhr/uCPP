@@ -96,7 +96,7 @@ Andrej Bauer and Matija Pretnar.
 \bibitem[{Bri}75]{ConcurrentPascal}
 Per {Brinch Hansen}.
 \newblock The Programming Language Concurrent Pascal.
-\newblock {\em IEEE Trans. Softw. Eng.}, 2:199--206, June 1975.
+\newblock {\em IEEE Trans. Softw. Eng.}, SE-1(2):199--207, June 1975.
 
 \bibitem[Buh85]{Buhr85}
 P.~A. Buhr.
@@ -119,11 +119,11 @@ Alan Burns and A.~J. Wellings.
 \newblock {\em Computer Language}, 15(3):153--162, 1990.
 
 \bibitem[C++98]{ANSI98:C++}
-{\em {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Programming Language
-  ISO/IEC 14882:1998}.
+International Standard Organization, Geneva, Switzerland.
+\newblock {\em {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Programming
+  Language ISO/IEC 14882:1998}, 1st edition, 1998.
 \newblock
-  \href{https://www.iso.org/standard/25845.html}{https://\-www.iso.org/\-standard/\-25845.html},
-  1st edition, 1998.
+  \href{https://www.iso.org/standard/25845.html}{https://\-www.iso.org/\-standard/\-25845.html}.
 
 \bibitem[Car90]{Cargill90}
 Tom~A. Cargill.
@@ -163,8 +163,7 @@ Thomas~W. Doeppner and Alan~J. Gebele.
 \bibitem[Dij65]{Dijkstra65}
 Edsger~W. Dijkstra.
 \newblock Cooperating Sequential Processes.
-\newblock Technical report, Technological University, Eindhoven, Netherlands,
-  1965.
+\newblock Technical report, Technological University, Eindhoven, Neth., 1965.
 \newblock Reprinted in \cite{Genuys68} pp. 43--112.
 
 \bibitem[Erl16]{Erlang}
@@ -310,8 +309,8 @@ Ole~Lehrmann Madsen, Birger M{\o}ller-Pedersen, and Kristen Nygaard.
 \bibitem[MMS79]{Mesa}
 James~G. Mitchell, William Maybury, and Richard Sweet.
 \newblock Mesa Language Manual.
-\newblock Technical Report CSL--79--3, Xerox Palo Alto Research Center, April
-  1979.
+\newblock Technical Report CSL--79--3, Xerox Palo Alto Research Center, Palo
+  Alto, California, U.S.A., April 1979.
 
 \bibitem[POS08]{POSIX08}
 IEEE and The Open Group.

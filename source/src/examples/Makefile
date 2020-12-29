@@ -26,7 +26,7 @@ endif
 
 .SILENT : all abortexit bench allocation features future actor pthread EHM realtime multiprocessor
 
-all : bench allocation features future actor cobegin timeout pthread EHM realtime multiprocessor
+all : bench allocation features collection future actor cobegin timeout pthread EHM realtime multiprocessor
 
 errors : ownership abortexit
 
@@ -121,6 +121,19 @@ allocation :
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${ALLOCFLAGS} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			/usr/bin/time ./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+collection :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in Stack Queue Sequence FlexArray BitSet ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
 		done ; \
 	done ; \
 	rm -f ./a.out ;

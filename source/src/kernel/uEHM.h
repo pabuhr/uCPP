@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 26 23:21:22 2020
-// Update Count     : 521
+// Last Modified On : Thu Nov 12 13:36:00 2020
+// Update Count     : 523
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -216,6 +216,7 @@ class uEHM::uResumptionHandlers {
     uResumptionHandlers( const uResumptionHandlers & ) = delete; // no copy
     uResumptionHandlers( uResumptionHandlers && ) = delete;
     uResumptionHandlers & operator=( const uResumptionHandlers & ) = delete; // no assignment
+    uResumptionHandlers & operator=( uResumptionHandlers && ) = delete;
 
     uResumptionHandlers( uHandlerBase * const table[], const unsigned int size );
     ~uResumptionHandlers();
@@ -235,6 +236,7 @@ class uEHM::uDeliverEStack {
     uDeliverEStack( const uDeliverEStack & ) = delete;	// no copy
     uDeliverEStack( uDeliverEStack && ) = delete;
     uDeliverEStack & operator=( const uDeliverEStack & ) = delete; // no assignment
+    uDeliverEStack & operator=( uDeliverEStack && ) = delete;
 
     uDeliverEStack( bool f, const std::type_info ** t = nullptr, unsigned int msg = 0 ); // for enable and disable blocks
     ~uDeliverEStack();

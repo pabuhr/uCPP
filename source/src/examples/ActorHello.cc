@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:23:31 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 10 15:46:33 2019
-// Update Count     : 14
+// Last Modified On : Sun Nov  1 23:33:26 2020
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -51,11 +51,11 @@ _Actor Hello {
 }; // Hello
 
 int main() {
-    uActorStart();					// start actor system
+    uActor::start();					// start actor system
     *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
     *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
     *new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "你好" ) | uActor::stopMsg;
-    uActorStop();					// wait for all actors to terminate
+    uActor::stop();					// wait for all actors to terminate
 } // main
 
 // Local Variables: //

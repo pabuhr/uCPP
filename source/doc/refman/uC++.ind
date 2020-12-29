@@ -933,6 +933,8 @@
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultSpin}}}\endlgrinde\LGend{}, 
 		\hyperpage{153}
     \subitem virtual processor, \hyperpage{131}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{split}}}\endlgrinde\LGend{}, 
+		\hyperpage{164, 165}
   \item sporadic task, \hyperpage{146}
   \item stack, \hyperpage{4}, \hyperpage{162}
     \subitem acceptor/signalled, \hyperpage{20, 21}, \hyperpage{23}, 
@@ -970,6 +972,8 @@
 		\hyperpage{28}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Start}}}\endlgrinde\LGend{}, 
 		\hyperpage{31}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{}, 
+		\hyperpage{63}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{starter}}}\endlgrinde\LGend{}, 
 		\hyperpage{15}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StartMsg}}}\endlgrinde\LGend{}, 
@@ -983,6 +987,8 @@
   \item status flag, \hyperpage{83}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StatusFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{74}, \hyperpage{99}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}, 
+		\hyperpage{63}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopdMsg}}}\endlgrinde\LGend{}, 
 		\hyperpage{63}
   \item subtyping, \hyperpage{33}
@@ -1431,9 +1437,9 @@
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{triggerCause}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{63, 64}
+		\hyperpage{64}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{63}
+		\hyperpage{63, 64}
   \item unikernel, \hyperpage{9}, \hyperpage{129}
   \item UNIX epoch, \hyperpage{140}
   \item unix process, \hyperpage{129}
@@ -1504,6 +1510,8 @@
 		\hyperpage{163}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}, 
 		\hyperpage{163}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{split}}}\endlgrinde\LGend{}, 
+		\hyperpage{163}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}, 
 		\hyperpage{163}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tail}}}\endlgrinde\LGend{}, 
@@ -1544,15 +1552,15 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqIter}}}\endlgrinde\LGend{}, 
 		\hyperpage{165}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}, 
-		\hyperpage{165}
+		\hyperpage{166}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}, 
-		\hyperpage{165}
+		\hyperpage{166}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqIterRev}}}\endlgrinde\LGend{}, 
-		\hyperpage{165}
+		\hyperpage{166}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}, 
-		\hyperpage{165}
+		\hyperpage{166}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}, 
-		\hyperpage{165}
+		\hyperpage{166}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSequence}}}\endlgrinde\LGend{}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}, 
 		\hyperpage{165}
@@ -1577,6 +1585,8 @@
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{pred}}}\endlgrinde\LGend{}, 
 		\hyperpage{165}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{remove}}}\endlgrinde\LGend{}, 
+		\hyperpage{165}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{split}}}\endlgrinde\LGend{}, 
 		\hyperpage{165}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}, 
 		\hyperpage{165}

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:04:36 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 30 19:20:04 2020
-// Update Count     : 394
+// Last Modified On : Thu Nov 12 13:53:32 2020
+// Update Count     : 395
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -54,7 +54,8 @@ class uSocket {
 
     uSocket( const uSocket & ) = delete;		// no copy
     uSocket( uSocket && ) = delete;
-    uSocket &operator=( const uSocket & ) = delete;	// no assignment
+    uSocket & operator=( const uSocket & ) = delete;	// no assignment
+    uSocket & operator=( uSocket && ) = delete;
 
     static void convertFailure( const char *msg, const char *addr ) __attribute__ ((noreturn));
 
