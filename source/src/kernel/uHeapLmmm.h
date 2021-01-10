@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov  1 11:25:32 2020
-// Update Count     : 500
+// Last Modified On : Sat Jan  9 13:58:47 2021
+// Update Count     : 503
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -82,6 +82,7 @@ namespace UPP {
 		friend void * ::valloc( size_t size ) __THROW;	// pageSize
 		friend void * ::pvalloc( size_t size ) __THROW;	// pageSize
 		friend void ::free( void * addr ) __THROW;		// doFree
+
 		friend int ::mallopt( int param_number, int value ) __THROW; // heapManagerInstance, setMmapStart
 		friend bool ::malloc_zero_fill( void * addr ) __THROW; // Storage
 		friend size_t ::malloc_size( void * addr ) __THROW; // Storage
@@ -156,6 +157,15 @@ namespace UPP {
 
 		static_assert( uAlign() >= sizeof( Storage ), "uAlign() < sizeof( Storage )" );
 
+		// Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
+		// Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
+		enum {
+			   #ifdef FASTLOOKUP
+			   LookupSizes = 65536 + sizeof(uHeapManager::Storage), // number of fast lookup sizes
+			   #endif // FASTLOOKUP
+			   NoBucketSizes = 91,						// number of buckets sizes
+		};
+
 		struct FreeHeader {
 			#if BUCKETLOCK == SPINLOCK
 			uSpinLock lock;								// must be first field for alignment
@@ -163,18 +173,11 @@ namespace UPP {
 			#else
 			StackLF<Storage> freeList;
 			#endif // BUCKETLOCK
-			size_t blockSize;				// size of allocations on this list
+			size_t blockSize;							// size of allocations on this list
 
 			bool operator<( const size_t bsize ) const { return blockSize < bsize; }
 		}; // FreeHeader
 
-		// Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
-		// Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
-		enum { NoBucketSizes = 91,			// number of buckets sizes
-			   #ifdef FASTLOOKUP
-			   LookupSizes = 65536 + sizeof(uHeapManager::Storage), // number of fast lookup sizes
-			   #endif // FASTLOOKUP
-		};
 		static const unsigned int bucketSizes[];				// different bucket sizes
 		static uHeapManager * heapManagerInstance;		// pointer to heap manager object
 		static size_t pageSize;							// architecture pagesize
@@ -184,30 +187,30 @@ namespace UPP {
 		#ifdef FASTLOOKUP
 		static unsigned char lookup[LookupSizes];		// O(1) lookup for small sizes
 		#endif // FASTLOOKUP
-		static int mmapFd;								// fake or actual fd for anonymous file
+		static const off_t mmapFd;						// fake or actual fd for anonymous file
 		#ifdef __U_DEBUG__
 		static size_t allocUnfreed;						// running total of allocations minus frees
 		#endif // __U_DEBUG__
 
 		#ifdef __U_STATISTICS__
 		// Heap statistics
-		static unsigned int malloc_calls;
+		static unsigned int malloc_zero_calls, malloc_calls;
 		static unsigned long long int malloc_storage;
-		static unsigned int aalloc_calls;
+		static unsigned int aalloc_zero_calls, aalloc_calls;
 		static unsigned long long int aalloc_storage;
-		static unsigned int calloc_calls;
+		static unsigned int calloc_zero_calls, calloc_calls;
 		static unsigned long long int calloc_storage;
-		static unsigned int memalign_calls;
+		static unsigned int memalign_zero_calls, memalign_calls;
 		static unsigned long long int memalign_storage;
-		static unsigned int amemalign_calls;
+		static unsigned int amemalign_zero_calls, amemalign_calls;
 		static unsigned long long int amemalign_storage;
-		static unsigned int cmemalign_calls;
+		static unsigned int cmemalign_zero_calls, cmemalign_calls;
 		static unsigned long long int cmemalign_storage;
-		static unsigned int resize_calls;
+		static unsigned int resize_zero_calls, resize_calls;
 		static unsigned long long int resize_storage;
-		static unsigned int realloc_calls;
+		static unsigned int realloc_zero_calls, realloc_calls;
 		static unsigned long long int realloc_storage;
-		static unsigned int free_calls;
+		static unsigned int free_zero_calls, free_calls;
 		static unsigned long long int free_storage;
 		static unsigned int mmap_calls;
 		static unsigned long long int mmap_storage;

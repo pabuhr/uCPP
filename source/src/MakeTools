@@ -7,7 +7,7 @@
 
 CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/${UPP}
 
-CCFLAGS = -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
+CCFLAGS = -std=c++17 -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
 
 CCFLAGS += -m${WORDSIZE}
 

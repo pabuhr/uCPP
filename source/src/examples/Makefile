@@ -120,7 +120,7 @@ allocation :
 	for filename in Allocation ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${ALLOCFLAGS} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
-			/usr/bin/time ./a.out ; \
+			/usr/bin/time -f "%Uu %Ss %Er %Mkb" ./a.out ; \
 		done ; \
 	done ; \
 	rm -f ./a.out ;

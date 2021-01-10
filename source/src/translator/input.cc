@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 23 23:49:38 2014
-// Update Count     : 132
+// Last Modified On : Sat Jan  9 14:13:36 2021
+// Update Count     : 133
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -588,8 +588,8 @@ token_t *getinput() {
 	    break;
 	  case dot:
 	    switch ( c ) {
-	      case '0': case '1': case '2': case '3': case '4':
-	      case '5': case '6': case '7': case '8': case '9':
+	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+	      case '\'':
 		state = fraction;
 		break;
 	      case '.':
@@ -632,6 +632,7 @@ token_t *getinput() {
 		state = hexadecimal;
 		break;
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+	      case '\'':
 		break;
 	      case 'l': case 'L': case 'u': case 'U':
 		state = long_unsigned;
@@ -650,6 +651,7 @@ token_t *getinput() {
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 	      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 	      case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+	      case '\'':
 		break;
 	      case 'l': case 'L': case 'u': case 'U':
 		state = long_unsigned;
@@ -663,6 +665,7 @@ token_t *getinput() {
 	  case decimal:
 	    switch ( c ) {
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+	      case '\'':
 		break;
 	      case 'l': case 'L': case 'u': case 'U':
 		state = long_unsigned;
@@ -692,6 +695,7 @@ token_t *getinput() {
 	  case fraction:
 	    switch ( c ) {
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+	      case '\'':
 		break;
 	      case 'e': case 'E':
 		state = possible_exponent;
@@ -722,6 +726,7 @@ token_t *getinput() {
 	  case possible_signed_exponent:
 	    switch ( c ) {
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+	      case '\'':
 		state = exponent;
 		break;
 	      default:
@@ -733,6 +738,7 @@ token_t *getinput() {
 	  case exponent:
 	    switch ( c ) {
 	      case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+	      case '\'':
 		break;
 	      case 'f': case 'F': case 'l': case 'L':
 		state = float_long;

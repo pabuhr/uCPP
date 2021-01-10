@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 18 20:34:29 2020
-// Update Count     : 3218
+// Last Modified On : Sat Jan  9 11:52:03 2021
+// Update Count     : 3220
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,6 +47,7 @@
 #include <cstdio>
 #include <unistd.h>					// _exit
 #include <fenv.h>					// floating-point exceptions
+#include <locale.h>					// setlocale
 
 
 using namespace UPP;
@@ -2139,6 +2140,7 @@ void UPP::uKernelBoot::startup() {
     RealRtn::startup();					// must come before any call to uDebugPrt
 
     tzset();						// initialize time global variables
+    setlocale( LC_NUMERIC, getenv("LANG") );
 
     // Force dynamic loader to (pre)load and initialize all the code to use C printf I/O. The stack depth to do this
     // initialization is significant as it includes all the calls to locale and can easily overflow the small stack of a
