@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov  1 23:32:22 2020
-// Update Count     : 59
+// Last Modified On : Sat May  1 08:01:13 2021
+// Update Count     : 60
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,11 +27,11 @@
 using namespace std;
 #include <uActor.h>
 
+struct NextMsg : public uActor::Message {};
 struct FibMsg : public uActor::Message {
 	long int fn;
 	FibMsg() : Message( uActor::Delete ) {}
 };
-struct NextMsg : public uActor::Message {};
 
 _Actor Fib {
 	long int fn1, fn2;

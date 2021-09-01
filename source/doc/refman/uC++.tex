@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Dec 28 08:26:09 2020
-%% Update Count     : 8149
+%% Last Modified On : Tue Jun 22 10:54:54 2021
+%% Update Count     : 8200
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3918,7 +3918,7 @@ Therefore, programmers must deal with actor/message life-time by returning to th
 \vspace*{-15pt}% FIX ME
 \begin{prefix}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}] means the actor/message persists after a behaviour returns.
-Use for multi-use actors or messages during their life time. (message default)
+Use for multi-use actors or messages during their life time. (actor/message default)
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}] means the actor/message is deleted by the executor after a behaviour returns.
 Use with dynamically allocated actors or messages at completion.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}] means the actor's/message's destructor is called by the executor after a behaviour returns, but storage is not deallocated.
@@ -3954,19 +3954,19 @@ Note, the default constructor assumes the message persists, while specifying the
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{} returns the actor that sent the message, which can be used for sending a reply message.
 
 \VRef[Figure]{f:TraceMessage} shows the message type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{TraceMsg}}}\endlgrinde\LGend{}, which remembers the actor path a message follows.
-Each step a message takes between actors is called a \newterm{hop}, and hop links point in ther reverse direction to the message sends.
+Each step a message takes between actors is called a \newterm{hop}, and hop links point in the reverse direction to the message sends.
 The hop queue has a cursor that is used to dynamically restructure the trace.
 \begin{center}
 \input{TraceMsg}
 \end{center}
-The overloaded constructor routines \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}} are the same as for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{} deletes all message hops except cursor hop.
+The overloaded constructor routines, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}}, are the same as for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{} deletes all message hops except the cursor hop.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{} deletes all message hops from head to cursor.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{} move cursor back (towards tail) one hop and send message to cursor actor.
-Return \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if cursor is tail and no action occurs, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{retSender}}}\endlgrinde\LGend{} move cursor to tail and send message to cursor actor.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{} return \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if cursor not at head, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{} move cursor to head and send message to cursor actor.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{} moves the cursor back (towards tail) one hop and sends the message to the cursor actor.
+Return \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if cursor is tail and no send occurs, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{retSender}}}\endlgrinde\LGend{} moves the cursor to tail and sends the message to the cursor actor.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the cursor is not at head, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{} moves the cursor to head and sends the message to the cursor actor.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{} prints the address of the trace message, trace head, cursor, and actors at each hop from cursor to tail, which is useful for debugging.
 
 \begin{figure}
@@ -4088,49 +4088,53 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uActor}\0\{}}
-\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0status}}
-\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
-\CE{}\L{\LB{}\Tab{4}{\K{struct}\0\V{Message}\0\{\0.\,.\,.\0\};}}
-\L{\LB{}\Tab{4}{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\};}}
-\L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{T}\>\0\K{class}\0\V{Promise}\0\{\0.\,.\,.\0\};}}
-\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\K{struct}\0\V{PromiseMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\}}}
-\L{\LB{\0\0\K{protected}:}}
+\L{\LB{}\Tab{4}{\K{virtual}\0\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{msg}\0)\0=\00;}\Tab{56}{\C{}\1\1\0user\0supplied\0message\0handler}}
+\CE{}\L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{preStart}()\0\{\0\C{}\1\*\0default\0empty\0\*\1\CE{}\0\};}\Tab{56}{\C{}\1\1\0user\0supplied\0actor\0initialization}}
 \CE{}\L{\LB{}\Tab{4}{\K{virtual}\0\V{Handler}\0\V{become}(\0\V{Handler}\0\V{handler}\0);}\Tab{56}{\C{}\1\1\0dynamically\0change\0message\0handler}}
-\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
-\CE{}\L{\LB{\0\0\K{private}:}}
-\L{\LB{}\Tab{4}{\K{virtual}\0\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{msg}\0)\0=\00;}\Tab{56}{\C{}\1\1\0user\0supplied\0message\0handler}}
+\CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation}();}\Tab{56}{\C{}\1\1\0getter}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{allocation}(\0\V{Allocation}\0\V{alloc}\0);}\Tab{56}{\C{}\1\1\0setter}}
 \CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{static}\0\K{inline}\0\V{uActor}\0\*\0\V{sender}();}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
+\CE{}\L{\LB{}\Tab{4}{\K{class}\0\V{Message}\0\{\0.\,.\,.\0\};}}
+\L{\LB{}\Tab{4}{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\};}}
+\L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{T}\>\0\K{class}\0\V{Promise}\0\{\0.\,.\,.\0\};}}
+\L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{Result}\>\0\K{struct}\0\V{PromiseMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\}}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Storage\0management}}
+\CE{}\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0status}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0);}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
+\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{inline}\0\V{uActor}\0\*\0\V{sender}();}\Tab{56}{\C{}\1\1\0current\0executing\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0message\0send,\0no\0return}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg}\0);}}
 \L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{Message}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{Message}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Promise}\<\0\V{Result}\0\>\0\V{ask}(\0\V{PromiseMsg}\<\0\V{Result}\0\>\0\&\0\V{msg},}}
-\L{\LB{}\Tab{12}{\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0\{}\Tab{56}{\C{}\1\1\0async\0call,\0return\0promise}}
-\CE{}\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Promise}\<\0\V{Result}\0\>\0\K{operator}\0\|\,\|\0(\0\V{PromiseMsg}\<\0\V{Result}\0\>\0\&\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\C{}\1\1\0Administration}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{restart}();}\Tab{56}{\C{}\1\1\0reset\0actor\0to\0initial\0state}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0tell\0alternative}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0do\0not\0update\0message\0sender}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
+\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Promise}\<\0\V{Result}\0\>}}
+\L{\LB{}\Tab{8}{\V{ask}(\0\V{PromiseMsg}\<\0\V{Result}\0\>\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0\{\0\C{}\1\1\0message\0send,\0return\0promise}}
+\CE{}\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Promise}\<\0\V{Result}\0\>}}
+\L{\LB{}\Tab{8}{\K{operator}\0\|\,\|\0(\0\V{PromiseMsg}\<\0\V{Result}\0\>\0\&\V{msg}\0);}\Tab{56}{\C{}\1\1\0ask\0alternative}}
+\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Administration}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{restart}();}\Tab{56}{\C{}\1\1\0reset\0to\0initial\0receive\0member\0and\0run\0preStart}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{start}(\0\V{uExecutor}\0\*\0\V{executor}\0=\0\K{nullptr}\0)}\Tab{56}{\C{}\1\1\0create\0executor\0to\0run\0actors}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{bool}\0\V{stop}(\0\V{uDuration}\0\V{duration}\0=\00\0)\0\{}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate\0or\0timeout}}
-\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Messages}}
+\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Builtin\0Messages}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StartMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{startMsg};\0\C{}\1\1\0start\0actor}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StopMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{stopMsg};\0\C{}\1\1\0terminate\0actor}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{UnhandledMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{unhandledMsg};\0\C{}\1\1\0tell\0error}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
-\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!receive@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}!Nodelete@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}!Delete@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}!Destroy@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}!Finished@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}}%
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!receive@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}}%
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!preStart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Handler@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Handler}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!become@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}}%
-\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!preStart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}}%
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!tell@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!forward@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{forward}}}\endlgrinde\LGend{}}%
@@ -4153,14 +4157,16 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \label{s:ActorType}
 
 \VRef[Figure]{f:ActorType} shows the actor type, which defines actor/message deallocation, message types, and send/receive communication members.
-\VRef[Figure]{f:ActorType} shows an actor has two members to send messages, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{}, for sending messages without and with a return value, and at least one \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} member must be created, where messages are delivered.
+The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}} creates an actor with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}.
+The overloaded member routines \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{} get and set an actor's current allocation value.
 
+The common mechanism for actor communication is members \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{}, for sending messages without and with a return value, and an actor subclass must provide at least one \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} member where messages are delivered.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} send has the following two forms:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{IntMsg}\0\V{msg};}}
-\L{\LB{\V{actor}\-\>\BF{\V{tell}}(\0\*\K{new}\0\V{IntMsg}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor,\0do\0not\0identify\0sender}}
+\L{\LB{\V{actor}\-\>\BF{\V{tell}}(\0\*\K{new}\0\V{IntMsg}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor\0containing\0current\0sender}}
 \CE{}\L{\LB{\*\V{actor}\0\BF{\|}\0\*\K{new}\0\V{IntMsg};}\Tab{36}{\C{}\1\1\0short\0form}}
-\CE{}\L{\LB{\V{actor}\-\>\V{tell}(\0\V{msg},\0\K{this}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor,\0identify\0sender}}
+\CE{}\L{\LB{\V{actor}\-\>\V{tell}(\0\V{msg},\0\BF{\V{proxysender}}\0);}\Tab{48}{\C{}\1\1\0send\0message\0to\0actor\0containing\0proxy\0sender}}
 \CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} message sends can be cascaded:
 \LGinlinefalse\LGbegin\lgrinde
@@ -4171,7 +4177,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{} send has th
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{promise}\0=\0\V{actor}\-\>\BF{\V{ask}}(\0\V{msg}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor\0with\0promise\0result,\0do\0not\0identify\0sender}}
 \CE{}\L{\LB{\V{promise}\0=\0\*\V{actor}\0\BF{\|\,\|}\0\*\K{new}\0\V{IntMsg};}\Tab{36}{\C{}\1\1\0short\0form}}
-\CE{}\L{\LB{\V{promise}\0=\0\V{actor}\-\>\V{ask}(\0\V{msg},\0\K{this}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor,\0identify\0sender}}
+\CE{}\L{\LB{\V{promise}\0=\0\V{actor}\-\>\V{ask}(\0\V{msg},\0\BF{\V{proxysender}}\0);\0\C{}\1\1\0send\0message\0to\0actor\0containing\0proxy\0sender}}
 \CE{}\endlgrinde\LGend
 
 An actor receive-member begins by discriminating the kind of message passed to it based on the message type using the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Case}}}\endlgrinde\LGend{}\index{Case@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Case}}}\endlgrinde\LGend{}} macro:
@@ -4210,8 +4216,11 @@ An actor is created from an actor type, which has all the properties of a \LGinl
 \L{\LB{\Proc{MyActor}}\Tab{4}{\V{MyActor}(\0\V{OtherActor}\0\*\0\V{partner}\0)\0:\0\V{partner}(\0\V{partner}\0)\0\{\}\0\C{}\1\1\0executed\0by\0creator\'s\0thread}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}\index{preStart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}} is run after an actor's constructor by an executor thread versus the creating thread executing the actor's constructor.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{MyActor}}}\endlgrinde\LGend{} is created with a partner actor and its first action is to send a message to its partner.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{MyActor}}}\endlgrinde\LGend{} is created with a partner actor passed to its constructor and its first action is to send a message to its partner in member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}.
+Member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}\index{preStart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}} is run via a special message sent at the end of an actor's constructor.
+This message is the first one received by an actor because messages are delivered in FIFO order.
+An executor processes a preStart message by invoking the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{} member rather than calling the current receive member set by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}.
+Hence, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{} is not performed by the thread executing the actor's constructor, but as part of normal message delivery.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}\index{become@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}} changes the receive member and returns the previous receive member.
 \LGinlinefalse\LGbegin\lgrinde
@@ -4253,7 +4262,7 @@ The message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{startMsg}}}\endlg
 The message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{stopMsg}}}\endlgrinde\LGend{}\index{unhandledMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}} of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{StopMsg}}}\endlgrinde\LGend{}\index{StopMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopdMsg}}}\endlgrinde\LGend{}} is the \emph{suggested} way to stop an actor.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{stop}}}\endlgrinde\LGend{} is called to wait for all actors in the system to terminate;
 therefore, actors must be created prior to calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{stop}}}\endlgrinde\LGend{} or the program ends immediately.
-The optional duration (in seconds) unblocks the waiting task after the time interval has expired and returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}, i.e., all the actors did not stop in the time interval.
+The optional duration (in seconds) for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{stop}}}\endlgrinde\LGend{} unblocks the waiting task after the time interval has expired and returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}, i.e., all the actors did not stop in the time interval.
 
 The following mechanism is used to deal with message errors, such as sending a message not understood by the receiver, i.e., the type of the message is not one a receive member knows how to handle.
 The mechanism is to return the message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{unhandledMsg}}}\endlgrinde\LGend{}\index{unhandledMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}} of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{UnhandledMsg}}}\endlgrinde\LGend{}\index{UnhandledMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledMsg}}}\endlgrinde\LGend{}} to the sender indicating it sent an unhandleable message, e.g.:
@@ -4307,7 +4316,7 @@ for variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{d}}}\endlgrinde\LGend{}, onl
 In general, the most derived actor knows how it wants to initialize the entire actor object.
 However, it is possible for the derived actor to explicitly invoke the base actors \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}, as in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{D}::\V{prestart}}}\endlgrinde\LGend{}, which calls \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{B}::\V{preStart}}}\endlgrinde\LGend{}.
 
-An complementary approach to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{} is an \newterm{coroutine actor}\index{actor!coroutine}, which combines the properties of a coroutine with the properties of an actor (see \VRef{s:Coroutine}).
+A complementary approach to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{} is an \newterm{coroutine actor}\index{actor!coroutine}, which combines the properties of a coroutine with the properties of an actor (see \VRef{s:Coroutine}).
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_CorActor}\0\V{MyActor}\0\{}}
 \L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}\0\{}\Tab{56}{\C{}\1\1\0receiver}}
@@ -4345,10 +4354,10 @@ It is still possible to use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\end
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\L{\LB{}\Tab{4}{\V{uActor}::\V{start}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"bonjour\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
 \L{\LB{}\Tab{4}{\*\K{new}\0\V{Hello}()\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"hello\"\SE{}\0)\0\|\0\*\K{new}\0\V{StrMsg}(\0\S{}\"buenos\0dias\"\SE{}\0)\0\|\0\V{uActor}::\V{stopMsg};}}
-\L{\LB{}\Tab{4}{\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Hello Actor}
@@ -4511,7 +4520,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{NextMsg}}}\endlgrinde\LGend{} contain
 \VRef[Figure]{f:TraceActorOutput} shows the output from the simple trace, with titles separating different tracing features.
 In ``\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Build}\0\V{Trace}}}\endlgrinde\LGend{}'', the actor sends 4 messages to itself, and the output shows the trace growing as each traced message arrives.
 In ``\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Move}\0\V{Cursor}\0\V{Back}}}\endlgrinde\LGend{}'', the actor does a trace \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{} for each message, which moves the cursor back one hop (towards tail) and sends the trace message to cursor actor.
-A trace messages is \emph{not} part of the trace.
+A trace message is \emph{not} part of the trace.
 The output shows the trace shrinking for each trace return until the cursor gets to tail.
 In ``\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Move}\0\V{Cursor}\0\V{Head}}}\endlgrinde\LGend{}'', the actor does a trace \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{} to move the cursor back to the head.
 The output shows the trace reset to the original length.
@@ -4571,10 +4580,10 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}(\0\K{int}\0\V{argc},\0\K{char}\0\*\0\V{argv}[\,]\0)\0\{}}
-\L{\LB{}\Tab{4}{\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\L{\LB{}\Tab{4}{\V{uActor}::\V{start}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\V{Trace}\0\V{trace};}}
 \L{\LB{}\Tab{4}{\V{trace}\0\|\0\V{tmsg};}}
-\L{\LB{}\Tab{4}{\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Trace Actor}
@@ -4684,11 +4693,11 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{\Proc{Client}}\Tab{4}{\V{Client}(\0\V{Server}\0\&\0\V{server}\0)\0:\0\V{server}(\0\V{server}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\V{uActorStart}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
+\L{\LB{}\Tab{4}{\V{uActor}::\V{start}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\V{Server}\0\V{server};}}
 \L{\LB{}\Tab{4}{\V{Client}\0\V{client}(\0\V{server}\0);}}
 \L{\LB{}\Tab{4}{\V{client}\0\|\0\V{uActor}::\V{startMsg};}\Tab{56}{\C{}\1\1\0terminate\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActorStop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
 \caption{Promise Actor}
@@ -4731,13 +4740,13 @@ This scheme allows other tasks to progress with only a slight degradation in per
 \section{\texorpdfstring{\CC Stream I/O}{C++ Stream I/O}}
 \label{s:streamIO}
 
-Because a stream may be shared by multiple tasks, characters generated by the insertion operator (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\<}}\endlgrinde\LGend{})\index{<<@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\<}}\endlgrinde\LGend{}} and/or the extraction operator \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}\index{>>@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}} in different tasks may be intermixed.
+When a stream is shared by multiple tasks, characters generated by the insertion operator (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\<}}\endlgrinde\LGend{})\index{<<@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\<}}\endlgrinde\LGend{}} and/or the extraction operator \LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}\index{>>@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\>\>}}\endlgrinde\LGend{}} can be intermixed or cause failure.
 For example, if two tasks execute the following:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\emph{task$_{1}$}\0:\0\V{cout}\0\<\<\0\S{}\"abc\0\"\SE{}\0\<\<\0\S{}\"def\0\"\SE{}\0\<\<\0\V{endl};}}
 \L{\LB{\emph{task$_{2}$}\0:\0\V{cout}\0\<\<\0\S{}\"uvw\0\"\SE{}\0\<\<\0\S{}\"xyz\0\"\SE{}\0\<\<\0\V{endl};}}
 \endlgrinde\LGend
-some of the different outputs that can appear are:
+possible outputs are:
 \begin{quote}
 \def\VRfont{\fontfamily{pcr}\upshape\selectfont}
 \LGindent=0pt
@@ -4768,20 +4777,22 @@ some of the different outputs that can appear are:
 \endlgrinde\LGend
 \end{tabular}
 \end{quote}
-In fact, concurrent operations can even corrupt the internal state of the stream, resulting in failure.
+Concurrent operations can even corrupt the internal state of the stream resulting in failure.
 As a result, some form of mutual exclusion is required for concurrent stream access.
-A coarse-grained solution is to perform all stream operations (e.g., I/O) via a single task or within a monitor, providing the necessary mutual exclusion for the stream.
-A fine-grained solution is to have a lock for each stream, which is acquired and released around stream operations by each task.
 
-\uC provides a fine-grained solution where an owner lock is acquired and released indirectly by instantiating a type that is specific to the kind of stream: type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}\index{isacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}}\index{istream@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{istream}}}\endlgrinde\LGend{}!isacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}} for input streams and type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}\index{ostream@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ostream}}}\endlgrinde\LGend{}!osacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}} for output streams \emph{located in namespace \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}}}\endlgrinde\LGend{}}.
-For the duration of objects of these types on an appropriate stream, that stream's owner lock is held so I/O for that stream occurs with mutual exclusion within and across I/O operations performed on the stream.
+A coarse-grained solution is to perform all stream operations via a single task or within a monitor providing the necessary mutual exclusion for the stream.
+A fine-grained solution is to have a lock for each stream, which is acquired and released around stream operations by each task.
+\uC provides a fine-grained solution where an \Index{owner lock} is acquired and released indirectly by instantiating an \Index{RAII} type specific for the kind of stream:\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}\index{ostream@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ostream}}}\endlgrinde\LGend{}!osacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}} for output streams and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}\index{isacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}}\index{istream@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{istream}}}\endlgrinde\LGend{}!isacquire@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{}} for input streams \emph{located in namespace \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{std}}}\endlgrinde\LGend{}}.
+For the duration of these object types on an appropriate stream, the stream's owner lock is held;
+hence, I/O for that stream occurs with mutual exclusion within and across I/O operations performed on the stream.
 The lock acquire is performed in the object's constructor and the release is performed in the destructor.
-The most common usage is to create an anonymous object to lock the stream during a single cascaded I/O expression, e.g.:
+
+The common usage is creating an anonymous object to lock a stream during a single cascaded I/O expression, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\emph{task$_{1}$}\0:\0\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"abc\0\"\SE{}\0\<\<\0\S{}\"def\0\"\SE{}\0\<\<\0\V{endl};\0\C{}\1\1\0anonymous\0locking\0object}}
-\CE{}\L{\LB{\emph{task$_{2}$}\0:\0\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"uvw\0\"\SE{}\0\<\<\0\S{}\"xyz\0\"\SE{}\0\<\<\0\V{endl};\0\C{}\1\1\0anonymous\0locking\0object}}
-\CE{}\endlgrinde\LGend
-constraining the output to two different lines in any order:
+\L{\LB{\emph{task$_{1}$}\0:\0\BF{\V{osacquire}(\0\V{cout}\0)}\0\<\<\0\S{}\"abc\0\"\SE{}\0\<\<\0\S{}\"def\0\"\SE{}\0\<\<\0\V{endl};\0\C{}\1\1\0anonymous\0locking\0object}}
+\CE{}\L{\LB{\emph{task$_{2}$}\0:\0\BF{\V{osacquire}(\0\V{cout}\0)}\0\<\<\0\S{}\"uvw\0\"\SE{}\0\<\<\0\S{}\"xyz\0\"\SE{}\0\<\<\0\V{endl};}}
+\endlgrinde\LGend
+Now, the order of the thread execution is still non-deterministic, but the output is constrained to two possible lines in either order.
 \begin{flushleft}
 \def\VRfont{\fontfamily{pcr}\upshape\selectfont}
 \begin{tabular}{@{}l|l@{}}
@@ -4797,18 +4808,19 @@ constraining the output to two different lines in any order:
 \endlgrinde\LGend
 \end{tabular}
 \end{flushleft}
-The anonymous locking object is only deallocated after the entire cascaded I/O expression is completed, and it then implicitly releases the stream's owner lock in its destructor.
+In summary, the stream lock is acquired by the allocation of the anonymous locking object (locking in constructor) and implicitly deallocated (releasing in destructor) at the end of the cascaded I/O expression ensuring all operations in the expression occur atomically.
 
-Because of the properties of an owner lock, a task can allocate multiple locking objects for a specified stream, and the stream's owner lock is only released when the topmost locking object is deallocated.
-Therefore, multiple I/O statements can be protected atomically using normal block structure, e.g.:
+To lock a stream across multiple I/O operations, declare an instance of the appropriate \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{} type to implicitly acquire and release the stream lock for the object's duration, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\{}\Tab{4}{\C{}\1\1\0acquire\0the\0lock\0for\0stream\0cout\0for\0block\0duration}}
-\CE{}\L{\LB{}\Tab{4}{\V{osacquire}\0\V{acq}(\0\V{cout}\0);\0\C{}\1\1\0named\0stream\0locker}}
+\L{\LB{\{}\Tab{4}{\C{}\1\1\0acquire\0cout\0for\0block\0duration}}
+\CE{}\L{\LB{}\Tab{4}{\BF{\V{osacquire}\0\V{acq}(\0\V{cout}\0);}\0\C{}\1\1\0named\0stream\0locker}}
 \CE{}\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\S{}\"abc\"\SE{};}}
-\L{\LB{\Proc{osacquire}}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"uvw\0\"\SE{}\0\<\<\0\S{}\"xyz\0\"\SE{}\0\<\<\0\V{endl};\0\C{}\1\1\0ok\0to\0acquire\0and\0release\0again}}
+\L{\LB{}\Tab{4}{\BF{\V{osacquire}(\0\V{cout}\0)}\0\<\<\0\S{}\"uvw\0\"\SE{}\0\<\<\0\S{}\"xyz\0\"\SE{}\0\<\<\0\V{endl};\0\C{}\1\1\0unnecessary,\0but\0ok\0to\0acquire\0and\0release\0again\}\$}}
 \CE{}\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\S{}\"def\"\SE{};}}
 \L{\LB{\}}\Tab{4}{\C{}\1\1\0implicitly\0release\0the\0lock\0when\0\"acq\"\0is\0deallocated}}
 \CE{}\endlgrinde\LGend
+Note, the unnecessary anonymous \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{} works because the recursive stream-lock can be acquired/released multiple times by the owner thread.
+Hence, calls to functions that also acquire a stream lock for their output do not result in \Index{deadlock}.
 
 For an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{fstream}}}\endlgrinde\LGend{}, which can perform both input and output, both \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{} can be used.
 The only restriction is that the kind of stream locker has to match with kind of I/O operation, e.g.:
@@ -4829,17 +4841,16 @@ For protecting multiple I/O statements on an \LGinlinetrue\LGbegin\lgrinde\L{\LB
 \CE{}\L{\LB{\}}\Tab{4}{\C{}\1\1\0implicitly\0release\0the\0lock\0when\0\"acq\"\0is\0deallocated}}
 \CE{}\endlgrinde\LGend
 
-\Textbf{WARNING:} Deadlock can occur if routines are called in an I/O sequence that might block, e.g.:
+\Textbf{WARNING:} The general problem of \Index{nested locking} can occur if routines are called in an I/O sequence that blocks, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\V{Monitor}.\V{rtn}(.\,.\,.)\0\<\<\0\V{endl};}}
+\L{\LB{\BF{\V{osacquire}(\0\V{cout}\0)}\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\V{monitor}.\V{rtn}(.\,.\,.)\0\<\<\0\V{endl};}}
 \endlgrinde\LGend
-The problem occurs if the task executing the I/O sequence blocks in the monitor when it is holding the I/O lock for stream \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{}.
-Any other task that attempts to write on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{} blocks until the task holding the lock is unblocked and releases it.
-This scenario can lead to \Index{deadlock} if the task that is going to unblock the task waiting in the monitor first writes to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{}.
-One simple precaution is to factor the call to the monitor routine out of the I/O sequence, e.g.:
+If the thread executing the I/O expression blocks in the monitor with the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{} lock, other threads writing to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sout}}}\endlgrinde\LGend{} also block until the thread holding the lock is unblocked and releases it.
+This scenario can lead to \Index{deadlock}, if the task that is going to unblock the task waiting in the monitor first writes to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{} (deadly embrace).
+To prevent nested locking, a simple precaution is to factor out the blocking call from the expression, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{int}\0\V{data}\0=\0\V{Monitor}.\V{rtn}(.\,.\,.);}}
-\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\V{data}\0\<\<\0\V{endl};}}
+\L{\LB{\K{int}\0\BF{\V{data}}\0=\0\V{monitor}.\V{rtn}(.\,.\,.);}}
+\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\BF{\V{data}}\0\<\<\0\V{endl};}}
 \endlgrinde\LGend
 
 \Textbf{WARNING:} A stream may be \emph{tied} to another output stream, so when the first stream performs any I/O, the second stream is implicitly flushed first.
@@ -4871,6 +4882,7 @@ In this case, the best solution is to remove the tie between \LGinlinetrue\LGbeg
 \CE{}\endlgrinde\LGend
 eliminating the implicit flushing and the race condition (see examples in \VRef[Sections]{s:ClientUNIXDatagram} and \VRef[]{s:ClientINETStream}).
 
+\begin{comment}
 \Textbf{WARNING:} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}\index{printf@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{scanf}}}\endlgrinde\LGend{}\index{scanf@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{scanf}}}\endlgrinde\LGend{}} and their derivatives are unsafe when used with user-level threading, as in \uC.
 These stream routines use kernel-thread locking (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{futex}}}\endlgrinde\LGend{}\index{futex@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{futex}}}\endlgrinde\LGend{}}), which block kernel threads, to prevent interleaving of I/O.
 However, the following simple example illustrates how a deadlock can occur (other complex scenarios are possible).
@@ -4878,6 +4890,7 @@ Assume a single kernel thread and two user-level threads calling \LGinlinetrue\L
 One user-level thread acquires the I/O lock and is time-sliced while performing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}.
 The other user-level thread then starts execution, calls \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{}, and blocks the only kernel thread because it cannot acquire the I/O lock.
 It does not help if the kernel lock is multiple acquisition, i.e., the lock owner can acquire it multiple times, because it then results in two user threads in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{printf}}}\endlgrinde\LGend{} critical section, corrupting the stream.
+\end{comment}
 
 
 \section{UNIX File I/O}
@@ -10647,7 +10660,7 @@ To get the appropriate link fields associated with a user node, it must be a pub
 \L{\LB{\K{class}\0\V{queuenode}\0:\0\K{public}\0\V{uColable}\0\{\0.\,.\,.\0\}}}
 \L{\LB{\K{class}\0\V{seqnode}\0:\0\K{public}\0\V{uSeqable}\0\{\0.\,.\,.\0\}}}
 \endlgrinde\LGend
-A node inheriting from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqable}}}\endlgrinde\LGend{} can be put in a collection data structure but not vice versa.
+A node inheriting from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqable}}}\endlgrinde\LGend{} can appear in a sequence/collection but a node inherting from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uColable}}}\endlgrinde\LGend{} can only appear in a collection.
 Along with providing the appropriate link fields, the types \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uColable}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqable}}}\endlgrinde\LGend{} also provide one member routine:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{bool}\0\V{listed}()\0\K{const};}}

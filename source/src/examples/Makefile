@@ -105,7 +105,7 @@ bench :
 		multi=${MULTI} ; \
 	fi ; \
 	for filename in Bench ; do \
-		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+		for ccflags in "" "-nodebug -DNDEBUG" $${multi+"-multi"} $${multi+"-multi -nodebug -DNDEBUG"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc -lrt ; \
 			./a.out ; \
 		done ; \
@@ -169,7 +169,7 @@ actor :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in ActorHello ActorFib1 ActorFib2 ActorFib3 ActorFork ActorFork2 ActorChameneos ActorInherit ActorPromise ActorTrace ActorPingPong ActorRestart ActorRing ActorSieve ActorMatrixSum ActorProdCons ; do \
+	for filename in ActorHello ActorFib1 ActorFib2 ActorFib3 ActorPhoneNo ActorDeviceDriver ActorFork ActorFork2 ActorChameneos ActorInherit ActorPromise ActorTrace ActorPingPong ActorRestart ActorRing ActorSieve ActorMatrixSum ActorProdCons ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
@@ -178,21 +178,16 @@ actor :
 	rm -f ./a.out ;
 
 cobegin :
-	# needs -std=c++1y
 	set -x ; \
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	tmpname="${TMPDIR}/uC_tmp$${$$}.cc" ; \
-	echo '#if __cplusplus <= 201103L\n#error unsupport\n#endif\n' > $${tmpname} ; \
-	if ${CCAPP} -E -std=c++1y $${tmpname} > /dev/null 2>&1 ; then \
-		for filename in Cobegin ; do \
-			for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-				${CXX} ${CXXFLAGS} -std=c++1y $${ccflags} $${filename}.cc ; \
-				./a.out ; \
-			done ; \
+	for filename in Cobegin ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
 		done ; \
-	fi ; \
+	done ; \
 	rm -f ./a.out $${tmpname} ;
 
 timeout :

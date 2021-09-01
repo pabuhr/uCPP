@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 16 08:34:00 2020
-// Update Count     : 1023
+// Last Modified On : Thu Jul 29 14:49:15 2021
+// Update Count     : 1026
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -145,7 +145,7 @@ int main( int argc, char * argv[] ) {
 	string unwindincdir;
 	string unwindlibdir;
 	string token;
-	string uAlloc;
+	string allocator;									// user specified memory allocator
 
 	uDEBUGPRT( cerr << "u++:" << endl; );
 	uDEBUGPRT(
@@ -283,9 +283,11 @@ int main( int argc, char * argv[] ) {
 				args[nargs++] = argv[i];				// pass flag along
 				i += 1;
 				args[nargs++] = argv[i];				// pass argument along
-			} else if ( prefix( arg, "-uAlloc" ) ) {
-				// non-default memory allocator
-				uAlloc = &argv[i][1];
+			} else if ( prefix( arg, "-alloc" ) ) {
+				// use the user specified memory allocator
+				i += 1;
+				if ( i == argc ) continue;				// next argument available ?
+				allocator = argv[i];
 			} else if ( arg[1] == 'l' ) {
 				// if the user specifies a library, load it after user code
 				libs[nlibs++] = argv[i];
@@ -447,12 +449,12 @@ int main( int argc, char * argv[] ) {
 			args[nargs++] = ( *new string( installlibdir + "/uDefaultProcessors-OpenMP.o" ) ).c_str();
 		} // if
 
-		if ( uAlloc != "" ) {
+		if ( allocator != "" ) {
 			args[nargs++] = "-u";
 			args[nargs++] = "malloc";					// force heap to be loaded
-			args[nargs++] = "-u";
-			args[nargs++] = "_ZN12uHeapControl11prepareTaskEP9uBaseTask";
-			args[nargs++] = ( *new string( installlibdir + "/" + uAlloc + m + d + ".a" ) ).c_str();
+//			args[nargs++] = "-u";
+//			args[nargs++] = "_ZN12uHeapControl11prepareTaskEP9uBaseTask";
+			args[nargs++] = allocator.c_str();
 		} // if
 
 		// link with the correct version of the kernel module
@@ -489,7 +491,7 @@ int main( int argc, char * argv[] ) {
 			libs[nlibs++] = "-lXt";
 			libs[nlibs++] = "-lSM";
 			libs[nlibs++] = "-lICE";
-//	    libs[nlibs++] = "-lXpm";
+		    // libs[nlibs++] = "-lXpm";
 			libs[nlibs++] = "-lXext";
 			libs[nlibs++] = ( *new string( string( "-luX" ) + m + d ) ).c_str();
 			libs[nlibs++] = "-lm";

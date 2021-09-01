@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 12 13:36:00 2020
-// Update Count     : 523
+// Last Modified On : Sat Jan 23 15:03:18 2021
+// Update Count     : 532
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -254,7 +254,13 @@ class uEHM::uFinallyHandler {
 	    noexcept( false )				// C++11, required to allow exception from destructor
 #endif
     {
-	cleanUpRtn();					// invoke handler on block exit
+	try {
+	    cleanUpRtn();				// invoke handler on block exit
+	} catch( ... ) {
+	    if ( std::__U_UNCAUGHT_EXCEPTION__() ) {
+		abort( "Raising an exception in a _Finally clause during exception propagation is disallowed." );
+	    } else _Throw;
+	} // try
     } // uFinallyHandler::~uFinallyHandler
 }; // uEHM::uFinallyHandler
 

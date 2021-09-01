@@ -19,10 +19,10 @@ CCFLAGS += -m${WORDSIZE}
 
 HOSTNAME = ${shell hostname}
 ifeq (${HOSTNAME},plg2)			# development machine
-    # When -O2 is specified, compilers can generate additional warning messages.
-    CCFLAGS += -Wall -Wextra -g -O2 #
+    # When -O2/3 is specified, compilers can generate additional warning messages.
+    CCFLAGS += -Wall -Wextra -g -O3 #
 else
-    CCFLAGS += -Wall -Wextra -g -O2 #
+    CCFLAGS += -Wall -Wextra -g -O3 #
 endif
 
 AR = ar cr

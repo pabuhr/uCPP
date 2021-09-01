@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 11 20:43:00 2020
-// Update Count     : 305
+// Last Modified On : Wed Jul 21 09:45:36 2021
+// Update Count     : 314
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -192,7 +192,9 @@ static void Stage1( const int argc, const char * const argv[] ) {
 				// CPP flags with an argument
 				if ( arg == "-D" || arg == "-U" || arg == "-I" || arg == "-MF" || arg == "-MT" || arg == "-MQ" ||
 					 arg == "-include" || arg == "-imacros" || arg == "-idirafter" || arg == "-iprefix" ||
-					 arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ) {
+					 arg == "-iwithprefix" || arg == "-iwithprefixbefore" || arg == "-isystem" || arg == "-isysroot" ||
+					 arg == "-dumpbase-ext" || arg == "-dumpbase"
+					) {
 					i += 1;
 					args[nargs++] = argv[i];			// pass argument along
 					uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; );
@@ -350,7 +352,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 				// strip inappropriate flags with an argument
 
-			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" ) {
+			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" || arg == "-dumpdir" ) {
 				i += 1;
 				uDEBUGPRT( cerr << "arg:\"" << argv[i] << "\"" << endl; );
 
@@ -542,7 +544,7 @@ int main( const int argc, const char * const argv[], __attribute__((unused)) con
 	} else if ( arg == "-fpreprocessed" ) {
 		Stage2( argc, argv );
 	} else {
-		cerr << "Usage: " << argv[0] << " input-file [output-file] [options]" << endl;
+		cerr << "Usage: " << argv[0] << " [-E input-file [output-file] ] | [-fpreprocessed input-file output-file] [options]" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 } // main

@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  9 18:27:10 2021
-// Update Count     : 1745
+// Last Modified On : Sun Aug 22 18:18:15 2021
+// Update Count     : 1835
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,17 +36,25 @@
 #include <uDebug.h>										// access: uDebugWrite
 #undef __U_DEBUG_H__									// turn off debug prints
 
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
+#include <algorithm>									// lower_bound, min
+#include <cstring>										// strlen, memset, memcpy
 #include <climits>										// ULONG_MAX
-#include <new>
-#include <unistd.h>										// sbrk, sysconf
+#include <cerrno>										// errno, ENOMEM, EINVAL
+#include <unistd.h>										// STDERR_FILENO, sbrk, sysconf, write
 
-#define LIKELY(x)       __builtin_expect(!!(x), 1)
-#define UNLIKELY(x)     __builtin_expect(!!(x), 0)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
-#define Fence() __asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" )
+#if defined(__x86_64)
+	//#define Fence() __asm__ __volatile__ ( "mfence" )
+	#define Fence() __asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" )
+#elif defined(__i386)
+	#define Fence() __asm__ __volatile__ ( "lock; addl $0,(%%esp);" ::: "cc" )
+#elif defined(__ARM_ARCH)
+	#define Fence() __asm__ __volatile__ ( "DMB ISH" ::: )
+#else
+	#error unsupported architecture
+#endif
 
 
 namespace UPP {
@@ -96,63 +104,82 @@ namespace UPP {
 	#endif // __U_DEBUG__
 
 	#ifdef __U_STATISTICS__
-	// Heap statistics counters.
-	unsigned int uHeapManager::malloc_zero_calls = 0, uHeapManager::malloc_calls = 0;
-	unsigned long long int uHeapManager::malloc_storage = 0;
-	unsigned int uHeapManager::aalloc_zero_calls = 0, uHeapManager::aalloc_calls = 0;
-	unsigned long long int uHeapManager::aalloc_storage = 0;
-	unsigned int uHeapManager::calloc_zero_calls = 0, uHeapManager::calloc_calls = 0;
-	unsigned long long int uHeapManager::calloc_storage = 0;
-	unsigned int uHeapManager::memalign_zero_calls = 0, uHeapManager::memalign_calls = 0;
-	unsigned long long int uHeapManager::memalign_storage = 0;
-	unsigned int uHeapManager::amemalign_zero_calls = 0, uHeapManager::amemalign_calls = 0;
-	unsigned long long int uHeapManager::amemalign_storage = 0;
-	unsigned int uHeapManager::cmemalign_zero_calls = 0, uHeapManager::cmemalign_calls = 0;
-	unsigned long long int uHeapManager::cmemalign_storage = 0;
-	unsigned int uHeapManager::resize_zero_calls = 0, uHeapManager::resize_calls = 0;
-	unsigned long long int uHeapManager::resize_storage = 0;
-	unsigned int uHeapManager::realloc_zero_calls = 0, uHeapManager::realloc_calls = 0;
-	unsigned long long int uHeapManager::realloc_storage = 0;
-	unsigned int uHeapManager::free_zero_calls = 0, uHeapManager::free_calls = 0;
-	unsigned long long int uHeapManager::free_storage = 0;
-	unsigned int uHeapManager::mmap_calls = 0;
-	unsigned long long int uHeapManager::mmap_storage = 0;
-	unsigned int uHeapManager::munmap_calls = 0;
-	unsigned long long int uHeapManager::munmap_storage = 0;
-	unsigned int uHeapManager::sbrk_calls = 0;
-	unsigned long long int uHeapManager::sbrk_storage = 0;
+	enum { CntTriples = 12 };							// number of counter triples
+	struct HeapStatistics {
+		enum { MALLOC, AALLOC, CALLOC, MEMALIGN, AMEMALIGN, CMEMALIGN, RESIZE, REALLOC };
+		union {
+			struct {
+				unsigned int malloc_calls, malloc_0_calls;
+				unsigned long long int malloc_storage_request, malloc_storage_alloc;
+				unsigned int aalloc_calls, aalloc_0_calls;
+				unsigned long long int aalloc_storage_request, aalloc_storage_alloc;
+				unsigned int calloc_calls, calloc_0_calls;
+				unsigned long long int calloc_storage_request, calloc_storage_alloc;
+				unsigned int memalign_calls, memalign_0_calls;
+				unsigned long long int memalign_storage_request, memalign_storage_alloc;
+				unsigned int amemalign_calls, amemalign_0_calls;
+				unsigned long long int amemalign_storage_request, amemalign_storage_alloc;
+				unsigned int cmemalign_calls, cmemalign_0_calls;
+				unsigned long long int cmemalign_storage_request, cmemalign_storage_alloc;
+				unsigned int resize_calls, resize_0_calls;
+				unsigned long long int resize_storage_request, resize_storage_alloc;
+				unsigned int realloc_calls, realloc_0_calls;
+				unsigned long long int realloc_storage_request, realloc_storage_alloc;
+				unsigned int free_calls, free_null_calls;
+				unsigned long long int free_storage_request, free_storage_alloc;
+				unsigned int away_pulls, away_pushes;
+				unsigned long long int away_storage_request, away_storage_alloc;
+				unsigned int mmap_calls, mmap_dummy;	// no zero calls
+				unsigned long long int mmap_storage_request, mmap_storage_alloc;
+				unsigned int munmap_calls, munmap_dummy; // no zero calls
+				unsigned long long int munmap_storage_request, munmap_storage_alloc;
+			};
+			struct {									// overlay for iteration
+				unsigned int cnt1, cnt2;
+				unsigned long long int cnt3, cnt4;
+			} counters[CntTriples];
+		};
+	}; // HeapStatistics
+
+	static_assert( sizeof(HeapStatistics) == CntTriples * sizeof(HeapStatistics::counters[0] ),
+				   "Heap statistics counter-triplets does not match with array size" );
+
+	static HeapStatistics stats;
+	unsigned int sbrk_calls;
+	unsigned long long int sbrk_storage;
+
 	// Statistics file descriptor (changed by malloc_stats_fd).
-	int uHeapManager::stats_fd = STDERR_FILENO;		// default stderr
+	int uHeapManager::stats_fd = STDERR_FILENO;			// default stderr
 
 	// Use "write" because streams may be shutdown when calls are made.
 	void uHeapManager::printStats() {
 		char helpText[1024];
 		int len = snprintf( helpText, sizeof(helpText),
-							"\nHeap statistics:\n"
-							"  malloc    0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  aalloc    0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  calloc    0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  memalign  0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  amemalign 0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  cmemalign 0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  resize    0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  realloc   0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  free      0-calls %'u; >0-calls %'u; storage %'llu bytes\n"
-							"  mmap      calls %'u; storage %'llu bytes\n"
-							"  munmap    calls %'u; storage %'llu bytes\n"
-							"  sbrk      calls %'u; storage %'llu bytes\n",
-							malloc_zero_calls, malloc_calls, malloc_storage,
-							aalloc_zero_calls, aalloc_calls, aalloc_storage,
-							calloc_zero_calls, calloc_calls, calloc_storage,
-							memalign_zero_calls, memalign_calls, memalign_storage,
-							amemalign_zero_calls, amemalign_calls, amemalign_storage,
-							cmemalign_zero_calls, cmemalign_calls, cmemalign_storage,
-							resize_zero_calls, resize_calls, resize_storage,
-							realloc_zero_calls, realloc_calls, realloc_storage,
-							free_zero_calls, free_calls, free_storage,
-							mmap_calls, mmap_storage,
-							munmap_calls, munmap_storage,
-							sbrk_calls, sbrk_storage
+							"\nHeap statistics: (storage request / allocation + header)\n"
+							"  malloc    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  aalloc    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  calloc    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  memalign  >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  amemalign >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  cmemalign >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  resize    >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  realloc   >0 calls %'u; 0 calls %'u; storage %'llu / %'llu bytes\n"
+							"  free      !null calls %'u; null calls %'u; storage %'llu / %'llu bytes\n"
+							"  sbrk      calls %'u; storage %'llu bytes\n"
+							"  mmap      calls %'u; storage %'llu / %'llu bytes\n"
+							"  munmap    calls %'u; storage %'llu / %'llu bytes\n",
+							stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
+							stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
+							stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
+							stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
+							stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
+							stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
+							stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
+							stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
+							stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+							sbrk_calls, sbrk_storage,
+							stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
+							stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc
 			);
 		uDebugWrite( stats_fd, helpText, len );
 	} // uHeapManager::printStats
@@ -164,31 +191,31 @@ namespace UPP {
 							"<heap nr=\"0\">\n"
 							"<sizes>\n"
 							"</sizes>\n"
-							"<total type=\"malloc\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"aalloc\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"calloc\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"memalign\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"amemalign\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"cmemalign\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"resize\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"realloc\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"free\" 0 count=\"%'u;\" >0 count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"mmap\" count=\"%'u;\" size=\"%'llu\"/> bytes\n"
-							"<total type=\"munmap\" count=\"%'u;\" size=\"%'llu\"/> bytes\n"
+							"<total type=\"malloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"aalloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"calloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"memalign\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"amemalign\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"cmemalign\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"resize\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"realloc\" >0 count=\"%'u;\" 0 count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
+							"<total type=\"free\" !null=\"%'u;\" 0 null=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
 							"<total type=\"sbrk\" count=\"%'u;\" size=\"%'llu\"/> bytes\n"
+							"<total type=\"mmap\" count=\"%'u;\" size=\"%'llu / %'llu\" / > bytes\n"
+							"<total type=\"munmap\" count=\"%'u;\" size=\"%'llu / %'llu\"/> bytes\n"
 							"</malloc>",
-							malloc_zero_calls, malloc_calls, malloc_storage,
-							aalloc_zero_calls, aalloc_calls, aalloc_storage,
-							calloc_zero_calls, calloc_calls, calloc_storage,
-							memalign_zero_calls, memalign_calls, memalign_storage,
-							amemalign_zero_calls, amemalign_calls, amemalign_storage,
-							cmemalign_zero_calls, cmemalign_calls, cmemalign_storage,
-							resize_zero_calls, resize_calls, resize_storage,
-							realloc_zero_calls, realloc_calls, realloc_storage,
-							free_zero_calls, free_calls, free_storage,
-							mmap_calls, mmap_storage,
-							munmap_calls, munmap_storage,
-							sbrk_calls, sbrk_storage
+							stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
+							stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
+							stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
+							stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
+							stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
+							stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
+							stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
+							stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
+							stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+							sbrk_calls, sbrk_storage,
+							stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
+							stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc
 			);
 		uDebugWrite( fileno( stream ), helpText, len );	// ensures all bytes written or exit
 		return len;
@@ -259,7 +286,7 @@ namespace UPP {
 		} // if
 	} // uHeapManager::fakeHeader
 
-	inline bool uHeapManager::headers( const char name[] __attribute__(( unused )), void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment ) {
+	inline bool uHeapManager::headers( const char name[] __attribute__(( unused )), void * addr, Storage::Header *& header, FreeHeader *& freeHead, size_t & size, size_t & alignment ) {
 		header = headerAddr( addr );
 
 	  if ( UNLIKELY( addr < heapBegin || heapEnd < addr ) ) { // mmapped ?
@@ -278,15 +305,15 @@ namespace UPP {
 		checkHeader( header < heapBegin || heapEnd < header, name, addr ); // bad address ? (offset could be + or -)
 		#endif // __U_DEBUG__
 
-		freeElem = (FreeHeader *)((size_t)header->kind.real.home & -3);
+		freeHead = (FreeHeader *)((size_t)header->kind.real.home & -3);
 		#ifdef __U_DEBUG__
-		if ( freeElem < &freeLists[0] || &freeLists[NoBucketSizes] <= freeElem ) {
+		if ( freeHead < &freeLists[0] || &freeLists[NoBucketSizes] <= freeHead ) {
 			abort( "Attempt to %s storage %p with corrupted header.\n"
 				   "Possible cause is duplicate free on same block or overwriting of header information.",
 				   name, addr );
 		} // if
 		#endif // __U_DEBUG__
-		size = freeElem->blockSize;
+		size = freeHead->blockSize;
 		return false;
 	} // uHeapManager::headers
 
@@ -350,39 +377,50 @@ namespace UPP {
 	} // uHeapManager::extend
 
 
-	inline void * uHeapManager::doMalloc( size_t size ) {
-		uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size ); )
+	inline void * uHeapManager::doMalloc( size_t size
+										  #ifdef __U_STATISTICS__
+										  , unsigned int counter
+										  #endif // __U_STATISTICS__
+			) {
+		uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc( %zu )\n", this, size ); );
 
 		Storage * block;
 
 		// Look up size in the size list.  Make sure the user request includes space for the header that must be allocated
 		// along with the block and is a multiple of the alignment size.
-
-	  if ( UNLIKELY( size > ULONG_MAX - sizeof(Storage) ) ) return nullptr;
 		size_t tsize = size + sizeof(Storage);
+
+		#ifdef __U_STATISTICS__
+		uFetchAdd( stats.counters[counter].cnt1, 1 );
+		uFetchAdd( stats.counters[counter].cnt3, size );
+		#endif // __U_STATISTICS__
+
 		if ( LIKELY( tsize < mmapStart ) ) {			// small size => sbrk
-			FreeHeader * freeElem =
+			FreeHeader * freeHead =
 				#ifdef FASTLOOKUP
-				tsize < LookupSizes ? &freeLists[lookup[tsize]] :
+				LIKELY( tsize < LookupSizes ) ? &freeLists[lookup[tsize]] :
 				#endif // FASTLOOKUP
 				std::lower_bound( freeLists, freeLists + maxBucketsUsed, tsize ); // binary search
-			assert( freeElem <= &freeLists[maxBucketsUsed] ); // subscripting error ?
-			assert( tsize <= freeElem->blockSize );		// search failure ?
-			tsize = freeElem->blockSize;				// total space needed for request
+			assert( freeHead <= &freeLists[maxBucketsUsed] ); // subscripting error ?
+			assert( tsize <= freeHead->blockSize );		// search failure ?
+			tsize = freeHead->blockSize;				// total space needed for request
+			#ifdef __U_STATISTICS__
+			uFetchAdd( stats.counters[counter].cnt4, tsize );
+			#endif // __U_STATISTICS__
 
 			uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doMalloc, size after lookup:%zu\n", this, tsize ); )
 	
 			// Spin until the lock is acquired for this particular size of block.
 
 			#if BUCKETLOCK == SPINLOCK
-			freeElem->lock.acquire();
-			block = freeElem->freeList;					// remove node from stack
+			freeHead->lock.acquire();
+			block = freeHead->freeList;					// remove node from stack
 			#else
-			block = freeElem->freeList.pop();
+			block = freeHead->freeList.pop();
 			#endif // BUCKETLOCK
 			if ( UNLIKELY( block == nullptr ) ) {		// no free block ?
 				#if BUCKETLOCK == SPINLOCK
-				freeElem->lock.release();
+				freeHead->lock.release();
 				#endif // BUCKETLOCK
 
 				// Freelist for that size was empty, so carve it out of the heap if there's enough left, or get some more
@@ -391,22 +429,24 @@ namespace UPP {
 				block = (Storage *)extend( tsize );		// mutual exclusion on call
 			#if BUCKETLOCK == SPINLOCK
 			} else {
-				freeElem->freeList = block->header.kind.real.next;
-				freeElem->lock.release();
+				freeHead->freeList = block->header.kind.real.next;
+				freeHead->lock.release();
 			#endif // BUCKETLOCK
 			} // if
 
-			block->header.kind.real.home = freeElem;	// pointer back to free list of apropriate size
+			block->header.kind.real.home = freeHead;	// pointer back to free list of apropriate size
 		} else {										// large size => mmap
 	  if ( UNLIKELY( size > ULONG_MAX - pageSize ) ) return nullptr;
 			tsize = uCeiling( tsize, pageSize );		// must be multiple of page size
 			#ifdef __U_STATISTICS__
-			uFetchAdd( mmap_calls, 1 );
-			uFetchAdd( mmap_storage, tsize );
+			uFetchAdd( stats.counters[counter].cnt4, tsize );
+			uFetchAdd( stats.mmap_calls, 1 );
+			uFetchAdd( stats.mmap_storage_request, size );
+			uFetchAdd( stats.mmap_storage_alloc, tsize );
 			#endif // __U_STATISTICS__
 
 			block = (Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, mmapFd, 0 );
-			if ( block == MAP_FAILED ) { // failed ?
+			if ( block == MAP_FAILED ) {				// failed ?
 				if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, tsize ); // no memory
 				// Do not call strerror( errno ) as it may call malloc.
 				abort( "(uHeapManager &)0x%p.doMalloc() : internal error, mmap failure, size:%zu errno:%d.", this, tsize, errno );
@@ -447,13 +487,20 @@ namespace UPP {
 		#endif // __U_DEBUG__
 
 		Storage::Header * header;
-		FreeHeader * freeElem;
+		FreeHeader * freeHead;
 		size_t size, alignment;							// not used (see realloc)
 
-		if ( headers( "free", addr, header, freeElem, size, alignment ) ) { // mmapped ?
+		bool mapped = headers( "free", addr, header, freeHead, size, alignment );
+		#ifdef __U_STATISTICS__
+		uFetchAdd( stats.free_storage_request, header->kind.real.size );
+		uFetchAdd( stats.free_storage_alloc, size );
+		#endif // __U_STATISTICS__
+	
+		if ( mapped ) {									// mmapped ?
 			#ifdef __U_STATISTICS__
-			uFetchAdd( munmap_calls, 1 );
-			uFetchAdd( munmap_storage, size );
+			uFetchAdd( stats.munmap_calls, 1 );
+			uFetchAdd( stats.munmap_storage_request, header->kind.real.size );
+			uFetchAdd( stats.munmap_storage_alloc, size );
 			#endif // __U_STATISTICS__
 			if ( munmap( header, size ) == -1 ) {
 				abort( "Attempt to deallocate storage %p not allocated or with corrupt header.\n"
@@ -463,28 +510,25 @@ namespace UPP {
 		} else {
 			#ifdef __U_PROFILER__
 			if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryDeallocate ) {
-				(* uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, freeElem->blockSize, PROFILEMALLOCENTRY( header ) ); 
+				(* uProfiler::uProfiler_registerMemoryDeallocate)( uProfiler::profilerInstance, addr, freeHead->blockSize, PROFILEMALLOCENTRY( header ) ); 
 			} // if
 			#endif // __U_PROFILER__
 
 			#ifdef __U_DEBUG__
 			// Set free memory to garbage so subsequent usages might fail.
-			memset( ((Storage *)header)->data, '\xde', freeElem->blockSize - sizeof( Storage ) );
-			//Memset( ((Storage *)header)->data, freeElem->blockSize - sizeof( Storage ) );
+			memset( ((Storage *)header)->data, '\xde', freeHead->blockSize - sizeof( Storage ) );
+			//Memset( ((Storage *)header)->data, freeHead->blockSize - sizeof( Storage ) );
 			#endif // __U_DEBUG__
 
-			uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeElem:%p\n", this, addr, &header, &freeElem ); )
+			uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) header:%p freeHead:%p\n", this, addr, &header, &freeHead ); )
 
-			#ifdef __U_STATISTICS__
-			free_storage += size;
-			#endif // __U_STATISTICS__
 			#if BUCKETLOCK == SPINLOCK
-			freeElem->lock.acquire();					// acquire spin lock
-			header->kind.real.next = freeElem->freeList; // push on stack
-			freeElem->freeList = (Storage *)header;
-			freeElem->lock.release();					// release spin lock
+			freeHead->lock.acquire();					// acquire spin lock
+			header->kind.real.next = freeHead->freeList; // push on stack
+			freeHead->freeList = (Storage *)header;
+			freeHead->lock.release();					// release spin lock
 			#else
-			freeElem->freeList.push( *(Storage *)header );
+			freeHead->freeList.push( *(Storage *)header );
 			#endif // BUCKETLOCK
 			uDEBUGPRT( uDebugPrt( "(uHeapManager &)%p.doFree( %p ) returning free block in list 0x%zx\n", this, addr, size ); )
 		} // if
@@ -648,13 +692,28 @@ namespace UPP {
 	// } // uHeapControl::finishTask
 
 
-	inline void * uHeapManager::mallocNoStats( size_t size ) __THROW { // necessary for malloc statistics
+	inline void * uHeapManager::mallocNoStats( size_t size
+											   #ifdef __U_STATISTICS__
+											   , unsigned int counter
+											   #endif // __U_STATISTICS__
+			) __THROW {
 		if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
 			UPP::uHeapManager::boot();
 		} // if
-	  if ( UNLIKELY( size ) == 0 ) return nullptr;		// 0 BYTE ALLOCATION RETURNS NULL POINTER
 
-		void * addr = heapManagerInstance->doMalloc( size );
+	  if ( UNLIKELY( size ) == 0 ||						// 0 BYTE ALLOCATION RETURNS NULL POINTER
+		   UNLIKELY( size > ULONG_MAX - sizeof(Storage) ) ) { // error check
+			#ifdef __U_STATISTICS__
+			uFetchAdd( stats.counters[counter].cnt2, 1 );
+			#endif // __U_STATISTICS__
+			return nullptr;
+		} // if
+
+		void * addr = heapManagerInstance->doMalloc( size
+													 #ifdef __U_STATISTICS__
+													 , counter
+													 #endif // __U_STATISTICS__
+			);
 
 		#ifdef __U_PROFILER__
 		if ( uThisTask().profileActive && uProfiler::uProfiler_registerMemoryAllocate ) {
@@ -667,15 +726,33 @@ namespace UPP {
 	} // mallocNoStats
 
 
-	inline void * uHeapManager::memalignNoStats( size_t alignment, size_t size ) __THROW {
-	  if ( UNLIKELY( size ) == 0 ) return nullptr;		// 0 BYTE ALLOCATION RETURNS NULL POINTER
+	inline void * uHeapManager::memalignNoStats( size_t alignment, size_t size
+												 #ifdef __U_STATISTICS__
+												 , unsigned int counter
+												 #endif // __U_STATISTICS__
+			) __THROW {
+		if ( UNLIKELY( UPP::uHeapManager::heapManagerInstance == nullptr ) ) {
+			UPP::uHeapManager::boot();
+		} // if
+
+	  if ( UNLIKELY( size ) == 0 ||						// 0 BYTE ALLOCATION RETURNS NULL POINTER
+		   UNLIKELY( size > ULONG_MAX - sizeof(Storage) ) ) { // error check
+			#ifdef __U_STATISTICS__
+			uFetchAdd( stats.counters[counter].cnt2, 1 );
+			#endif // __U_STATISTICS__
+			return nullptr;
+		} // if
 
 		#ifdef __U_DEBUG__
 		checkAlign( alignment );						// check alignment
 		#endif // __U_DEBUG__
 
 		// if alignment <= default alignment, do normal malloc as two headers are unnecessary
-	  if ( UNLIKELY( alignment <= uAlign() ) ) return mallocNoStats( size );
+	  if ( UNLIKELY( alignment <= uAlign() ) ) return heapManagerInstance->doMalloc( size
+																					 #ifdef __U_STATISTICS__
+																					 , counter
+																					 #endif // __U_STATISTICS__
+		  );
 
 		// Allocate enough storage to guarantee an address on the alignment boundary, and sufficient space before it for
 		// administrative storage. NOTE, WHILE THERE ARE 2 HEADERS, THE FIRST ONE IS IMPLICITLY CREATED BY DOMALLOC.
@@ -686,7 +763,11 @@ namespace UPP {
 
 		// subtract uAlign() because it is already the minimum alignment
 		// add sizeof(Storage) for fake header
-		char * addr = (char *)mallocNoStats( size + alignment - uAlign() + sizeof(Storage) );
+		char * addr = (char *)heapManagerInstance->doMalloc( size + alignment - uAlign() + sizeof(Storage)
+															 #ifdef __U_STATISTICS__
+															 , counter
+															 #endif // __U_STATISTICS__
+			);
 
 		// address in the block of the "next" alignment address
 		char * user = (char *)uCeiling( (uintptr_t)(addr + sizeof(Storage)), alignment );
@@ -718,59 +799,41 @@ extern "C" {
 	// Allocates size bytes and returns a pointer to the allocated memory.  The contents are undefined. If size is 0,
 	// then malloc() returns a unique pointer value that can later be successfully passed to free().
 	void * malloc( size_t size ) __THROW {
-		#ifdef __U_STATISTICS__
-		if ( LIKELY( size > 0 ) ) {
-			uFetchAdd( UPP::uHeapManager::malloc_calls, 1 );
-			uFetchAdd( UPP::uHeapManager::malloc_storage, size );
-		} else {
-			uFetchAdd( UPP::uHeapManager::malloc_zero_calls, 1 );
-		} // if
-		#endif // __U_STATISTICS__
-
-		return UPP::uHeapManager::mallocNoStats( size );
+		return UPP::uHeapManager::mallocNoStats( size
+												 #ifdef __U_STATISTICS__
+												 , UPP::HeapStatistics::MALLOC
+												 #endif // __U_STATISTICS__
+			);
 	} // malloc
 
 
 	// Same as malloc() except size bytes is an array of dim elements each of elemSize bytes.
 	void * aalloc( size_t dim, size_t elemSize ) __THROW {
-		size_t size = dim * elemSize;
-		#ifdef __U_STATISTICS__
-		if ( LIKELY( size > 0 ) ) {
-			uFetchAdd( UPP::uHeapManager::aalloc_calls, 1 );
-			uFetchAdd( UPP::uHeapManager::aalloc_storage, size );
-		} else {
-			uFetchAdd( UPP::uHeapManager::aalloc_zero_calls, 1 );
-		} // if
-		#endif // __U_STATISTICS__
-
-		return UPP::uHeapManager::mallocNoStats( size );
+		return UPP::uHeapManager::mallocNoStats( dim * elemSize
+												 #ifdef __U_STATISTICS__
+												 , UPP::HeapStatistics::AALLOC
+												 #endif // __U_STATISTICS__
+			);
 	} // aalloc
 
 
 	// Same as aalloc() with memory set to zero.
 	void * calloc( size_t dim, size_t elemSize ) __THROW {
 		size_t size = dim * elemSize;
-	  if ( UNLIKELY( size ) == 0 ) {					// 0 BYTE ALLOCATION RETURNS NULL POINTER
-			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::calloc_zero_calls, 1 );
-			#endif // __U_STATISTICS__
-			return nullptr;
-		} // if
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::calloc_calls, 1 );
-		uFetchAdd( UPP::uHeapManager::calloc_storage, size );
-		#endif // __U_STATISTICS__
-
-		char * addr = (char *)UPP::uHeapManager::mallocNoStats( size );
+		char * addr = (char *)UPP::uHeapManager::mallocNoStats( size
+																#ifdef __U_STATISTICS__
+																, UPP::HeapStatistics::CALLOC
+																#endif // __U_STATISTICS__
+			);
 
 		UPP::uHeapManager::Storage::Header * header;
-		UPP::uHeapManager::FreeHeader * freeElem;
+		UPP::uHeapManager::FreeHeader * freeHead;
 		size_t bsize, alignment;
 
 		#ifndef __U_DEBUG__
 		bool mapped =
 		#endif // __U_DEBUG__
-			UPP::uHeapManager::heapManagerInstance->headers( "calloc", addr, header, freeElem, bsize, alignment );
+			UPP::uHeapManager::heapManagerInstance->headers( "calloc", addr, header, freeHead, bsize, alignment );
 
 		#ifndef __U_DEBUG__
 		// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero.
@@ -790,79 +853,83 @@ extern "C" {
 	// not nullptr, then the call is equivalent to free(oaddr). Unless oaddr is nullptr, it must have been returned by an earlier
 	// call to malloc(), alloc(), calloc() or realloc(). If the area pointed to was moved, a free(oaddr) is done.
 	void * resize( void * oaddr, size_t size ) __THROW {
+	  if ( UNLIKELY( oaddr == nullptr ) ) {				// special cases
+			return UPP::uHeapManager::mallocNoStats( size
+													 #ifdef __U_STATISTICS__
+													 , UPP::HeapStatistics::RESIZE
+													 #endif // __U_STATISTICS__
+				);
+		} // if
+
 		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
 	  if ( UNLIKELY( size == 0 ) ) {					// special cases
 			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::resize_zero_calls, 1 );
+			uFetchAdd( UPP::stats.resize_0_calls, 1 );
 			#endif // __U_STATISTICS__
-			free( oaddr );
+			UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 			return nullptr;
-		} // if
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::resize_calls, 1 );
-		#endif // __U_STATISTICS__
-
-	  if ( UNLIKELY( oaddr == nullptr ) ) {
-			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::resize_storage, size );
-			#endif // __U_STATISTICS__
-			return UPP::uHeapManager::mallocNoStats( size );
 		} // if
 
 		UPP::uHeapManager::Storage::Header * header;
-		UPP::uHeapManager::FreeHeader * freeElem;
+		UPP::uHeapManager::FreeHeader * freeHead;
 		size_t bsize, oalign;
-		UPP::uHeapManager::heapManagerInstance->headers( "resize", oaddr, header, freeElem, bsize, oalign );
+		UPP::uHeapManager::heapManagerInstance->headers( "resize", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = dataStorage( bsize, oaddr, header ); // data storage available in bucket
 		// same size, DO NOT preserve STICKY PROPERTIES.
 		if ( oalign == uAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
+			#ifdef __U_STATISTICS__
+			uFetchAdd( UPP::stats.resize_calls, 1 );
+			#endif // __U_STATISTICS__
 			header->kind.real.blockSize &= -2;			// no alignment and turn off 0 fill
 			header->kind.real.size = size;				// reset allocation size
 			return oaddr;
 		} // if
 
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::resize_storage, size );
-		#endif // __U_STATISTICS__
-
 		// change size, DO NOT preserve STICKY PROPERTIES.
-		free( oaddr );
-		return UPP::uHeapManager::mallocNoStats( size ); // create new area
+		UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
+		return UPP::uHeapManager::mallocNoStats( size	// create new area
+												 #ifdef __U_STATISTICS__
+												 , UPP::HeapStatistics::RESIZE
+												 #endif // __U_STATISTICS__
+			);
 	} // resize
 
 
 	// Same as resize() but the contents are unchanged in the range from the start of the region up to the minimum of
 	// the old and new sizes.
 	void * realloc( void * oaddr, size_t size ) __THROW {
+	  if ( UNLIKELY( oaddr == nullptr ) ) {				// special cases
+			return UPP::uHeapManager::mallocNoStats( size
+													 #ifdef __U_STATISTICS__
+													 , UPP::HeapStatistics::REALLOC
+													 #endif // __U_STATISTICS__
+				);
+		} // if
+
 		// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
 	  if ( UNLIKELY( size == 0 ) ) {					// special cases
 			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::realloc_zero_calls, 1 );
+			uFetchAdd( UPP::stats.realloc_0_calls, 1 );
 			#endif // __U_STATISTICS__
-			free( oaddr );
+			UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 			return nullptr;
-		} // if
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
-		#endif // __U_STATISTICS__
-
-	  if ( UNLIKELY( oaddr == nullptr ) ) {
-			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::realloc_storage, size );
-			#endif // __U_STATISTICS__
-			return UPP::uHeapManager::mallocNoStats( size );
 		} // if
 
 		UPP::uHeapManager::Storage::Header * header;
-		UPP::uHeapManager::FreeHeader * freeElem;
+		UPP::uHeapManager::FreeHeader * freeHead;
 		size_t bsize, oalign;
-		UPP::uHeapManager::heapManagerInstance->headers( "realloc", oaddr, header, freeElem, bsize, oalign );
+		UPP::uHeapManager::heapManagerInstance->headers( "realloc", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = dataStorage( bsize, oaddr, header ); // data storage available in bucket
 		size_t osize = header->kind.real.size;			// old allocation size
 		bool ozfill = (header->kind.real.blockSize & 2); // old allocation zero filled
 	  if ( UNLIKELY( size <= odsize ) && odsize <= size * 2 ) { // allow up to 50% wasted storage
+			#ifdef __U_STATISTICS__
+			uFetchAdd( UPP::stats.realloc_calls, 1 );
+			uFetchAdd( UPP::stats.realloc_storage_request, size );
+			#endif // __U_STATISTICS__
+
 	  		header->kind.real.size = size;				// reset allocation size
 	  		if ( UNLIKELY( ozfill ) && size > osize ) {	// previous request zero fill and larger ?
 	  			memset( (char *)oaddr + osize, '\0', size - osize ); // initialize added storage
@@ -870,22 +937,27 @@ extern "C" {
 			return oaddr;
 		} // if
 
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::realloc_storage, size );
-		#endif // __U_STATISTICS__
-
 		// change size and copy old content to new storage
 
 		void * naddr;
 		if ( UNLIKELY( oalign <= uAlign() ) ) {			// previous request not aligned ?
-			naddr = UPP::uHeapManager::mallocNoStats( size ); // create new area
+			naddr = UPP::uHeapManager::mallocNoStats( size // create new area
+													  #ifdef __U_STATISTICS__
+													  , UPP::HeapStatistics::REALLOC
+													  #endif // __U_STATISTICS__
+			);
 		} else {
-			naddr = UPP::uHeapManager::memalignNoStats( oalign, size ); // create new aligned area
+			naddr = UPP::uHeapManager::memalignNoStats( oalign, size // create new aligned area
+														#ifdef __U_STATISTICS__
+														, UPP::HeapStatistics::REALLOC
+														#endif // __U_STATISTICS__
+				);
 		} // if
 
-		UPP::uHeapManager::heapManagerInstance->headers( "realloc", naddr, header, freeElem, bsize, oalign );
-		memcpy( naddr, oaddr, std::min( osize, size ) );	// copy bytes
-		free( oaddr );
+		UPP::uHeapManager::heapManagerInstance->headers( "realloc", naddr, header, freeHead, bsize, oalign );
+		// To preserve prior fill, the entire bucket must be copied versus the size.
+		memcpy( naddr, oaddr, std::min( osize, size ) ); // copy bytes
+		UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 
 		if ( UNLIKELY( ozfill ) ) {						// previous request zero fill ?
 			header->kind.real.blockSize |= 2;			// mark new request as zero filled
@@ -899,59 +971,41 @@ extern "C" {
 
 	// Same as malloc() except the memory address is a multiple of alignment, which must be a power of two. (obsolete)
 	void * memalign( size_t alignment, size_t size ) __THROW {
-		#ifdef __U_STATISTICS__
-		if ( LIKELY( size > 0 ) ) {
-			uFetchAdd( UPP::uHeapManager::memalign_calls, 1 );
-			uFetchAdd( UPP::uHeapManager::memalign_storage, size );
-		} else {
-			uFetchAdd( UPP::uHeapManager::memalign_zero_calls, 1 );
-		} // if
-		#endif // __U_STATISTICS__
-
-		return UPP::uHeapManager::memalignNoStats( alignment, size );
+		return UPP::uHeapManager::memalignNoStats( alignment, size
+												   #ifdef __U_STATISTICS__
+												   , UPP::HeapStatistics::MEMALIGN
+												   #endif // __U_STATISTICS__
+			);
 	} // memalign
 
 
 	// Same as aalloc() with memory alignment.
 	void * amemalign( size_t alignment, size_t dim, size_t elemSize ) __THROW  {
-		size_t size = dim * elemSize;
-		#ifdef __U_STATISTICS__
-		if ( LIKELY( size > 0 ) ) {
-			uFetchAdd( UPP::uHeapManager::cmemalign_calls, 1 );
-			uFetchAdd( UPP::uHeapManager::cmemalign_storage, size );
-		} else {
-			uFetchAdd( UPP::uHeapManager::cmemalign_zero_calls, 1 );
-		} // if
-		#endif // __U_STATISTICS__
-
-		return UPP::uHeapManager::memalignNoStats( alignment, size );
+		return UPP::uHeapManager::memalignNoStats( alignment, dim * elemSize
+												   #ifdef __U_STATISTICS__
+												   , UPP::HeapStatistics::AMEMALIGN
+												   #endif // __U_STATISTICS__
+			);
 	} // amemalign
 
 
 	// Same as calloc() with memory alignment.
 	void * cmemalign( size_t alignment, size_t dim, size_t elemSize ) __THROW {
 		size_t size = dim * elemSize;
-	  if ( UNLIKELY( size ) == 0 ) {					// 0 BYTE ALLOCATION RETURNS NULL POINTER
-			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::cmemalign_zero_calls, 1 );
-			#endif // __U_STATISTICS__
-			return nullptr;
-		} // if
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::cmemalign_calls, 1 );
-		uFetchAdd( UPP::uHeapManager::cmemalign_storage, size );
-		#endif // __U_STATISTICS__
-
-		char * addr = (char *)UPP::uHeapManager::memalignNoStats( alignment, size );
+		char * addr = (char *)UPP::uHeapManager::memalignNoStats( alignment, size
+																  #ifdef __U_STATISTICS__
+																  , UPP::HeapStatistics::CMEMALIGN
+																  #endif // __U_STATISTICS__
+			);
 
 		UPP::uHeapManager::Storage::Header * header;
-		UPP::uHeapManager::FreeHeader * freeElem;
+		UPP::uHeapManager::FreeHeader * freeHead;
 		size_t bsize;
 
 		#ifndef __U_DEBUG__
 		bool mapped =
 		#endif // __U_DEBUG__
-			UPP::uHeapManager::heapManagerInstance->headers( "cmemalign", addr, header, freeElem, bsize, alignment );
+			UPP::uHeapManager::heapManagerInstance->headers( "cmemalign", addr, header, freeHead, bsize, alignment );
 
 		// Mapped storage is zero filled, but in debug mode mapped memory is scrubbed in doMalloc, so it has to be reset to zero.
 		#ifndef __U_DEBUG__
@@ -967,7 +1021,7 @@ extern "C" {
 
 
 	// Same as memalign(), but ISO/IEC 2011 C11 Section 7.22.2 states: the value of size shall be an integral multiple
-    // of alignment. This requirement is universally ignored.
+	// of alignment. This requirement is universally ignored.
 	void * aligned_alloc( size_t alignment, size_t size ) {
 		return memalign( alignment, size );
 	} // aligned_alloc
@@ -979,7 +1033,7 @@ extern "C" {
 	// free(3).
 	int posix_memalign( void ** memptr, size_t alignment, size_t size ) {
 	  if ( alignment < uAlign() || ! uPow2( alignment ) ) return EINVAL; // check alignment
-		* memptr = memalign( alignment, size );
+		*memptr = memalign( alignment, size );
 		return 0;
 	} // posix_memalign
 
@@ -1003,7 +1057,7 @@ extern "C" {
 	void free( void * addr ) __THROW {
 		if ( UNLIKELY( addr == nullptr ) ) {			// special case
 			#ifdef __U_STATISTICS__
-			uFetchAdd( UPP::uHeapManager::free_zero_calls, 1 );
+			uFetchAdd( UPP::stats.free_null_calls, 1 );
 			#endif // __U_STATISTICS__
 
 			#ifdef __U_PROFILER__
@@ -1020,6 +1074,10 @@ extern "C" {
 			// #endif // __U_DEBUG__
 			return;
 		} // exit
+
+		#ifdef __U_STATISTICS__
+		uFetchAdd( UPP::stats.free_calls, 1 );
+		#endif // __U_STATISTICS__
 
 		UPP::uHeapManager::heapManagerInstance->doFree( addr );
 		// Do not debug print free( nullptr ), as it can cause recursive entry from sprintf.
@@ -1038,9 +1096,10 @@ extern "C" {
 		} // if
 	} // malloc_alignment
 
+
 	// Returns true if the allocation is zero filled, e.g., allocated by calloc().
 	bool malloc_zero_fill( void * addr ) __THROW {
-	  if ( UNLIKELY( addr == nullptr ) ) return false; // null allocation is not zero fill
+	  if ( UNLIKELY( addr == nullptr ) ) return false;	// null allocation is not zero fill
 		UPP::uHeapManager::Storage::Header * header = headerAddr( addr );
 		if ( (header->kind.fake.alignment & 1) == 1 ) { // fake header ?
 			header = realHeader( header );				// backup from fake to real header
@@ -1049,9 +1108,9 @@ extern "C" {
 	} // malloc_zero_fill
 
 
-	// Returns original total allocation size (not bucket size) => array size is dimension * sizeif(T).
+	// Returns original total allocation size (not bucket size) => array size is dimension * sizeof(T).
 	size_t malloc_size( void * addr ) __THROW {
-	  if ( UNLIKELY( addr == nullptr ) ) return 0; // null allocation is not zero fill
+	  if ( UNLIKELY( addr == nullptr ) ) return 0;		// null allocation is not zero fill
 		UPP::uHeapManager::Storage::Header * header = headerAddr( addr );
 		if ( (header->kind.fake.alignment & 1) == 1 ) { // fake header ?
 			header = realHeader( header );				// backup from fake to real header
@@ -1065,10 +1124,10 @@ extern "C" {
 	size_t malloc_usable_size( void * addr ) __THROW {
 	  if ( UNLIKELY( addr == nullptr ) ) return 0;		// null allocation has 0 size
 		UPP::uHeapManager::Storage::Header * header;
-		UPP::uHeapManager::FreeHeader * freeElem;
+		UPP::uHeapManager::FreeHeader * freeHead;
 		size_t bsize, alignment;
 
-		UPP::uHeapManager::heapManagerInstance->headers( "malloc_usable_size", addr, header, freeElem, bsize, alignment );
+		UPP::uHeapManager::heapManagerInstance->headers( "malloc_usable_size", addr, header, freeHead, bsize, alignment );
 		return dataStorage( bsize, addr, header );		// data storage in bucket
 	} // malloc_usable_size
 
@@ -1078,6 +1137,9 @@ extern "C" {
 		#ifdef __U_STATISTICS__
 		UPP::uHeapManager::printStats();
 		if ( UPP::uHeapControl::prtFree() ) UPP::uHeapManager::heapManagerInstance->prtFree();
+		#else
+		#define MALLOC_STATS_MSG "malloc_stats statistics disabled.\n"
+		uDebugWrite( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ );
 		#endif // __U_STATISTICS__
 	} // malloc_stats
 
@@ -1097,9 +1159,11 @@ extern "C" {
 	// Adjusts parameters that control the behaviour of the memory-allocation functions (see malloc). The param argument
 	// specifies the parameter to be modified, and value specifies the new value for that parameter.
 	int mallopt( int option, int value ) __THROW {
+		if ( value < 0 ) return 0;
 		switch( option ) {
 		  case M_TOP_PAD:
-			UPP::uHeapManager::heapExpand = uCeiling( value, UPP::uHeapManager::pageSize ); return 1;
+			UPP::uHeapManager::heapExpand = uCeiling( value, UPP::uHeapManager::pageSize );
+			return 1;
 		  case M_MMAP_THRESHOLD:
 			if ( UPP::uHeapManager::heapManagerInstance->setMmapStart( value ) ) return 1;
 			break;
@@ -1146,27 +1210,24 @@ extern "C" {
 
 // Must have C++ linkage to overload with C linkage realloc.
 void * resize( void * oaddr, size_t nalign, size_t size ) __THROW {
+  if ( UNLIKELY( oaddr == nullptr ) ) {
+		return UPP::uHeapManager::memalignNoStats( nalign, size
+												   #ifdef __U_STATISTICS__
+												   , UPP::HeapStatistics::RESIZE
+												   #endif // __U_STATISTICS__
+			);
+	} // if
+
 	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
   if ( UNLIKELY( size == 0 ) ) {						// special cases
 		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::resize_zero_calls, 1 );
+		uFetchAdd( UPP::stats.resize_0_calls, 1 );
 		#endif // __U_STATISTICS__
-		free( oaddr );
+		UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 		return nullptr;
 	} // if
 
-	if ( UNLIKELY( nalign < uAlign() ) ) nalign = uAlign(); // reset alignment to minimum
-	#ifdef __U_DEBUG__
-	else UPP::uHeapManager::checkAlign( nalign );		// check alignment
-	#endif // __U_DEBUG__
-
-  if ( UNLIKELY( oaddr == nullptr ) ) {
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::resize_calls, 1 );
-		uFetchAdd( UPP::uHeapManager::resize_storage, size );
-		#endif // __U_STATISTICS__
-		return UPP::uHeapManager::memalignNoStats( nalign, size );
-	} // if
+	UPP::uHeapManager::checkAlign( nalign );			// check alignment
 
 	// Attempt to reuse existing alignment.
 	UPP::uHeapManager::Storage::Header * header = headerAddr( oaddr );
@@ -1179,9 +1240,9 @@ void * resize( void * oaddr, size_t nalign, size_t size ) __THROW {
 				  || (oalign >= nalign && oalign <= 256) ) // little alignment storage wasted ?
 			) {
 			headerAddr( oaddr )->kind.fake.alignment = nalign | 1; // update alignment (could be the same)
-			UPP::uHeapManager::FreeHeader * freeElem;
+			UPP::uHeapManager::FreeHeader * freeHead;
 			size_t bsize, oalign;
-			UPP::uHeapManager::heapManagerInstance->headers( "resize", oaddr, header, freeElem, bsize, oalign );
+			UPP::uHeapManager::heapManagerInstance->headers( "resize", oaddr, header, freeHead, bsize, oalign );
 			size_t odsize = dataStorage( bsize, oaddr, header ); // data storage available in bucket
 
 			if ( size <= odsize && odsize <= size * 2 ) { // allow 50% wasted data storage
@@ -1197,39 +1258,37 @@ void * resize( void * oaddr, size_t nalign, size_t size ) __THROW {
 		return resize( oaddr, size );					// duplicate special case checks
 	} // if
 
-	#ifdef __U_STATISTICS__
-	uFetchAdd( UPP::uHeapManager::resize_storage, size );
-	#endif // __U_STATISTICS__
-
 	// change size, DO NOT preserve STICKY PROPERTIES.
-	free( oaddr );
-	return UPP::uHeapManager::memalignNoStats( nalign, size ); // create new aligned area
+	UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
+	return UPP::uHeapManager::memalignNoStats( nalign, size // create new aligned area
+											   #ifdef __U_STATISTICS__
+											   , UPP::HeapStatistics::RESIZE
+											   #endif // __U_STATISTICS__
+		);
 } // resize
 
 
 void * realloc( void * oaddr, size_t nalign, size_t size ) __THROW {
+  if ( UNLIKELY( oaddr == nullptr ) ) {
+		return UPP::uHeapManager::memalignNoStats( nalign, size
+												   #ifdef __U_STATISTICS__
+												   , UPP::HeapStatistics::REALLOC
+												   #endif // __U_STATISTICS__
+			);
+	} // if
+
 	// If size is equal to 0, either NULL or a pointer suitable to be passed to free() is returned.
   if ( UNLIKELY( size == 0 ) ) {						// special cases
 		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::realloc_zero_calls, 1 );
+		uFetchAdd( UPP::stats.realloc_0_calls, 1 );
 		#endif // __U_STATISTICS__
-		free( oaddr );
+		UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 		return nullptr;
 	} // if
 
-	if ( UNLIKELY( nalign < uAlign() ) ) nalign = uAlign(); // reset alignment to minimum
-	#ifdef __U_DEBUG__
-	else UPP::uHeapManager::checkAlign( nalign );		// check alignment
-	#endif // __U_DEBUG__
+	UPP::uHeapManager::checkAlign( nalign );			// check alignment
 
-  if ( UNLIKELY( oaddr == nullptr ) ) {
-		#ifdef __U_STATISTICS__
-		uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
-		uFetchAdd( UPP::uHeapManager::realloc_storage, size );
-		#endif // __U_STATISTICS__
-		return UPP::uHeapManager::memalignNoStats( nalign, size );
-	} // if
-
+	// Attempt to reuse existing alignment.
 	UPP::uHeapManager::Storage::Header * header = headerAddr( oaddr );
 	bool isFakeHeader = header->kind.fake.alignment & 1; // old fake header ?
 	size_t oalign;
@@ -1240,31 +1299,31 @@ void * realloc( void * oaddr, size_t nalign, size_t size ) __THROW {
 				  || (oalign >= nalign && oalign <= 256) ) // little alignment storage wasted ?
 			) {
 			headerAddr( oaddr )->kind.fake.alignment = nalign | 1; // update alignment (could be the same)
-			return realloc( oaddr, size );				// duplicate alignment and special case checks
+			return realloc( oaddr, size );				// duplicate special case checks
 		} // if
 	} else if ( ! isFakeHeader							// old real header (aligned on libAlign) ?
-				&& nalign == uAlign() )					// new alignment also on libAlign => no fake header needed
-		return realloc( oaddr, size );					// duplicate alignment and special case checks
+				&& nalign == uAlign() ) {				// new alignment also on libAlign => no fake header needed
+		return realloc( oaddr, size );					// duplicate special case checks
+	} // if
 
-	#ifdef __U_STATISTICS__
-	uFetchAdd( UPP::uHeapManager::realloc_calls, 1 );
-	uFetchAdd( UPP::uHeapManager::realloc_storage, size );
-	#endif // __U_STATISTICS__
-
-	UPP::uHeapManager::FreeHeader * freeElem;
+	UPP::uHeapManager::FreeHeader * freeHead;
 	size_t bsize;
-	UPP::uHeapManager::heapManagerInstance->headers( "realloc", oaddr, header, freeElem, bsize, oalign );
+	UPP::uHeapManager::heapManagerInstance->headers( "realloc", oaddr, header, freeHead, bsize, oalign );
 
 	// change size and copy old content to new storage
 
 	size_t osize = header->kind.real.size;				// old allocation size
 	bool ozfill = (header->kind.real.blockSize & 2);	// old allocation zero filled
 
-	void * naddr = UPP::uHeapManager::memalignNoStats( nalign, size ); // create new aligned area
+	void * naddr = UPP::uHeapManager::memalignNoStats( nalign, size // create new aligned area
+													   #ifdef __U_STATISTICS__
+													   , UPP::HeapStatistics::REALLOC
+													   #endif // __U_STATISTICS__
+		);
 
-	UPP::uHeapManager::heapManagerInstance->headers( "realloc", naddr, header, freeElem, bsize, oalign );
+	UPP::uHeapManager::heapManagerInstance->headers( "realloc", naddr, header, freeHead, bsize, oalign );
 	memcpy( naddr, oaddr, std::min( osize, size ) );	// copy bytes
-	free( oaddr );
+	UPP::uHeapManager::heapManagerInstance->doFree( oaddr ); // free previous storage
 
 	if ( UNLIKELY( ozfill ) ) {							// previous request zero fill ?
 		header->kind.real.blockSize |= 2;				// mark new request as zero filled

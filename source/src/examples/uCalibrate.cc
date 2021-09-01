@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 16 14:12:08 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  4 10:58:44 2020
-// Update Count     : 40
+// Last Modified On : Sun Feb 14 21:07:03 2021
+// Update Count     : 42
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,7 @@
 using std::cout;
 using std::endl;
 
-#define TIMES 5000000000LL				// cannot be larger or overflow occurs
+#define TIMES 5'000'000'000LL				//' cannot be larger or overflow occurs
 
 int main() {
     uTime start = uClock::getCPUTime();

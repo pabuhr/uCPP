@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan 30 14:51:02 2020
-// Update Count     : 937
+// Last Modified On : Wed Jan 20 16:52:47 2021
+// Update Count     : 938
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -268,14 +268,19 @@ namespace UPP {
 	// Associate handlers with the set of signals that this application is interested in.  These handlers are
 	// inherited by all unix processes that are subsequently created so they are not installed again.
 
-	signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGBUS,  sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGILL,  sigIllHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGFPE,  sigFpeHandler, SA_SIGINFO | SA_ONSTACK );
-	signal( SIGTERM, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // one shot handler, return to default
-	signal( SIGINT,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND );
-	signal( SIGABRT, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND );
-	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // terminal hangup
+	// internal errors
+	signal( SIGSEGV, sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK ); // Invalid memory reference (default: Core)
+	signal( SIGBUS,  sigSegvBusHandler, SA_SIGINFO | SA_ONSTACK ); // Bus error, bad memory access (default: Core)
+	signal( SIGILL,  sigIllHandler, SA_SIGINFO | SA_ONSTACK ); // Illegal Instruction (default: Core)
+	signal( SIGFPE,  sigFpeHandler, SA_SIGINFO | SA_ONSTACK ); // Floating-point exception (default: Core)
+
+	// handlers from outside errors
+	// one shot handler, reset to default in-case there are multiple attempts, e.g., C-c, C-c, C-c ...
+	signal( SIGTERM, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Termination signal (default: Term)
+	signal( SIGINT,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Interrupt from keyboard (default: Term)
+	signal( SIGHUP,  sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Hangup detected on controlling terminal or death of controlling process (default: Term)
+	signal( SIGQUIT, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Quit from keyboard (default: Core)
+	signal( SIGABRT, sigTermHandler, SA_SIGINFO | SA_ONSTACK | SA_RESETHAND ); // Abort signal from abort(3) (default: Core)
 
 	// Do NOT specify SA_RESTART for SIGALRM because "select" does not wake up when sent a SIGALRM from another UNIX
 	// process, which means non-blocking I/O does not work correctly in multiprocessor mode.

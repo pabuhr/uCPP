@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  9 13:58:47 2021
-// Update Count     : 503
+// Last Modified On : Sun Aug 22 13:56:00 2021
+// Update Count     : 515
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,8 +67,6 @@ void uAbort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char fmt[], 
 
 namespace UPP {
 	class uHeapManager {
-		friend class uKernelBoot;						// uHeap
-		friend class UPP::uMachContext;					// pageSize
 		friend void * ::malloc( size_t size ) __THROW;	// boot
 		friend void * ::aalloc( size_t dim, size_t elemSize ) __THROW;
 		friend void * ::calloc( size_t dim, size_t elemSize ) __THROW;
@@ -155,16 +153,7 @@ namespace UPP {
 			#endif // LOCKFREE
 		}; // Storage
 
-		static_assert( uAlign() >= sizeof( Storage ), "uAlign() < sizeof( Storage )" );
-
-		// Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
-		// Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
-		enum {
-			   #ifdef FASTLOOKUP
-			   LookupSizes = 65536 + sizeof(uHeapManager::Storage), // number of fast lookup sizes
-			   #endif // FASTLOOKUP
-			   NoBucketSizes = 91,						// number of buckets sizes
-		};
+		static_assert( uAlign() >= sizeof( Storage ), "minimum alignment < sizeof( Storage )" );
 
 		struct FreeHeader {
 			#if BUCKETLOCK == SPINLOCK
@@ -178,7 +167,18 @@ namespace UPP {
 			bool operator<( const size_t bsize ) const { return blockSize < bsize; }
 		}; // FreeHeader
 
-		static const unsigned int bucketSizes[];				// different bucket sizes
+		// Recursive definitions: HeapManager needs size of bucket array and bucket area needs sizeof HeapManager storage.
+		// Break recursion by hardcoding number of buckets and statically checking number is correct after bucket array defined.
+		enum {
+			   #ifdef FASTLOOKUP
+			   LookupSizes = 65'536 + sizeof(Storage),	// number of fast lookup sizes
+			   #endif // FASTLOOKUP
+			   NoBucketSizes = 91,						// number of bucket sizes
+		}; // enum
+
+		// The next variables are statically allocated => zero filled.
+
+		static const unsigned int bucketSizes[];		// different bucket sizes
 		static uHeapManager * heapManagerInstance;		// pointer to heap manager object
 		static size_t pageSize;							// architecture pagesize
 		static size_t heapExpand;						// sbrk advance
@@ -193,37 +193,10 @@ namespace UPP {
 		#endif // __U_DEBUG__
 
 		#ifdef __U_STATISTICS__
-		// Heap statistics
-		static unsigned int malloc_zero_calls, malloc_calls;
-		static unsigned long long int malloc_storage;
-		static unsigned int aalloc_zero_calls, aalloc_calls;
-		static unsigned long long int aalloc_storage;
-		static unsigned int calloc_zero_calls, calloc_calls;
-		static unsigned long long int calloc_storage;
-		static unsigned int memalign_zero_calls, memalign_calls;
-		static unsigned long long int memalign_storage;
-		static unsigned int amemalign_zero_calls, amemalign_calls;
-		static unsigned long long int amemalign_storage;
-		static unsigned int cmemalign_zero_calls, cmemalign_calls;
-		static unsigned long long int cmemalign_storage;
-		static unsigned int resize_zero_calls, resize_calls;
-		static unsigned long long int resize_storage;
-		static unsigned int realloc_zero_calls, realloc_calls;
-		static unsigned long long int realloc_storage;
-		static unsigned int free_zero_calls, free_calls;
-		static unsigned long long int free_storage;
-		static unsigned int mmap_calls;
-		static unsigned long long int mmap_storage;
-		static unsigned int munmap_calls;
-		static unsigned long long int munmap_storage;
-		static unsigned int sbrk_calls;
-		static unsigned long long int sbrk_storage;
 		static int stats_fd;
 		static void printStats();
 		static int printStatsXML( FILE * stream );
 		#endif // __U_STATISTICS__
-
-		// The next variables are statically allocated => zero filled.
 
 		// must be first fields for alignment
 		uSpinLock extlock;								// protects allocation-buffer extension
@@ -241,10 +214,22 @@ namespace UPP {
 
 		bool headers( const char * name, void * addr, Storage::Header *& header, FreeHeader *& freeElem, size_t & size, size_t & alignment );
 		void * extend( size_t size );
-		void * doMalloc( size_t size );
-		static void * mallocNoStats( size_t size ) __THROW;
+		void * doMalloc( size_t size
+						 #ifdef __U_STATISTICS__
+						 , unsigned int counter
+						 #endif // __U_STATISTICS__
+			);
+		static void * mallocNoStats( size_t size
+									 #ifdef __U_STATISTICS__
+									 , unsigned int counter
+									 #endif // __U_STATISTICS__
+			) __THROW;
 		static void * callocNoStats( size_t dim, size_t elemSize ) __THROW;
-		static void * memalignNoStats( size_t alignment, size_t size ) __THROW;
+		static void * memalignNoStats( size_t alignment, size_t size
+									   #ifdef __U_STATISTICS__
+									   , unsigned int counter
+									   #endif // __U_STATISTICS__
+			) __THROW;
 		static void * cmemalignNoStats( size_t alignment, size_t dim, size_t elemSize ) __THROW;
 		void doFree( void * addr );
 		size_t prtFree();
