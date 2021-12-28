@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Jun 22 10:54:54 2021
-%% Update Count     : 8200
+%% Last Modified On : Mon Dec 27 14:44:40 2021
+%% Update Count     : 8313
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -24,7 +24,7 @@
 \usepackage[dvips,plainpages=false,pdfpagelabels,pdfpagemode=UseNone,colorlinks=true,pagebackref=true,linkcolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
 
 \newcommand{\NT}[1]{\nterminal{#1}}
-\renewcommand{\newtermFontInline}{\color{OliveGreen}\textbf}
+\renewcommand{\newtermFontInline}{\color{OliveGreen}\textbf} % ForestGreen
 \newcommand{\BF}[1]{\Textbf{#1}}
 \newcommand{\BB}[1]{{\Textbf[blue]{#1}}}
 
@@ -57,7 +57,7 @@
 \large Peter A. Buhr \copyright\thanks{\normalsize
 Permission is granted to redistribute this manual unmodified in any form;
 permission is granted to redistribute modified versions of this	manual in any form, provided the modified version explicitly attributes said modifications to their respective authors, and provided that no modification is made to these terms of redistribution.
-} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019 \\
+} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019, 2022 \\
 Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
 } % author
 
@@ -808,8 +808,6 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \L{\LB{}}
 \endlgrinde\LGend
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{}\Tab{4}{\K{static}\0\K{int}\0\V{asyncpoll}();}\Tab{48}{\C{}\1\1\0asynchronous\0exceptions}}
-\CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{enum}\0\V{CancellationState}\0\{\0\V{CancelEnabled},\0\V{CancelDisabled}\0\};}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{cancel}();}\Tab{48}{\C{}\1\1\0cancellation}}
 \CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{cancelled}();}}
@@ -832,7 +830,6 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!getState@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getState}}}\endlgrinde\LGend{}}%
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!starter@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{starter}}}\endlgrinde\LGend{}}%
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!resumer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resumer}}}\endlgrinde\LGend{}}%
-\index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!asyncpoll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}}%
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!cancel@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}}%
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!cancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}}%
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!cancelInProgress@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelInProgress}}}\endlgrinde\LGend{}}%
@@ -915,13 +912,6 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getState}}}\endlgrinde
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{starter}}}\endlgrinde\LGend{}\index{starter@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{starter}}}\endlgrinde\LGend{}} returns the coroutine's starter, i.e., the coroutine that performed the first resume of this coroutine (see \VRef{s:CoroutineCreationDestruction}).
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resumer}}}\endlgrinde\LGend{}\index{resumer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resumer}}}\endlgrinde\LGend{}} returns the coroutine's last resumer, i.e., the coroutine that performed the last resume of this coroutine (see \VRef{s:CoroutineControlCommunication}).
-
-\begin{sloppypar}
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}\index{asyncpoll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}} returns the number of asynchronous exceptions propagated by this call to poll.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{} is a static member-routine that always polls the calling thread's asynchronous event-queue;
-use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{asyncpoll}()}}\endlgrinde\LGend{} for a call outside of a coroutine or task type.
-\VRef{s:EnablingDisablingPropagation} discusses propagation control in detail.
-\end{sloppypar}
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}\index{cancel@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}} marks the coroutine/task for cancellation.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}\index{cancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}} returns true if the coroutine/task is marked for cancellation, and false otherwise.
@@ -1330,8 +1320,8 @@ The \nterminal{conditional-expression} of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{
 The guard must be true and an outstanding call to the specified mutex member(s) must exist for a call to be accepted.
 A list of mutex members can be specified in an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} clause, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Accept}(\0\V{insert},\0\V{remove}\0);}}
-\endlgrinde\LGend
+\L{\LB{\K{\_Accept}(\0\V{insert}\0\|\,\|\0\V{remove}\0);\0\C{}\1\1\0insert\0OR\0remove\0call\0unblocks\0acceptor}}
+\CE{}\endlgrinde\LGend
 If there are several mutex members that can be accepted, selection priority is established by the left-to-right placement of the mutex members in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} clause of the statement.
 Hence, the order of the mutex members in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} clause indicates their relative priority for selection if there are several outstanding calls.
 If the guard is true and there is no outstanding call to the specified member(s), the acceptor is \Index{accept-blocked} until a call to the appropriate member(s) is made.
@@ -1386,10 +1376,10 @@ Once the accepted call has completed \emph{or the caller waits}, the statement a
 \label{p:ExponentialExpansion}
 Generalizing the previous example from 2 to 3 accept clauses with conditionals results in the following expansion:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C2}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem1},\0\V{mem2},\0\V{mem3}\0);}}
-\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C2}\0)\0\K{\_Accept}(\0\V{mem1},\0\V{mem2}\0);}}
-\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem1},\0\V{mem3}\0);}}
-\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C2}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem2},\0\V{mem3}\0);}}
+\L{\LB{\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C2}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem1}\0\|\,\|\0\V{mem2}\0\|\,\|\0\V{mem3}\0);}}
+\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C2}\0)\0\K{\_Accept}(\0\V{mem1}\0\|\,\|\0\V{mem2}\0);}}
+\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C1}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem1}\0\|\,\|\0\V{mem3}\0);}}
+\L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C2}\0\&\&\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem2}\0\|\,\|\0\V{mem3}\0);}}
 \L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C1}\0)\0\K{\_Accept}(\0\V{mem1}\0);}}
 \L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C2}\0)\0\K{\_Accept}(\0\V{mem2}\0);}}
 \L{\LB{\K{else}\0\K{if}}\Tab{8}{(\0\V{C3}\0)\0\K{\_Accept}(\0\V{mem3}\0);}}
@@ -5949,25 +5939,27 @@ Several of the predefined kernel exception-types are implicitly enabled in certa
 
 The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptions (and cancellation, see \VRef{s:Cancellation}) at these points:
 \begin{itemize}[topsep=3pt,parsep=0pt,itemsep=0pt]
-\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}}}\endlgrinde\LGend{},
-\item when an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} statement begins,
+\item when an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} statement begins/ends,
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} statement ends,
-\item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEnableCancel}}}\endlgrinde\LGend{} object is instantiated (see \VRef{s:EnablingDisablingCancellation}) 
-\item after a task migrates to another cluster,
-\item after a task unblocks if it blocked when trying to enter a monitor,
-\item after a task unblocks if it blocked on an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} statement,
-\item after a task unblocks if it blocked when acquiring a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uLock}}}\endlgrinde\LGend{},
-\item after a task unblocks if it blocked when trying to perform I/O,
-\item the first time a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed,
-\item after \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{} return.
+\item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEnableCancel}}}\endlgrinde\LGend{} object is instantiated (see \VRef{s:EnablingDisablingCancellation}),
+\item before a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed,
+\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{Failure}}}\endlgrinde\LGend{},
+\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}}}\endlgrinde\LGend{},
+\item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uLock}::\V{acquire}}}\endlgrinde\LGend{} spins because of yielding,
+\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} unblocks for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{},
+\item after a call to a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}}}\endlgrinde\LGend{} member unblocks for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{},
+\item after a call to task migrates to another cluster because of yielding,
+\item after a task unblocks after trying to perform I/O.
 \end{itemize}
 If this level of polling is insufficient, explicit polling is possible by calling:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{int}\0\V{uBaseCoroutine}::\V{asyncpoll}();}}
+\L{\LB{\K{int}\0\V{uEHM}::\V{poll}();}}
 \endlgrinde\LGend
-\index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!asyncpoll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}}%
-\index{asyncpoll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}}%
-which returns the number of exceptions propagated by this call to poll.
+\index{uEHM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}}}\endlgrinde\LGend{}!poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{poll}}}\endlgrinde\LGend{}}%
+\index{poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{poll}}}\endlgrinde\LGend{}}%
+The routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{}\index{uEHM::poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{}} returns the number of asynchronous exceptions propagated by this call to poll.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{} is a static member-routine that always polls the calling thread's asynchronous event-queue.
+\VRef{s:EnablingDisablingPropagation} discusses nonlocal propagation control in detail.
 In general, explicit polling is only necessary if \Index{pre-emption} is disabled, a large number of nonlocal exception-types are arriving, or timely propagation is essential.
 
 
@@ -6202,11 +6194,11 @@ Recursive resuming is similar to infinite recursion, and is difficult to discove
 Concurrent resuming compounds the difficulty because it can cause recursive resuming where it is impossible otherwise because the \Index{concurrent exception}\index{exception!concurrent} can be delivered at any time.
 
 \begin{annotation}
-An implicit form of recursive resuming can occur if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{} is called from within the resumption handler.
+An implicit form of recursive resuming can occur if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{} is called from within the resumption handler.
 Each of these operations results in a check for delivered exceptions, which can then result in a call to another resumption handler.
 As a result, the stack can grow, possibly exceeding the task's stack size.
 In general, this error is rare because there is usually sufficient stack space and the number of delivered resuming exceptions is small.
-Nevertheless, care must be taken when calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{} directly or indirectly from a resumption handler.
+Nevertheless, care must be taken when calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{} directly or indirectly from a resumption handler.
 \end{annotation}
 
 
@@ -7086,13 +7078,13 @@ This capability allows a mutex member to terminate with an exception without inf
 Any coroutine/task may cancel itself or another coroutine/task by calling \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{cancel}()}}\endlgrinde\LGend{} (see \VRef{s:CoroutineInheritedMembers}).
 \Emph{The deletion of a non-terminated coroutine (see \VPageref{p:AutoUnwindCoroutine}) implicitly forces its cancellation.}
 Cancelling a coroutine/task does not result in immediate cancellation of the object;
-cancellation only begins when the coroutine/task encounters a \newterm{cancellation checkpoint}, such as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}()}}\endlgrinde\LGend{}\index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!asyncpoll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{asyncpoll}}}\endlgrinde\LGend{}} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}()}}\endlgrinde\LGend{}\index{yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{}} (see \VPageref{p:ListPollingPoints} for a complete list), which starts the cancellation for the cancelled object.
+cancellation only begins when the coroutine/task encounters a \newterm{cancellation checkpoint}, such as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}()}}\endlgrinde\LGend{}\index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!uEHM::poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{}} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}()}}\endlgrinde\LGend{}\index{yield@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}}}\endlgrinde\LGend{}} (see \VPageref{p:ListPollingPoints} for a complete list), which starts the cancellation for the cancelled object.
 The following self-cancellation illustrates the need to explicitly trigger cancellation.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\BF{\V{cancel}();}}\Tab{56}{\C{}\1\1\0self\-cancellation}}
-\CE{}\L{\LB{}\Tab{8}{\BF{\V{asyncpoll}();}}\Tab{56}{\C{}\1\1\0force\0cancellation}}
+\CE{}\L{\LB{}\Tab{8}{\BF{\V{uEHM}::\V{poll}();}}\Tab{56}{\C{}\1\1\0force\0cancellation}}
 \CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0control\0does\0not\0reach\0here}}
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\0\0\K{public}:}}
@@ -7793,11 +7785,14 @@ generates this error:
 uC++ Runtime error (UNIX pid:27411) (uSerial \&)0x22cbff0 : Rendezvous failure in accepted call from task program main (0x7ffdac373900) to mutex member of task T (0x22cbd80).
 Error occurred while executing task T (0x22cbd80).
 \end{quote}
+\noindent
+\begin{sloppypar}
 because in the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}.\V{mem}}}\endlgrinde\LGend{} from the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine, the rendezvous terminates abnormally by raising an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{E}}}\endlgrinde\LGend{}.
 As a result, the \Index{program main} implicitly resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{}\index{uSerial@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSerial}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}\index{RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}} concurrently at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} so it knows the call did not complete and can take appropriate corrective action (see \VRef{s:BreakingRendezvous2}).
 If the call \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uRendezvousAcceptor}()}}\endlgrinde\LGend{} is uncommented, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}::\V{RendezvousFailure}}}\endlgrinde\LGend{} is not resumed at task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{}, and task \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{t}}}\endlgrinde\LGend{} restarts as if the rendezvous completed.
 A more complex version of this situation occurs when a blocked call is aborted, i.e., before the call even begins.
 The following program:
+\end{sloppypar}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
 \L{\LB{}}
@@ -10472,7 +10467,7 @@ The ellipsis in the following rules represent the productions elided from the \C
 	\rhs \nterminal{or-accept} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{or}}}\endlgrinde\LGend{} \nterminal{accept-clause}
 
 \lhs{accept-clause}
-	\rhs \nterminal{when-clause}\opt \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \nterminal{(mutex-)identifier-list} \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{} \nterminal{statement}
+	\rhs \nterminal{when-clause}\opt \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \nterminal{(mutex-)identifier-list} \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{} \nterminal{statement} \hspace{0.125in} // identifier separator is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\',\'\SE{}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\'\|\,\|\'\SE{}}}\endlgrinde\LGend{}
 
 \lhs{select-statement}
 	\rhs \nterminal{or-select}
@@ -10508,7 +10503,7 @@ The ellipsis in the following rules represent the productions elided from the \C
 \lhs{handler}
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CatchResume}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \ \nterminal{exception-declaration} \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{}\ \nterminal{compound-statement}
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CatchResume}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \ \nterminal{lvalue} . \nterminal{exception-declaration} \ \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{}\ \nterminal{compound-statement}
-	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \ \nterminal{exception-declaration} \ \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{} \nterminal{compound-statement}
+	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \ \nterminal{exception-declaration} \ \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{} \nterminal{compound-statement} \hspace{0.125in} // alternative \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{\_Catch}}}\endlgrinde\LGend{}
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} \LGinlinetrue\LGbegin\lgrinde\L{\LB{(}}\endlgrinde\LGend{} \ \nterminal{lvalue} . \nterminal{exception-declaration} \ \LGinlinetrue\LGbegin\lgrinde\L{\LB{)}}\endlgrinde\LGend{} \nterminal{compound-statement}
 
 \begin{comment}
@@ -10629,6 +10624,137 @@ This file descriptor is used implicitly by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}(\0\V{options},\0\V{stream}\0)}}\endlgrinde\LGend{}]\index{malloc_info@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}}}\endlgrinde\LGend{}} print memory-allocation statistics as an XML string on the specified file-descriptor set by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}}}\endlgrinde\LGend{}.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{options}}}\endlgrinde\LGend{} argument must be zero.
 \end{description}
+
+
+\chapter{Pseudo Random Number Generator}
+\label{s:PRNG}
+
+Random numbers are values generated independently, i.e., new values do not depend on previous values (independent trials), e.g., lottery numbers, shuffled cards, dice roll, coin flip.
+While a primary goal of programming is computing values that are \emph{not} random, random values are useful. e.g., simulation, cryptography, games, etc.
+A random-number generator is an algorithm computing independent values.
+If the algorithm uses deterministic computation (predictable sequence of values), it generates \emph{pseudo} random numbers versus \emph{true} random numbers.
+
+All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some technique to scramble bits of a value, e.g., multiplicative recurrence:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{rand}\0=\036973\0\*\0(\V{rand}\0\&\065535)\0+\0(\V{rand}\0\>\>\016);\0\C{}\1\1\0scramble\0bits}}
+\CE{}\endlgrinde\LGend
+Multiplication of large values adds new least-significant bits and drops most-significant bits.
+\begin{quote}
+\begin{tabular}{@{}r|l@{}}
+bits 63--32	& bits 31--0	\\
+\hline
+0x0			& 0x3e8e36		\\
+0x5f		& 0x718c25e1	\\
+0xad3e		& 0x7b5f1dbe	\\
+0xbc3b		& 0xac69ff19	\\
+0x1070f		& 0x2d258dc6	\\
+\end{tabular}
+\end{quote}
+By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
+The least-significant bits \emph{appear} random but the same bits always appear given a fixed starting value, called the \newterm{seed} (value 0x3e8e36 above).
+Hence, if a program uses the same seed, the same sequence of random values is generated from the PRNG.
+Often, the seed it set to some other random value like the a program's process identifier (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}\index{getpid@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}}) or time when the program is run;
+hence, one random value bootstraps another.
+Finally, a PRNG usually generates large values in the range of \LGinlinetrue\LGbegin\lgrinde\L{\LB{[0,\0\V{UINT\_MAX}]}}\endlgrinde\LGend{}, and programmers scales these values using the modulus operator, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}()\0\%\05}}\endlgrinde\LGend{} produces random values in the range 0--4.
+
+\uC provides a sequential and concurrent PRNG.
+\begin{itemize}
+\item
+For sequential programs, like coroutining, the PRNG can be used to randomize behaviour or values during execution, e.g., in games a character makes a random move or an object takes on a random value.
+Sequential execution is repeatable given the same starting seeds for all PRNGs. 
+In this scenario, it is useful to have multiple PRNG, e.g., one per player or object so a class is provided to generate multiple instances.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{class}\0\V{PRNG}\0\{}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{PRNG}();}\Tab{52}{\C{}\1\1\0random\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{PRNG}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed\_}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{calls}()\0\K{const};}}
+\L{\LB{\};}}
+\endlgrinde\LGend
+The following example creates two sequential PRNGs, sets them both to the same seed (1009), and shows the 3 forms for generating random values, where both PRNGs generate the same sequence of values.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{PRNG}\0\V{sprng1},\0\V{sprng2};}}
+\L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0);\0\0\0\V{sprng2}.\V{set\_seed}(\01009\0);}}}
+\L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\015;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng1}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng1}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng1}(\00,\05\0)}\0\<\<\0\S{}\'\2t\2t\'\SE{};}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng2}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng2}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng2}(\00,\05\0)}\0\<\<\0\V{endl};}}
+\L{\LB{\}}}
+\endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\0\0\037305757\03\03}\Tab{20}{\0\0\037305757\03\03}}
+\L{\LB{1821310498\04\01}\Tab{20}{1821310498\04\01}}
+\L{\LB{\0603686050\03\04}\Tab{20}{\0603686050\03\04}}
+\L{\LB{1354865902\00\00}\Tab{20}{1354865902\00\00}}
+\L{\LB{\0419569906\04\01}\Tab{20}{\0419569906\04\01}}
+\L{\LB{\0224287468\00\03}\Tab{20}{\0224287468\00\03}}
+\L{\LB{2338967995\02\04}\Tab{20}{2338967995\02\04}}
+\L{\LB{\0925028647\03\00}\Tab{20}{\0925028647\03\00}}
+\L{\LB{\0553419481\00\01}\Tab{20}{\0553419481\00\01}}
+\L{\LB{\0890860879\01\04}\Tab{20}{\0890860879\01\04}}
+\L{\LB{1488185164\03\04}\Tab{20}{1488185164\03\04}}
+\L{\LB{2393505511\01\03}\Tab{20}{2393505511\01\03}}
+\L{\LB{1935722428\02\02}\Tab{20}{1935722428\02\02}}
+\L{\LB{1861488646\00\02}\Tab{20}{1861488646\00\02}}
+\L{\LB{2246946481\03\04}\Tab{20}{2246946481\03\04}}
+\endlgrinde\LGend
+\item
+For concurrent programs, the PRNG can be used to randomize execution in short-running concurrent programs, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}(\0\V{prng}()\0\%\05\0)}}\endlgrinde\LGend{}.
+Beause concurrent execution is non-deterministic, seeding the concurrent PRNG is less important, because repeatable execution is impossible.
+It is important for the PRNG to be thread-safe and not a point of contention.
+Hence, only one system-wide PRNG is needed, and each kernel thread (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}) has its own implicit PRNG used by wherever user threads happen to execute on that processor.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0kernel\-thread\0seed}}
+\CE{}\L{\LB{\V{uint32\_t}\0\V{get\_seed}();}\Tab{52}{\C{}\1\1\0get\0seed}}
+\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
+\CE{}\endlgrinde\LGend
+The following example uses the system-wide PRNG, sets the starting seed (1009) for all kernel threads, and shows the 3 forms for generating random values.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\BF{\V{set\_seed}(\01009\0);}}}
+\L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\015;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{prng}(\00,\05\0)}\0\<\<\0\V{endl};}}
+\L{\LB{\}}}
+\endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\0\0\037305757\03\03}}
+\L{\LB{1821310498\04\01}}
+\L{\LB{\0603686050\03\04}}
+\L{\LB{1354865902\00\00}}
+\L{\LB{\0419569906\04\01}}
+\L{\LB{\0224287468\00\03}}
+\L{\LB{2338967995\02\04}}
+\L{\LB{\0925028647\03\00}}
+\L{\LB{\0553419481\00\01}}
+\L{\LB{\0890860879\01\04}}
+\L{\LB{1488185164\03\04}}
+\L{\LB{2393505511\01\03}}
+\L{\LB{1935722428\02\02}}
+\L{\LB{1861488646\00\02}}
+\L{\LB{2246946481\03\04}}
+\endlgrinde\LGend
+\end{itemize}
+
+To ensure each \uC task generates the same random number, independent of nondeterministic time-slicing, requires each task to have its own fixed seed and run its own PRNG.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Task}\0\V{T}\0\{}}
+\L{\LB{}\Tab{4}{\K{const}\0\K{unsigned}\0\K{int}\0\V{tid};}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{8}{\V{PRNG}\0\V{prng}(\0\V{tid}\0\*\01009\0);}\Tab{52}{\C{}\1\1\0repeatable\0seed}}
+\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\05;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{12}{\V{yield}(\0\V{prng}(\010\0)\0);}\Tab{52}{\C{}\1\1\0random\0integer\0between\00\-9}}
+\CE{}\L{\LB{}\Tab{12}{.\,.\,.}}
+\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{T}(\0\K{unsigned}\0\K{int}\0\V{tid}\0)\0:\0\V{tid}(\0\V{tid}\0)\0\{\}}}
+\L{\LB{\};}}
+\endlgrinde\LGend
 
 
 \chapter{Data Structure Library (DSL)}

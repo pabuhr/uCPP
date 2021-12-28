@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:46:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:17:49 2019
-// Update Count     : 32
+// Last Modified On : Fri Dec 24 18:12:22 2021
+// Update Count     : 34
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,26 +34,26 @@ struct token_t;
 
 class structor_t {
   public:
-    char separator;					// separator cahracter before base-class initializer
-    token_t *start;					// first token of non-base class initializer
-    token_t *prefix;					// '{' of constructor/destructor
-    token_t *suffix;					// '}' of constructor/destructor
-    token_t *rp;					// ')' of constructor parameter list
-    declmutex dclmutex;					// mutex qualifier of constructor/destructor
-    bool defarg;
-    structor_t *link;					// next constructor
-    structor_t();
-    ~structor_t();
+	char separator;										// separator cahracter before base-class initializer
+	token_t * start;									// first token of non-base class initializer
+	token_t * prefix;									// '{' of constructor/destructor
+	token_t * suffix;									// '}' of constructor/destructor
+	token_t * rp;										// ')' of constructor parameter list
+	declmutex dclmutex;									// mutex qualifier of constructor/destructor
+	bool defarg;
+	structor_t * link;									// next constructor
+	structor_t();
+	~structor_t();
 };
 
 class structor_list_t {
   public:
-    structor_t *head;
-    structor_list_t();
-    ~structor_list_t();
-    void add_structor( structor_t *structor );
-    structor_t *remove_structor();
-    int empty_structor_list();
+	structor_t * head;
+	structor_list_t();
+	~structor_list_t();
+	void add_structor( structor_t * structor );
+	structor_t * remove_structor();
+	int empty_structor_list();
 };
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 18 22:48:11 2021
-// Update Count     : 6010
+// Last Modified On : Mon Dec 27 17:13:11 2021
+// Update Count     : 6070
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -110,31 +110,33 @@
 
 #include <assert.h>
 
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 //######################### InterposeSymbol #########################
 
 
 namespace UPP {
 	class RealRtn {
-		static void *interposeSymbol( const char *symbolName, const char *version = nullptr );
+		static void * interposeSymbol( const char * symbolName, const char * version = nullptr );
 	  public:
 		static void startup();
 
-		static __typeof__( ::exit ) *exit __attribute__(( noreturn ));
-		static __typeof__( ::abort ) *abort __attribute__(( noreturn ));
-		static __typeof__( ::pselect ) *pselect;
-		static __typeof__( std::set_terminate ) *set_terminate;
-		static __typeof__( std::set_unexpected ) *set_unexpected;
-		static __typeof__( ::dl_iterate_phdr ) *dl_iterate_phdr;
-		static __typeof__( ::pthread_create ) *pthread_create;
-//		static __typeof__( ::pthread_exit ) *pthread_exit;
-		static __typeof__( ::pthread_attr_init ) *pthread_attr_init;
-		static __typeof__( ::pthread_attr_setstack ) *pthread_attr_setstack;
-		static __typeof__( ::pthread_kill ) *pthread_kill;
-		static __typeof__( ::pthread_join ) *pthread_join;
-		static __typeof__( ::pthread_self ) *pthread_self;
-		static __typeof__( ::pthread_setaffinity_np ) *pthread_setaffinity_np;
-		static __typeof__( ::pthread_getaffinity_np ) *pthread_getaffinity_np;
+		static __typeof__( ::exit ) * exit __attribute__(( noreturn ));
+		static __typeof__( ::abort ) * abort __attribute__(( noreturn ));
+		static __typeof__( ::pselect ) * pselect;
+		static __typeof__( std::set_terminate ) * set_terminate;
+		static __typeof__( std::set_unexpected ) * set_unexpected;
+		static __typeof__( ::dl_iterate_phdr ) * dl_iterate_phdr;
+		static __typeof__( ::pthread_create ) * pthread_create;
+//		static __typeof__( ::pthread_exit ) * pthread_exit;
+		static __typeof__( ::pthread_attr_init ) * pthread_attr_init;
+		static __typeof__( ::pthread_attr_setstack ) * pthread_attr_setstack;
+		static __typeof__( ::pthread_kill ) * pthread_kill;
+		static __typeof__( ::pthread_join ) * pthread_join;
+		static __typeof__( ::pthread_self ) * pthread_self;
+		static __typeof__( ::pthread_setaffinity_np ) * pthread_setaffinity_np;
+		static __typeof__( ::pthread_getaffinity_np ) * pthread_getaffinity_np;
 	}; // RealRtn
 } // UPP
 
@@ -158,7 +160,7 @@ extern "C" {
 	void * resize( void * oaddr, size_t size ) __THROW;
 	void * amemalign( size_t align, size_t dim, size_t elemSize ) __THROW;
 	void * cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
-	size_t malloc_alignment( void *addr ) __THROW;
+	size_t malloc_alignment( void * addr ) __THROW;
 	bool malloc_zero_fill( void * addr ) __THROW;
 	size_t malloc_size( void * addr ) __THROW;
 	size_t malloc_dimension( void * addr ) __THROW;
@@ -280,10 +282,10 @@ namespace UPP {
 	void umainProfile();								// forward declaration
 } // UPP
 
-extern uBaseCoroutine &uThisCoroutine();				// forward declaration
-extern uBaseTask &uThisTask();							// forward declaration
-extern uProcessor &uThisProcessor();					// forward declaration
-extern uCluster &uThisCluster();						// forward declaration
+extern uBaseCoroutine & uThisCoroutine();				// forward declaration
+extern uBaseTask & uThisTask();							// forward declaration
+extern uProcessor & uThisProcessor();					// forward declaration
+extern uCluster & uThisCluster();						// forward declaration
 
 
 //######################### Profiling ########################
@@ -296,8 +298,8 @@ class uProfileClusterSampler;
 class uProfileProcessorSampler;
 
 extern "C" {
-	void __cyg_profile_func_enter( void *pcCurrentFunction, void *pcCallingFunction );
-	void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallingFunction );
+	void __cyg_profile_func_enter( void * pcCurrentFunction, void * pcCallingFunction );
+	void __cyg_profile_func_exit( void * pcCurrentFunction, void * pcCallingFunction );
 } // extern "C"
 
 #ifdef __U_PROFILER__
@@ -311,7 +313,7 @@ extern "C" {
 // define parameter types for signal handlers
 
 #define __U_SIGCXT__ ucontext_t *
-#define __U_SIGPARMS__ int sig __attribute__(( unused )), siginfo_t *sfp __attribute__(( unused )), __U_SIGCXT__ cxt __attribute__(( unused ))
+#define __U_SIGPARMS__ int sig __attribute__(( unused )), siginfo_t * sfp __attribute__(( unused )), __U_SIGCXT__ cxt __attribute__(( unused ))
 #define __U_SIGTYPE__ int, siginfo_t *, __U_SIGCXT__
 
 namespace UPP {
@@ -324,7 +326,7 @@ namespace UPP {
 
 		static sigset_t block_mask;						// block all signals
 
-		static void signal( int sig, void (*handler)(__U_SIGPARMS__), int flags = 0 );
+		static void signal( int sig, void (* handler)(__U_SIGPARMS__), int flags = 0 );
 		static void sigAlrmHandler( __U_SIGPARMS__ );
 
 		uSigHandlerModule( const uSigHandlerModule & ) = delete; // no copy
@@ -342,9 +344,9 @@ namespace UPP {
 //######################### abnormal exit #########################
 
 
-void exit( int retcode, const char fmt[], ... ) __THROW __attribute__(( format (printf, 2, 3), noreturn ));
-extern void abort( const char * fmt, ... ) __attribute__(( format (printf, 1, 2), noreturn ));
-extern void abort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char * fmt, ... ) __attribute__(( format (printf, 2, 3), noreturn ));
+extern void exit( int retcode, const char fmt[], ... ) __THROW __attribute__(( format( printf, 2, 3 ), __nothrow__, __leaf__, __noreturn__ ));
+extern void abort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char fmt[], ... ) __attribute__(( format( printf, 2, 3 ), __nothrow__, __leaf__, noreturn ));
+extern void abort( const char fmt[], ... ) __attribute__(( format( printf, 1, 2 ), __nothrow__, __leaf__, noreturn ));
 namespace std {
 	using ::abort;										// needed for replacing std::stream routines
 }
@@ -354,10 +356,10 @@ namespace std {
 
 
 class uProcessorDL : public uSeqable {
-	uProcessor &processor_;
+	uProcessor & processor_;
   public:
-	uProcessorDL( uProcessor &processor_ ) : processor_( processor_ ) {}
-	uProcessor &processor() const { return processor_; }
+	uProcessorDL( uProcessor & processor_ ) : processor_( processor_ ) {}
+	uProcessor & processor() const { return processor_; }
 }; // uProcessorDL
 
 typedef uSequence<uProcessorDL> uProcessorSeq;
@@ -367,10 +369,10 @@ typedef uSequence<uProcessorDL> uProcessorSeq;
 
 
 class uClusterDL : public uSeqable {
-	uCluster &cluster_;
+	uCluster & cluster_;
   public:
-	uClusterDL( uCluster &cluster_ ) : cluster_( cluster_ ) {}
-	uCluster &cluster() const { return cluster_; }
+	uClusterDL( uCluster & cluster_ ) : cluster_( cluster_ ) {}
+	uCluster & cluster() const { return cluster_; }
 }; // uClusterDL
 
 typedef uSequence<uClusterDL> uClusterSeq;
@@ -380,10 +382,10 @@ typedef uSequence<uClusterDL> uClusterSeq;
 
 
 class uBaseTaskDL : public uSeqable {
-	uBaseTask &task_;
+	uBaseTask & task_;
   public:
-	uBaseTaskDL( uBaseTask &task_ ) : task_( task_ ) {}
-	uBaseTask &task() const { return task_; }
+	uBaseTaskDL( uBaseTask & task_ ) : task_( task_ ) {}
+	uBaseTask & task() const { return task_; }
 }; // uBaseTaskDL
 
 typedef uSequence<uBaseTaskDL> uBaseTaskSeq;
@@ -394,9 +396,9 @@ typedef uSequence<uBaseTaskDL> uBaseTaskSeq;
 
 #ifdef __U_PROFILER__
 extern "C" {											// TEMPORARY: profiler allocating memory from the kernel issue
-	int pthread_mutex_lock( pthread_mutex_t *mutex ) __THROW;
-	int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW;
-	int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW;
+	int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW;
+	int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW;
+	int pthread_mutex_unlock( pthread_mutex_t * mutex ) __THROW;
 } // extern "C"
 #endif // __U_PROFILER__
 
@@ -417,9 +419,9 @@ class uKernelModule {
 	friend class uContext;								// access: uKernelModuleBoot
 	friend _Coroutine UPP::uProcessorKernel;			// access: uKernelModuleBoot, globalProcessors, globalClusters, systemProcessor
 	friend class uProcessor;							// access: everything
-	friend uBaseTask &uThisTask();						// access: uKernelModuleBoot
-	friend uProcessor &uThisProcessor();				// access: uKernelModuleBoot
-	friend uCluster &uThisCluster();					// access: uKernelModuleBoot
+	friend uBaseTask & uThisTask();						// access: uKernelModuleBoot
+	friend uProcessor & uThisProcessor();				// access: uKernelModuleBoot
+	friend uCluster & uThisCluster();					// access: uKernelModuleBoot
 	friend _Task uProcessorTask;						// access: uKernelModuleBoot
 	friend class uCluster;								// access: uKernelModuleBoot, globalClusters, globalClusterLock, rollForward
 	friend _Task UPP::uBootTask;						// access: uKernelModuleBoot, systemCluster
@@ -429,7 +431,7 @@ class uKernelModule {
 	friend class UPP::uInitProcessorsBoot;				// access: numUserProcessors, userProcessors
 	friend class UPP::uHeapManager;						// access: bootTaskStorage, kernelModuleInitialized, startup
 	friend class UPP::uNBIO;							// access: uKernelModuleBoot
-	friend int pthread_mutex_lock( pthread_mutex_t *mutex ) __THROW; // access: kernelModuleInitialized
+	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: kernelModuleInitialized
 
 	// real-time
 
@@ -445,10 +447,10 @@ class uKernelModule {
 	// profiling
 
 	friend class UPP::PthreadLock;						// access: initialized
-	friend int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW; // TEMPORARY: profiler allocating memory from the kernel issue
-	friend int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW; // TEMPORARY: profiler allocating memory from the kernel issue
-	friend void __cyg_profile_func_enter( void *pcCurrentFunction, void *pcCallingFunction ); // access: uKernelModuleBoot
-	friend void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallingFunction ); // access: uKernelModuleBoot
+	friend int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW; // TEMPORARY: profiler allocating memory from the kernel issue
+	friend int pthread_mutex_unlock( pthread_mutex_t * mutex ) __THROW; // TEMPORARY: profiler allocating memory from the kernel issue
+	friend void __cyg_profile_func_enter( void * pcCurrentFunction, void * pcCallingFunction ); // access: uKernelModuleBoot
+	friend void __cyg_profile_func_exit( void * pcCurrentFunction, void * pcCallingFunction ); // access: uKernelModuleBoot
 	friend class uProfiler;								// access: uKernelModuleBoot
 	friend class uProfilerBoot;							// access: uKernelModuleBoot, bootTask, systemCluster, userProcessor
 	friend class HWCounters;							// access: uKernelModuleBoot
@@ -461,11 +463,11 @@ class uKernelModule {
 	friend __typeof__( ::dl_iterate_phdr ) dl_iterate_phdr; // access: disableInterrupts, enableInterrupts
 
 	struct uKernelModuleData {
-		volatile uKernelModuleData *This;
+		volatile uKernelModuleData * This;
 
 #		define __U_MAX_PAGE_SIZE__ (16 * 1024)
 #		define activeProcessorKernel (THREAD_GETMEM( processorKernelStorage ))
-		uProcessor *activeProcessor;					// current active processor
+		uProcessor * activeProcessor;					// current active processor
 		// The next two private variables shadow the corresponding fields in the processor data structure. They are an
 		// optimization so that routines uThisCluster and uThisTask do not have to be atomic routines, and as a
 		// consequence can be inlined. The problem is the multiple activeProcessor variables (one per UNIX process). A
@@ -474,8 +476,8 @@ class uKernelModule {
 		// incorrect. By updating these two shadow variables whenever the corresponding processor field is changed (and
 		// this occurs atomically in the kernel), the appropriate data structure (cluster or task) can be accessed with
 		// a single load instruction, which is atomic.
-		uCluster *activeCluster;						// current active cluster for processor
-		uBaseTask *activeTask;							// current active task for processor
+		uCluster * activeCluster;						// current active cluster for processor
+		uBaseTask * activeTask;							// current active task for processor
 
 		bool disableInt;								// task in kernel: no time slice interrupts
 		int disableIntCnt;
@@ -486,7 +488,7 @@ class uKernelModule {
 		bool RFinprogress;								// roll forward in progress
 		bool RFpending;									// roll forward pending and needs execution
 
-		UPP::uProcessorKernel *processorKernelStorage;	// system-cluster processor kernel
+		UPP::uProcessorKernel * processorKernelStorage;	// system-cluster processor kernel
 
 		// The thread pointer value needs to be accessible so that it can be properly restored on context switches.  On
 		// a non-tls system the thread pointer points directly at the kernel module, i.e. tp == This.  On a tls system
@@ -566,47 +568,47 @@ class uKernelModule {
 #endif // ! __U_MULTI__
 	static bool globalAbort;							// indicate aborting processor
 	static bool globalSpinAbort;						// indicate aborting processor to spin locks
-	static uSpinLock *globalAbortLock;					// only one aborting processors
-	static uSpinLock *globalProcessorLock;				// mutual exclusion for global processor operations
-	static uProcessorSeq *globalProcessors;				// global list of processors
-	static uSpinLock *globalClusterLock;				// mutual exclusion for global cluster operations
-	static uClusterSeq *globalClusters;					// global list of cluster
-	static uDefaultScheduler *systemScheduler;			// pointer to systen scheduler for system cluster
-	static uProcessor *systemProcessor;					// pointer to system processor
-	static UPP::uBootTask *bootTask;					// pointer to boot task for global constructors/destructors
-	static uProcessor **userProcessors;					// pointer to user processors
+	static uSpinLock * globalAbortLock;					// only one aborting processors
+	static uSpinLock * globalProcessorLock;				// mutual exclusion for global processor operations
+	static uProcessorSeq * globalProcessors;			// global list of processors
+	static uSpinLock * globalClusterLock;				// mutual exclusion for global cluster operations
+	static uClusterSeq * globalClusters;				// global list of cluster
+	static uDefaultScheduler * systemScheduler;			// pointer to systen scheduler for system cluster
+	static uProcessor * systemProcessor;				// pointer to system processor
+	static UPP::uBootTask * bootTask;					// pointer to boot task for global constructors/destructors
+	static uProcessor ** userProcessors;				// pointer to user processors
 	static unsigned int numUserProcessors;				// number of user processors
 	static char systemProcessorStorage[];
 	static char systemClusterStorage[];
-	static uCluster *systemCluster;						// pointer to system cluster
-	static uCluster *userCluster;						// pointer to user cluster
+	static uCluster * systemCluster;						// pointer to system cluster
+	static uCluster * userCluster;						// pointer to user cluster
 	static char bootTaskStorage[];
 
-	static std::filebuf *cerrFilebuf, *clogFilebuf, *coutFilebuf, *cinFilebuf;
+	static std::filebuf * cerrFilebuf, * clogFilebuf, * coutFilebuf, * cinFilebuf;
 
 	static void rollForward( bool inKernel = false );
-	static void *startThread( void *p );
+	static void * startThread( void * p );
 
 	static void abortExit();
 	static void startup();								// init boot KM
   public:
-	static uSystemTask *systemTask;						// pointer to system task for global constructors/destructors
+	static uSystemTask * systemTask;					// pointer to system task for global constructors/destructors
 
 	static bool afterMain;
 }; // uKernelModule
 
 
-inline uProcessor &uThisProcessor() {
+inline uProcessor & uThisProcessor() {
 	return *THREAD_GETMEM( activeProcessor );
 } // uThisProcessor
 
 
-inline uCluster &uThisCluster() {
+inline uCluster & uThisCluster() {
 	return *THREAD_GETMEM( activeCluster );
 } // uThisCluster
 
 
-inline uBaseTask &uThisTask() {
+inline uBaseTask & uThisTask() {
 	return *THREAD_GETMEM( activeTask );
 } // uThisTask
 
@@ -662,7 +664,7 @@ class uBaseSpinLock {									// non-yielding spinlock
 class uSpinLock : public uBaseSpinLock {				// handle alignment to prevent false sharing
 //	char padding[128 - sizeof(uBaseSpinLock)];			// pad to size of cacheline
   public:
-	void *operator new( size_t size ) {					// dynamic allocation
+	void * operator new( size_t size ) {				// dynamic allocation
 //		return ::memalign( 128, size );
 		return ::malloc( size );
 	} // uSpinLock::operator new
@@ -673,14 +675,14 @@ class uSpinLock : public uBaseSpinLock {				// handle alignment to prevent false
 // multiple block exit or return.
 
 class uCSpinLock {
-	uSpinLock &spinLock;
+	uSpinLock & spinLock;
   public:
 	uCSpinLock( const uCSpinLock & ) = delete;			// no copy
 	uCSpinLock( uCSpinLock && ) = delete;
 	uCSpinLock & operator=( const uCSpinLock & ) = delete; // no assignment
 	uCSpinLock & operator=( uCSpinLock && ) = delete;
 
-	uCSpinLock( uSpinLock &spinLock ) : spinLock( spinLock ) {
+	uCSpinLock( uSpinLock & spinLock ) : spinLock( spinLock ) {
 		spinLock.acquire();
 	} // uCSpinLock::uCSpinLock
 
@@ -725,7 +727,7 @@ class uLock {											// yielding spinlock
 		value = 1;
 	} // uLock::release
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::memalign( 128, size );					// size of cache line to prevent false sharing
 	} // uLock::operator new
 }; // uLock
@@ -739,7 +741,7 @@ class uLock {											// yielding spinlock
 
 _Event uKernelFailure {									// general event for kernel failures, inherit implicitly from uBaseEvent (exception root)
   protected:
-	uKernelFailure( const char *const msg = "" );
+	uKernelFailure( const char * const msg = "" );
   public:
 	virtual ~uKernelFailure();
 	virtual void defaultTerminate() override;
@@ -747,12 +749,12 @@ _Event uKernelFailure {									// general event for kernel failures, inherit im
 
 
 _Event uMutexFailure : public uKernelFailure {			// general event for mutex member failures
-	const UPP::uSerial *const serial;					// identify the mutex object of _Cormonitor or _Task
+	const UPP::uSerial * const serial;					// identify the mutex object of _Cormonitor or _Task
   protected:
-	uMutexFailure( const UPP::uSerial *const serial, const char *const msg = "" );
-	uMutexFailure( const char *const msg = "" );
+	uMutexFailure( const UPP::uSerial * const serial, const char * const msg = "" );
+	uMutexFailure( const char * const msg = "" );
   public:
-	const UPP::uSerial *serialId() const;
+	const UPP::uSerial * serialId() const;
 
 	// exception handling
 
@@ -763,19 +765,19 @@ _Event uMutexFailure : public uKernelFailure {			// general event for mutex memb
 
 _Event uMutexFailure::EntryFailure : public uMutexFailure {
   public:
-	EntryFailure( const UPP::uSerial *const serial, const char *const msg = "" );
-	EntryFailure( const char *const msg = "" );
+	EntryFailure( const UPP::uSerial * const serial, const char * const msg = "" );
+	EntryFailure( const char * const msg = "" );
 	virtual ~EntryFailure();
 	virtual void defaultTerminate() override;
 }; // uMutexFailure::EntryFailure
 
 
 _Event uMutexFailure::RendezvousFailure : public uMutexFailure {
-	const uBaseCoroutine *const caller_;
+	const uBaseCoroutine * const caller_;
   public:
-	RendezvousFailure( const UPP::uSerial *const serial, const char *const msg = "" );
+	RendezvousFailure( const UPP::uSerial * const serial, const char * const msg = "" );
 	virtual ~RendezvousFailure();
-	const uBaseCoroutine *caller() const;
+	const uBaseCoroutine * caller() const;
 	virtual void defaultTerminate() override;
 }; // uMutexFailure::RendezvousFailure
 
@@ -783,7 +785,7 @@ _Event uMutexFailure::RendezvousFailure : public uMutexFailure {
 _Event uIOFailure {										// general event for IO failures, inherit implicitly from uBaseEvent (exception root)
 	int errno_;
   protected:
-	uIOFailure( int errno__, const char *const msg );
+	uIOFailure( int errno__, const char * const msg );
   public:
 	virtual ~uIOFailure();
 	int errNo() const;
@@ -798,10 +800,10 @@ _Event uIOFailure {										// general event for IO failures, inherit implicitl
 
 class uSignalHandler : public uColable {
   protected:
-	uBaseTask *This;
+	uBaseTask * This;
 	virtual ~uSignalHandler() {}
   public:
-	uBaseTask *getThis() { return This; }
+	uBaseTask * getThis() { return This; }
 	virtual void handler() = 0;
 }; // uSignalHandler
 
@@ -814,8 +816,8 @@ class uCxtSwtchHndlr : public uSignalHandler {
 	friend class uEventListPop;							// access: processor
 
 #if defined( __U_MULTI__ )
-	uProcessor &processor;
-	uCxtSwtchHndlr( uProcessor &processor ) : processor( processor ) {}
+	uProcessor & processor;
+	uCxtSwtchHndlr( uProcessor & processor ) : processor( processor ) {}
 #endif // __U_MULTI__
 	void handler();
 }; // uCxtSwtchHndlr
@@ -837,7 +839,7 @@ class uMutexLock {
 	unsigned int count;									// number of recursive entries; no overflow checking
 	uSequence<uBaseTaskDL> waiting;						// sequence versus queue to reduce size to 24 bytes => more expensive
 
-	virtual void add_( uBaseTask &task );				// helper routines for uCondLock
+	virtual void add_( uBaseTask & task );				// helper routines for uCondLock
 	void release_();
   public:
 	uMutexLock( const uMutexLock & ) = delete;			// no copy
@@ -858,11 +860,11 @@ class uMutexLock {
 	bool tryacquire();
 	void release();
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::operator new( size );
 	} // uMutexLock::operator new
 
-	void *operator new( size_t, void *storage ) {		// used in pthread_mutex
+	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
 		return storage;
 	} // uMutexLock::operator new
 }; // uMutexLock
@@ -877,9 +879,9 @@ class uOwnerLock : public uMutexLock {
 	// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 	// pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uOwnerLock).
 
-	uBaseTask *owner_;									// owner with respect to recursive entry
+	uBaseTask * owner_;									// owner with respect to recursive entry
 
-	void add_( uBaseTask &task );						// helper routines for uCondLock
+	void add_( uBaseTask & task );						// helper routines for uCondLock
 	void release_();
   public:
 	uOwnerLock( const uOwnerLock & ) = delete;			// no copy
@@ -901,7 +903,7 @@ class uOwnerLock : public uMutexLock {
 		return count;
 	} // uOwnerLock::times
 
-	uBaseTask *owner() const {
+	uBaseTask * owner() const {
 		return owner_;
 	} // uOwnerLock::times
 
@@ -909,11 +911,11 @@ class uOwnerLock : public uMutexLock {
 	bool tryacquire();
 	void release();
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::operator new( size );
 	} // uOwnerLock::operator new
 
-	void *operator new( size_t, void *storage ) {		// used in pthread_mutex
+	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
 		return storage;
 	} // uOwnerLock::operator new
 }; // uOwnerLock
@@ -924,11 +926,11 @@ class uOwnerLock : public uMutexLock {
 
 class uCondLock {
 	struct TimedWaitHandler : public uSignalHandler {	// real-time
-		uCondLock &condlock;
+		uCondLock & condlock;
 		bool timedout;
 
-		TimedWaitHandler( uBaseTask &task, uCondLock &condlock );
-		TimedWaitHandler( uCondLock &condlock );
+		TimedWaitHandler( uBaseTask & task, uCondLock & condlock );
+		TimedWaitHandler( uCondLock & condlock );
 		void handler();
 	}; // TimedWaitHandler
 
@@ -937,7 +939,7 @@ class uCondLock {
 
 	uBaseSpinLock spinLock;								// must be first field for alignment
 	uSequence<uBaseTaskDL> waiting;						// queue of blocked tasks
-	void waitTimeout( TimedWaitHandler &h );			// timeout
+	void waitTimeout( TimedWaitHandler & h );			// timeout
   public:
 	uCondLock( const uCondLock & ) = delete;			// no copy
 	uCondLock( uCondLock && ) = delete;
@@ -951,18 +953,18 @@ class uCondLock {
 	} // uCondLock::uCondLock
 
 	uDEBUG( ~uCondLock(); )
-	void wait( uMutexLock &lock );
-	void wait( uMutexLock &lock, uintptr_t info );
-	bool wait( uMutexLock &lock, uDuration duration );
-	bool wait( uMutexLock &lock, uintptr_t info, uDuration duration );
-	bool wait( uMutexLock &lock, uTime time );
-	bool wait( uMutexLock &lock, uintptr_t info, uTime time );
-	void wait( uOwnerLock &lock );
-	void wait( uOwnerLock &lock, uintptr_t info );
-	bool wait( uOwnerLock &lock, uDuration duration );
-	bool wait( uOwnerLock &lock, uintptr_t info, uDuration duration );
-	bool wait( uOwnerLock &lock, uTime time );
-	bool wait( uOwnerLock &lock, uintptr_t info, uTime time );
+	void wait( uMutexLock & lock );
+	void wait( uMutexLock & lock, uintptr_t info );
+	bool wait( uMutexLock & lock, uDuration duration );
+	bool wait( uMutexLock & lock, uintptr_t info, uDuration duration );
+	bool wait( uMutexLock & lock, uTime time );
+	bool wait( uMutexLock & lock, uintptr_t info, uTime time );
+	void wait( uOwnerLock & lock );
+	void wait( uOwnerLock & lock, uintptr_t info );
+	bool wait( uOwnerLock & lock, uDuration duration );
+	bool wait( uOwnerLock & lock, uintptr_t info, uDuration duration );
+	bool wait( uOwnerLock & lock, uTime time );
+	bool wait( uOwnerLock & lock, uintptr_t info, uTime time );
 	bool signal();
 	bool broadcast();
 
@@ -972,11 +974,11 @@ class uCondLock {
 
 	uintptr_t front() const;
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::operator new( size );
 	} // Pthread_cleanup::operator new
 
-	void *operator new( size_t, void *storage ) {		// used in pthread_cond
+	void * operator new( size_t, void * storage ) {		// used in pthread_cond
 		return storage;
 	} // uCondLock::operator new
 }; // uCondLock
@@ -988,11 +990,11 @@ class uCondLock {
 namespace UPP {
 	class uSemaphore {
 		struct TimedWaitHandler : public uSignalHandler { // real-time
-			uSemaphore &semaphore;
+			uSemaphore & semaphore;
 			bool timedout;
 
-			TimedWaitHandler( uBaseTask &task, uSemaphore &semaphore );
-			TimedWaitHandler( uSemaphore &semaphore );
+			TimedWaitHandler( uBaseTask & task, uSemaphore & semaphore );
+			TimedWaitHandler( uSemaphore & semaphore );
 			void handler();
 		}; // TimedWaitHandler
 
@@ -1003,7 +1005,7 @@ namespace UPP {
 		int count;
 		uQueue<uBaseTaskDL> waiting;
 
-		void waitTimeout( TimedWaitHandler &h );
+		void waitTimeout( TimedWaitHandler & h );
 	  public:
 		uSemaphore( const uSemaphore & ) = delete;		// no copy
 		uSemaphore( uSemaphore && ) = delete;
@@ -1051,7 +1053,7 @@ namespace UPP {
 			return ::operator new( size );
 		} // uSemaphore::operator new
 
-		void * operator new( size_t, void *storage ) {	// used in sem_t
+		void * operator new( size_t, void * storage ) {	// used in sem_t
 			return storage;
 		} // uSemaphore::operator new
 	}; // uSemaphore
@@ -1062,10 +1064,10 @@ namespace UPP {
 
 
 class uContext : public uSeqable {
-	void *key;
+	void * key;
   public:
 	uContext();
-	uContext( void *key );
+	uContext( void * key );
 	virtual ~uContext();
 
 	// These two routines cannot be abstract (i.e., = 0) because there is a race condition during initialization of a
@@ -1119,7 +1121,7 @@ class uFloatingPointContext {
 //######################### uMachContext #########################
 
 
-extern "C" void uSwitch( void *from, void *to ) asm ("uSwitch"); // assembler routine that performs the context switch
+extern "C" void uSwitch( void * from, void * to ) asm ("uSwitch"); // assembler routine that performs the context switch
 
 
 // Contains the machine dependent context and routines that initialize and switch between contexts.
@@ -1133,7 +1135,7 @@ namespace UPP {
 		friend _Coroutine uProcessorKernel;				// access: storage
 		friend class ::uProcessor;						// access: storage
 		friend class uKernelBoot;						// access: storage
-		friend void *uKernelModule::startThread( void *p ); // acesss: invokeCoroutine
+		friend void * uKernelModule::startThread( void * p ); // acesss: invokeCoroutine
 
 		struct uContext_t {								// name mimics ucontext_t from Linux headers
 			void * SP, * FP;
@@ -1145,33 +1147,33 @@ namespace UPP {
 		static uint32_t mxcsr;
 #endif // __i386__ || __x86_64__
 
-		void * storage;									// stack pointer
-		void * limit;									// stack grows towards stack limit
-		void * base;									// stack base
-		void * context;									// uContext_t pointer
+		void * storage_;								// stack pointer
+		void * limit_;									// stack grows towards stack limit
+		void * base_;									// stack base
+		void * context_;								// uContext_t pointer
 		union {
 			long int allExtras;							// allow access to all extra flags
 			struct {									// put all extra flags in this structure
 				unsigned int usercxts : 1;				// user defined contexts
 			} is;
-		} extras;										// indicates extra work during the context switch
+		} extras_;										// indicates extra work during the context switch
 
 		void createContext( unsigned int stackSize );	// used by all constructors
 
-		void startHere( void (*uInvoke)( uMachContext & ) );
+		void startHere( void (* uInvoke)( uMachContext & ) );
 	  protected:
-		static void invokeCoroutine( uBaseCoroutine &This );
-		static void invokeTask( uBaseTask &This ) __attribute__(( noreturn ));
-		static void cleanup( uBaseTask &This ) __attribute__(( noreturn ));
+		static void invokeCoroutine( uBaseCoroutine & This );
+		static void invokeTask( uBaseTask & This ) __attribute__(( noreturn ));
+		static void cleanup( uBaseTask & This ) __attribute__(( noreturn ));
 
-		uContextSeq additionalContexts;					// list of additional contexts for this execution state
+		uContextSeq additionalContexts_;				// list of additional contexts for this execution state
 
 		void extraSave();
 		void extraRestore();
 
 		void save() {
 			// Any extra work that must occur on this side of a context switch is performed here.
-			if ( __builtin_expect( !!(extras.allExtras), 0 ) ) { // unlikely
+			if ( UNLIKELY( extras_.allExtras ) ) {
 				extraSave();
 			} // if
 
@@ -1182,7 +1184,7 @@ namespace UPP {
 			uDEBUG( verify(); )
 
 			// Any extra work that must occur on this side of a context switch is performed here.
-			if ( __builtin_expect( !!(extras.allExtras), 0 ) ) { // unlikely
+			if ( UNLIKELY( extras_.allExtras ) ) {
 				extraRestore();
 			} // if
 		} // uMachContext::restore
@@ -1196,35 +1198,35 @@ namespace UPP {
 
 		uMachContext( unsigned int stackSize ) {
 			// stack storage provides a minimum of stackSize memory for the stack plus ancillary storage
-			storage = nullptr;
+			storage_ = nullptr;
 			createContext( stackSize );
 		} // uMachContext::uMachContext
 
-		uMachContext( void *storage, unsigned int storageSize ) {
+		uMachContext( void * storage, unsigned int storageSize ) {
 			// stack storage provides a maximum of memory for the stack plus ancillary storage
-			uMachContext::storage = storage;
+			storage_ = storage;
 			createContext( storageSize );
 		} // uMachContext::uMachContext
 
 		virtual ~uMachContext() noexcept(false) {		// noexcept(false) inherited by subclass destructors
-			if ( ! ((uintptr_t)storage & 1) ) {			// check user stack storage mark
+			if ( ! ((uintptr_t)storage_ & 1) ) {			// check user stack storage mark
 				uDEBUG(
-					if ( ::mprotect( storage, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
+					if ( ::mprotect( storage_, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
 						abort( "(uMachContext &)%p.~uMachContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
 					} // if
-				)
-				free( storage );
+				);
+				free( storage_ );
 			} // if
 		} // uMachContext::~uMachContext
 
-		void *stackPointer() const;
+		void * stackPointer() const;
 
 		unsigned int stackSize() const {
-			return (char *)base - (char *)limit;
+			return (char *)base_ - (char *)limit_;
 		} // uMachContext::stackSize
 
-		void *stackStorage() const {
-			return (void *)((uintptr_t)storage & 1);	// remove user stack storage mark
+		void * stackStorage() const {
+			return (void *)((uintptr_t)storage_ & 1);	// remove user stack storage mark
 		} // uMachContext::stackStorage
 
 		ptrdiff_t stackFree() const;
@@ -1233,7 +1235,7 @@ namespace UPP {
 
 		// These members should be private but cannot be because they are referenced from user code.
 
-		static void *rtnAdr( void (*rtn)() );			// access: see profiler
+		static void * rtnAdr( void (* rtn)() );			// access: see profiler
 	}; // uMachContext
 } // UPP
 
@@ -1241,7 +1243,7 @@ namespace UPP {
 //######################### uBaseCoroutine #########################
 
 
-extern "C" void pthread_exit( void *status );
+extern "C" void pthread_exit( void * status );
 
 template< typename Actor > _Coroutine uCorActorType;	// see uActor.h
 
@@ -1278,15 +1280,15 @@ class uBaseCoroutine : public UPP::uMachContext {
 	enum CancellationState { CancelEnabled = PTHREAD_CANCEL_ENABLE, CancelDisabled = PTHREAD_CANCEL_DISABLE };
 	enum CancellationType { CancelPoll = PTHREAD_CANCEL_DEFERRED, CancelImplicit = PTHREAD_CANCEL_ASYNCHRONOUS };
   private:
-	const char *name;									// textual name for coroutine/task, initialized by uC++ generated code
-	uBaseCoroutine *starter_;							// first coroutine to resume this one
-	UPP::uSerial *serial;								// original serial instance for cormonitor/task (versus currently used instance)
-	State state;										// current execution status for coroutine
-	bool notHalted;										// indicate if execuation state is not halted
+	const char * name_;									// textual name for coroutine/task, initialized by uC++ generated code
+	uBaseCoroutine * starter_;							// first coroutine to resume this one
+	UPP::uSerial * serial_;								// original serial instance for cormonitor/task (versus currently used instance)
+	State state_;										// current execution status for coroutine
+	bool notHalted_;									// indicate if execuation state is not halted
 
-	uBaseCoroutine *last;								// last coroutine to resume this one
-	uBaseTask *currSerialOwner;							// task accessing monitors from this coroutine
-	unsigned int currSerialCount;						// counter to determine when to unset currSerialOwner
+	uBaseCoroutine * last_;								// last coroutine to resume this one
+	uBaseTask * currSerialOwner_;						// task accessing monitors from this coroutine
+	unsigned int currSerialCount_;						// counter to determine when to unset currSerialOwner
 
 	// cancellation
 
@@ -1304,13 +1306,13 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	bool cancelled_;									// cancellation flag
 	bool cancelInProgress_;								// cancellation in progress flag
-	CancellationState cancelState;						// enabled/disabled
-	CancellationType cancelType;						// deferred/asynchronous
+	CancellationState cancelState_;						// enabled/disabled
+	CancellationType cancelType_;						// deferred/asynchronous
 
 	struct PthreadCleanup : uColable {
 		void (* routine )(void *);
 		void * args;
-		void *operator new( size_t, void *storage ) {
+		void * operator new( size_t, void * storage ) {
 			return storage;
 		} // Pthread_cleanup::operator new
 	}; // PthreadCleanup
@@ -1321,12 +1323,12 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	// exception handling
 
-	uEHM::uResumptionHandlers *handlerStackTop, *handlerStackVisualTop;
-	uBaseEvent *resumedObj;								// the object that is currently being handled during resumption
-	const std::type_info *topResumedType;				// the top of the currently handled resumption stack (unchanged during stack unwind through EH)
-	uEHM::uDeliverEStack *DEStack;						// manage exception enable/disable
-	std::unexpected_handler unexpectedRtn;				// per coroutine handling unexpected action
-	bool unexpected;									// indicate if unexpected error occurs
+	uEHM::uResumptionHandlers * handlerStackTop_, * handlerStackVisualTop_;
+	uBaseEvent * resumedObj_;							// the object that is currently being handled during resumption
+	const std::type_info * topResumedType_;				// the top of the currently handled resumption stack (unchanged during stack unwind through EH)
+	uEHM::uDeliverEStack * DEStack_;					// manage exception enable/disable
+	std::unexpected_handler unexpectedRtn_;				// per coroutine handling unexpected action
+	bool unexpected_;									// indicate if unexpected error occurs
 
 	__cxxabiv1::__cxa_eh_globals ehGlobals;
 	friend __cxxabiv1::__cxa_eh_globals *__cxxabiv1::__cxa_get_globals_fast() throw();
@@ -1334,19 +1336,19 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	// profiling : necessary for compatibility between non-profiling and profiling
 
-	mutable uProfileTaskSampler *profileTaskSamplerInstance; // pointer to related profiling object
+	mutable uProfileTaskSampler * profileTaskSamplerInstance; // pointer to related profiling object
 
 	void createCoroutine();
 
 	void setState( State s ) {
-		state = s;
+		state_ = s;
 	} // uBaseCoroutine::setState
 
 	void taskCxtSw();									// switch between a task and the kernel
 	void corCxtSw();									// switch between two coroutine contexts
 
 	void corStarter() {									// remembers who started a coroutine
-		starter_ = last;
+		starter_ = last_;
 	} // uBaseCoroutine::corStarter
 
 	virtual void corFinish() __attribute__(( noreturn ));
@@ -1355,7 +1357,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	_Event Failure : public uKernelFailure {
 	  protected:
-		Failure( const char *const msg = "" );
+		Failure( const char * const msg = "" );
 	  public:
 	}; // uBaseCoroutine::Failure
 
@@ -1380,17 +1382,17 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	// Only allow direct access to resume/suspend, i.e., preclude indirect access C.resume()/C.suspend()
 	void resume() {										// restarts the coroutine's main where last suspended
-		uBaseCoroutine &c = uThisCoroutine();			// optimization
+		uBaseCoroutine & c = uThisCoroutine();			// optimization
 
-		if ( &c != this ) {								// not resuming self ?
+		if ( & c != this ) {								// not resuming self ?
 			uDEBUG(
-				if ( ! notHalted ) {					// check if terminated
+				if ( ! notHalted_ ) {					// check if terminated
 					abort( "Attempt by coroutine %.256s (%p) to resume terminated coroutine %.256s (%p).\n"
 						   "Possible cause is terminated coroutine's main routine has already returned.",
 						   c.getName(), &c, getName(), this );
 				} // if
-			)
-			last = &c;									// set last resumer
+			);
+			last_ = &c;									// set last resumer
 		} // if
 		corCxtSw();										// always done for performance testing
 
@@ -1398,40 +1400,40 @@ class uBaseCoroutine : public UPP::uMachContext {
 	} // uBaseCoroutine::resume
 
 	void suspend() {									// restarts the coroutine that most recently resumed this coroutine
-		uBaseCoroutine &c = uThisCoroutine();			// optimization
+		uBaseCoroutine & c = uThisCoroutine();			// optimization
 			uDEBUG(
-				if ( c.last == nullptr ) {
+				if ( c.last_ == nullptr ) {
 					abort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
 						   "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
 						   getName(), this );
 				} // if
-				if ( ! c.last->notHalted ) {			// check if terminated
+				if ( ! c.last_->notHalted_ ) {			// check if terminated
 					abort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
 						   "Possible cause is terminated coroutine's main routine has already returned.",
-						   getName(), this, c.last->getName(), c.last );
+						   getName(), this, c.last_->getName(), c.last_ );
 				} // if
-			)
-		c.last->corCxtSw();
+			);
+		c.last_->corCxtSw();
 
 		_Enable <Failure>;								// implicit poll
 	} // uBaseCoroutine::suspend
 
 	class uCoroutineConstructor {						// placed in the constructor of a coroutine
 	  public:
-			uCoroutineConstructor( UPP::uAction f, UPP::uSerial &serial, uBaseCoroutine &coroutine, const char *name );
+			uCoroutineConstructor( UPP::uAction f, UPP::uSerial & serial, uBaseCoroutine & coroutine, const char * name );
 	} __attribute__(( unused )); // uCoroutineConstructor
 
 	class uCoroutineDestructor {						// placed in the destructor of a coroutine
 #ifdef __U_PROFILER__
 		UPP::uAction f;
-		uBaseCoroutine &coroutine;
+		uBaseCoroutine & coroutine;
 #endif // __U_PROFILER__
 	  public:
 		uCoroutineDestructor(
 #ifdef __U_PROFILER__
 			UPP::uAction f,
 #endif // __U_PROFILER__
-			uBaseCoroutine &coroutine
+			uBaseCoroutine & coroutine
 		);
 #ifdef __U_PROFILER__
 		~uCoroutineDestructor();
@@ -1449,28 +1451,28 @@ class uBaseCoroutine : public UPP::uMachContext {
 		createCoroutine();
 	} // uBaseCoroutine::uBaseCoroutine
 
-	uBaseCoroutine( void *storage, unsigned int storageSize ) : UPP::uMachContext( storage, storageSize ) {
+	uBaseCoroutine( void * storage, unsigned int storageSize ) : UPP::uMachContext( storage, storageSize ) {
 		createCoroutine();
 	} // uBaseCoroutine::uBaseCoroutine
 
-	const char *setName( const char *name );
-	const char *getName() const;
+	const char * setName( const char * name );
+	const char * getName() const;
 
 	State getState() const {
-		return notHalted ? state : Halt;
+		return notHalted_ ? state_ : Halt;
 	} // uBaseCoroutine::getState
 
-	uBaseCoroutine &starter() const {					// starter coroutine => did first resume
-		return *starter_;
+	uBaseCoroutine & starter() const {					// starter coroutine => did first resume
+		return * starter_;
 	} // uBaseCoroutine::starter
 
-	uBaseCoroutine &resumer() const {					// last resumer coroutine
-		return *last;
+	uBaseCoroutine & resumer() const {					// last resumer coroutine
+		return * last_;
 	} // uBaseCoroutine::resumer
 
 	// asynchronous exceptions
 
-	static int asyncpoll() { return uEHM::poll(); }
+	static int asyncpoll() __attribute__(( deprecated )) { return uEHM::poll(); }
 
 	// cancellation
 
@@ -1484,15 +1486,15 @@ class uBaseCoroutine : public UPP::uMachContext {
 	// These members should be private but cannot be because they are referenced from user code.
 
 	void setCancelState( CancellationState state );
-	CancellationState getCancelState() { return cancelState; }
+	CancellationState getCancelState() { return cancelState_; }
 	void setCancelType( CancellationType type );
-	CancellationType getCancelType() { return cancelType; }
+	CancellationType getCancelType() { return cancelType_; }
 
 	template<CancellationState newState> class Cancel {	// RAII helper to enable/disable cancellation
 		CancellationState prev;
 	  public:
 		Cancel() {
-			uBaseCoroutine &coroutine = uThisCoroutine();
+			uBaseCoroutine & coroutine = uThisCoroutine();
 			prev = coroutine.getCancelState();
 			coroutine.setCancelState( newState );
 		} // Cancel::Cancel
@@ -1512,34 +1514,34 @@ class uBaseCoroutine : public UPP::uMachContext {
 class uBaseScheduleFriend {
   protected:
 	virtual ~uBaseScheduleFriend() {}
-	uBaseTask &getInheritTask( uBaseTask &task ) const;
-	int getActivePriority( uBaseTask &task ) const;
-	int getActivePriorityValue( uBaseTask &task ) const;
-	int setActivePriority( uBaseTask &task1, int priority );
-	int setActivePriority( uBaseTask &task1, uBaseTask &task2 );
-	int getBasePriority( uBaseTask &task ) const;
-	int setBasePriority( uBaseTask &task, int priority );
-	int getActiveQueueValue( uBaseTask &task ) const;
-	int setActiveQueue( uBaseTask &task1, int priority );
-	int getBaseQueue( uBaseTask &task ) const;
-	int setBaseQueue( uBaseTask &task, int priority );
-	bool isEntryBlocked( uBaseTask &task ) const;
-	bool checkHookConditions( uBaseTask &task1, uBaseTask &task2 ) const;
+	uBaseTask & getInheritTask( uBaseTask & task ) const;
+	int getActivePriority( uBaseTask & task ) const;
+	int getActivePriorityValue( uBaseTask & task ) const;
+	int setActivePriority( uBaseTask & task1, int priority );
+	int setActivePriority( uBaseTask & task1, uBaseTask & task2 );
+	int getBasePriority( uBaseTask & task ) const;
+	int setBasePriority( uBaseTask & task, int priority );
+	int getActiveQueueValue( uBaseTask & task ) const;
+	int setActiveQueue( uBaseTask & task1, int priority );
+	int getBaseQueue( uBaseTask & task ) const;
+	int setBaseQueue( uBaseTask & task, int priority );
+	bool isEntryBlocked( uBaseTask & task ) const;
+	bool checkHookConditions( uBaseTask & task1, uBaseTask & task2 ) const;
 }; // uBaseScheduleFriend
 
 
 template<typename Node> class uBaseSchedule : protected uBaseScheduleFriend {
   public:
 	virtual bool empty() const = 0;
-	virtual void add( Node *node ) = 0;
-	virtual Node *drop() = 0;
-	virtual void remove( uBaseTaskDL *node ) = 0;
-	virtual void transfer( uBaseTaskSeq &from ) = 0;
-	virtual bool checkPriority( Node &owner, Node &calling ) = 0;
-	virtual void resetPriority( Node &owner, Node &calling ) = 0;
-	virtual void addInitialize( uBaseTaskSeq &taskList ) = 0;
-	virtual void removeInitialize( uBaseTaskSeq &taskList ) = 0;
-	virtual void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList ) = 0;
+	virtual void add( Node * node ) = 0;
+	virtual Node * drop() = 0;
+	virtual void remove( uBaseTaskDL * node ) = 0;
+	virtual void transfer( uBaseTaskSeq & from ) = 0;
+	virtual bool checkPriority( Node & owner, Node & calling ) = 0;
+	virtual void resetPriority( Node & owner, Node & calling ) = 0;
+	virtual void addInitialize( uBaseTaskSeq & taskList ) = 0;
+	virtual void removeInitialize( uBaseTaskSeq & taskList ) = 0;
+	virtual void rescheduleTask( uBaseTaskDL * taskNode, uBaseTaskSeq & taskList ) = 0;
 }; // uBaseSchedule
 
 
@@ -1557,11 +1559,11 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 		return list.empty();
 	} // uBasePrioritySeq::empty
 
-	virtual uBaseTaskDL *head() const {
+	virtual uBaseTaskDL * head() const {
 		return list.head();
 	} // uBasePrioritySeq::head
 
-	virtual int add( uBaseTaskDL *node, uBaseTask * /* uOwner */ ) {
+	virtual int add( uBaseTaskDL * node, uBaseTask * /* uOwner */ ) {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, 1 );
 #endif // __U_STATISTICS__
@@ -1569,14 +1571,14 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 		return 0;
 	} // uBasePrioritySeq::add
 
-	virtual uBaseTaskDL *drop() {
+	virtual uBaseTaskDL * drop() {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
 #endif // __U_STATISTICS__
 		return list.dropHead();
 	} // uBasePrioritySeq::drop
 
-	virtual void remove( uBaseTaskDL *node ) {
+	virtual void remove( uBaseTaskDL * node ) {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
 #endif // __U_STATISTICS__
@@ -1592,7 +1594,7 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 	virtual void onRelease( uBaseTask & /* uOldOwner */ ) {
 	} // uBasePrioritySeq::onRelease
 
-	int reposition( uBaseTask &task, UPP::uSerial &sserial );
+	int reposition( uBaseTask & task, UPP::uSerial & sserial );
 }; // uBasePrioritySeq
 
 
@@ -1603,11 +1605,11 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 		return list.empty();
 	} // uBasePriorityQueue::empty
 
-	virtual uBaseTaskDL *head() const {
+	virtual uBaseTaskDL * head() const {
 		return list.head();
 	} // uBasePriorityQueue::head
 
-	virtual int add( uBaseTaskDL *node, uBaseTask * /* uOwner */ ) {
+	virtual int add( uBaseTaskDL * node, uBaseTask * /* uOwner */ ) {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, 1 );
 #endif // __U_STATISTICS__
@@ -1615,7 +1617,7 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 		return 0;										// dummy value
 	} // uBasePriorityQueue::add
 
-	virtual uBaseTaskDL *drop() {
+	virtual uBaseTaskDL * drop() {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
 #endif // __U_STATISTICS__
@@ -1642,10 +1644,10 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 
 
 class uRepositionEntry {
-	uBaseTask &blocked;
-	UPP::uSerial &bSerial, &cSerial;
+	uBaseTask & blocked;
+	UPP::uSerial & bSerial, & cSerial;
   public:
-	uRepositionEntry( uBaseTask &blocked, uBaseTask &calling );
+	uRepositionEntry( uBaseTask & blocked, uBaseTask & calling );
 	int uReposition( bool relCallingLock );
 }; // uRepositionEntry
 
@@ -1655,30 +1657,30 @@ class uDefaultScheduler : public uBaseSchedule<uBaseTaskDL> {
   public:
 	bool empty() const { return list.empty(); }
 #ifdef KNOT
-	void add( uBaseTaskDL *taskNode );
+	void add( uBaseTaskDL * taskNode );
 #else
-	void add( uBaseTaskDL *taskNode ) { list.addTail( taskNode );
+	void add( uBaseTaskDL * taskNode ) { list.addTail( taskNode );
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, 1 );
 #endif // __U_STATISTICS__
 	}
 #endif // KNOT
 
-	uBaseTaskDL *drop() {
+	uBaseTaskDL * drop() {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, -1 );
 #endif // __U_STATISTICS__
 		return list.dropHead();
 	} // uDefaultScheduler::drop
 
-	void remove( uBaseTaskDL *node ) {
+	void remove( uBaseTaskDL * node ) {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, -1 );
 #endif // __U_STATISTICS__
 		list.remove( node );
 	} // uDefaultScheduler::remove
 
-	void transfer( uBaseTaskSeq &from ) {
+	void transfer( uBaseTaskSeq & from ) {
 		list.transfer( from );
 	} // uDefaultScheduler::remove
 
@@ -1713,34 +1715,34 @@ class uBasePIQ {
 class uBaseTask : public uBaseCoroutine {
 	friend class UPP::uSerial;							// access: everything
 	friend class UPP::uSerialConstructor;				// access: profileActive, setSerial
-	friend class UPP::uSerialDestructor;				// access: mutexRef, profileActive, mutexRecursion, setState
-	friend class UPP::uMachContext;						// access: currCoroutine, profileActive, setState, main
+	friend class UPP::uSerialDestructor;				// access: mutexRef_, profileActive, mutexRecursion, setState
+	friend class UPP::uMachContext;						// access: currCoroutine_, profileActive, setState, main
 //	friend class uTaskDestructor;						// cause
-	friend class uBaseCoroutine;						// access: currCoroutine, profileActive, setState
-	friend uBaseCoroutine &uThisCoroutine();			// access: currCoroutine
-	friend class uMutexLock;							// access: entryRef, profileActive, wake
-	friend class uOwnerLock;							// access: entryRef, profileActive, wake
-	template< int, int, int > friend class uAdaptiveLock; // access: entryRef, profileActive, wake
-	friend class uCondLock;								// access: entryRef, ownerLock, profileActive, wake
+	friend class uBaseCoroutine;						// access: currCoroutine_, profileActive, setState
+	friend uBaseCoroutine & uThisCoroutine();			// access: currCoroutine_
+	friend class uMutexLock;							// access: entryRef_, profileActive, wake
+	friend class uOwnerLock;							// access: entryRef_, profileActive, wake
+	template< int, int, int > friend class uAdaptiveLock; // access: entryRef_, profileActive, wake
+	friend class uCondLock;								// access: entryRef_, ownerLock, profileActive, wake
 	friend class uBaseSpinLock;							// access: profileActive
-	friend class UPP::uSemaphore;						// access: entryRef, wake, info
-	friend class uRWLock;								// access: entryRef, wake, info
-	friend class uCondition;							// access: currCoroutine, mutexRef, info, profileActive
-	friend _Coroutine UPP::uProcessorKernel;			// access: currCoroutine, setState, wake
+	friend class UPP::uSemaphore;						// access: entryRef_, wake, info
+	friend class uRWLock;								// access: entryRef_, wake, info
+	friend class uCondition;							// access: currCoroutine_, mutexRef_, info, profileActive
+	friend _Coroutine UPP::uProcessorKernel;			// access: currCoroutine_, setState, wake
 	friend _Task uProcessorTask;						// access: currCluster, uBaseTask
-	friend class uCluster;								// access: currCluster, readyRef, clusterRef, bound
+	friend class uCluster;								// access: currCluster, readyRef_, clusterRef_, bound_
 	friend _Task UPP::uBootTask;						// access: wake
 	friend class UPP::uHeapManager;						// access: profileActive
-	friend class uKernelModule;							// access: currCoroutine, inheritTask
-	friend void *malloc( size_t size ) __THROW;			// access: profileActive
-	friend void *memalign( size_t alignment, size_t size ) __THROW; // access: profileActive
+	friend class uKernelModule;							// access: currCoroutine_, inheritTask
+	friend void * malloc( size_t size ) __THROW;			// access: profileActive
+	friend void * memalign( size_t alignment, size_t size ) __THROW; // access: profileActive
 	friend class uEventList;							// access: profileActive
 	friend class UPP::uHeapControl;						// access: heapData
 	friend class uEventListPop;							// access: currCluster
 #ifdef KNOT
-	friend int pthread_mutex_lock( pthread_mutex_t *mutex ) __THROW; // access: setActivePriority
-	friend int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW; // access: setActivePriority
-	friend int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW; // access: setActivePriority
+	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
+	friend int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
+	friend int pthread_mutex_unlock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
 #endif // KNOT
 
 	// exception handling
@@ -1752,68 +1754,68 @@ class uBaseTask : public uBaseCoroutine {
 	// debugging
 
 	friend class uLocalDebuggerHandler;					// access: taskDebugMask, processBP
-	friend _Task uLocalDebugger;						// access: bound, taskDebugMask, debugPCandSRR
+	friend _Task uLocalDebugger;						// access: bound_, taskDebugMask, debugPCandSRR
 	friend class UPP::uSigHandlerModule;				// access: debugPCandSRR
 
 #ifdef __U_PROFILER__
 	// profiling
 
-	friend _Task uProfiler;								// access: currCoroutine
-	friend void __cyg_profile_func_enter( void *pcCurrentFunction, void *pcCallingFunction );
-	friend void __cyg_profile_func_exit( void *pcCurrentFunction, void *pcCallingFunction );
+	friend _Task uProfiler;								// access: currCoroutine_
+	friend void __cyg_profile_func_enter( void * pcCurrentFunction, void * pcCallingFunction );
+	friend void __cyg_profile_func_exit( void * pcCurrentFunction, void * pcCallingFunction );
 	friend class uExecutionMonitor;						// access: profileActive
 	friend void UPP::umainProfile();					// access: profileActive
 #endif // __U_PROFILER__
   public:
 	enum State { Start, Ready, Running, Blocked, Terminate };
   private:
-	void createTask( uCluster &cluster );
-	uBaseTask( uCluster &cluster, uProcessor &processor ); // only used by uProcessorTask
+	void createTask( uCluster & cluster );
+	uBaseTask( uCluster & cluster, uProcessor & processor ); // only used by uProcessorTask
 	void setState( State state );
 	void wake();
 
 	// debugging : must be first fields
 
 	char taskDebugMask[8];								// 64 bit breakpoint mask for task (used only by debugger)
-	void *debugPCandSRR;								// PC of break point; address of return message for IPC SRR
+	void * debugPCandSRR;								// PC of break point; address of return message for IPC SRR
 	bool processBP;										// true if task is in the middle of processing a breakpoint
 
 	// general
 
-	State state;										// current state of task
-	unsigned int recursion;								// allow recursive entry of main member
-	unsigned int mutexRecursion;						// number of recursive calls while holding mutex
-	uCluster *currCluster;								// cluster task is executing on
-	uBaseCoroutine *currCoroutine;						// coroutine being executed by tasks thread
-	uintptr_t info;										// condition information stored with blocked task
+	State state_;										// current state of task
+	unsigned int recursion_;							// allow recursive entry of main member
+	unsigned int mutexRecursion_;						// number of recursive calls while holding mutex
+	uCluster * currCluster_;							// cluster task is executing on
+	uBaseCoroutine * currCoroutine_;					// coroutine being executed by tasks thread
+	uintptr_t info_;									// condition information stored with blocked task
 
-	uBaseTaskDL clusterRef;								// double link field: list of tasks on cluster
-	uBaseTaskDL readyRef;								// double link field: ready queue
-	uBaseTaskDL entryRef;								// double link field: general entry deque (all waiting tasks)
-	uBaseTaskDL mutexRef;								// double link field: mutex member, suspend stack, condition variable
-	uProcessor &bound;									// processor to which this task is bound, if applicable
-	uBasePrioritySeq *calledEntryMem;					// pointer to called mutex queue
-	uMutexLock *ownerLock;								// pointer to owner lock used for signalling conditions
+	uBaseTaskDL clusterRef_;							// double link field: list of tasks on cluster
+	uBaseTaskDL readyRef_;								// double link field: ready queue
+	uBaseTaskDL entryRef_;								// double link field: general entry deque (all waiting tasks)
+	uBaseTaskDL mutexRef_;								// double link field: mutex member, suspend stack, condition variable
+	uProcessor & bound_;								// processor to which this task is bound, if applicable
+	uBasePrioritySeq * calledEntryMem_;					// pointer to called mutex queue
+	uMutexLock * ownerLock_;							// pointer to owner lock used for signalling conditions
 
 	// profiling : necessary for compatibility between non-profiling and profiling
 
 	bool profileActive;									// indicates if this context is supposed to be profiled
 #ifdef __U_PROFILER__
-	void profileActivate( uBaseTask &task );
+	void profileActivate( uBaseTask & task );
 #endif // __U_PROFILER__
 
 	// exception handling
 
-	UPP::uSerialMember *acceptedCall;					// pointer to the last mutex entry accepted by this thread
+	UPP::uSerialMember * acceptedCall;					// pointer to the last mutex entry accepted by this thread
 	std::terminate_handler terminateRtn __attribute__(( noreturn )); // per task handling termination action
 	uBaseCoroutine::UnhandledException * cause;			// forwarded unhandled exception
   protected:
 	// real-time
 
-	friend class UPP::uSerialMember;					// access: setSerial, currCoroutine, profileActive, acceptedCall
-	friend class uBaseScheduleFriend;					// access: entryRef, getInheritTask, setActivePriority, setBasePriority, setActiveQueue, setBaseQueue, uIsEntryBlocked
+	friend class UPP::uSerialMember;					// access: setSerial, currCoroutine_, profileActive, acceptedCall
+	friend class uBaseScheduleFriend;					// access: entryRef_, getInheritTask, setActivePriority, setBasePriority, setActiveQueue, setBaseQueue, uIsEntryBlocked
 	friend class uWakeupHndlr;							// access: wake
-	friend class uBasePrioritySeq;						// access: entryRef, mutexRef, calledEntryMem
+	friend class uBasePrioritySeq;						// access: entryRef_, mutexRef_, calledEntryMem
 	friend class uRepositionEntry;						// access: entryList TEMPORARY
 
 	// Duplicate "main" (see uMachContext) to get better error message about
@@ -1822,15 +1824,15 @@ class uBaseTask : public uBaseCoroutine {
 
 	int priority;
 	int activePriority;
-	uBaseTask *inheritTask;
+	uBaseTask * inheritTask;
 	int queueIndex;
 	int activeQueueIndex;
-	UPP::uSerial *currSerial;							// current serial task is using (not original serial)
+	UPP::uSerial * currSerial;							// current serial task is using (not original serial)
 
 	unsigned int currSerialLevel;						// counter for checking non-nested entry/exit from multiple accessed mutex objects
 
-	uBaseTask &getInheritTask() {
-		return *inheritTask;
+	uBaseTask & getInheritTask() {
+		return * inheritTask;
 	} // uBaseTask::getInheritTask
 
 	int setActivePriority( int priority ) {
@@ -1839,9 +1841,9 @@ class uBaseTask : public uBaseCoroutine {
 		return temp;
 	} // uBaseTask::setActivePriority
 
-	int setActivePriority( uBaseTask &task ) {
+	int setActivePriority( uBaseTask & task ) {
 		int temp = activePriority;
-		inheritTask = &task;
+		inheritTask = & task;
 		activePriority = inheritTask->getActivePriority();
 		return temp;
 	} // uBaseTask::setActivePriority
@@ -1854,7 +1856,7 @@ class uBaseTask : public uBaseCoroutine {
 
 	int setActiveQueue( int q ) {
 		int temp = activeQueueIndex;
-		// uInheritTask = &t;  is this needed or should this just be called from setActivePriority ??
+		// uInheritTask = & t;  is this needed or should this just be called from setActivePriority ??
 		activeQueueIndex = q;
 		return temp;
 	} // uBaseTask::setActiveQueue
@@ -1865,19 +1867,19 @@ class uBaseTask : public uBaseCoroutine {
 		return temp;
 	} // uBaseTask::setBaseQueue
 
-	UPP::uSerial &setSerial( UPP::uSerial &serial ) {
-		UPP::uSerial *temp = currSerial;
-		currSerial = &serial;
-		return *temp;
+	UPP::uSerial & setSerial( UPP::uSerial & serial ) {
+		UPP::uSerial * temp = currSerial;
+		currSerial = & serial;
+		return * temp;
 	} // uBaseTask::setSerial
 
 
 	class uTaskConstructor {							// placed in the constructor of a task
 		UPP::uAction f;
-		UPP::uSerial &serial;
-		uBaseTask &task;
+		UPP::uSerial & serial;
+		uBaseTask & task;
 	  public:
-		uTaskConstructor( UPP::uAction f, UPP::uSerial &serial, uBaseTask &task, uBasePIQ &piq, const char *n, bool profile );
+		uTaskConstructor( UPP::uAction f, UPP::uSerial & serial, uBaseTask & task, uBasePIQ & piq, const char * n, bool profile );
 		~uTaskConstructor();
 	} __attribute__(( unused )); // uTaskConstructor
 
@@ -1885,20 +1887,20 @@ class uBaseTask : public uBaseCoroutine {
 		friend class uTaskConstructor;					// access: cleanup
 
 		UPP::uAction f;
-		uBaseTask &task;
+		uBaseTask & task;
 
-		static void cleanup( uBaseTask &task );
+		static void cleanup( uBaseTask & task );
 	  public:
-		uTaskDestructor( UPP::uAction f, uBaseTask &task ) : f( f ), task( task ) {
+		uTaskDestructor( UPP::uAction f, uBaseTask & task ) : f( f ), task( task ) {
 		} // uTaskDestructor::uTaskDestructor
 
 		~uTaskDestructor() noexcept(false);
 	}; // uTaskDestructor
 
 	class uTaskMain {									// placed in the main member of a task
-		uBaseTask &task;
+		uBaseTask & task;
 	  public:
-		uTaskMain( uBaseTask &task );
+		uTaskMain( uBaseTask & task );
 		~uTaskMain();
 	}; // uTaskMain
 
@@ -1910,25 +1912,25 @@ class uBaseTask : public uBaseCoroutine {
 	uBaseTask & operator=( const uBaseTask & ) = delete; // no assignment
 	uBaseTask & operator=( uBaseTask && ) = delete;
 
-	uBaseTask() : clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
+	uBaseTask() : clusterRef_( * this ), readyRef_( * this ), entryRef_( * this ), mutexRef_( * this ), bound_( *(uProcessor *)0 ) {
 		createTask( uThisCluster() );
 	} // uBaseTask::uBaseTask
 
-	uBaseTask( unsigned int stackSize ) : uBaseCoroutine ( stackSize ), clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
+	uBaseTask( unsigned int stackSize ) : uBaseCoroutine ( stackSize ), clusterRef_( * this ), readyRef_( * this ), entryRef_( * this ), mutexRef_( * this ), bound_( *(uProcessor *)0 ) {
 		createTask( uThisCluster() );
 	} // uBaseTask::uBaseTask
 
-	uBaseTask( void *storage, unsigned int storageSize ) : uBaseCoroutine ( storage, storageSize ), clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
+	uBaseTask( void * storage, unsigned int storageSize ) : uBaseCoroutine ( storage, storageSize ), clusterRef_( * this ), readyRef_( * this ), entryRef_( * this ), mutexRef_( * this ), bound_( *(uProcessor *)0 ) {
 		createTask( uThisCluster() );
 	} // uBaseTask::uBaseTask
 
-	uBaseTask( uCluster &cluster );
+	uBaseTask( uCluster & cluster );
 
-	uBaseTask( uCluster &cluster, unsigned int stackSize ) : uBaseCoroutine( stackSize ), clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
+	uBaseTask( uCluster & cluster, unsigned int stackSize ) : uBaseCoroutine( stackSize ), clusterRef_( * this ), readyRef_( * this ), entryRef_( * this ), mutexRef_( * this ), bound_( *(uProcessor *)0 ) {
 		createTask( cluster );
 	} // uBaseTask::uBaseTask
 
-	uBaseTask( uCluster &cluster, void *storage, unsigned int storageSize ) : uBaseCoroutine( storage, storageSize ), clusterRef( *this ), readyRef( *this ), entryRef( *this ), mutexRef( *this ), bound( *(uProcessor *)0 ) {
+	uBaseTask( uCluster & cluster, void * storage, unsigned int storageSize ) : uBaseCoroutine( storage, storageSize ), clusterRef_( * this ), readyRef_( * this ), entryRef_( * this ), mutexRef_( * this ), bound_( *(uProcessor *)0 ) {
 		createTask( cluster );
 	} // uBaseTask::uBaseTask
 
@@ -1937,7 +1939,7 @@ class uBaseTask : public uBaseCoroutine {
 
 	static void yield() {
 		uThisTask().uYieldNoPoll();
-		asyncpoll();
+		uEHM::poll();
 	} // uBaseTask::yield
 
 	static void yield( unsigned int times ) {
@@ -1949,18 +1951,18 @@ class uBaseTask : public uBaseCoroutine {
 	static void sleep( uDuration duration );
 	static void sleep( uTime time );
 
-	static uCluster &migrate( uCluster &cluster );
+	static uCluster & migrate( uCluster & cluster );
 
-	uCluster &getCluster() const {
-		return *currCluster;
+	uCluster & getCluster() const {
+		return * currCluster_;
 	} // uBaseTask::getCluster
 
-	uBaseCoroutine &getCoroutine() const {
-		return *currCoroutine;
+	uBaseCoroutine & getCoroutine() const {
+		return * currCoroutine_;
 	} // uBaseTask::getCoroutine
 
 	State getState() const {
-		return state;
+		return state_;
 	} // uBaseTask::getState
 
 	int getActivePriority() const {
@@ -1984,8 +1986,8 @@ class uBaseTask : public uBaseCoroutine {
 		return queueIndex;
 	} // uBaseTask::getBaseQueue
 
-	UPP::uSerial &getSerial() const {
-		return *currSerial;
+	UPP::uSerial & getSerial() const {
+		return * currSerial;
 	} // uBaseTask::getSerial
 
 #ifdef __U_PROFILER__
@@ -1998,9 +2000,9 @@ class uBaseTask : public uBaseCoroutine {
 
 	// These members should be private but cannot be because they are referenced from user code.
 
-	uBasePIQ *uPIQ;										// TEMPORARY
-	void *pthreadData;									// pointer to pthread specific data
-	void *heapData;										// thread-local storage for per-thread heaps
+	uBasePIQ * uPIQ;									// TEMPORARY
+	void * pthreadData;									// pointer to pthread specific data
+	void * heapData;									// thread-local storage for per-thread heaps
 
 	void uYieldNoPoll();
 	void uYieldYield( unsigned int times );				// inserted by translator for -yield
@@ -2011,8 +2013,8 @@ class uBaseTask : public uBaseCoroutine {
 class uWakeupHndlr : public uSignalHandler {			// real-time
 	friend class uBaseTask;								// access: uWakeupHndlr
 
-	uWakeupHndlr( uBaseTask &task ) {
-		This = &task;
+	uWakeupHndlr( uBaseTask & task ) {
+		This = & task;
 	} // uWakeupHndlr::uWakeupHndlr
 
 	void handler() {
@@ -2021,8 +2023,8 @@ class uWakeupHndlr : public uSignalHandler {			// real-time
 }; // uWakeupHndlr
 
 
-inline uBaseCoroutine &uThisCoroutine() {
-	return *uThisTask().currCoroutine;
+inline uBaseCoroutine & uThisCoroutine() {
+	return * uThisTask().currCoroutine_;
 } // uThisCoroutine
 
 
@@ -2048,14 +2050,14 @@ namespace UPP {
 
 		// must be first field for alignment
 		uSpinLock spinLock;								// provide mutual exclusion while examining serial state
-		uBaseTask *mutexOwner;							// active thread in the mutex object
+		uBaseTask * mutexOwner;							// active thread in the mutex object
 		uBitSet< __U_MAXENTRYBITS__ > mask;				// entry mask of accepted mutex members and timeout
-		unsigned int *mutexMaskLocn;					// location to place mask position in accept statement
-		uBasePrioritySeq &entryList;					// tasks waiting to enter mutex object
+		unsigned int * mutexMaskLocn;					// location to place mask position in accept statement
+		uBasePrioritySeq & entryList;					// tasks waiting to enter mutex object
 		uStack<uBaseTaskDL> acceptSignalled;			// tasks suspended within the mutex object
-		uBaseTask *constructorTask;						// identity of task creating mutex object
-		uBaseTask *destructorTask;						// identity of task calling mutex object's destructor
-		uSerial *prevSerial;							// task's previous serial (see uSerialMember, recursive entry during constructor)
+		uBaseTask * constructorTask;						// identity of task creating mutex object
+		uBaseTask * destructorTask;						// identity of task calling mutex object's destructor
+		uSerial * prevSerial;							// task's previous serial (see uSerialMember, recursive entry during constructor)
 		unsigned int mr;								// mutex recursion counter for multiple serial-object entry
 		enum uDestructorState { NoDestructor, DestrCalled, DestrScheduled }; // identify the state of the destructor
 		uDestructorState destructorStatus;				// has the destructor been called ? 
@@ -2066,26 +2068,26 @@ namespace UPP {
 		// real-time
 
 		uEventNode timeoutEvent;						// event node for event list
-		uEventList *events;								// event list when event added
+		uEventList * events;								// event list when event added
 
 		// exception handling
 
-		uBaseTask *lastAcceptor;						// acceptor of current entry for communication between acceptor and caller
+		uBaseTask * lastAcceptor;						// acceptor of current entry for communication between acceptor and caller
 
 		// profiling : necessary for compatibility between non-profiling and profiling
 
-		mutable uProfileTaskSampler *profileSerialSamplerInstance; // pointer to related profiling object
+		mutable uProfileTaskSampler * profileSerialSamplerInstance; // pointer to related profiling object
 
 		void resetDestructorStatus();					// allow destructor to be called
-		void enter( unsigned int &mr, uBasePrioritySeq &ml, int mp );
-		void enterDestructor( unsigned int &mr, uBasePrioritySeq &ml, int mp );
+		void enter( unsigned int & mr, uBasePrioritySeq & ml, int mp );
+		void enterDestructor( unsigned int & mr, uBasePrioritySeq & ml, int mp );
 		void enterTimeout();
 		void leave( unsigned int mr );
 		void leave2();
 		void removeTimeout();
-		bool checkHookConditions( uBaseTask *task );	// check conditions for executing hooks
+		bool checkHookConditions( uBaseTask * task );	// check conditions for executing hooks
 
-		void acceptStart( unsigned int &mutexMaskPosn );
+		void acceptStart( unsigned int & mutexMaskPosn );
 		void acceptTry();
 
 		bool acceptTestMask() {
@@ -2108,13 +2110,13 @@ namespace UPP {
 		class uTimeoutHndlr : public uSignalHandler {	// real-time
 			friend class uSerial;						// access: uWakeupHndlr
 
-			uSerial &serial;
+			uSerial & serial;
 
-			uTimeoutHndlr( uBaseTask &task, UPP::uSerial &serial ) : serial( serial ) {
-				This = &task;
+			uTimeoutHndlr( uBaseTask & task, UPP::uSerial & serial ) : serial( serial ) {
+				This = & task;
 			} // uTimeoutHndlr::uTimeoutHndlr
 
-			uTimeoutHndlr( UPP::uSerial &serial ) : serial( serial ) {
+			uTimeoutHndlr( UPP::uSerial & serial ) : serial( serial ) {
 				This = nullptr;
 			} // uTimeoutHndlr::uTimeoutHndlr
 
@@ -2128,14 +2130,14 @@ namespace UPP {
 		uSerial & operator=( const uSerial & ) = delete; // no assignment
 		uSerial & operator=( uSerial && ) = delete;
 
-		uSerial( uBasePrioritySeq &entryList );
+		uSerial( uBasePrioritySeq & entryList );
 		~uSerial();
 
 		// These members should be private but cannot be because they are referenced from user code.
 
 		// calls generated by translator in application code
-		bool acceptTry( uBasePrioritySeq &ml, int mp );
-		bool acceptTry2( uBasePrioritySeq &ml, int mp );
+		bool acceptTry( uBasePrioritySeq & ml, int mp );
+		bool acceptTry2( uBasePrioritySeq & ml, int mp );
 
 		void acceptSetMask() {
 			// The lock acquired at the start of the accept statement cannot be released here, otherwise, it is
@@ -2223,15 +2225,15 @@ namespace UPP {
 		bool executeC( bool timeout, uDuration duration, bool else_ );
 
 		class uProtectAcceptStmt {
-			uSerial &serial;
+			uSerial & serial;
 		  public:
 			unsigned int mutexMaskPosn;					// bit position (0-N) in the entry mask for accepted mutex member
 
-			uProtectAcceptStmt( uSerial &serial ) : serial( serial ) {
+			uProtectAcceptStmt( uSerial & serial ) : serial( serial ) {
 				serial.acceptStart( mutexMaskPosn );
 			} // uSerial::uProtectAcceptStmt::uProtectAcceptStmt
 
-			uProtectAcceptStmt( uSerial &serial, bool ) : serial( serial ) {
+			uProtectAcceptStmt( uSerial & serial, bool ) : serial( serial ) {
 				serial.removeTimeout();
 				serial.acceptStart( mutexMaskPosn );
 			} // uSerial::uProtectAcceptStmt::uProtectAcceptStmt
@@ -2245,11 +2247,11 @@ namespace UPP {
 
 	class uSerialConstructor {							// placed in the constructor of a mutex class
 		uAction f;
-		UPP::uSerial &serial;
+		UPP::uSerial & serial;
 	  public:
-		uSerialConstructor( uAction f, uSerial &serial );
+		uSerialConstructor( uAction f, uSerial & serial );
 #ifdef __U_PROFILER__
-		uSerialConstructor( uAction f, uSerial &serial, const char *n );
+		uSerialConstructor( uAction f, uSerial & serial, const char * n );
 #endif // __U_PROFILER__
 		~uSerialConstructor();
 	}; // uSerialConstructor
@@ -2262,13 +2264,13 @@ namespace UPP {
 		unsigned int mr;								// mutex recursion counter for multiple serial-object entry
 		uAction f;
 	  public:
-		uSerialDestructor( uAction f, uSerial &serial, uBasePrioritySeq &ml, int mp );
+		uSerialDestructor( uAction f, uSerial & serial, uBasePrioritySeq & ml, int mp );
 		~uSerialDestructor();
 	}; // uSerialDestructor
 
 
 	class uSerialMember {								// placed in the mutex member of a mutex class
-		uSerial *prevSerial;							// task's previous serial
+		uSerial * prevSerial;							// task's previous serial
 		unsigned int mr;								// mutex recursion counter for multiple serial-object entry
 		uDEBUG(
 			unsigned int nlevel;						// nesting level counter for accessed serial-objects
@@ -2279,15 +2281,15 @@ namespace UPP {
 		friend class uSerial;							// access: caller, acceptor
 		friend class ::uCondition;						// access: caller
 
-		uBaseTask *acceptor;							// acceptor of the entry invocation, null => no acceptor
+		uBaseTask * acceptor;							// acceptor of the entry invocation, null => no acceptor
 		bool acceptorSuspended;							// true only when the acceptor, if there is one, remains blocked
 		bool noUserOverride;							// true when acceptor has not been called
 
-		void finalize( uBaseTask &task );
+		void finalize( uBaseTask & task );
 	  public:
-		uSerialMember( uSerial &serial, uBasePrioritySeq &ml, int mp );
+		uSerialMember( uSerial & serial, uBasePrioritySeq & ml, int mp );
 		~uSerialMember();
-		uBaseTask *uAcceptor();
+		uBaseTask * uAcceptor();
 	}; // uSerialMember
 } // UPP
 
@@ -2296,7 +2298,7 @@ namespace UPP {
 
 
 inline bool uEHM::pollCheck() {
-	uBaseCoroutine &coroutine = uThisCoroutine();
+	uBaseCoroutine & coroutine = uThisCoroutine();
 	return ! coroutine.asyncEBuf.empty() || coroutine.cancelled();
 } // uEHM::pollCheck 
 
@@ -2320,7 +2322,7 @@ class uDisableCancel : public uBaseCoroutine::Cancel<uBaseCoroutine::CancelDisab
 
 class uCondition {
 	uQueue<uBaseTaskDL> waiting;						// queue of blocked tasks
-	UPP::uSerial *owner;								// mutex object owning condition, only set in wait
+	UPP::uSerial * owner;								// mutex object owning condition, only set in wait
   public:
 	uCondition( const uCondition & ) = delete;			// no copy
 	uCondition( uCondition && ) = delete;
@@ -2334,7 +2336,7 @@ class uCondition {
 
 	void wait();										// wait on condition
 	void wait( uintptr_t info ) {						// wait on a condition with information
-		uThisTask().info = info;						// store the information with this task
+		uThisTask().info_ = info;						// store the information with this task
 		wait();											// wait on this condition
 	} // uCondition::wait
 	bool signal();										// signal condition
@@ -2351,7 +2353,7 @@ class uCondition {
 					   "Possible cause is not checking if the condition is empty before reading stored data." );
 			} // if
 		)
-		return waiting.head()->task().info;				// return condition information stored with blocked task
+		return waiting.head()->task().info_;			// return condition information stored with blocked task
 	} // uCondition::front
 
 	// exception handling
@@ -2359,11 +2361,11 @@ class uCondition {
 	_Event WaitingFailure : public uKernelFailure {		// condition queue deleted before restarted from waiting
 		friend class uCondition;
 
-		const uCondition &cond;
-		WaitingFailure( const uCondition &cond, const char *const msg = "" );
+		const uCondition & cond;
+		WaitingFailure( const uCondition & cond, const char * const msg = "" );
 	  public:
 		virtual ~WaitingFailure();
-		const uCondition &conditionId() const;
+		const uCondition & conditionId() const;
 		virtual void defaultTerminate() override;
 	}; // uCondition::WaitingFailure 
 }; // uCondition
@@ -2389,27 +2391,27 @@ namespace UPP {
 			int nfds;									// return value
 			enum { singleFd, multipleFds } fdType;
 			bool timedout;								// has timeout
-			bool *nbioTimeout;							// timeout in NBIO
+			bool * nbioTimeout;							// timeout in NBIO
 			union {
 				struct {								// used if waiting for only one fd
-					uIOClosure *closure;
-					int *uRWE;
+					uIOClosure * closure;
+					int * uRWE;
 				} sfd;
 				struct {								// used if waiting for multiple fds
 					unsigned int tnfds;
-					fd_set *trfds;
-					fd_set *twfds;
-					fd_set *tefds;
+					fd_set * trfds;
+					fd_set * twfds;
+					fd_set * tefds;
 				} mfd;
 			} smfd;
 		}; // NBIOnode
 
 		class uSelectTimeoutHndlr : public uSignalHandler { // real-time
-			NBIOnode &node;
-			uCluster &cluster;
+			NBIOnode & node;
+			uCluster & cluster;
 		  public:
-			uSelectTimeoutHndlr( uBaseTask &task, NBIOnode &node ) : node( node ), cluster( uThisCluster() ) {
-				This = &task;
+			uSelectTimeoutHndlr( uBaseTask & task, NBIOnode & node ) : node( node ), cluster( uThisCluster() ) {
+				This = & task;
 			} // uSelectTimeoutHndlr::uSelectTimeoutHndlr
 
 			void handler();
@@ -2427,7 +2429,7 @@ namespace UPP {
 		unsigned int smaxFD;							// highest FD used in single master mask
 		unsigned int mmaxFD;							// highest FD used in multiple master mask
 		int descriptors;								// declared here so uniprocessor kernel can check if I/O occurred
-		uBaseTask *IOPoller;							// pointer to current IO poller task, or 0
+		uBaseTask * IOPoller;							// pointer to current IO poller task, or 0
 		unsigned int pending;
 		uPid_t IOPollerPid;								// processor where IOPoller select blocks
 		bool selectBlock;								// true => select blocks rather than poll
@@ -2437,19 +2439,19 @@ namespace UPP {
 #endif // ! __U_MULTI__
 
 		_Mutex void checkIOStart();
-		bool pollIO( NBIOnode &node );
-		void performIO( int fd, NBIOnode *p, uSequence<NBIOnode> &pendingIO, int cnt );
-		void checkSfds( int fd, NBIOnode *p, uSequence<NBIOnode> &pendingIO );
-		void unblockFD( uSequence<NBIOnode> &pendingIO );
-		_Mutex bool checkIOEnd( NBIOnode &node, int terrno );
+		bool pollIO( NBIOnode & node );
+		void performIO( int fd, NBIOnode * p, uSequence<NBIOnode> & pendingIO, int cnt );
+		void checkSfds( int fd, NBIOnode * p, uSequence<NBIOnode> & pendingIO );
+		void unblockFD( uSequence<NBIOnode> & pendingIO );
+		_Mutex bool checkIOEnd( NBIOnode & node, int terrno );
 		bool checkPoller();
-		void waitOrPoll( NBIOnode &node, uEventNode *timeoutEvent = nullptr );
-		void waitOrPoll( unsigned int nfds, NBIOnode &node, uEventNode *timeoutEvent = nullptr );
-		_Mutex bool initSfd( NBIOnode &node, uEventNode *timeoutEvent = nullptr );
-		_Mutex bool initMfds( unsigned int nfds, NBIOnode &node, uEventNode *timeoutEvent = nullptr );
+		void waitOrPoll( NBIOnode & node, uEventNode * timeoutEvent = nullptr );
+		void waitOrPoll( unsigned int nfds, NBIOnode & node, uEventNode * timeoutEvent = nullptr );
+		_Mutex bool initSfd( NBIOnode & node, uEventNode * timeoutEvent = nullptr );
+		_Mutex bool initMfds( unsigned int nfds, NBIOnode & node, uEventNode * timeoutEvent = nullptr );
 		int select( sigset_t * );
-		int select( uIOClosure &closure, int &rwe, timeval *timeout = nullptr );
-		int select( int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, timeval *timeout = nullptr );
+		int select( uIOClosure & closure, int & rwe, timeval * timeout = nullptr );
+		int select( int nfds, fd_set * rfds, fd_set * wfds, fd_set * efds, timeval * timeout = nullptr );
 
 		uNBIO();
 	  public:
@@ -2469,7 +2471,7 @@ namespace UPP {
 		friend class uSerialDestructor;					// access: schedule
 		friend class ::uMutexLock;						// access: schedule
 		friend class ::uOwnerLock;						// access: schedule
-		template<int, int, int> friend class ::uAdaptiveLock; // access: entryRef, profileActive, wake
+		template<int, int, int> friend class ::uAdaptiveLock; // access: entryRef_, profileActive, wake
 		friend class ::uCondLock;						// access: schedule
 		friend class uSemaphore;						// access: schedule
 		friend class ::uRWLock;							// access: schedule
@@ -2484,30 +2486,30 @@ namespace UPP {
 		friend class ::uEventListPop;					// access: kernelClock
 
 		unsigned int kind;								// specific kind of schedule operation
-		uBaseSpinLock *prevLock;						// comunication
-		uBaseTask *nextTask;							// task to be wakened
+		uBaseSpinLock * prevLock;						// comunication
+		uBaseTask * nextTask;							// task to be wakened
 
 		void taskIsBlocking();
 		static void schedule();
-		static void schedule( uBaseSpinLock *lock );
-		static void schedule( uBaseTask *task );
-		static void schedule( uBaseSpinLock *lock, uBaseTask *task );
+		static void schedule( uBaseSpinLock * lock );
+		static void schedule( uBaseTask * task );
+		static void schedule( uBaseSpinLock * lock, uBaseTask * task );
 		void scheduleInternal();
-		void scheduleInternal( uBaseSpinLock *lock );
-		void scheduleInternal( uBaseTask *task );
-		void scheduleInternal( uBaseSpinLock *lock, uBaseTask *task );
+		void scheduleInternal( uBaseSpinLock * lock );
+		void scheduleInternal( uBaseTask * task );
+		void scheduleInternal( uBaseSpinLock * lock, uBaseTask * task );
 		void onBehalfOfUser();
 		void setTimer( uDuration time );
 		void setTimer( uTime time );
 #ifndef __U_MULTI__
-		void nextProcessor( uProcessorDL *&currProc, uProcessorDL *cycleStart );
+		void nextProcessor( uProcessorDL *& currProc, uProcessorDL * cycleStart );
 #endif // __U_MULTI__
 		void main();
 
 		uProcessorKernel();
 		~uProcessorKernel();
 
-		void *operator new( size_t size ) {
+		void * operator new( size_t size ) {
 			return ::operator new( size );
 		} // uProcessorKernel::operator new
 	  public:
@@ -2529,15 +2531,16 @@ inline void uBaseTask::uYieldNoPoll() {
 
 class uProcessor {
 	friend class UPP::uKernelBoot;						// access: new, uProcessor, events, contextEvent, contextSwitchHandler, setContextSwitchEvent
+	friend class UPP::uInitProcessorsBoot;
 	friend class uKernelModule;							// access: events
 	friend class uCluster;								// access: pid, idleRef, external, processorRef, setContextSwitchEvent
-	friend _Coroutine UPP::uProcessorKernel;			// access: events, currCluster, procTask, external, globalRef, setContextSwitchEvent
-	friend _Task uProcessorTask;						// access: pid, processorClock, preemption, currCluster, setContextSwitchEvent
+	friend _Coroutine UPP::uProcessorKernel;			// access: events, currCluster_, procTask, external, globalRef, setContextSwitchEvent
+	friend _Task uProcessorTask;						// access: pid, processorClock, preemption, currCluster_, setContextSwitchEvent
 	friend class UPP::uNBIO;							// access: setContextSwitchEvent
 	friend class uEventList;							// access: events, contextSwitchHandler
 	friend class uEventNode;							// access: events
 	friend class uEventListPop;							// access: contextSwitchHandler
-	friend void *uKernelModule::startThread( void *p ); // acesss: everything
+	friend void * uKernelModule::startThread( void * p ); // acesss: everything
 	friend class UPP::uMachContext;						// access: procTask
 //#if defined( __i386__ ) && ! defined( __old_perfmon__ )
 //	friend class HWCounters;							// access: uPerfctrContext (i386) or uPerfmon_fd (ia64)
@@ -2556,15 +2559,15 @@ class uProcessor {
 	friend class uProfileProcessorSampler;				// access: profileProcessorSamplerInstance
 #endif // __U_PROFILER__
 
-	static uEventList *events;							// single list of events for all processors
+	static uEventList * events;							// single list of events for all processors
 #if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
 #endif // ! __U_MULTI__
-	uEventNode *contextEvent;							// context-switch node for event list
+	uEventNode * contextEvent;							// context-switch node for event list
 #if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
 #endif // ! __U_MULTI__
-	uCxtSwtchHndlr *contextSwitchHandler;				// special time slice handler
+	uCxtSwtchHndlr * contextSwitchHandler;				// special time slice handler
 
 #ifdef __U_MULTI__
 	UPP::uProcessorKernel processorKer;					// need a uProcessorKernel
@@ -2577,9 +2580,9 @@ class uProcessor {
 #else
 	mutable
 #endif // ! __U_MULTI__
-	uProfileProcessorSampler *profileProcessorSamplerInstance; // pointer to related profiling object
+	uProfileProcessorSampler * profileProcessorSamplerInstance; // pointer to related profiling object
 
-	void *operator new( size_t, void *storage ) {
+	void * operator new( size_t, void * storage ) {
 		return storage;
 	} // uProcessor::operator new
   protected:
@@ -2588,10 +2591,10 @@ class uProcessor {
 	unsigned int preemption;
 	unsigned int spin;
 
-	uProcessorTask *procTask;							// handle processor specific requests
+	uProcessorTask * procTask;							// handle processor specific requests
 	uBaseTaskSeq external;								// ready queue for processor task
 
-	uCluster *currCluster;								// cluster processor currently associated with
+	uCluster * currCluster_;								// cluster processor currently associated with
 
 	bool detached;										// processor detached ?
 	bool terminated;									// processor being deleted ?
@@ -2600,12 +2603,12 @@ class uProcessor {
 	uProcessorDL processorRef;							// double link field: list of processors on a cluster
 	uProcessorDL globalRef;								// double link field: list of all processors
 
-	void createProcessor( uCluster &cluster, bool detached, int ms, int spin );
-	void fork( uProcessor *processor );
+	void createProcessor( uCluster & cluster, bool detached, int ms, int spin );
+	void fork( uProcessor * processor );
 	void setContextSwitchEvent( int msecs );			// set the real-time timer
 	void setContextSwitchEvent( uDuration duration );	// set the real-time timer
 
-	uProcessor( uCluster &cluster, double );			// used solely during kernel boot
+	uProcessor( uCluster & cluster, double );			// used solely during kernel boot
   public:
 	uProcessor( const uProcessor & ) = delete;			// no copy
 	uProcessor( uProcessor && ) = delete;
@@ -2614,18 +2617,18 @@ class uProcessor {
 
 	uProcessor( unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
 	uProcessor( bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
-	uProcessor( uCluster &cluster, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
-	uProcessor( uCluster &cluster, bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
+	uProcessor( uCluster & cluster, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
+	uProcessor( uCluster & cluster, bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
 	~uProcessor();
 
 	uPid_t getPid() const {
 		return pid;
 	} // uProcessor::getPid
 
-	uCluster &setCluster( uCluster &cluster );
+	uCluster & setCluster( uCluster & cluster );
 
-	uCluster &getCluster() const {
-		return *currCluster;
+	uCluster & getCluster() const {
+		return * currCluster_;
 	} // uProcessor::getCluster
 
 	bool getDetach() const {
@@ -2649,9 +2652,9 @@ class uProcessor {
 	} // uProcessor::getSpin
 
 #if defined( __U_AFFINITY__ )
-	void setAffinity( const cpu_set_t &mask );
+	void setAffinity( const cpu_set_t & mask );
 	void setAffinity( unsigned int cpu );
-	void getAffinity( cpu_set_t &mask);
+	void getAffinity( cpu_set_t & mask);
 	int getAffinity();
 #endif // __U_AFFINITY__
 
@@ -2659,7 +2662,7 @@ class uProcessor {
 		return idleRef.listed();
 	} // uProcessor::idle
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::operator new( size );
 	} // uProcessor::operator new
 } __attribute__(( unused )); // uProcessor
@@ -2733,13 +2736,13 @@ class uCluster {
 	friend class uProcWakeupHndlr;						// access: wakeProcessor
 
 	uClusterDL globalRef;								// double link field: list of all clusters
-
-	void *operator new( size_t, void *storage ) {
+  protected:
+	void * operator new( size_t, void * storage ) {
 		return storage;
 	} // uCluster::operator new
-  protected:
-	const char *name;									// textual name for cluster, default value
-	uBaseSchedule<uBaseTaskDL> *readyQueue;				// list of tasks awaiting execution by processors on this cluster
+
+	const char * name;									// textual name for cluster, default value
+	uBaseSchedule<uBaseTaskDL> * readyQueue;				// list of tasks awaiting execution by processors on this cluster
 	bool defaultReadyQueue;								// indicates if the cluster allocated the ready queue
 	unsigned int idleProcessorsCnt;						// number of idle processors
 	uProcessorSeq idleProcessors;						// list of idle processors associated with this cluster
@@ -2754,37 +2757,37 @@ class uCluster {
 #if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
 #endif // ! __U_MULTI__
-	UPP::uNBIO *NBIO;									// non-blocking I/O facilities
+	UPP::uNBIO * NBIO;									// non-blocking I/O facilities
 
 	// profiling : necessary for compatibility between non-profiling and profiling
 
-	mutable uProfileClusterSampler *profileClusterSamplerInstance; // pointer to related profiling object
+	mutable uProfileClusterSampler * profileClusterSamplerInstance; // pointer to related profiling object
 
 	static void wakeProcessor( uPid_t pid );
 	void processorPause();
-	void makeProcessorIdle( uProcessor &processor );
-	void makeProcessorActive( uProcessor &processor );
+	void makeProcessorIdle( uProcessor & processor );
+	void makeProcessorActive( uProcessor & processor );
 	void makeProcessorActive();
 
 	bool readyQueueEmpty() {
 		return readyQueue->empty();
 	} // uCluster::readyQueueEmpty
 
-	void makeTaskReady( uBaseTask &readyTask );
-	void makeTaskReady( uSequence<uBaseTaskDL> &readyQueue, unsigned int n );
-	void readyQueueRemove( uBaseTaskDL *task );
-	uBaseTask &readyQueueTryRemove();
-	void taskAdd( uBaseTask &task );
-	void taskRemove( uBaseTask &task );
-	void taskReschedule( uBaseTask &task );
-	virtual void processorAdd( uProcessor &processor );
-	void processorRemove( uProcessor &processor );
+	void makeTaskReady( uBaseTask & readyTask );
+	void makeTaskReady( uSequence<uBaseTaskDL> & readyQueue, unsigned int n );
+	void readyQueueRemove( uBaseTaskDL * task );
+	uBaseTask & readyQueueTryRemove();
+	void taskAdd( uBaseTask & task );
+	void taskRemove( uBaseTask & task );
+	void taskReschedule( uBaseTask & task );
+	virtual void processorAdd( uProcessor & processor );
+	void processorRemove( uProcessor & processor );
 #if defined( __U_MULTI__ )
 	void processorPoke();
 #endif // __U_MULTI__
-	void createCluster( unsigned int stackSize, const char *name );
+	void createCluster( unsigned int stackSize, const char * name );
 
-	int select( uIOClosure &closure, int rwe, timeval *timeout = nullptr ) {
+	int select( uIOClosure & closure, int rwe, timeval * timeout = nullptr ) {
 		return NBIO->select( closure, rwe, timeout );
 	} // uCluster::select
   public:
@@ -2793,22 +2796,22 @@ class uCluster {
 	uCluster & operator=( const uCluster & ) = delete;	// no assignment
 	uCluster & operator=( uCluster && ) = delete;
 
-	uCluster( unsigned int stackSize = uDefaultStackSize(), const char *name = "*unnamed*" );
-	uCluster( const char *name );
-	uCluster( uBaseSchedule<uBaseTaskDL> &ReadyQueue, unsigned int stackSize = uDefaultStackSize(), const char *name = "*unnamed*" );
-	uCluster( uBaseSchedule<uBaseTaskDL> &ReadyQueue, const char *name = "*unnamed*" );
+	uCluster( unsigned int stackSize = uDefaultStackSize(), const char * name = "* unnamed*" );
+	uCluster( const char * name );
+	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, unsigned int stackSize = uDefaultStackSize(), const char * name = "* unnamed*" );
+	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, const char * name = "* unnamed*" );
 	virtual ~uCluster();
 
-	const char *setName( const char *name ) {
-		const char *prev = name;
+	const char * setName( const char * name ) {
+		const char * prev = name;
 		uCluster::name = name;
 		return prev;
 	} // uCluster::setName
 
-	const char *getName() const {
+	const char * getName() const {
 		return
 			uDEBUG(
-				( name == nullptr || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
+				( name == nullptr || name == (const char *)-1 ) ? "* unknown*" : // storage might be scrubbed
 			)
 			name;
 	} // uCluster::getName
@@ -2823,18 +2826,18 @@ class uCluster {
 		return stackSize;
 	} // uCluster::getStackSize
 
-	void taskResetPriority( uBaseTask &owner, uBaseTask &calling );
-	void taskSetPriority( uBaseTask &owner, uBaseTask &calling );
+	void taskResetPriority( uBaseTask & owner, uBaseTask & calling );
+	void taskSetPriority( uBaseTask & owner, uBaseTask & calling );
 
 	enum { ReadSelect = 1, WriteSelect = 2,  ExceptSelect = 4 };
 
-	int select( int fd, int rwe, timeval *timeout = nullptr );
+	int select( int fd, int rwe, timeval * timeout = nullptr );
 
-	int select( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, timeval *timeout = nullptr ) {
+	int select( int nfds, fd_set * rfd, fd_set * wfd, fd_set * efd, timeval * timeout = nullptr ) {
 		return NBIO->select( nfds, rfd, wfd, efd, timeout );
 	} // uCluster::select
 
-	const uBaseTaskSeq &getTasksOnCluster() {
+	const uBaseTaskSeq & getTasksOnCluster() {
 		return tasksOnCluster;
 	} // uCluster::getTasksOnCluster
 
@@ -2842,11 +2845,11 @@ class uCluster {
 		return numProcessors;
 	} // uCluster::getProcessors
 
-	const uProcessorSeq &getProcessorsOnCluster() {
+	const uProcessorSeq & getProcessorsOnCluster() {
 		return processorsOnCluster;
 	} // uCluster::getProcessorsOnCluster
 
-	void *operator new( size_t size ) {
+	void * operator new( size_t size ) {
 		return ::memalign( 128, size );					// size of cache line to prevent false sharing
 	} // uCluster::operator new
 }; // uCluster
@@ -2868,8 +2871,8 @@ extern "C" {											// not all prototypes in pthread.h
 	void _pthread_cleanup_pop( _pthread_cleanup_buffer *, int ) __THROW;  
 	int pthread_tryjoin_np( pthread_t, void **) __THROW;
 	int pthread_getattr_np(pthread_t, pthread_attr_t*) __THROW;
-	int pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stackSize ) __THROW;
-	int pthread_attr_getstack( const pthread_attr_t *attr, void **stackaddr, size_t *stackSize ) __THROW;
+	int pthread_attr_setstack( pthread_attr_t * attr, void * stackaddr, size_t stackSize ) __THROW;
+	int pthread_attr_getstack( const pthread_attr_t * attr, void ** stackaddr, size_t * stackSize ) __THROW;
 } // extern "C"
 
 
@@ -2877,27 +2880,27 @@ extern "C" {											// not all prototypes in pthread.h
 
 _Task uPthreadable {									// abstract class (inheritance only)
 	friend void UPP::uMachContext::invokeTask( uBaseTask & ); // access: stop_unwinding
-	friend int pthread_create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg ) __THROW;
-	friend int pthread_attr_init( pthread_attr_t *attr ) __THROW;
-	friend int pthread_attr_destroy( pthread_attr_t *attr ) __THROW;
-	friend int pthread_attr_setscope( pthread_attr_t *attr, int contentionscope ) __THROW;
-	friend int pthread_attr_getscope( const pthread_attr_t *attr, int *contentionscope ) __THROW;
-	friend int pthread_attr_setdetachstate( pthread_attr_t *attr, int detachstate ) __THROW;
-	friend int pthread_attr_getdetachstate( const pthread_attr_t *attr, int *detachstate ) __THROW;
-	friend int pthread_attr_setstacksize( pthread_attr_t *attr, size_t stacksize ) __THROW;
-	friend int pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize ) __THROW;
-	friend int pthread_attr_setstackaddr( pthread_attr_t *attr, void *stackaddr ) __THROW;
-	friend int pthread_attr_getstackaddr( const pthread_attr_t *attr, void **stackaddr ) __THROW;
-	friend int pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize ) __THROW;
-	friend int pthread_attr_getstack( const pthread_attr_t *attr, void **stackaddr, size_t *stacksize ) __THROW;
-	friend int pthread_getattr_np( pthread_t threadID, pthread_attr_t *attr ) __THROW;
-	friend int pthread_attr_setschedpolicy( pthread_attr_t *attr, int policy ) __THROW;
-	friend int pthread_attr_getschedpolicy( const pthread_attr_t *attr, int *policy ) __THROW;
-	friend int pthread_attr_setinheritsched( pthread_attr_t *attr, int inheritsched ) __THROW;
-	friend int pthread_attr_getinheritsched( const pthread_attr_t *attr, int *inheritsched ) __THROW;
-	friend int pthread_attr_setschedparam( pthread_attr_t *attr, const struct sched_param *param ) __THROW;
-	friend int pthread_attr_getschedparam( const pthread_attr_t *attr, struct sched_param *param ) __THROW;
-	friend void pthread_exit( void *status );			// access: joinval
+	friend int pthread_create( pthread_t * new_thread_id, const pthread_attr_t * attr, void * (* start_func)( void * ), void * arg ) __THROW;
+	friend int pthread_attr_init( pthread_attr_t * attr ) __THROW;
+	friend int pthread_attr_destroy( pthread_attr_t * attr ) __THROW;
+	friend int pthread_attr_setscope( pthread_attr_t * attr, int contentionscope ) __THROW;
+	friend int pthread_attr_getscope( const pthread_attr_t * attr, int * contentionscope ) __THROW;
+	friend int pthread_attr_setdetachstate( pthread_attr_t * attr, int detachstate ) __THROW;
+	friend int pthread_attr_getdetachstate( const pthread_attr_t * attr, int * detachstate ) __THROW;
+	friend int pthread_attr_setstacksize( pthread_attr_t * attr, size_t stacksize ) __THROW;
+	friend int pthread_attr_getstacksize( const pthread_attr_t * attr, size_t * stacksize ) __THROW;
+	friend int pthread_attr_setstackaddr( pthread_attr_t * attr, void * stackaddr ) __THROW;
+	friend int pthread_attr_getstackaddr( const pthread_attr_t * attr, void ** stackaddr ) __THROW;
+	friend int pthread_attr_setstack( pthread_attr_t * attr, void * stackaddr, size_t stacksize ) __THROW;
+	friend int pthread_attr_getstack( const pthread_attr_t * attr, void ** stackaddr, size_t * stacksize ) __THROW;
+	friend int pthread_getattr_np( pthread_t threadID, pthread_attr_t * attr ) __THROW;
+	friend int pthread_attr_setschedpolicy( pthread_attr_t * attr, int policy ) __THROW;
+	friend int pthread_attr_getschedpolicy( const pthread_attr_t * attr, int * policy ) __THROW;
+	friend int pthread_attr_setinheritsched( pthread_attr_t * attr, int inheritsched ) __THROW;
+	friend int pthread_attr_getinheritsched( const pthread_attr_t * attr, int * inheritsched ) __THROW;
+	friend int pthread_attr_setschedparam( pthread_attr_t * attr, const struct sched_param * param ) __THROW;
+	friend int pthread_attr_getschedparam( const pthread_attr_t * attr, struct sched_param * param ) __THROW;
+	friend void pthread_exit( void * status );			// access: joinval
 	friend int pthread_join( pthread_t, void **);		// access: attr
 	friend int pthread_tryjoin_np( pthread_t, void **) __THROW;
 	friend int pthread_detach( pthread_t ) __THROW;
@@ -2907,7 +2910,7 @@ _Task uPthreadable {									// abstract class (inheritance only)
 		int contentionscope;
 		int detachstate;
 		size_t stacksize;
-		void *stackaddr;
+		void * stackaddr;
 		int policy;
 		int inheritsched;
 		struct sched_param param;
@@ -2924,16 +2927,16 @@ _Task uPthreadable {									// abstract class (inheritance only)
 	// uPthreadable( uPthreadable && ) = delete;
 	// uPthreadable & operator=( const uPthreadable & ) = delete; // no assignment
 	// uPthreadable & operator=( uPthreadable && ) = delete;
-	void createPthreadable( const pthread_attr_t *attr_ = nullptr );
+	void createPthreadable( const pthread_attr_t * attr_ = nullptr );
 
-	static Pthread_attr_t *&get( const pthread_attr_t *attr ) {
+	static Pthread_attr_t *& get( const pthread_attr_t * attr ) {
 		return *((Pthread_attr_t **)attr);
 	} // uPthreadable::get
   protected:
-	void *joinval;										// pthreads return value
+	void * joinval;										// pthreads return value
 	pthread_attr_t pthread_attr;						// pthread attributes
 
-	uPthreadable( const pthread_attr_t *attr ) :
+	uPthreadable( const pthread_attr_t * attr ) :
 			uBaseTask( attr != nullptr ? get( attr )->stackaddr : u_pthread_attr_defaults.stackaddr,
 					   attr != nullptr ? get( attr )->stacksize : u_pthread_attr_defaults.stacksize ) {
 		createPthreadable( attr );
@@ -2947,19 +2950,19 @@ _Task uPthreadable {									// abstract class (inheritance only)
 		createPthreadable();
 	} // uPthreadable::uPthreadable
 
-	uPthreadable( void *storage, unsigned int storageSize ) : uBaseTask( storage, storageSize ) {
+	uPthreadable( void * storage, unsigned int storageSize ) : uBaseTask( storage, storageSize ) {
 		createPthreadable();
 	} // uPthreadable::uPthreadable
 
-	uPthreadable( uCluster &cluster ) : uBaseTask( cluster ) {
+	uPthreadable( uCluster & cluster ) : uBaseTask( cluster ) {
 		createPthreadable();
 	} // uPthreadable::uPthreadable
 
-	uPthreadable( uCluster &cluster, unsigned int stackSize ) : uBaseTask( cluster, stackSize ) {
+	uPthreadable( uCluster & cluster, unsigned int stackSize ) : uBaseTask( cluster, stackSize ) {
 		createPthreadable();
 	} // uPthreadable::uPthreadable
 
-	uPthreadable( uCluster &cluster, void *storage, unsigned int storageSize ) : uBaseTask( cluster, storage, storageSize ) {
+	uPthreadable( uCluster & cluster, void * storage, unsigned int storageSize ) : uBaseTask( cluster, storage, storageSize ) {
 		createPthreadable();
 	} // uPthreadable::uPthreadable
 
@@ -2980,16 +2983,16 @@ _Task uPthreadable {									// abstract class (inheritance only)
   private:
 	// The following routines should only have to be called by the original task owner.
 
-	_Mutex void *join() {								// may only be accepted after the task which inherits
+	_Mutex void * join() {								// may only be accepted after the task which inherits
 		return joinval;									// this terminates and turns into a monitor
 	} // uPthreadable::join
 
-	static void restart_unwinding( _Unwind_Reason_Code urc, _Unwind_Exception *e );
+	static void restart_unwinding( _Unwind_Reason_Code urc, _Unwind_Exception * e );
 	static _Unwind_Reason_Code unwinder_cleaner( int version, _Unwind_Action ,_Unwind_Exception_Class, _Unwind_Exception *, _Unwind_Context *, void * );
 	void do_unwind();
 	void cleanup_pop( int ex );
-	void cleanup_push( void (*routine)(void *), void *args, void *stackaddress );		
-	uBaseCoroutine::PthreadCleanup *cleanupStackTop();
+	void cleanup_push( void (* routine)(void *), void * args, void * stackaddress );		
+	uBaseCoroutine::PthreadCleanup * cleanupStackTop();
 }; // uPthreadable
 
 
@@ -3000,18 +3003,18 @@ _Task uMain : public uPthreadable {
 	friend _Task uPthread;								// access: cleanup_handlers
 
 	int argc;
-	char **argv, **env;
+	char ** argv, ** env;
 
 	// A reference to a variable that holds the return code that the uMain task
 	// returns to the OS.
 
-	int &uRetCode;
+	int & uRetCode;
 
 	// Main routine for the first user task, declared here, defined by user.
 
 	void main();
   public:
-	uMain( int argc, char *argv[], char *env[], int &retcode );
+	uMain( int argc, char * argv[], char * env[], int & retcode );
 	~uMain();
 }; // uMain
 
@@ -3023,10 +3026,10 @@ namespace UPP {
 	class uHeapControl {
 		friend class UPP::uKernelBoot;					// access: startup, finishup
 		friend class ::uBaseTask;						// access: prepareTask
-		friend class UPP::PthreadLock;						// access: startup
+		friend class UPP::PthreadLock;					// access: startup
 
 		static void finishup();
-		static void prepareTask( uBaseTask *task );
+		static void prepareTask( uBaseTask * task );
 		static void startTask();
 		static void finishTask();
 		static void startup();

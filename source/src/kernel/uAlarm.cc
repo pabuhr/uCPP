@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  4 18:25:51 2020
-// Update Count     : 315
+// Last Modified On : Mon Dec 27 17:38:02 2021
+// Update Count     : 316
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -328,8 +328,8 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
 #if defined( __U_MULTI__ )
 	if ( dynamic_cast<uWakeupHndlr *>(node->sigHandler) != nullptr ) { // uWakeupHndlr event ?
 	    assert( node->task != nullptr );
-	    if ( ! node->task->currCluster->wakeupList.listed() ) { // already on list ?
-		wakeupList.addTail( &(node->task->currCluster->wakeupList) ); // defer until destructor
+	    if ( ! node->task->currCluster_->wakeupList.listed() ) { // already on list ?
+		wakeupList.addTail( &(node->task->currCluster_->wakeupList) ); // defer until destructor
 	    } // if
 	} // if
 #endif // __U_MULTI__

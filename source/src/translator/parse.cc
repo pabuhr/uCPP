@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 22 20:55:05 2021
-// Update Count     : 4995
+// Last Modified On : Fri Dec 24 12:09:21 2021
+// Update Count     : 5026
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1021,17 +1021,25 @@ static bool accept_mutex_list( jump_t *& list, symbol_t * symbol, const char * t
 		gen_code( ahead, "this ->" );					// must qualify with templates
 		gen_entry( ahead, index );
 
-		if ( match( ',' ) ) {							// separator ?
+		if ( check( ',' ) || check( OR_OR ) ) {			// separator ?
+			if ( check( OR_OR ) ) { 					
+				ahead->hash = hash_table->lookup( "," ); // change || to comma
+				ahead->value = ',';
+			} // if
+			match( ',' );								// now match comma
 			gen_mask( ahead, index );					// use existing comma to separate arguments for call to acceptTry
 			gen_code( ahead, ") ||" );
 			accept_mutex_list( list, symbol, tryname );
+		} else if ( check( AND_AND ) ) {				// separator ?
+			// no reason to backtrack
+			gen_error( ahead, "unsupported && in _Accept clause." );
 		} else {
 			gen_code( ahead, "," );						// separate arguments for call to acceptTry
 			gen_mask( ahead, index );
 
 			if ( ! match( RP ) ) {						// end of mutex list ?
 				// no reason to backtrack
-				gen_error( ahead, "missing closing parenthesis for mutex-member list; closing parenthesis assumed." );
+				gen_error( ahead, "missing closing parenthesis for mutex-member list." );
 			} // if
 			gen_code( ahead, ") ) {" );					// brace starts the completion statement of the accept clause
 		} // if
@@ -2174,12 +2182,13 @@ static bool enable_statement( symbol_t * symbol ) {
 		} else {
 			gen_code( ahead, "uEHM :: uDeliverEStack uNoName ( true ) ;" );
 		} // if
-		gen_code( ahead, "uEHM :: poll( ) ;" );			// poll after enabling as there may be pending exceptions
+		gen_code( ahead, "uEHM :: poll( ) ;" );			// poll on enter as there may be pending exceptions
 		if ( null_statement() ) {						// optimize empty statement body
 			gen_code( befEnable, "if ( uEHM :: pollCheck( ) ) {" );
 			gen_code( ahead, "} }" );
 			return true;
 		} else if ( statement( symbol ) ) {
+			gen_code( ahead, "uEHM :: poll( ) ;" );		// poll on exit as there may be pending exceptions
 			gen_code( ahead, "}" );
 			return true;
 		} // if
@@ -2212,8 +2221,8 @@ static bool disable_statement( symbol_t * symbol ) {
 			gen_code( ahead, "uEHM :: uDeliverEStack uNoName ( false ) ;" );
 		} // if
 		if ( statement( symbol ) ) {
+			gen_code( ahead, "uEHM :: poll( ) ;" );		// poll on exit as there may be pending exceptions
 			gen_code( ahead, "}" );
-			gen_code( ahead, "uEHM :: poll( ) ;" );		// poll after disabling as there may be pending exceptions
 			return true;
 		} // if
 	} // if
@@ -4495,7 +4504,14 @@ static bool constructor_declaration( attribute_t & attribute ) {
 				symbol->data->table->hasdefault = true;
 			} // if
 
-			delete_default_specific();					// optional delete/default
+			if ( delete_default_specific() ) {			// optional delete/default
+				if ( ahead->aft->value == DEFAULT && attribute.emptyparms && symbol->data->attribute.Mutex ) {
+					for ( unsigned int i = 0; i < 5; i += 1 ) { // remove tokens: T ( ) = default
+						ahead->aft->remove_token();
+					} // for
+					return true;
+				} // if
+			} // if
 
 			if ( match( TRY ) ) {						// exceptions for constructor body ?
 				gen_error( ahead, "try block for constructor body not supported." );
@@ -4603,7 +4619,14 @@ static bool destructor_declaration( attribute_t & attribute ) {
 		table = symbol->data->table;
 
 		if ( table != nullptr ) {						// must be complete type
-			delete_default_specific();					// optional delete/default
+			if ( delete_default_specific() ) {			// optional delete/default
+				if ( ahead->aft->value == DEFAULT && symbol->data->attribute.Mutex ) {
+					for ( unsigned int i = 0; i < 6; i += 1 ) { // remove tokens: ~ T ( ) = default
+						ahead->aft->remove_token();
+					} // for
+					return true;
+				} // if
+			} // if
 
 			prefix = ahead;
 			if ( attribute.dclmutex.qual.MUTEX ) {

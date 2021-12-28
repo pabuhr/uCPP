@@ -28,6 +28,7 @@ uDefaultExecutorAffinity \
 uFuture \
 uCobegin \
 uActor \
+uPRNG \
 pthread \
 Unix \
 } }

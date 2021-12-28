@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:04:17 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul 28 08:01:38 2014
-// Update Count     : 63
+// Last Modified On : Fri Dec 24 17:25:23 2021
+// Update Count     : 64
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,61 +32,61 @@
 
 
 hash_t::hash_t( const char *t, hash_t *l, int v ) {
-    text = new char[strlen( t ) + 1];
-    strcpy( text, t );
-    link = l;
-    value = v;
-    InSymbolTable = 0;
+	text = new char[strlen( t ) + 1];
+	strcpy( text, t );
+	link = l;
+	value = v;
+	InSymbolTable = 0;
 } // hash_t::hash_t
 
 
 hash_t::~hash_t() {
-    delete [] text;
+	delete [] text;
 } // hash_t::~hash_t
 
 
 hash_table_t::hash_table_t() {
-    for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
-	table[i] = nullptr;
-    } // for
+	for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
+		table[i] = nullptr;
+	} // for
 } // hash_table_t::hash_table_t
 
 
 hash_table_t::~hash_table_t() {
-    for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
-	hash_t *hash = table[i];
-	while ( hash != nullptr ) {
-	    hash_t *temp = hash;
-	    hash = hash->link;
-	    delete temp;
-	} // while
-    } // for
+	for ( int i = 0; i < HASH_TABLE_SIZE; i += 1 ) {
+		hash_t *hash = table[i];
+		while ( hash != nullptr ) {
+			hash_t *temp = hash;
+			hash = hash->link;
+			delete temp;
+		} // while
+	} // for
 } // hash_table_t::~hash_table_t
 
 
 hash_t *hash_table_t::lookup( const char *text, int value ) {
-    unsigned int key;
-    const char *cp;
+	unsigned int key;
+	const char *cp;
 
-    for ( key = 0, cp = text; *cp != '\0'; cp += 1 ) {
-	key += (int)*cp;
-    } // for
-    key *= HASH_MAGIC_VALUE;
-    key = key % HASH_TABLE_SIZE;
+	for ( key = 0, cp = text; *cp != '\0'; cp += 1 ) {
+		key += (int)*cp;
+	} // for
+	key *= HASH_MAGIC_VALUE;
+	key = key % HASH_TABLE_SIZE;
 
-    // if matching entry found in the hash table, return pointer to entry
+	// if matching entry found in the hash table, return pointer to entry
 
-    hash_t *hash;
-    for ( hash = table[ key ]; hash != nullptr; hash = hash->link ) {
-	if ( strcmp( hash->text, text ) == 0 ) return hash;
-    } // for
+	hash_t *hash;
+	for ( hash = table[ key ]; hash != nullptr; hash = hash->link ) {
+		if ( strcmp( hash->text, text ) == 0 ) return hash;
+	} // for
 
-    // if matching entry not found, create a new hash table entry, and insert it into hash table
+	// if matching entry not found, create a new hash table entry, and insert it into hash table
 
-    hash = new hash_t( text, table[key], value );
-    table[key] = hash;
+	hash = new hash_t( text, table[key], value );
+	table[key] = hash;
 
-    return hash;
+	return hash;
 } // hash_table::lookup
 
 

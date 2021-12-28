@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:43:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:12:33 2019
-// Update Count     : 13
+// Last Modified On : Fri Dec 24 18:10:58 2021
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,7 +29,7 @@
 
 
 void scan();
-void unscan( token_t *back );
+void unscan( token_t * back );
 
 
 

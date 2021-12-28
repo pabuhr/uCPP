@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 18 22:48:11 2021
-// Update Count     : 683
+// Last Modified On : Mon Dec 27 17:26:05 2021
+// Update Count     : 706
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,31 +76,31 @@ void uBaseCoroutine::unwindStack() {
 
 
 void uBaseCoroutine::createCoroutine() {
-	state = Start;
-	notHalted = true;									// must be a non-zero value so detectable after memory is scrubbed
+	state_ = Start;
+	notHalted_ = true;									// must be a non-zero value so detectable after memory is scrubbed
 
 	// start_ is initialized to last resumer at the start of invokeCoroutine
-	last = nullptr;										// see ~uCoroutineDestructor
+	last_ = nullptr;									// see ~uCoroutineDestructor
 	#ifdef __U_DEBUG__
-	currSerialOwner = nullptr;							// for error checking
-	currSerialCount = 0;
+	currSerialOwner_ = nullptr;							// for error checking
+	currSerialCount_ = 0;
 	#endif // __U_DEBUG__
 
 	// exception handling / cancellation
 
-	handlerStackTop = handlerStackVisualTop = nullptr;
-	resumedObj = nullptr;
-	topResumedType = nullptr;
-	DEStack = nullptr;
-	unexpectedRtn = uEHM::unexpected;					// initialize default unexpected routine
-	unexpected = false;
+	handlerStackTop_ = handlerStackVisualTop_ = nullptr;
+	resumedObj_ = nullptr;
+	topResumedType_ = nullptr;
+	DEStack_ = nullptr;
+	unexpectedRtn_ = uEHM::unexpected;					// initialize default unexpected routine
+	unexpected_ = false;
 
 	memset( &ehGlobals, 0, sizeof( ehGlobals ) );
 
 	cancelled_ = false;
 	cancelInProgress_ = false;
-	cancelState = CancelEnabled;
-	cancelType = CancelPoll;							// not used yet, but makes uPthread cancellation easier
+	cancelState_ = CancelEnabled;
+	cancelType_ = CancelPoll;							// not used yet, but makes uPthread cancellation easier
 
 	#ifdef __U_PROFILER__
 	// profiling
@@ -140,7 +140,7 @@ void uBaseCoroutine::taskCxtSw() {						// switch between a task and the kernel
 	decltype(errno) errno_ = errno;						// save
 	coroutine.save();									// save user specified contexts
 
-	uSwitch( coroutine.context, context );				// context switch to kernel
+	uSwitch( coroutine.context_, context_ );			// context switch to kernel
 
 	coroutine.restore();								// restore user specified contexts
 	*errno_location() = errno_;							// restore
@@ -162,25 +162,25 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 
 	#ifdef __U_DEBUG__
 	// reset task in current coroutine?
-	if ( coroutine.currSerialCount == currTask.currSerialLevel ) {
-		coroutine.currSerialOwner = nullptr;
+	if ( coroutine.currSerialCount_ == currTask.currSerialLevel ) {
+		coroutine.currSerialOwner_ = nullptr;
 	} // if
 	
 	// check and set for new owner
-	if ( currSerialOwner != &currTask ) {
-		if ( currSerialOwner != nullptr  ) {
-			if ( &currSerialOwner->getCoroutine() != this ) {
+	if ( currSerialOwner_ != &currTask ) {
+		if ( currSerialOwner_ != nullptr  ) {
+			if ( &currSerialOwner_->getCoroutine() != this ) {
 				abort( "Attempt by task %.256s (%p) to activate coroutine %.256s (%p) currently executing in a mutex object owned by task %.256s (%p).\n"
 					   "Possible cause is task attempting to logically change ownership of a mutex object via a coroutine.",
-					   currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
+					   currTask.getName(), &currTask, this->getName(), this, currSerialOwner_->getName(), currSerialOwner_ );
 			} else {
 				abort( "Attempt by task %.256s (%p) to resume coroutine %.256s (%p) currently being executed by task %.256s (%p).\n"
 					   "Possible cause is two tasks attempting simultaneous execution of the same coroutine.",
-					   currTask.getName(), &currTask, this->getName(), this, currSerialOwner->getName(), currSerialOwner );
+					   currTask.getName(), &currTask, this->getName(), this, currSerialOwner_->getName(), currSerialOwner_ );
 			} // if
 		}  else {
-			currSerialOwner = &currTask;
-			currSerialCount = currTask.currSerialLevel;
+			currSerialOwner_ = &currTask;
+			currSerialCount_ = currTask.currSerialLevel;
 		} // if
 	} // if
 	#endif // __U_DEBUG__
@@ -198,13 +198,13 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 	uDEBUGPRT( uDebugPrt( "(uBaseCoroutine &)%p.corCxtSw, coroutine:%p, coroutine.SP:%p\n",
 						  this, &coroutine, coroutine.stackPointer() ); )
 	coroutine.save();									// save user specified contexts
-	currTask.currCoroutine = this;						// set new coroutine that task is executing
+	currTask.currCoroutine_ = this;						// set new coroutine that task is executing
 
 	#ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::coroutine_context_switches, 1 );
 	#endif // __U_STATISTICS__
 
-	uSwitch( coroutine.context, context );				// context switch to specified coroutine
+	uSwitch( coroutine.context_, context_ );			// context switch to specified coroutine
 
 	coroutine.restore();								// restore user specified contexts
 	coroutine.setState( Active );						// set state of new coroutine to active
@@ -221,14 +221,14 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 
 void uBaseCoroutine::corFinish() {						// resumes the coroutine that first resumed this coroutine
 	#ifdef __U_DEBUG__
-	if ( ! starter_->notHalted ) {						// check if terminated
+	if ( ! starter_->notHalted_ ) {						// check if terminated
 			abort( "Attempt by coroutine %.256s (%p) to resume back to terminated starter coroutine %.256s (%p).\n"
 					"Possible cause is terminated coroutine's main routine has already returned.",
 					uThisCoroutine().getName(), &uThisCoroutine(), starter_->getName(), starter_ );
 	} // if
 	#endif // __U_DEBUG__
 
-	notHalted = false;
+	notHalted_ = false;
 	starter_->corCxtSw();
 	// CONTROL NEVER REACHES HERE!
 	abort( "(uBaseCoroutine &)%p.corFinish() : internal error, attempt to return.", this );
@@ -237,7 +237,7 @@ void uBaseCoroutine::corFinish() {						// resumes the coroutine that first resu
 
 const char * uBaseCoroutine::setName( const char name[] ) {
 	const char * prev = name;
-	uBaseCoroutine::name = name;
+	name_ = name;
 
 	#ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_registerSetName ) { 
@@ -249,34 +249,34 @@ const char * uBaseCoroutine::setName( const char name[] ) {
 
 const char * uBaseCoroutine::getName() const {
 	// storage might be uninitialized or scrubbed
-	return name == nullptr
+	return name_ == nullptr
 		#ifdef __U_DEBUG__
-			 || name == (const char *)-1				// only scrub in debug
+			 || name_ == (const char *)-1				// only scrub in debug
 		#endif // __U_DEBUG__
-		? "*unknown*" : name;
+		? "*unknown*" : name_;
 } // uBaseCoroutine::getName
 
 
 void uBaseCoroutine::setCancelState( CancellationState state ) {
 	#ifdef __U_DEBUG__
-	if ( this != &uThisCoroutine() && uBaseCoroutine::state != Start ) {
+	if ( this != &uThisCoroutine() && state_ != Start ) {
 		abort( "Attempt to set the cancellation state of coroutine %.256s (%p) by coroutine %.256s (%p).\n"
 				"A coroutine/task may only change its own cancellation state.",
 				getName(), this, uThisCoroutine().getName(), &uThisCoroutine() );
 	} // if
 	#endif // __U_DEBUG__
-	cancelState = state;
+	cancelState_ = state;
 } // uBaseCoroutine::setCancelState
 
 void uBaseCoroutine::setCancelType( CancellationType type ) {
 	#ifdef __U_DEBUG__
-	if ( this != &uThisCoroutine() && uBaseCoroutine::state != Start ) {
+	if ( this != &uThisCoroutine() && state_ != Start ) {
 		abort( "Attempt to set the cancellation state of coroutine %.256s (%p) by coroutine %.256s (%p).\n"
 				"A coroutine/task may only change its own cancellation state.",
 				getName(), this, uThisCoroutine().getName(), &uThisCoroutine() );
 	} // if
 	#endif // __U_DEBUG__
-	cancelType = type;
+	cancelType_ = type;
 } // uBaseCoroutine::setCancelType
 
 
@@ -312,7 +312,7 @@ void uBaseCoroutine::UnhandledException::defaultTerminate() {
 
 void uBaseCoroutine::forwardUnhandled( UnhandledException & ex ) {
 	ex.multiple += 1;
-	notHalted = false;									// terminate coroutine
+	notHalted_ = false;									// terminate coroutine
 	_Resume _At resumer();								// forward original exception at resumer
 } // uBaseCoroutine::forwardUnhandled
 
@@ -323,7 +323,7 @@ void uBaseCoroutine::handleUnhandled( uBaseEvent * ex ) {
 	uBaseEvent::RaiseKind raisekind = ex == nullptr ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
 	strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
 	uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
-	notHalted = false;									// terminate coroutine
+	notHalted_ = false;									// terminate coroutine
 	_Resume UnhandledException( ex == nullptr ? ex : ex->duplicate(), msg ) _At resumer();
 } // uBaseCoroutine::handleUnhandled
 
@@ -336,8 +336,8 @@ uBaseCoroutine::uCoroutineConstructor::uCoroutineConstructor( UPP::uAction f, UP
 		#endif // __GNUC__ >= 8
 		coroutine.startHere( reinterpret_cast<void (*)( uMachContext & )>(uMachContext::invokeCoroutine) );
 		#pragma GCC diagnostic pop
-		coroutine.name = name;
-		coroutine.serial = &serial;						// set cormonitor's serial instance
+		coroutine.name_ = name;
+		coroutine.serial_ = &serial;					// set cormonitor's serial instance
 
 		#ifdef __U_PROFILER__
 		if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutine && // profiling & coroutine registered for profiling ?
@@ -366,7 +366,7 @@ uBaseCoroutine::uCoroutineDestructor::uCoroutineDestructor(
 	// so it is asymmetric with the coroutine's constructor.
 
 	if ( coroutine.getState() != uBaseCoroutine::Halt	// coroutine not halted
-		 && coroutine.last != nullptr					// and its main is started
+		 && coroutine.last_ != nullptr					// and its main is started
 		 && dynamic_cast<UPP::uProcessorKernel *>(&coroutine) == nullptr ) { // but not the processor Kernel
 		// Mark for cancellation, then resume the coroutine to trigger a call to uPoll on the backside of its
 		// suspend(). uPoll detects the cancellation and calls unwind_stack, which throws exception UnwindStack to

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 21 16:24:48 2021
-// Update Count     : 653
+// Last Modified On : Thu Dec 23 18:34:20 2021
+// Update Count     : 667
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -123,6 +123,7 @@ void exit( int retcode, const char fmt[], ... ) __THROW {
 } // exit
 
 
+// Used by multiple abort function, must use "va_list args" not "...".
 void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ) __attribute__(( __nothrow__, __leaf__, __noreturn__ ));
 void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ) {
 #if defined( __U_MULTI__ )
@@ -217,11 +218,6 @@ void abort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], ... ) 
 	va_start( args, fmt );
 	uAbort( signalAbort, fmt, args );
 	// CONTROL NEVER REACHES HERE!
-	va_end( args );
-}
-
-void abort( void ) {									// interpose
-	abort( uSigHandlerModule::No, "%s", "" );
 } // abort
 
 void abort( const char fmt[], ... ) {
@@ -229,7 +225,10 @@ void abort( const char fmt[], ... ) {
 	va_start( args, fmt );
 	uAbort( uSigHandlerModule::No, fmt, args );
 	// CONTROL NEVER REACHES HERE!
-	va_end( args );
+} // abort
+
+void abort( void ) {									// interpose
+	abort( uSigHandlerModule::No, "%s", "" );
 } // abort
 
 

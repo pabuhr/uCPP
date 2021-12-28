@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:06:46 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:17:18 2019
-// Update Count     : 31
+// Last Modified On : Fri Dec 24 18:07:39 2021
+// Update Count     : 32
 //
 
 
@@ -20,15 +20,15 @@
 using std::istream;
 using std::ostream;
 
-extern istream *yyin;
-extern ostream *yyout;
+extern istream * yyin;
+extern ostream * yyout;
 
 extern bool error;
 extern bool profile;
 extern bool stdcpp11;
 extern bool user;
 
-int main( int argc, char *argv[] );
+int main( int argc, char * argv[] );
 
 
 

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:11:49 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Feb 20 09:50:51 2017
-// Update Count     : 74
+// Last Modified On : Fri Dec 24 18:11:08 2021
+// Update Count     : 77
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@
 #include "key.h"
 #include "scan.h"
 
-#include <cstdio>					// EOF
+#include <cstdio>										// EOF
 
 //#define __U_DEBUG_H__
 #include "debug.h"
@@ -43,39 +43,39 @@ using std::endl;
 
 
 void scan() {
-    ahead = ahead->next_parse_token();
+	ahead = ahead->next_parse_token();
 
   if ( ahead->value == EOF ) return;
 
-    if ( ahead->hash->value != 0 ) {
-	// if the value of the hash associated with the look ahead token is non zero, it must be a keyword.  simply make
-	// the value of the token the value of the keyword.
+	if ( ahead->hash->value != 0 ) {
+		// if the value of the hash associated with the look ahead token is non zero, it must be a keyword.  simply make
+		// the value of the token the value of the keyword.
 
-	ahead->value = ahead->hash->value;
-    } else if ( ahead->symbol != nullptr ) {
-	// symbol has already been looked up and the parser has backtracked to it again.
-    } else if ( ahead->value == IDENTIFIER ) {
-	// use the symbol to determine whether the identifier is a type or a variable.
+		ahead->value = ahead->hash->value;
+	} else if ( ahead->symbol != nullptr ) {
+		// symbol has already been looked up and the parser has backtracked to it again.
+	} else if ( ahead->value == IDENTIFIER ) {
+		// use the symbol to determine whether the identifier is a type or a variable.
 
-	uDEBUGPRT( cerr << "scan: token " << ahead << " (" << ahead->hash->text << ") focus " << focus << endl; )
-	if ( focus != nullptr ) {			// scanning mode
-	    ahead->symbol = focus->search_table( ahead->hash );
-	    if ( ahead->symbol != nullptr ) {
-		uDEBUGPRT( cerr << "scan: setting token " << ahead << " (" << ahead->hash->text << ") to value " << ahead->symbol->value << endl; )
-		ahead->value = ahead->symbol->value;
-	    } // if
+		uDEBUGPRT( cerr << "scan: token " << ahead << " (" << ahead->hash->text << ") focus " << focus << endl; );
+		if ( focus != nullptr ) {						// scanning mode
+			ahead->symbol = focus->search_table( ahead->hash );
+			if ( ahead->symbol != nullptr ) {
+				uDEBUGPRT( cerr << "scan: setting token " << ahead << " (" << ahead->hash->text << ") to value " << ahead->symbol->value << endl; )
+					ahead->value = ahead->symbol->value;
+			} // if
+		} // if
 	} // if
-    } // if
 } // scan
 
 
-void unscan( token_t *back ) {
-    for ( token_t *t = back->next_parse_token(); t != ahead->next_parse_token(); t = t->next_parse_token() ) {
-	uDEBUGPRT( if ( t->value == TYPE || t->symbol != nullptr ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl; )
-	if ( t->value == TYPE ) t->value = IDENTIFIER;
-	t->symbol = nullptr;
-    } // for
-    ahead = back;
+void unscan( token_t * back ) {
+	for ( token_t * t = back->next_parse_token(); t != ahead->next_parse_token(); t = t->next_parse_token() ) {
+		uDEBUGPRT( if ( t->value == TYPE || t->symbol != nullptr ) cerr << "unscan: clearing token " << ahead << " (" << ahead->hash->text << ")" << endl; )
+			if ( t->value == TYPE ) t->value = IDENTIFIER;
+		t->symbol = nullptr;
+	} // for
+	ahead = back;
 } // unscan
 
 

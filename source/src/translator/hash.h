@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:37:36 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:10:06 2019
-// Update Count     : 31
+// Last Modified On : Fri Dec 24 17:25:54 2021
+// Update Count     : 33
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,28 +33,28 @@
 
 
 class hash_t {
-    friend class hash_table_t;
+	friend class hash_table_t;
   public:
-    char *text;
-    hash_t *link;
-    int value;
-    int InSymbolTable;
+	char * text;
+	hash_t * link;
+	int value;
+	int InSymbolTable;
   public:
-    hash_t( const char *, hash_t *, int value );
-    ~hash_t();
+	hash_t( const char *, hash_t *, int value );
+	~hash_t();
 };
 
 
 class hash_table_t {
   private:
-    hash_t *table[HASH_TABLE_SIZE];
+	hash_t * table[HASH_TABLE_SIZE];
   public:
-    hash_table_t();
-    ~hash_table_t();
-    hash_t *lookup( const char *, int value = 0 );
+	hash_table_t();
+	~hash_table_t();
+	hash_t * lookup( const char *, int value = 0 );
 };
 
-extern hash_table_t *hash_table;
+extern hash_table_t * hash_table;
 
 
 

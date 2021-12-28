@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 22 18:18:15 2021
-// Update Count     : 1835
+// Last Modified On : Mon Dec 27 13:44:26 2021
+// Update Count     : 1836
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,9 +41,6 @@
 #include <climits>										// ULONG_MAX
 #include <cerrno>										// errno, ENOMEM, EINVAL
 #include <unistd.h>										// STDERR_FILENO, sbrk, sysconf, write
-
-#define LIKELY(x) __builtin_expect(!!(x), 1)
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 #if defined(__x86_64)
 	//#define Fence() __asm__ __volatile__ ( "mfence" )

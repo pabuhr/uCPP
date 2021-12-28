@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 22 11:00:21 2021
-// Update Count     : 1144
+// Last Modified On : Mon Dec 27 15:58:36 2021
+// Update Count     : 1145
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -515,7 +515,7 @@ template< typename Actor > _Coroutine uCorActorType : public uActor {
 		// SKULLDUGGERY: on termination, a coroutine actor cannot return to its starter because its starter is a random
 		// executor thread. Instead, the coroutine actor always returns back to its last resumer, which is accomplished
 		// by reseting the starter to the last resumer and then shutting down the coroutine.
-		starter_ = last;
+		starter_ = last_;
 		uBaseCoroutine::corFinish();					// shutdown coroutine
 	} // uCorActorType::corFinish
   protected:

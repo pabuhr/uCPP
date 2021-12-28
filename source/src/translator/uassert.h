@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:01:41 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  9 13:09:30 2011
-// Update Count     : 37
+// Last Modified On : Fri Dec 24 18:21:20 2021
+// Update Count     : 38
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,12 +45,12 @@ using std::endl;
 #include "gen.h"
 
 #define uassert( expr ) \
-    if ( ! ( expr ) ) { \
+	if ( ! ( expr ) ) { \
 	cerr << __FILE__ << ":" << __LINE__ << ": assertion failed" << endl; \
-        gen_error( ahead, "assertion failed at this line." ); \
-        write_all_output(); \
-        exit( EXIT_FAILURE ); \
-    } // if
+		gen_error( ahead, "assertion failed at this line." ); \
+		write_all_output(); \
+		exit( EXIT_FAILURE ); \
+	} // if
 
 #endif // NDEBUG
 

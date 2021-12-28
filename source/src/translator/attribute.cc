@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 16:02:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 19:07:23 2019
-// Update Count     : 58
+// Last Modified On : Fri Dec 24 17:18:08 2021
+// Update Count     : 59
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,25 +27,25 @@
 #include "attribute.h"
 
 attribute_t::attribute_t() {
-    Mutex = false;
-    dclkind.value = dclmutex.value = dclqual.value = 0;
-    rttskkind.value = 0;
-    typedef_base = nullptr;
-    focus = nullptr;
-    emptyparms = nestedqual = false;
-    plate = nullptr;
-    startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
+	Mutex = false;
+	dclkind.value = dclmutex.value = dclqual.value = 0;
+	rttskkind.value = 0;
+	typedef_base = nullptr;
+	focus = nullptr;
+	emptyparms = nestedqual = false;
+	plate = nullptr;
+	startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::attribute_t
 
 attribute_t::~attribute_t() {
-    Mutex = false;
-    dclkind.value = dclmutex.value = dclqual.value = 0;
-    rttskkind.value = 0;
-    typedef_base = nullptr;
-    focus = nullptr;
-    emptyparms = nestedqual = false;
-    plate = nullptr;
-    startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
+	Mutex = false;
+	dclkind.value = dclmutex.value = dclqual.value = 0;
+	rttskkind.value = 0;
+	typedef_base = nullptr;
+	focus = nullptr;
+	emptyparms = nestedqual = false;
+	plate = nullptr;
+	startT = endT = startParms = endParms = startRet = endRet = startCR = startI = startE = startM = endM = startP = endP = nullptr;
 } // attribute_t::~attribute_t
 
 // Local Variables: //

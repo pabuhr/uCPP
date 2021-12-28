@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Apr  4 10:20:32 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 29 17:28:53 2020
-// Update Count     : 19
+// Last Modified On : Tue Nov 16 14:58:42 2021
+// Update Count     : 20
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,50 +30,50 @@
 
 template<typename ElemType> _Monitor uBoundedBuffer {
   protected:
-    const int size;					// number of buffer elements
-    int front, back;					// position of front and back of queue
-    int count;						// number of used elements in the queue
-    ElemType * elements;
+  const int size;										// number of buffer elements
+  int front, back;										// position of front and back of queue
+  int count;											// number of used elements in the queue
+  ElemType * elements;
   public:
-    uBoundedBuffer( const int size = 10 ) : size( size ) {
-        front = back = count = 0;
-        elements = new ElemType[size];
-    } // uBoundedBuffer::uBoundedBuffer
+  uBoundedBuffer( const int size = 10 ) : size( size ) {
+	  front = back = count = 0;
+	  elements = new ElemType[size];
+  } // uBoundedBuffer::uBoundedBuffer
 
-    ~uBoundedBuffer() {
-        delete [] elements;
-    } // uBoundedBuffer::~uBoundedBuffer
+  ~uBoundedBuffer() {
+	  delete [] elements;
+  } // uBoundedBuffer::~uBoundedBuffer
 
-    _Nomutex int query() {
-        return count;
-    } // uBoundedBuffer::query
+  _Nomutex int query() {
+	  return count;
+  } // uBoundedBuffer::query
 
-    void insert( ElemType elem );
-    ElemType remove();
+  void insert( ElemType elem );
+  ElemType remove();
 }; // uBoundedBuffer
 
 template<typename ElemType> inline void uBoundedBuffer<ElemType>::insert( ElemType elem ) {
-    if ( count == size ) {				// buffer full ?
-        _Accept( remove );				// only allow removals
-    } // if
+	if ( count == size ) {								// buffer full ?
+		_Accept( remove );								// only allow removals
+	} // if
 
-    elements[back] = elem;
-    back = ( back + 1 ) % size;
-    count += 1;
+	elements[back] = elem;
+	back = ( back + 1 ) % size;
+	count += 1;
 } // uBoundedBuffer::insert
 
 template<typename ElemType> inline ElemType uBoundedBuffer<ElemType>::remove() {
-    ElemType elem;
+	ElemType elem;
 
-    if ( count == 0 ) {					// buffer empty ?
-        _Accept( insert );				// only allow insertions
-    } // if
+	if ( count == 0 ) {									// buffer empty ?
+		_Accept( insert );								// only allow insertions
+	} // if
 
-    elem = elements[front];
-    front = ( front + 1 ) % size;
-    count -= 1;
+	elem = elements[front];
+	front = ( front + 1 ) % size;
+	count -= 1;
 
-    return elem;
+	return elem;
 } // uBoundedBuffer::remove
 
 

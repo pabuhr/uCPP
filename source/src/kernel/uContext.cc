@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 23 17:32:14 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 19 22:39:27 2008
-// Update Count     : 70
+// Last Modified On : Mon Dec 27 13:51:32 2021
+// Update Count     : 74
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,23 +40,23 @@ uContext::uContext( void *key ) : key( key ) {
 
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     uContext *context;
-    for ( uSeqIter<uContext> iter( coroutine.additionalContexts ); iter >> context; ) {
+    for ( uSeqIter<uContext> iter( coroutine.additionalContexts_ ); iter >> context; ) {
       if ( context->key == key ) return;
     } // for
 
     // If no similar context is found, add this context to the list of contexts active for this state.
 
     THREAD_GETMEM( This )->disableInterrupts();
-    coroutine.additionalContexts.addTail( this );
-    coroutine.extras.is.usercxts = 1;
+    coroutine.additionalContexts_.addTail( this );
+    coroutine.extras_.is.usercxts = 1;
     THREAD_GETMEM( This )->enableInterrupts();
 } // uContext::uContext
 
 uContext::uContext() : key( this ) {
     uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
     THREAD_GETMEM( This )->disableInterrupts();
-    coroutine.additionalContexts.addTail( this );
-    coroutine.extras.is.usercxts = 1;
+    coroutine.additionalContexts_.addTail( this );
+    coroutine.extras_.is.usercxts = 1;
     THREAD_GETMEM( This )->enableInterrupts();
 } // uContext::uContext
 
@@ -65,9 +65,9 @@ uContext::~uContext() {
     // If the usercxts is present on a list of contexts, remove it.
     if ( listed() ) {
 	THREAD_GETMEM( This )->disableInterrupts();
-	coroutine.additionalContexts.remove( this );
-	if ( coroutine.additionalContexts.empty() ) {
-	    coroutine.extras.is.usercxts = 0;
+	coroutine.additionalContexts_.remove( this );
+	if ( coroutine.additionalContexts_.empty() ) {
+	    coroutine.extras_.is.usercxts = 0;
 	} // if
 	THREAD_GETMEM( This )->enableInterrupts();
     } // if

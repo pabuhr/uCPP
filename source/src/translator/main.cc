@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:25:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 19 12:34:54 2019
-// Update Count     : 173
+// Last Modified On : Thu Dec 16 10:59:41 2021
+// Update Count     : 184
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -167,11 +167,10 @@ int main( int argc, char *argv[] ) {
     if ( yyin != &cin ) delete yyin;
     if ( yyout != &cout ) delete yyout;
 
-    // If an error has occurred during the translation phase, return a negative result to signify this fact.  This will
-    // cause the host compiler to terminate the compilation at this point, just as if the regular cpp had failed.
+    // If an error has occurred during the translation phase, return a failure result to signify this fact. This causes
+    // the host compiler to terminate the compilation at this point, just as if the regular cpp had failed.
 
-//    return error ? -1 : 0;
-    return 0;
+    return error ? EXIT_FAILURE : EXIT_SUCCESS;
 } // main
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 28 11:54:04 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 08:40:08 2019
-// Update Count     : 30
+// Last Modified On : Tue Dec 21 21:00:10 2021
+// Update Count     : 33
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,17 +29,17 @@
 
 
 namespace UPP {
-    _Task uBootTask {
-	friend class uKernelBoot;			// access: new
+	_Task uBootTask {
+		friend class uKernelBoot;						// access: new
 
-	void main();
+		void main();
 
-	void *operator new( size_t, void *storage );
-	void *operator new( size_t size );
-      public:
-	uBootTask();
-	~uBootTask();
-    }; // uBootTask
+		void * operator new( size_t, void * storage );
+		void * operator new( size_t size );
+	  public:
+		uBootTask();
+		~uBootTask();
+	}; // uBootTask
 } // UPP
 
 

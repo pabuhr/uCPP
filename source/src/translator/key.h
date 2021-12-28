@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 12 11:20:59 2020
-// Update Count     : 100
+// Last Modified On : Fri Dec 24 09:16:07 2021
+// Update Count     : 101
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,187 +29,187 @@
 
 
 struct keyword_t {
-    const char *text;
-    int value;
+	const char *text;
+	int value;
 };
 
 extern keyword_t key[];
 
 enum key_value_t {
-    // Operators
+	// Operators
 
-    EQ = 256,						// ==
-    NE,							// !=
-    LE,							// <=
-    GE,							// >=
+	EQ = 256,											// ==
+	NE,													// !=
+	LE,													// <=
+	GE,													// >=
 
-    PLUS_ASSIGN,					// +=
-    MINUS_ASSIGN,					// -=
-    LSH_ASSIGN,						// <<=
-    RSH_ASSIGN,						// >>=
-    AND_ASSIGN,						// &=
-    XOR_ASSIGN,						// ^=
-    OR_ASSIGN,						// |=
-    MULTIPLY_ASSIGN,					// *=
-    DIVIDE_ASSIGN,					// /=
-    MODULUS_ASSIGN,					// %=
+	PLUS_ASSIGN,										// +=
+	MINUS_ASSIGN,										// -=
+	LSH_ASSIGN,											// <<=
+	RSH_ASSIGN,											// >>=
+	AND_ASSIGN,											// &=
+	XOR_ASSIGN,											// ^=
+	OR_ASSIGN,											// |=
+	MULTIPLY_ASSIGN,									// *=
+	DIVIDE_ASSIGN,										// /=
+	MODULUS_ASSIGN,										// %=
 
-    AND_AND,						// &&
-    OR_OR,						// ||
-    PLUS_PLUS,						// ++
-    MINUS_MINUS,					// --
-    RSH,						// >>
-    LSH,						// <<
-    GMIN,						// <? (min) gcc specific, deprecated
-    GMAX,						// >? (max) gcc specific, deprecated
+	AND_AND,											// &&
+	OR_OR,												// ||
+	PLUS_PLUS,											// ++
+	MINUS_MINUS,										// --
+	RSH,												// >>
+	LSH,												// <<
+	GMIN,												// <? (min) gcc specific, deprecated
+	GMAX,												// >? (max) gcc specific, deprecated
 
-    ARROW,						// ->
-    ARROW_STAR,						// ->*
-    DOT_STAR,						// ->.
+	ARROW,												// ->
+	ARROW_STAR,											// ->*
+	DOT_STAR,											// ->.
 
-    CHARACTER,						// 'a'
-    STRING,						// "abc"
-    NUMBER,						// integer (oct,dec,hex) and floating-point constants
+	CHARACTER,											// 'a'
+	STRING,												// "abc"
+	NUMBER,												// integer (oct,dec,hex) and floating-point constants
 
-    IDENTIFIER,						// variable names
-    LABEL,						// statement labels
-    TYPE,						// builtin and user defined types
+	IDENTIFIER,											// variable names
+	LABEL,												// statement labels
+	TYPE,												// builtin and user defined types
 
-    DOT_DOT,						// meta, intermediate parsing state
-    DOT_DOT_DOT,					// ...
+	DOT_DOT,											// meta, intermediate parsing state
+	DOT_DOT_DOT,										// ...
 
-    COLON_COLON,					// ::
+	COLON_COLON,										// ::
 
-    USER_LITERAL,					// meta, user literal name
-    ERROR,						// meta, error mesage
-    WARNING,						// meta, warning message
-    CODE,						// meta, generated code
+	USER_LITERAL,										// meta, user literal name
+	ERROR,												// meta, error mesage
+	WARNING,											// meta, warning message
+	CODE,												// meta, generated code
 
-    // Keywords
+	// Keywords
 
-    ASM = 512,
-    ATTRIBUTE,						// gcc specific
-    BOOL,
-    BREAK,
-    CASE,
-    CATCH,
-    CHAR,
-    CHAR16_t,
-    CHAR32_t,
-    CLASS,
-    COMPLEX,						// gcc/c99 specific
-    CONST,
-    CONST_CAST,
-    CONTINUE,
-    DEFAULT,
-    DELETE,
-    DO,
-    DOUBLE,
-    DYNAMIC_CAST,
-    ELSE,
-    ENUM,
-    EXPLICIT,
-    EXPORT,
-    EXTENSION,						// gcc specific
-    EXTERN,
-    FALSE,
-    FLOAT,
-    FOR,
-    FRIEND,
-    GOTO,
-    IF,
-    INLINE,
-    INT,
-    LONG,
-    MUTABLE,
-    NAMESPACE,
-    NEW,
-    OPERATOR,
-    OVERRIDE,
-    PRIVATE,
-    PROTECTED,
-    PUBLIC,
-    REGISTER,
-    REINTERPRET_CAST,
-    RESTRICT,
-    RETURN,
-    SHORT,
-    SIGNED,
-    SIZEOF,
-    STATIC,
-    STATIC_CAST,
-    STRUCT,
-    SWITCH,
-    TEMPLATE,
-    THIS,
-    THREAD,
-    THROW,
-    TRUE,
-    TRY,
-    TYPEDEF,
-    TYPEOF,						// gcc specific
-    TYPEID,
-    TYPENAME,
-    UNDERLYING_TYPE,					// gcc specific
-    UNION,
-    UNSIGNED,
-    USING,
-    VIRTUAL,
-    VOID,
-    VOLATILE,
-    WCHAR_T,
-    WHILE,
+	ASM = 512,
+	ATTRIBUTE,											// gcc specific
+	BOOL,
+	BREAK,
+	CASE,
+	CATCH,
+	CHAR,
+	CHAR16_t,
+	CHAR32_t,
+	CLASS,
+	COMPLEX,											// gcc/c99 specific
+	CONST,
+	CONST_CAST,
+	CONTINUE,
+	DEFAULT,
+	DELETE,
+	DO,
+	DOUBLE,
+	DYNAMIC_CAST,
+	ELSE,
+	ENUM,
+	EXPLICIT,
+	EXPORT,
+	EXTENSION,											// gcc specific
+	EXTERN,
+	FALSE,
+	FLOAT,
+	FOR,
+	FRIEND,
+	GOTO,
+	IF,
+	INLINE,
+	INT,
+	LONG,
+	MUTABLE,
+	NAMESPACE,
+	NEW,
+	OPERATOR,
+	OVERRIDE,
+	PRIVATE,
+	PROTECTED,
+	PUBLIC,
+	REGISTER,
+	REINTERPRET_CAST,
+	RESTRICT,
+	RETURN,
+	SHORT,
+	SIGNED,
+	SIZEOF,
+	STATIC,
+	STATIC_CAST,
+	STRUCT,
+	SWITCH,
+	TEMPLATE,
+	THIS,
+	THREAD,
+	THROW,
+	TRUE,
+	TRY,
+	TYPEDEF,
+	TYPEOF,												// gcc specific
+	TYPEID,
+	TYPENAME,
+	UNDERLYING_TYPE,									// gcc specific
+	UNION,
+	UNSIGNED,
+	USING,
+	VIRTUAL,
+	VOID,
+	VOLATILE,
+	WCHAR_T,
+	WHILE,
 
-    // uC++
+	// uC++
 
-    ACCEPT,
-    ACCEPTRETURN,
-    ACCEPTWAIT,
-    ACTOR,
-    AT,
-    CATCHRESUME,
-    CORACTOR,
-    COROUTINE,
-    DISABLE,
-    UELSE,
-    ENABLE,
-    EVENT,
-    FINALLY,
-    MUTEX,
-    NOMUTEX,
-    PTASK,
-    RESUME,
-    RESUMETOP,
-    RTASK,
-    SELECT,
-    STASK,
-    TASK,
-    UTHROW,
-    TIMEOUT,
-    WITH,
-    WHEN,
+	ACCEPT,
+	ACCEPTRETURN,
+	ACCEPTWAIT,
+	ACTOR,
+	AT,
+	CATCHRESUME,
+	CORACTOR,
+	COROUTINE,
+	DISABLE,
+	UELSE,
+	ENABLE,
+	EVENT,
+	FINALLY,
+	MUTEX,
+	NOMUTEX,
+	PTASK,
+	RESUME,
+	RESUMETOP,
+	RTASK,
+	SELECT,
+	STASK,
+	TASK,
+	UTHROW,
+	TIMEOUT,
+	WITH,
+	WHEN,
 
-    // C++11
+	// C++11
 
-    ALIGNAS,						// C++11
-    ALIGNOF,						// C++11
-    ATOMIC,						// C11
-    AUTO,						// C++11
-    CONSTEXPR,						// C++11
-    DECLTYPE,						// C++11
-    FINAL,						// C++11
-    NOEXCEPT,						// C++11
-    nullptrPTR,						// C++11
-    STATIC_ASSERT,					// C++11
-    THREAD_LOCAL,					// C++11
+	ALIGNAS,											// C++11
+	ALIGNOF,											// C++11
+	ATOMIC,												// C11
+	AUTO,												// C++11
+	CONSTEXPR,											// C++11
+	DECLTYPE,											// C++11
+	FINAL,												// C++11
+	NOEXCEPT,											// C++11
+	nullptrPTR,											// C++11
+	STATIC_ASSERT,										// C++11
+	THREAD_LOCAL,										// C++11
 
-    CONN_OR,						// pseudo values (i.e., no associated keywords) denotes kinds of definitions
-    CONN_AND,
-    SELECT_LP,
-    SELECT_RP,
-    MEMBER,
-    ROUTINE,
-    TEMPLATEVAR,
+	CONN_OR,											// pseudo values (i.e., no associated keywords) denotes kinds of definitions
+	CONN_AND,
+	SELECT_LP,
+	SELECT_RP,
+	MEMBER,
+	ROUTINE,
+	TEMPLATEVAR,
 };
 
 

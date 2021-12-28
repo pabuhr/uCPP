@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 19 20:43:59 2021
-// Update Count     : 948
+// Last Modified On : Mon Dec 27 17:25:28 2021
+// Update Count     : 966
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,11 +76,11 @@ namespace UPP {
 		try {
 			try {
 				This.corStarter();						// remember starter coroutine
-				uBaseCoroutine::asyncpoll();			// cancellation checkpoint
+				uEHM::poll();							// cancellation checkpoint
 				This.main();							// start coroutine's "main" routine
 			} catch( uBaseCoroutine::UnwindStack & ex ) { // cancellation to force stack unwind
 				ex.exec_dtor = false;					// defuse the unwinder
-				This.notHalted = false;					// terminate coroutine
+				This.notHalted_ = false;					// terminate coroutine
 			} catch( uBaseCoroutine::UnhandledException & ex ) {
 				This.forwardUnhandled( ex );			// continue forwarding
 			} catch( uBaseEvent & ex ) {				// uC++ raise ?
@@ -94,7 +94,7 @@ namespace UPP {
 		} // try
 
 		// check outside handler so exception is freed before suspending
-		if ( ! This.notHalted ) {						// exceptional ending ?
+		if ( ! This.notHalted_ ) {						// exceptional ending ?
 			This.suspend();								// restart last resumer, which should immediately propagate nonlocal exception
 		} // if
 		if ( &This != activeProcessorKernel ) {			// uProcessorKernel exit ?
@@ -112,7 +112,7 @@ namespace UPP {
 		#endif // __U_MULTI__
 
 		errno = 0;										// reset errno for each task
-		This.currCoroutine->setState( uBaseCoroutine::Active ); // set state of next coroutine to active
+		This.currCoroutine_->setState( uBaseCoroutine::Active ); // set state of next coroutine to active
 		This.setState( uBaseTask::Running );
 
 		// At this point, execution is on the stack of the new coroutine or task that has just been switched to by the
@@ -129,7 +129,7 @@ namespace UPP {
 
 		try {
 			try {
-				uBaseCoroutine::asyncpoll();			// cancellation checkpoint
+				uEHM::poll();							// cancellation checkpoint
 				This.main();							// start task's "main" routine
 			} catch( uBaseCoroutine::UnwindStack & ex ) {
 				ex.exec_dtor = false;					// defuse the unwinder
@@ -164,7 +164,7 @@ namespace UPP {
 
 //		uHeapControl::finishTask();
 
-		This.notHalted = false;
+		This.notHalted_ = false;
 		This.setState( uBaseTask::Terminate );
 
 		This.getSerial().leave2();
@@ -189,7 +189,7 @@ namespace UPP {
 
 	void uMachContext::extraSave() {
 		uContext *context;
-		for ( uSeqIter<uContext> iter(additionalContexts); iter >> context; ) {
+		for ( uSeqIter<uContext> iter(additionalContexts_); iter >> context; ) {
 			context->save();
 		} // for
 	} // uMachContext::extraSave
@@ -197,7 +197,7 @@ namespace UPP {
 
 	void uMachContext::extraRestore() {
 		uContext *context;
-		for ( uSeqIter<uContext> iter(additionalContexts); iter >> context; ) {
+		for ( uSeqIter<uContext> iter(additionalContexts_); iter >> context; ) {
 			context->restore();
 		} // for
 	} // uMachContext::extraRestore
@@ -242,15 +242,15 @@ namespace UPP {
 			void *dummyReturn;							// null return address to provide proper alignment
 		}; // FakeStack
 
-		((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
-		((uContext_t *)context)->FP = nullptr;			// terminate stack with null fp
+		((uContext_t *)context_)->SP = (char *)base_ - sizeof( FakeStack );
+		((uContext_t *)context_)->FP = nullptr;			// terminate stack with null fp
 		
-		((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
-		((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvokeStub );
-		((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[0] = this;
-		((FakeStack *)(((uContext_t *)context)->SP))->fixedRegisters[1] = rtnAdr( (void (*)())uInvoke );
-		((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
-		((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
+		((FakeStack *)(((uContext_t *)context_)->SP))->dummyReturn = nullptr;
+		((FakeStack *)(((uContext_t *)context_)->SP))->rturn = rtnAdr( (void (*)())uInvokeStub );
+		((FakeStack *)(((uContext_t *)context_)->SP))->fixedRegisters[0] = this;
+		((FakeStack *)(((uContext_t *)context_)->SP))->fixedRegisters[1] = rtnAdr( (void (*)())uInvoke );
+		((FakeStack *)(((uContext_t *)context_)->SP))->fpucsr = fncw;
+		((FakeStack *)(((uContext_t *)context_)->SP))->mxcsr = mxcsr; // see note above
 
 		#else
 			#error uC++ : internal error, unsupported architecture
@@ -280,35 +280,35 @@ namespace UPP {
 		size_t cxtSize = uCeiling( sizeof(uContext_t), 8 ); // minimum alignment
 		size_t size;
 
-		if ( storage == nullptr ) {
+		if ( storage_ == nullptr ) {
 			size = uCeiling( storageSize, 16 );
 			// use malloc/memalign because "new" raises an exception for out-of-memory
 			#ifdef __U_DEBUG__
-			storage = memalign( pageSize, cxtSize + size + pageSize );
-			if ( ::mprotect( storage, pageSize, PROT_NONE ) == -1 ) {
+			storage_ = memalign( pageSize, cxtSize + size + pageSize );
+			if ( ::mprotect( storage_, pageSize, PROT_NONE ) == -1 ) {
 				abort( "(uMachContext &)%p.createContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
 			} // if
 			#else
-			storage = malloc( cxtSize + size );			// assume malloc has 16 byte alignment
+			storage_ = malloc( cxtSize + size );		// assume malloc has 16 byte alignment
 			#endif // __U_DEBUG__
-			if ( storage == nullptr ) {
+			if ( storage_ == nullptr ) {
 				abort( "Attempt to allocate %zd bytes of storage for coroutine or task execution-state but insufficient memory available.", size );
 			} // if
 			#ifdef __U_DEBUG__
-			limit = (char *)storage + pageSize;
+			limit_ = (char *)storage_ + pageSize;
 			#else
-			limit = (char *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
+			limit_ = (char *)uCeiling( (unsigned long)storage_, 16 ); // minimum alignment
 			#endif // __U_DEBUG__
 		} else {
 			#ifdef __U_DEBUG__
-			if ( ((size_t)storage & (uAlign() - 1)) != 0 ) { // multiple of uAlign ?
-				abort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage, (int)uAlign() );
+			if ( ((size_t)storage_ & (uAlign() - 1)) != 0 ) { // multiple of uAlign ?
+				abort( "Stack storage %p for task/coroutine must be aligned on %d byte boundary.", storage_, (int)uAlign() );
 			} // if
 			#endif // __U_DEBUG__
 			size = storageSize - cxtSize;
 			if ( size % 16 != 0 ) size -= 8;
-			limit = (void *)uCeiling( (unsigned long)storage, 16 ); // minimum alignment
-			storage = (void *)((uintptr_t)storage | 1);	// add user stack storage mark
+			limit_ = (void *)uCeiling( (unsigned long)storage_, 16 ); // minimum alignment
+			storage_ = (void *)((uintptr_t)storage_ | 1); // add user stack storage mark
 		} // if
 		#ifdef __U_DEBUG__
 		if ( size < MinStackSize ) {					// below minimum stack size ?
@@ -316,10 +316,10 @@ namespace UPP {
 		} // if
 		#endif // __U_DEBUG__
 
-		base = (char *)limit + size;
-		context = base;
+		base_ = (char *)limit_ + size;
+		context_ = base_;
 
-		extras.allExtras = 0;
+		extras_.allExtras = 0;
 
 //		uDebugPrt( "(uMachContext &)%p.createContext( %u ), storage:%p, limit:%p, base:%p, context:%p, size:0x%zd\n",			
 //				   this, storageSize, storage, limit, base, context, size );
@@ -338,31 +338,31 @@ namespace UPP {
 			#endif
 			return sp;
 		} else {										// accessing another coroutine
-			return ((uContext_t *)context)->SP;
+			return ((uContext_t *)context_)->SP;
 		} // if
 	} // uMachContext::stackPointer
 
 
 	ptrdiff_t uMachContext::stackFree() const {
-		return (char *)stackPointer() - (char *)limit;
+		return (char *)stackPointer() - (char *)limit_;
 	} // uMachContext::stackFree
 
 
 	ptrdiff_t uMachContext::stackUsed() const {
-		return (char *)base - (char *)stackPointer();
+		return (char *)base_ - (char *)stackPointer();
 	} // uMachContext::stackUsed
 
 
 	void uMachContext::verify() {
 		// Ignore boot task as it uses the UNIX stack.
-		if ( storage == ((uBaseTask *)uKernelModule::bootTask)->storage ) return;
+		if ( storage_ == ((uBaseTask *)uKernelModule::bootTask)->storage_ ) return;
 
-		void *sp = stackPointer();						// optimization
+		void * sp = stackPointer();						// optimization
 
-		if ( sp < limit ) {
+		if ( sp < limit_ ) {
 			abort( "Stack overflow detected: stack pointer %p below limit %p.\n"
 					"Possible cause is allocation of large stack frame(s) and/or deep call stack.",
-					sp, limit );
+					sp, limit_ );
 			#define MINSTACKSIZE 1
 		} else if ( stackFree() < MINSTACKSIZE * 1024 ) {
 			// Do not use fprintf because it uses a lot of stack space.
@@ -370,10 +370,10 @@ namespace UPP {
 			#define str(s) #s
 			#define MINSTACKSIZEWARNING "uC++ Runtime warning : within " xstr(MINSTACKSIZE) "K of stack limit.\n"
 			uDebugWrite( STDERR_FILENO, MINSTACKSIZEWARNING, sizeof(MINSTACKSIZEWARNING) - 1 );
-		} else if ( sp > base ) {
+		} else if ( sp > base_ ) {
 			abort( "Stack underflow detected: stack pointer %p above base %p.\n"
 					"Possible cause is corrupted stack frame via overwriting memory.",
-					sp, base );
+					sp, base_ );
 		} // if
 	} // uMachContext::verify
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  5 12:53:33 2009
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:09:09 2019
-// Update Count     : 12
+// Last Modified On : Mon Dec 27 18:04:24 2021
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,8 +46,8 @@ class uRWLock {
     void block( RW kind ) {
 	rwdelay += 1;
 	uBaseTask &task = uThisTask();			// optimization
-	task.info = kind;				// store the kind with this task
-	waiting.addTail( &(task.entryRef) );		// block current task
+	task.info_ = kind;				// store the kind with this task
+	waiting.addTail( &(task.entryRef_) );		// block current task
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::owner_lock_queue, 1 );
 #endif // __U_STATISTICS__
@@ -98,7 +98,7 @@ class uRWLock {
 	entry.acquire();				// exit protocol
 	wcnt -= 1;
 	if ( rwdelay > 0 ) {				// anyone waiting ?
-	    if ( waiting.head()->task().info == WRITER ) {
+	    if ( waiting.head()->task().info_ == WRITER ) {
 		wunblock();
 	    } else {
 		uBaseTaskDL *n = waiting.head();
@@ -106,7 +106,7 @@ class uRWLock {
 		    rcnt += 1;
 		    rwdelay -= 1;
 		    n->task().setState( uBaseTask::Ready );
-		  if ( rwdelay == 0 || waiting.succ( n )->task().info != READER ) break;
+		  if ( rwdelay == 0 || waiting.succ( n )->task().info_ != READER ) break;
 		    n = waiting.succ( n );
 		} // for
 		uSequence<uBaseTaskDL> unblock;
@@ -114,7 +114,7 @@ class uRWLock {
 		unblock.split( waiting, n );
 		entry.release();			// put baton down
 //		for ( n = unblock.dropHead(); n != nullptr; n = unblock.dropHead() ) {
-//		    cout << &uThisTask() << " " << n << " " << n->task().info << endl;
+//		    cout << &uThisTask() << " " << n << " " << n->task().info_ << endl;
 //		    n->task().wake();			// and wake task
 //		} // for
 		uThisCluster().makeTaskReady( unblock, lrcnt );

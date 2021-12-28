@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:17:01 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 19:10:19 2019
-// Update Count     : 31
+// Last Modified On : Fri Dec 24 18:11:39 2021
+// Update Count     : 33
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,10 +27,10 @@
 #include "structor.h"
 
 structor_t::structor_t() {
-    prefix = nullptr;
-    suffix = nullptr;
-    rp = nullptr;
-    link = nullptr;
+	prefix = nullptr;
+	suffix = nullptr;
+	rp = nullptr;
+	link = nullptr;
 } // structor_t::structor_t
 
 
@@ -46,21 +46,21 @@ structor_list_t::~structor_list_t() {
 } // structor_list_t::~structor_list_t
 
 
-void structor_list_t::add_structor( structor_t *structor ) {
-    structor->link = head;
-    head = structor;
+void structor_list_t::add_structor( structor_t * structor ) {
+	structor->link = head;
+	head = structor;
 } // structor_list_t::add_structor
 
 
-structor_t *structor_list_t::remove_structor() {
-    structor_t *structor = head;
-    head = structor->link;
-    return structor;
+structor_t * structor_list_t::remove_structor() {
+	structor_t * structor = head;
+	head = structor->link;
+	return structor;
 } // structor_list_t::remove_structor
 
 
 int structor_list_t::empty_structor_list() {
-    return ( head == nullptr );
+	return ( head == nullptr );
 } // structor_list_t::empty_structor_list
 
 

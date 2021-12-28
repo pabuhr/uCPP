@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 21 09:45:36 2021
-// Update Count     : 314
+// Last Modified On : Thu Dec 16 10:55:30 2021
+// Update Count     : 328
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -473,6 +473,11 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 	if ( UPP_flag ) {									// no tmpfile created
 		exit( WEXITSTATUS( code ) );					// stop regardless of success or failure
+	} // if
+
+	if ( WEXITSTATUS(code) ) {							// child error ?
+		rmtmpfile();									// remove tmpname
+		exit( WEXITSTATUS( code ) );					// do not continue
 	} // if
 
 	uDEBUGPRT(

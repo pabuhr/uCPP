@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb  7 09:46:40 2020
-// Update Count     : 623
+// Last Modified On : Mon Dec 27 17:35:04 2021
+// Update Count     : 628
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -154,7 +154,7 @@ void uCluster::makeProcessorActive() {
     if ( ! readyQueue->empty() && ! idleProcessors.empty() ) {
 	uPid_t pid = idleProcessors.dropHead()->processor().pid;
 	idleProcessorsCnt -= 1;
-	readyIdleTaskLock.release();			// don't hold lock while sending SIGALRM
+	readyIdleTaskLock.release();						// don't hold lock while sending SIGALRM
 	wakeProcessor( pid );
     } else {
 	readyIdleTaskLock.release();
@@ -164,11 +164,12 @@ void uCluster::makeProcessorActive() {
 
 void uCluster::makeTaskReady( uBaseTask &readyTask ) {
     readyIdleTaskLock.acquire();
-    if ( (uProcessor *)(&readyTask.bound) != nullptr ) { // task bound to a specific processor ?
+    if ( (uProcessor *)(&readyTask.bound_) != nullptr ) { // task bound to a specific processor ?
     uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(1): task %.256s (%p) makes task %.256s (%p) ready\n",
 			  this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask ); )
-	uProcessor *p = &readyTask.bound;		// optimization
-	p->external.addTail( &(readyTask.readyRef) );	// add task to end of special ready queue
+	uProcessor *p = &readyTask.bound_;		// optimization
+
+	p->external.addTail( &(readyTask.readyRef_) );		// add task to end of special ready queue
 #ifdef __U_MULTI__
 	if ( p->idle() ) {				// processor on idle queue ?
 	    idleProcessors.remove( &(p->idleRef) );
@@ -185,7 +186,7 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
     } else {
 	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) makes task %.256s (%p) ready\n",
 			      this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask ); )
-	readyQueue->add( &(readyTask.readyRef) );	// add task to end of cluster ready queue
+	readyQueue->add( &(readyTask.readyRef_) );	// add task to end of cluster ready queue
 #ifdef __U_MULTI__
 	// Wake up an idle processor if the ready task is migrating to another cluster with idle processors or if the
 	// ready task is on the same cluster but the ready queue of that cluster is not empty. This check prevents a
@@ -269,23 +270,23 @@ uBaseTask &uCluster::readyQueueTryRemove() {
 
 void uCluster::taskAdd( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
-    tasksOnCluster.addTail( &(task.clusterRef) );
-    if ( (uProcessor *)(&task.bound) == nullptr ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    tasksOnCluster.addTail( &(task.clusterRef_) );
+    if ( (uProcessor *)(&task.bound_) == nullptr ) readyQueue->addInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskAdd
 
 
 void uCluster::taskRemove( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
-    tasksOnCluster.remove( &(task.clusterRef) );
-    if ( (uProcessor *)(&task.bound) == nullptr ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
+    tasksOnCluster.remove( &(task.clusterRef_) );
+    if ( (uProcessor *)(&task.bound_) == nullptr ) readyQueue->removeInitialize( tasksOnCluster ); // processor task is not part of normal initialization
     readyIdleTaskLock.release();
 } // uCluster::taskRemove
 
 
 void uCluster::taskReschedule( uBaseTask &task ) {
     readyIdleTaskLock.acquire();
-    readyQueue->rescheduleTask( &(task.clusterRef), tasksOnCluster );
+    readyQueue->rescheduleTask( &(task.clusterRef_), tasksOnCluster );
     readyIdleTaskLock.release();
 } // uCluster::taskReschedule
 
@@ -446,9 +447,9 @@ uCluster::~uCluster() {
 void uCluster::taskResetPriority( uBaseTask &owner, uBaseTask &calling ) { // TEMPORARY
     uDEBUGPRT( uDebugPrt( "(uCluster &)%p.taskResetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster ); )
     readyIdleTaskLock.acquire();
-    if ( &uThisCluster() == owner.currCluster ) {
-	if ( readyQueue->checkPriority( owner.readyRef, calling.readyRef ) ) {
-	    readyQueue->resetPriority( owner.readyRef, calling.readyRef );
+    if ( &uThisCluster() == owner.currCluster_ ) {
+	if ( readyQueue->checkPriority( owner.readyRef_, calling.readyRef_ ) ) {
+	    readyQueue->resetPriority( owner.readyRef_, calling.readyRef_ );
 	} // if
     } // if
     readyIdleTaskLock.release();
@@ -458,7 +459,7 @@ void uCluster::taskResetPriority( uBaseTask &owner, uBaseTask &calling ) { // TE
 void uCluster::taskSetPriority( uBaseTask &owner, uBaseTask &calling ) {
     uDEBUGPRT( uDebugPrt( "(uCluster &)%p.taskSetPriority, owner:%p, calling:%p, owner's cluster:%p\n", this, &owner, &calling, owner.currCluster ); )
     readyIdleTaskLock.acquire();
-    readyQueue->resetPriority( owner.readyRef, calling.readyRef );
+    readyQueue->resetPriority( owner.readyRef_, calling.readyRef_ );
     readyIdleTaskLock.release();
 } // uCluster::taskSetPriority
 
