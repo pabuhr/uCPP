@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 17:50:36 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 14:29:54 2021
-// Update Count     : 35
+// Last Modified On : Sat Jan  1 13:42:09 2022
+// Update Count     : 37
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -54,12 +54,12 @@ uint32_t MarsagliaXor( uint32_t & state ) {
 uint32_t LCG( uint32_t & state ) {						// linear congruential generator
 	if ( UNLIKELY( seed == 0 ) ) set_seed( uRdtsc() );
 	else if ( UNLIKELY( state == 0 ) ) state = seed;
-	return state = 36973 * (state & 65535) + (state >> 16);
+	return state = 36969 * (state & 65535) + (state >> 16);
 } // LCG
 
 //=========================================================
 
-uint32_t PRNG::operator()() { PRNGcnt += 1; return GENERATOR( state ); }
+uint32_t PRNG::operator()() { callcnt += 1; return GENERATOR( state ); }
 
 uint32_t prng() { return GENERATOR( state ); }
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 17:48:48 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 23:43:11 2021
-// Update Count     : 11
+// Last Modified On : Wed Dec 29 09:06:14 2021
+// Update Count     : 12
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -50,7 +50,7 @@
 //   sprng.calls();
 
 class PRNG {
-	uint32_t PRNGcnt = 0;
+	uint32_t callcnt = 0;
 	uint32_t seed;										// current seed
 	uint32_t state;										// random state
   public:
@@ -61,7 +61,7 @@ class PRNG {
 	uint32_t operator()() __attribute__(( warn_unused_result )); // [0,UINT_MAX]
 	uint32_t operator()( uint32_t u ) __attribute__(( warn_unused_result )) { return operator()() % u; } // [0,u)
 	uint32_t operator()( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return operator()( u - l + 1 ) + l; } // [l,u]
-	uint32_t calls() const __attribute__(( warn_unused_result )) { return PRNGcnt; }
+	uint32_t calls() const __attribute__(( warn_unused_result )) { return callcnt; }
 }; // PRNG
 
 //===============================================================

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 20:47:53 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 14:25:56 2021
-// Update Count     : 13
+// Last Modified On : Sat Jan  1 14:27:42 2022
+// Update Count     : 17
 // 
 
 #include <iostream>
@@ -19,7 +19,6 @@
 using namespace std;
 
 enum : unsigned int { BUCKETS = 100'000, TRIALS = 1'000'000'000 };
-unsigned int buckets[BUCKETS];
 
 void avgstd( unsigned int buckets[] ) {
 	unsigned int min = UINT_MAX, max = 0;
@@ -41,6 +40,8 @@ void avgstd( unsigned int buckets[] ) {
 					  << " min " << min << " max " << max
 					  << " avg " << avg << " std " << std << " rstd " << (avg == 0 ? 0.0 : std / avg * 100) << "%" << endl;
 } // avgstd
+
+unsigned int buckets[BUCKETS];
 
 int main() {
 	uTime start;
@@ -86,8 +87,8 @@ int main() {
 	{
 		enum { TASKS = 4 };
 		uProcessor p[TASKS - 1];						// already 1 processor
-		uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
-		for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
+		// uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
+		// for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
 		{
 			_Task T {
 				void main() {
@@ -107,5 +108,5 @@ int main() {
 
 // Local Variables: //
 // tab-width: 4 //
-// compile-command: "u++-work -Wall -g -O2 -multi PRNG.cc" //
+// compile-command: "u++-work -Wall -g -O2 -multi -nodebug PRNG.cc" //
 // End: //
