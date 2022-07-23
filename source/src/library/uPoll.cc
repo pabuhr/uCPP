@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:02:07 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  1 07:23:17 2017
-// Update Count     : 43
+// Last Modified On : Tue Apr 19 16:42:23 2022
+// Update Count     : 44
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,71 +35,71 @@
 
 
 void uPoll::setPollFlag( int fd ) {
-    int flags;
+	int flags;
 
-    for ( ;; ) {
-	flags = ::fcntl( fd, F_GETFL, 0 );
-      if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
-    } // for
-    if ( flags == -1 ) {
-	uStatus = NeverPoll;
-    } else {
 	for ( ;; ) {
-	    flags = ::fcntl( fd, F_SETFL, flags | U_FNDELAY );
-	  if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
+		flags = ::fcntl( fd, F_GETFL, 0 );
+	  if ( flags != -1 || errno != EINTR ) break;		// timer interrupt ?
 	} // for
 	if ( flags == -1 ) {
-	    uStatus = NeverPoll;
+		uStatus = NeverPoll;
+	} else {
+		for ( ;; ) {
+			flags = ::fcntl( fd, F_SETFL, flags | U_FNDELAY );
+		  if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
+		} // for
+		if ( flags == -1 ) {
+			uStatus = NeverPoll;
+		} // if
 	} // if
-    } // if
-    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.setPollFlag( %d ), uStatus:%d\n", this, fd, uStatus ); )
+	uDEBUGPRT( uDebugPrt( "(uPoll &)%p.setPollFlag( %d ), uStatus:%d\n", this, fd, uStatus ); );
 } // uPoll::setPollFlag
 
 
 void uPoll::clearPollFlag( int fd ) {
-    int flags;
+	int flags;
 
-    for ( ;; ) {
-	flags = ::fcntl( fd, F_GETFL, 0 );
-      if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
-    } // for
-    if ( flags == -1 ) {
-	uStatus = NeverPoll;
-    } else {
 	for ( ;; ) {
-	    flags = ::fcntl( fd, F_SETFL, flags & ~ U_FNDELAY );
-	  if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
+		flags = ::fcntl( fd, F_GETFL, 0 );
+	  if ( flags != -1 || errno != EINTR ) break;		// timer interrupt ?
 	} // for
 	if ( flags == -1 ) {
-	    uStatus = NeverPoll;
+		uStatus = NeverPoll;
+	} else {
+		for ( ;; ) {
+			flags = ::fcntl( fd, F_SETFL, flags & ~ U_FNDELAY );
+		  if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
+		} // for
+		if ( flags == -1 ) {
+			uStatus = NeverPoll;
+		} // if
 	} // if
-    } // if
 } // uPoll::clearPollFlag
 
 
 void uPoll::computeStatus( int fd ) {
-    struct stat buf;
-    int flags;
+	struct stat buf;
+	int flags;
 
-    for ( ;; ) {
-	flags = ::fstat( fd, &buf );
-      if ( flags != -1 || errno != EINTR ) break;	// timer interrupt ?
-    } // for
-    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), flags:%d, st_mode:0x%x\n", this, fd, flags, buf.st_mode ); )
-    if ( flags ) {
-	uStatus = NeverPoll;				// if the file cannot be stat'ed, never poll
-    } else if ( S_ISCHR( buf.st_mode ) ) {
-	uStatus = PollOnDemand;				// if a tty, poll on demand
+	for ( ;; ) {
+		flags = ::fstat( fd, &buf );
+	  if ( flags != -1 || errno != EINTR ) break;		// timer interrupt ?
+	} // for
+	uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), flags:%d, st_mode:0x%x\n", this, fd, flags, buf.st_mode ); );
+	if ( flags ) {
+		uStatus = NeverPoll;							// if the file cannot be stat'ed, never poll
+	} else if ( S_ISCHR( buf.st_mode ) ) {
+		uStatus = PollOnDemand;							// if a tty, poll on demand
 #ifdef S_IFIFO
-    } else if ( S_ISFIFO( buf.st_mode ) ) {
-	uStatus = AlwaysPoll;				// if a pipe, always poll
+	} else if ( S_ISFIFO( buf.st_mode ) ) {
+		uStatus = AlwaysPoll;							// if a pipe, always poll
 #endif
-    } else if ( S_ISSOCK( buf.st_mode ) ) {
-	uStatus = AlwaysPoll;				// if a socket, always poll
-    } else {
-	uStatus = NeverPoll;				// otherwise, never
-    } // if
-    uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), uStatus:%d\n", this, fd, uStatus ); )
+	} else if ( S_ISSOCK( buf.st_mode ) ) {
+		uStatus = AlwaysPoll;							// if a socket, always poll
+	} else {
+		uStatus = NeverPoll;							// otherwise, never
+	} // if
+	uDEBUGPRT( uDebugPrt( "(uPoll &)%p.computeStatus( %d ), uStatus:%d\n", this, fd, uStatus ); );
 } // uPoll::computeStatus
 
 

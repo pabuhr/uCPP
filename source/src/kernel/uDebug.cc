@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 22 21:55:25 2019
-// Update Count     : 140
+// Last Modified On : Sat Apr 23 11:37:45 2022
+// Update Count     : 159
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdarg>
-#include <unistd.h>					// write
+#include <unistd.h>										// write
 
 
 using namespace UPP;
@@ -49,89 +49,92 @@ static char buffer[BufferSize];
 // SKULLDUGGERY: The debug spin lock has to be available at the same time as the heap routines to allow debugging
 // them. Since the initial value of a spin lock are zero and static storage is initialized to zero, this works out.
 
-static char uDebugLockStorage[sizeof(uSpinLock)] __attribute__(( aligned (16) ));
-#define uDebugLock ((uSpinLock *)&uDebugLockStorage)
+uNoCtor<uSpinLock> uDebugLock;
+
+#if defined( __U_MULTI__ )
+	// null if called early in boot sequence
+	#define KTname (RealRtn::pthread_self == nullptr ? 0 : RealRtn::pthread_self())
+#else
+	#define KTname (long int)getpid()
+#endif // __U_MULTI__
 
 
 extern "C" void uDebugWrite( int fd, const char *buffer, int len ) {
-    for ( int count = 0, retcode; count < len; count += retcode ) { // ensure all data is written
-	buffer += count;
-	for ( ;; ) {
-	    retcode = ::write( fd, buffer, len - count );
-	  if ( retcode != -1 || errno != EINTR ) break; // not a timer interrupt ?
+	for ( int count = 0, retcode; count < len; count += retcode ) { // ensure all data is written
+		buffer += count;
+		for ( ;; ) {
+			retcode = ::write( fd, buffer, len - count );
+		  if ( retcode != -1 || errno != EINTR ) break; // not a timer interrupt ?
+		} // for
+		if ( retcode == -1 ) _exit( EXIT_FAILURE );
 	} // for
-	if ( retcode == -1 ) _exit( EXIT_FAILURE );
-    } // for
 } // uDebugWrite
 
 
 extern "C" void uDebugAcquire() {
-    uDebugLock->acquire();
-    int len = sprintf( ::buffer, "(%ld) ", (long int)
-#if defined( __U_MULTI__ )
-	     RealRtn::pthread_self()
-#else
-	     getpid()
-#endif // __U_MULTI__
-	);
-    uDebugWrite( STDERR_FILENO, ::buffer, len );
+	uDebugLock->acquire();
+	int len = sprintf( ::buffer, "(%ld) ", KTname );
+	uDebugWrite( STDERR_FILENO, ::buffer, len );
 } // uDebugAcquire
 
 
 extern "C" void uDebugRelease() {
-    uDebugLock->release();
+	uDebugLock->release();
 } // uDebugRelease
 
 
-extern "C" void uDebugPrt( const char fmt[], ... ) {
-    va_list args;
+extern "C" int uDebugPrt( const char fmt[], ... ) {
+	va_list args;
 
-    va_start( args, fmt );
-    uDebugLock->acquire();
-    int len = sprintf( ::buffer, "(%ld) ", (long int)
-#if defined( __U_MULTI__ )
-	     // null if called early in boot sequence
-	     (RealRtn::pthread_self == nullptr ? 0 : RealRtn::pthread_self())
-#else
-	     getpid()
-#endif // __U_MULTI__
-	);
-    len += vsnprintf( ::buffer + len, BufferSize, fmt, args );	// and after that the message
-    uDebugWrite( STDERR_FILENO, ::buffer, len );
-    uDebugRelease();
-    va_end( args );
+	va_start( args, fmt );
+	uDebugLock->acquire();
+	int len = sprintf( ::buffer, "(%ld) ", KTname );
+	len += vsnprintf( ::buffer + len, BufferSize, fmt, args ); // and after that the message
+	uDebugWrite( STDERR_FILENO, ::buffer, len );
+	uDebugRelease();
+	va_end( args );
+	return len;
 } // uDebugPrt
 
 
 // No lock to allow printing after explicitly acquiring the lock.
 
-extern "C" void uDebugPrt2( const char fmt[], ... ) {
-    va_list args;
+extern "C" int uDebugPrt2( const char fmt[], ... ) {
+	va_list args;
 
-    va_start( args, fmt );
-    int len = vsnprintf( ::buffer, BufferSize, fmt, args );
-    uDebugWrite( STDERR_FILENO, ::buffer, len );
-    va_end( args );
+	va_start( args, fmt );
+	int len = vsnprintf( ::buffer, BufferSize, fmt, args );
+	uDebugWrite( STDERR_FILENO, ::buffer, len );
+	va_end( args );
+	return len;
 } // uDebugPrt2
 
 
 // No lock to allow printing in potential deadlock situations.
 
-extern "C" void uDebugPrtBuf( char buffer[], const char fmt[], ... ) {
-    va_list args;
+extern "C" int uDebugPrtBuf( char buffer[], const char fmt[], ... ) {
+	va_list args;
 
-    va_start( args, fmt );
-    int len = sprintf( buffer, "(%ld) ", (long int)
-#if defined( __U_MULTI__ )
-	     RealRtn::pthread_self()
-#else
-	     getpid()
-#endif // __U_MULTI__
-	);
-    len += vsnprintf( buffer + len, BufferSize, fmt, args ); // and after that the message
-    uDebugWrite( STDERR_FILENO, buffer, len );
-    va_end( args );
-} // uDebugPrt
+	va_start( args, fmt );
+	int len = sprintf( buffer, "(%ld) ", KTname );
+	len += vsnprintf( buffer + len, BufferSize, fmt, args ); // and after that the message
+	uDebugWrite( STDERR_FILENO, buffer, len );
+	va_end( args );
+	return len;
+} // uDebugPrtBuf
+
+
+// No lock or KT name to allow printing in potential deadlock situations.
+
+extern "C" int uDebugPrtBuf2( int fd, char buffer[], int buflen, const char fmt[], ... ) {
+	va_list args;
+
+	va_start( args, fmt );
+	int len = vsnprintf( buffer, buflen, fmt, args );
+	uDebugWrite( fd, buffer, len );
+	va_end( args );
+	return len;
+} // uDebugPrtBuf2
 
 
 // Local Variables: //

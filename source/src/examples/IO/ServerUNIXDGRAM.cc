@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Apr 30 16:36:18 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:05:58 2019
-// Update Count     : 48
+// Last Modified On : Fri Apr 22 17:07:15 2022
+// Update Count     : 49
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,9 +35,9 @@ using std::endl;
 enum { BufferSize = 8 * 1024 };
 
 _Task Reader {
-    uSocketServer &server;
+	uSocketServer &server;
 
-    void main() {
+	void main() {
 		uDuration timeout( 20, 0 );						// timeout for read
 		char buf[BufferSize];
 		int len;
@@ -49,16 +49,16 @@ _Task Reader {
 				len = server.recvfrom( buf, sizeof(buf), 0, &timeout );
 				//len = server.recvfrom( buf, sizeof(buf), (sockaddr *)&to, &tolen, 0, &timeout );
 				// osacquire( cerr ) << "reader read len:" << len << endl;
-			  if ( len == 0 ) abort( "server %d : EOF ecountered before timeout", getpid() );
+				if ( len == 0 ) abort( "server %d : EOF ecountered before timeout", getpid() );
 				server.sendto( buf, len );				// write byte back to client
 				//server.sendto( buf, len, (sockaddr *)&to, tolen ); // write byte back to client
 			} // for
 		} catch( uSocketServer::ReadTimeout & ) {
 		} // try
-    } // Reader::main
+	} // Reader::main
   public:
-    Reader( uSocketServer &server ) : server( server ) {
-    } // Reader::Reader
+	Reader( uSocketServer &server ) : server( server ) {
+	} // Reader::Reader
 }; // Reader
 
 int main( int argc, char *argv[] ) {
@@ -74,7 +74,7 @@ int main( int argc, char *argv[] ) {
 	{
 		Reader rd( server );							// execute until reader times out
 	}
-    unlink( argv[1] );									// remove socket file
+	unlink( argv[1] );									// remove socket file
 } // uMain
 
 // Local Variables: //

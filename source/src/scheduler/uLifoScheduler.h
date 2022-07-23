@@ -7,8 +7,8 @@
 // Author           : Jiongxiong Chen and Ashif S. Harji
 // Created On       : Fri Feb 14 14:26:49 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:49:12 2019
-// Update Count     : 147
+// Last Modified On : Sat Apr  9 17:06:10 2022
+// Update Count     : 148
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,16 +31,16 @@
 #include <uC++.h>
 
 class uLifoScheduler : public uBaseSchedule<uBaseTaskDL> {
-    uBaseTaskSeq list;					// list of tasks awaiting execution
+	uBaseTaskSeq list;					// list of tasks awaiting execution
   public:
-    bool empty() const;
-    void add( uBaseTaskDL *node );
-    uBaseTaskDL *drop();
-    bool checkPriority( uBaseTaskDL &owner, uBaseTaskDL &calling );
-    void resetPriority( uBaseTaskDL &owner, uBaseTaskDL &calling );
-    void addInitialize( uBaseTaskSeq &taskList );
-    void removeInitialize( uBaseTaskSeq &taskList );
-    void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
+	bool empty() const;
+	void add( uBaseTaskDL *node );
+	uBaseTaskDL *drop();
+	bool checkPriority( uBaseTaskDL &owner, uBaseTaskDL &calling );
+	void resetPriority( uBaseTaskDL &owner, uBaseTaskDL &calling );
+	void addInitialize( uBaseTaskSeq &taskList );
+	void removeInitialize( uBaseTaskSeq &taskList );
+	void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
 }; // uLifoScheduler
 
 

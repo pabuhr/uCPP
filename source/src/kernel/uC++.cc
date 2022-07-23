@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 17:46:25 2021
-// Update Count     : 3241
+// Last Modified On : Thu Jun 16 18:55:53 2022
+// Update Count     : 3325
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,8 +38,6 @@
 #endif // __U_STATISTICS__
 
 #include <uDebug.h>										// access: uDebugWrite
-#undef uDEBUGPRT										// turn off debug prints
-#define uDEBUGPRT( stmt )
 
 #include <iostream>
 #include <exception>
@@ -47,15 +45,14 @@
 #include <cstdio>
 #include <unistd.h>										// _exit
 #include <fenv.h>										// floating-point exceptions
-#include <locale.h>										// setlocale
 
 
 using namespace UPP;
 
 
 #ifdef __U_STATISTICS__
-// Kernel, signed because of the atomic inc/dec
-long int Statistics::ready_queue = 0, Statistics::spins = 0, Statistics::spin_sched = 0, Statistics::mutex_queue = 0,
+// Kernel/Lock statistics
+unsigned long int Statistics::ready_queue = 0, Statistics::spins = 0, Statistics::spin_sched = 0, Statistics::mutex_queue = 0,
 	Statistics::mutex_lock_queue = 0, Statistics::owner_lock_queue = 0, Statistics::adaptive_lock_queue = 0, Statistics::io_lock_queue = 0,
 	Statistics::uSpinLocks = 0, Statistics::uLocks = 0, Statistics::uMutexLocks = 0, Statistics::uOwnerLocks = 0, Statistics::uCondLocks = 0, Statistics::uSemaphores = 0, Statistics::uSerials = 0;
 
@@ -221,16 +218,14 @@ uSpinLock *uKernelModule::globalAbortLock = nullptr;
 uSpinLock *uKernelModule::globalProcessorLock = nullptr;
 uSpinLock *uKernelModule::globalClusterLock = nullptr;
 uDefaultScheduler *uKernelModule::systemScheduler = nullptr;
-uCluster *uKernelModule::systemCluster = nullptr;
-uProcessor *uKernelModule::systemProcessor = nullptr;
+uNoCtor<uProcessor> uKernelModule::systemProcessor;
+uNoCtor<uCluster> uKernelModule::systemCluster;
 UPP::uBootTask *uKernelModule::bootTask = (uBootTask *)&bootTaskStorage;
 uSystemTask *uKernelModule::systemTask = nullptr;
 uCluster *uKernelModule::userCluster = nullptr;
 uProcessor **uKernelModule::userProcessors = nullptr;
 unsigned int uKernelModule::numUserProcessors = 0;
 
-char uKernelModule::systemClusterStorage[sizeof(uCluster)] __attribute__(( aligned (128) ));
-char uKernelModule::systemProcessorStorage[sizeof(uProcessor)] __attribute__(( aligned (16) ));
 char uKernelModule::bootTaskStorage[sizeof(uBootTask)] __attribute__(( aligned (16) ));
 
 std::filebuf *uKernelModule::cerrFilebuf = nullptr, *uKernelModule::clogFilebuf = nullptr, *uKernelModule::coutFilebuf = nullptr, *uKernelModule::cinFilebuf = nullptr;
@@ -687,7 +682,7 @@ void uOwnerLock::release() {
 			abort( "Attempt to release owner lock (%p) that is currently owned by task %.256s (%p).", this, prev->getName(), prev );
 		} // if
 	);
-		count -= 1;										// release the lock
+	count -= 1;											// release the lock
 	if ( count == 0 ) {									// if this is the last
 		if ( ! waiting.empty() ) {						// waiting tasks ?
 			owner_ = &(waiting.dropHead()->task());		// remove task at head of waiting list and make new owner
@@ -1189,8 +1184,8 @@ void uKernelModule::uKernelModuleData::ctor() volatile {
 	This = this;
 	kernelModuleInitialized = true;
 
-	activeProcessor = (uProcessor *)&uKernelModule::systemProcessorStorage;
-	activeCluster = (uCluster *)&uKernelModule::systemClusterStorage;
+	activeProcessor = &uKernelModule::systemProcessor;
+	activeCluster = &uKernelModule::systemCluster;
 	activeTask = (uBaseTask *)&bootTaskStorage;
 
 	disableInt = true;
@@ -1214,7 +1209,7 @@ void uKernelModule::rollForward( bool inKernel ) {
 #endif // __U_STATISTICS__
 
 #if defined( __U_MULTI__ )
-	if ( &uThisProcessor() == uKernelModule::systemProcessor ) { // process events on event list
+	if ( &uThisProcessor() == &uKernelModule::systemProcessor ) { // process events on event list
 #endif // __U_MULTI__
 		uEventNode *event;
 		for ( uEventListPop iter( *uKernelModule::systemProcessor->events, inKernel ); iter >> event; );
@@ -1630,11 +1625,11 @@ namespace UPP {
 				mask.set( mp );							// add this mutex member to the mask
 				return false;							// the accept failed
 			} else {
-				uBaseTask &task = uThisTask();			 // optimization
-				mutexOwner = destructorTask;			 // next task to use this mutex object
-				destructorStatus = DestrScheduled;		 // change status of destructor to scheduled
-				lastAcceptor = &task;					 // saving the acceptor thread of a rendezvous
-				mask.clrAll();							 // clear the mask
+				uBaseTask &task = uThisTask();			// optimization
+				mutexOwner = destructorTask;			// next task to use this mutex object
+				destructorStatus = DestrScheduled;		// change status of destructor to scheduled
+				lastAcceptor = &task;					// saving the acceptor thread of a rendezvous
+				mask.clrAll();							// clear the mask
 				acceptSignalled.add( &(task.mutexRef_) ); // suspend current task on top of accept/signalled stack
 				if ( entryList.executeHooks ) {
 					// no check for destructor because it cannot accept itself
@@ -1905,8 +1900,8 @@ namespace UPP {
 
 			prevSerial = &task.getSerial();				// save previous serial
 			task.setSerial( serial );					// set new serial
-			uDEBUG( nlevel = task.currSerialLevel += 1; )
-				serial.enter( mr, ml, mp );
+			uDEBUG( nlevel = task.currSerialLevel += 1; );
+			serial.enter( mr, ml, mp );
 			acceptor = serial.lastAcceptor;
 			acceptorSuspended = acceptor != nullptr;
 			if ( acceptorSuspended ) {
@@ -2134,14 +2129,13 @@ uMain::~uMain() {
 
 
 void UPP::uKernelBoot::startup() {
-	if ( ! uKernelModule::kernelModuleInitialized ) {
-	uKernelModule::startup();
+	if ( ! uKernelModule::kernelModuleInitialized ) {	// normally started in malloc
+		uKernelModule::startup();
 	} // if
 
 	RealRtn::startup();									// must come before any call to uDebugPrt
 
 	tzset();											// initialize time global variables
-	setlocale( LC_NUMERIC, getenv("LANG") );
 
 	// Force dynamic loader to (pre)load and initialize all the code to use C printf I/O. The stack depth to do this
 	// initialization is significant as it includes all the calls to locale and can easily overflow the small stack of a
@@ -2150,6 +2144,7 @@ void UPP::uKernelBoot::startup() {
 //	char dummy[16];
 //	sprintf( dummy, "dummy%d\n", 6 );					// force dynamic loading for this and associated routines
 
+	// Heap should be started by first dynamic-loader call to malloc/calloc.
 	uHeapControl::startup();
 
 	uMachContext::pageSize = sysconf( _SC_PAGESIZE );
@@ -2188,8 +2183,8 @@ void UPP::uKernelBoot::startup() {
 	// processor. Because the global pointers are initialized, all the references through them in the cluster and
 	// processor constructors work out. (HA!)
 
-	uKernelModule::systemProcessor = (uProcessor *)&uKernelModule::systemProcessorStorage;
-	uKernelModule::systemCluster = (uCluster *)&uKernelModule::systemClusterStorage;
+//	uKernelModule::systemProcessor = (uProcessor *)&uKernelModule::systemProcessorStorage;
+//	uKernelModule::systemCluster = (uCluster *)&uKernelModule::systemClusterStorage;
 	uKernelModule::systemScheduler = new uDefaultScheduler;
 
 #if ! defined( __U_MULTI__ )
@@ -2202,8 +2197,8 @@ void UPP::uKernelBoot::startup() {
 
 	// create system cluster: it is at a fixed address so storing the result is unnecessary.
 
-	new( &uKernelModule::systemClusterStorage ) uCluster( *uKernelModule::systemScheduler, uDefaultStackSize(), "systemCluster" );
-	new( &uKernelModule::systemProcessorStorage ) uProcessor( *uKernelModule::systemCluster, 1.0 );
+	uKernelModule::systemCluster.ctor( *uKernelModule::systemScheduler, uDefaultStackSize(), "systemCluster" );
+	uKernelModule::systemProcessor.ctor( *uKernelModule::systemCluster, 1.0 );
 
 	// create processor kernel
 
@@ -2280,6 +2275,7 @@ void UPP::uKernelBoot::startup() {
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
 						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
+
 	uKernelModule::bootTask->migrate( *uKernelModule::userCluster );
 
 	// reset filebuf for default streams
@@ -2297,6 +2293,8 @@ void UPP::uKernelBoot::startup() {
 						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
 } // uKernelBoot::startup
 
+
+extern void heapManagerDtor();
 
 void UPP::uKernelBoot::finishup() {
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
@@ -2317,7 +2315,7 @@ void UPP::uKernelBoot::finishup() {
 	// If afterMain is false, control has reached here due to an "exit" call before the end of uMain::main. In this
 	// case, all user destructors have been executed (which is potentially dangerous as external user-tasks may be
 	// running). To prevent triggering errors, shutdown is now terminated, and any remaining destructors are executed.
-	if ( ! uKernelModule::afterMain ) return;
+  if ( ! uKernelModule::afterMain ) return;
 
 	uKernelModule::bootTask->migrate( *uKernelModule::systemCluster );
 
@@ -2341,16 +2339,15 @@ void UPP::uKernelBoot::finishup() {
 	} // if
 	THREAD_GETMEM( This )->enableInterrupts();
 
-	// SKULLDUGGERY: The termination order for the boot task is different from the starting order. This results from the
-	// fact that the boot task must have a processor before it can start. However, the system processor must have the
-	// thread from the boot task to terminate. Deleting the cluster first requires that the boot task be removed first
-	// from the list of tasks on the cluster or the cluster complains about unfinished tasks. The boot task must be
-	// added again before its deletion because it removes itself from the list. Also, when the boot task is being
-	// deleted it is using the *already* deleted system cluster, which works only because the system cluster storage is
-	// not dynamically allocated so the storage is not scrubbed; therefore, it still has the necessary state values to
-	// allow the boot task to be deleted. As well, the ready queue has to be allocated spearately from the system
-	// cluster so it can be deleted *after* the boot task is deleted because the boot task access the ready queue during
-	// its deletion.
+	// SKULLDUGGERY: The termination order for the boot task is different from the starting order. This results because
+	// the boot task must have a processor before it can start. However, the system processor must have the thread from
+	// the boot task to terminate. Deleting the cluster first requires that the boot task be removed first from the list
+	// of tasks on the cluster or the cluster complains about unfinished tasks. The boot task must be added again before
+	// its deletion because it removes itself from the list. Also, when the boot task is being deleted it is using the
+	// *already* deleted system cluster, which works only because the system cluster storage is not dynamically
+	// allocated so the storage is not scrubbed; therefore, it still has the necessary state values to allow the boot
+	// task to be deleted. As well, the ready queue has to be allocated spearately from the system cluster so it can be
+	// deleted *after* the boot task is deleted because the boot task access the ready queue during its deletion.
 
 	// remove the boot task so the cluster does not complain
 	uKernelModule::systemCluster->taskRemove( *(uBaseTask *)uKernelModule::bootTask );
@@ -2400,6 +2397,7 @@ void UPP::uKernelBoot::finishup() {
 	delete uKernelModule::globalAbortLock;
 
 	uHeapControl::finishup();
+	heapManagerDtor();
 } // uKernelBoot::finishup
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jun 28 10:23:11 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:52:03 2016
-// Update Count     : 44
+// Last Modified On : Mon Apr 25 20:51:24 2022
+// Update Count     : 45
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,28 +29,28 @@ using std::cout;
 using std::endl;
 
 unsigned int uDefaultPreemption() {
-    return 1;
+	return 1;
 } // uDefaultPreemption
 
 unsigned int uDefaultSpin() {
-    return 10;						// keep small for 1-core computer
+	return 10;											// keep small for 1-core computer
 } // uDefaultSpin
 
 _Task Worker {
-    uCluster &cluster1, &cluster2, &cluster3;
+	uCluster &cluster1, &cluster2, &cluster3;
 
-    void main() {
-	const int NoOfTimes = 10000;
+	void main() {
+		const int NoOfTimes = 10000;
 
-        for ( int i = 0; i < NoOfTimes; i += 1 ) {
-	    migrate( cluster3 );
-	    migrate( cluster2 );
-	    migrate( cluster1 );
-        } // for
-    } // Worker::main
+	    for ( int i = 0; i < NoOfTimes; i += 1 ) {
+			migrate( cluster3 );
+			migrate( cluster2 );
+			migrate( cluster1 );
+	    } // for
+	} // Worker::main
   public:
-    Worker( uCluster &cluster1, uCluster &cluster2, uCluster &cluster3 ) : uBaseTask( cluster1 ), cluster1( cluster1 ), cluster2( cluster2 ), cluster3( cluster3 ) {
-    } // Worker::Worker
+	Worker( uCluster &cluster1, uCluster &cluster2, uCluster &cluster3 ) : uBaseTask( cluster1 ), cluster1( cluster1 ), cluster2( cluster2 ), cluster3( cluster3 ) {
+	} // Worker::Worker
 }; // Worker
 
 uCluster cluster1( "cluster1" );
@@ -60,10 +60,10 @@ uCluster cluster2( "cluster2" );
 uProcessor processor2( cluster2 );
 
 int main() {
-    {
-	Worker task1( uThisCluster(), cluster1, cluster2 ), task2( cluster2, uThisCluster(), cluster1 ), task3( cluster1, cluster2, uThisCluster() );
-    }
-    cout << "successful completion" << endl;
+	{
+		Worker task1( uThisCluster(), cluster1, cluster2 ), task2( cluster2, uThisCluster(), cluster1 ), task3( cluster1, cluster2, uThisCluster() );
+	}
+	cout << "successful completion" << endl;
 } // main
 
 // Local Variables: //

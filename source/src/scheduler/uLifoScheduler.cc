@@ -7,8 +7,8 @@
 // Author           : Jiongxiong Chen and Ashif S. Harji
 // Created On       : Fri Feb 14 14:26:49 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 13 22:14:37 2011
-// Update Count     : 147
+// Last Modified On : Sat Apr  9 17:05:58 2022
+// Update Count     : 148
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,16 +32,16 @@
 //#include <uDebug.h>
 
 bool uLifoScheduler::empty() const {
-    return list.empty();
+	return list.empty();
 } // uLifoScheduler::empty
 
 void uLifoScheduler::add( uBaseTaskDL *node ) {
-    list.addTail( node );
+	list.addTail( node );
 } // uLifoScheduler::add
 
 uBaseTaskDL *uLifoScheduler::drop() {
-    uBaseTaskDL *temp = list.dropTail();
-    return temp;
+	uBaseTaskDL *temp = list.dropTail();
+	return temp;
 } // uLifoScheduler::drop
 
 bool uLifoScheduler::checkPriority( uBaseTaskDL &, uBaseTaskDL & ) { return false; }

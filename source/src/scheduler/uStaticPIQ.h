@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:53:22 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:51:48 2019
-// Update Count     : 38
+// Last Modified On : Sat Apr  9 17:10:35 2022
+// Update Count     : 39
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -38,19 +38,19 @@
 
 
 class uStaticPIQ : public uBasePIQ {
-    int objects[ __U_MAX_NUMBER_PRIORITIES__ ];
-    uSpinLock lock;
-    unsigned int mask;
+	int objects[ __U_MAX_NUMBER_PRIORITIES__ ];
+	uSpinLock lock;
+	unsigned int mask;
 
-    static int compare( int k1, int k2 );
+	static int compare( int k1, int k2 );
   public:
-    uStaticPIQ();
-    virtual bool empty() const;
-    //virtual int head();
-    virtual int getHighestPriority();
-    virtual void add( int priority );
-    virtual int drop();
-    virtual void remove( int priority );
+	uStaticPIQ();
+	virtual bool empty() const;
+	//virtual int head();
+	virtual int getHighestPriority();
+	virtual void add( int priority );
+	virtual int drop();
+	virtual void remove( int priority );
 }; // PIHeap
 
 

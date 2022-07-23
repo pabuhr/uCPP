@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat May  1 08:01:13 2021
-// Update Count     : 60
+// Last Modified On : Wed Jul  6 09:25:50 2022
+// Update Count     : 76
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,21 +27,16 @@
 using namespace std;
 #include <uActor.h>
 
-struct NextMsg : public uActor::Message {};
-struct FibMsg : public uActor::Message {
-	long int fn;
-	FibMsg() : Message( uActor::Delete ) {}
-};
+struct FibMsg : public uActor::SenderMsg { long int fn; }; // Nodelete
 
 _Actor Fib {
 	long int fn1, fn2;
 	int state = 1;
 
 	Allocation receive( Message & msg ) {
-		Case( NextMsg, msg ) {
-			FibMsg *fibMsg = new FibMsg;
-			long int & fn = fibMsg->fn;					// optimization
-			switch( state ) {
+		Case( FibMsg, msg ) {
+			long int & fn = msg_d->fn;					// compute answer in message
+			switch( state ) {							// discriminate Fibonacci state
 			  case 1:
 				fn = 0; fn1 = fn;						// fib(0) => 0
 				state = 2;
@@ -54,7 +49,7 @@ _Actor Fib {
 				fn = fn1 + fn2; fn2 = fn1; fn1 = fn;	// fib(n) => fib(n-1) + fib(n-2)
 				break;
 			} // switch
-			*msg_d->sender() | *fibMsg;					// return fn
+			*msg_d->sender() | *msg_d;					// return fn
 		} else Case( StopMsg, msg ) return Finished;
 		return Nodelete;
 	} // Fib::receive
@@ -65,17 +60,17 @@ int Times = 10;											// default values
 _Actor Generator {
 	int i = 0;
 	Fib fib;
-	NextMsg nextMsg;
+	FibMsg figMsg;
 
 	void preStart() {
-		fib | nextMsg;
+		fib | figMsg;
 	} // Generator::preStart
 
 	Allocation receive( Message & msg ) {
 		if ( i < Times ) {
 			Case( FibMsg, msg ) {
 				cout << msg_d->fn << endl;
-				fib | nextMsg;
+				fib | figMsg;
 			} // Case
 			i += 1;
 			return Nodelete;

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 28 07:23:06 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul 28 07:26:51 2020
-// Update Count     : 1
+// Last Modified On : Mon Apr 25 22:39:08 2022
+// Update Count     : 2
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,61 +33,61 @@ _Event Ping {};
 _Event Pong {};
 
 void pinger( int i, int N ) {
-    cout << "Enter pinger " << i << ' ' << N << endl;
-    try {
-        if (i < N) {
-            Ping pi;
-            cout << "Raising Ping from pinger" << endl;
-            _ResumeTop pi;
-            cout << "Return Ping from pinger" << endl;
-        }
-    } _CatchResume( Pong & ) {
-        cout << "Caught Pong in pinger" << endl;
-        pinger( i + 1, N );
-        cout << "Return Pong in pinger" << endl;
-    }
-    cout << "Exit pinger " << i << ' ' << N << endl;
+	cout << "Enter pinger " << i << ' ' << N << endl;
+	try {
+	    if (i < N) {
+	        Ping pi;
+	        cout << "Raising Ping from pinger" << endl;
+	        _ResumeTop pi;
+	        cout << "Return Ping from pinger" << endl;
+	    }
+	} _CatchResume( Pong & ) {
+	    cout << "Caught Pong in pinger" << endl;
+	    pinger( i + 1, N );
+	    cout << "Return Pong in pinger" << endl;
+	}
+	cout << "Exit pinger " << i << ' ' << N << endl;
 }
 
 void ponger1() {
-    cout << "Enter ponger1" << endl;
-    Pong po;
-    cout << "Raising Pong from ponger1" << endl;
-    _ResumeTop po;
-    cout << "Return Pong from ponger1" << endl;
-    cout << "Exit ponger1" << endl;
+	cout << "Enter ponger1" << endl;
+	Pong po;
+	cout << "Raising Pong from ponger1" << endl;
+	_ResumeTop po;
+	cout << "Return Pong from ponger1" << endl;
+	cout << "Exit ponger1" << endl;
 }
 
 void ponger2() {
-    cout << "Enter ponger2" << endl;
-    try {
-        Pong po;
-        cout << "Raising Pong from ponger2" << endl;
-        _ResumeTop po; // This Pong appears to go unhandled
-        cout << "Return Pong from ponger2" << endl;
-    } _CatchResume( Ping & ) {
-        cout << "Caught Ping in ponger2" << endl;
-        ponger2();
-        cout << "Return Ping in ponger2" << endl;
-    }
-    cout << "Exit ponger2" << endl;
+	cout << "Enter ponger2" << endl;
+	try {
+	    Pong po;
+	    cout << "Raising Pong from ponger2" << endl;
+	    _ResumeTop po;									// This Pong appears to go unhandled
+	    cout << "Return Pong from ponger2" << endl;
+	} _CatchResume( Ping & ) {
+	    cout << "Caught Ping in ponger2" << endl;
+	    ponger2();
+	    cout << "Return Ping in ponger2" << endl;
+	}
+	cout << "Exit ponger2" << endl;
 }
 
 void test( void ponger() ) {
-    cout << "Enter test" << endl;
-    try {
-        pinger( 0, 1 );
-    } _CatchResume ( Ping & ) {
-        cout << "Caught Ping in test" << endl;
-        ponger();
-        cout << "Return Ping in test" << endl;
-    }
-    cout << "Exit test" << endl;
+	cout << "Enter test" << endl;
+	try {
+	    pinger( 0, 1 );
+	} _CatchResume ( Ping & ) {
+	    cout << "Caught Ping in test" << endl;
+	    ponger();
+	    cout << "Return Ping in test" << endl;
+	}
+	cout << "Exit test" << endl;
 }
 
 int main() {
-    cout << "Testing ponger1..." << endl;
-    test(ponger1);
-    cout << "Testing ponger2..." << endl;
-    test(ponger2);
+	cout << "Testing ponger1..." << endl;
+	test(ponger1);
+	cout << "Testing ponger2..." << endl;
+	test(ponger2);
 }

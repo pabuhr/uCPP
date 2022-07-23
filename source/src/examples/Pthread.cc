@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  5 17:20:38 2018
-// Update Count     : 192
+// Last Modified On : Mon Apr 25 22:37:50 2022
+// Update Count     : 193
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -132,28 +132,28 @@ void *Worker1( void * ) {
 } // Worker1
 
 void *Worker2( void * ) {
-    pthread_key_t key[PTHREAD_KEYS_MAX];
-    unsigned long int i;
-    for ( i = 0; i < 60; i += 1 ) {
+	pthread_key_t key[PTHREAD_KEYS_MAX];
+	unsigned long int i;
+	for ( i = 0; i < 60; i += 1 ) {
 		if ( pthread_key_create( &key[i], nullptr ) != 0 ) {
 			cout << "Create key" << endl;
 			exit( EXIT_FAILURE );
 		} // if
 		cout << pthread_self() << ", i:" << i << " key:" << key[i] << endl;
-    } // for
-    for ( i = 0; i < 60; i += 1 ) {
+	} // for
+	for ( i = 0; i < 60; i += 1 ) {
 		if ( pthread_setspecific( key[i], (const void *)i ) != 0 ) {
 			cout << "Set key" << endl;
 			exit( EXIT_FAILURE );
 		} // if
-    } // for
-    for ( i = 0; i < 60; i += 1 ) {
+	} // for
+	for ( i = 0; i < 60; i += 1 ) {
 		if ( (unsigned long int)pthread_getspecific( key[i] ) != i ) {
 			cout << "Get key" << endl;
 			exit( EXIT_FAILURE );
 		} // if
-    } // for
-    pthread_exit( nullptr );
+	} // for
+	pthread_exit( nullptr );
 	return (void *)0;
 } // Worker2
 
@@ -172,14 +172,14 @@ void clean2( void *) {
 
 class RAII {
   public:
-    RAII() {
+	RAII() {
 		check += 1;
 //		cout << "Executing RAII constructor" << endl;
-    }
-    ~RAII() {
+	}
+	~RAII() {
 		check -= 1;
 //		cout << "Executing RAII destructor" << endl;
-    }
+	}
 }; // RAII
 
 
@@ -210,7 +210,7 @@ void cancel_me() {
 void *cancellee( void * ) {
 	int i;
 	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, nullptr );
-	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, nullptr );	// guard against undefined cancellation points
+	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, nullptr ); // guard against undefined cancellation points
 	for ( ;; ) {
 		pthread_cleanup_push( clean2, nullptr );
 		check += 1000;
@@ -258,7 +258,7 @@ void maintestcancel() {
 		pthread_cleanup_pop( 1 );
 	}
 	pthread_cleanup_pop( 1 );
-    assert( check == 1 );
+	assert( check == 1 );
 } // maintestcancel
 
 void bye( void * ) {
@@ -271,11 +271,9 @@ _Task JoinTester : public uPthreadable {
 		joinval = this;
 	} // JoinTester::main
 }; // JoinTester
+#endif // __U_CPLUSPLUS__
 
 int main() {
-#else
-int main() {
-#endif // __U_CPLUSPLUS__
 	const int NoOfCons = 20, NoOfProds = 30;
 	BoundedBuffer<int> buf;								// create a buffer monitor
 	pthread_t cons[NoOfCons];							// pointer to an array of consumers
@@ -355,19 +353,19 @@ int main() {
 
 	cout << endl << endl << "thread specific data test" << endl << endl;
 
-    if ( pthread_create( &worker1, nullptr, Worker2, nullptr ) != 0 ) {
+	if ( pthread_create( &worker1, nullptr, Worker2, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_create( &worker2, nullptr, Worker2, nullptr ) != 0 ) {
+	if ( pthread_create( &worker2, nullptr, Worker2, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_join( worker1, nullptr ) != 0 ) {
+	if ( pthread_join( worker1, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
-    if ( pthread_join( worker2, nullptr ) != 0 ) {
+	if ( pthread_join( worker2, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
@@ -393,17 +391,17 @@ int main() {
 #else
 	cout << endl << endl << "thread cancellation test" << endl << endl;
 
-    if ( pthread_create( &worker1, nullptr, cancellee, nullptr ) != 0 ) {
+	if ( pthread_create( &worker1, nullptr, cancellee, nullptr ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 	cout << "cancellee " << worker1 << endl;
-    if ( pthread_create( &worker2, nullptr, canceller, &worker1 ) != 0 ) {
+	if ( pthread_create( &worker2, nullptr, canceller, &worker1 ) != 0 ) {
 		cout << "create thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if
 	// worker1 joined in canceller
-    if ( pthread_join( worker2, nullptr ) != 0 ) {
+	if ( pthread_join( worker2, nullptr ) != 0 ) {
 		cout << "join thread failure" << endl;
 		exit( EXIT_FAILURE );
 	} // if

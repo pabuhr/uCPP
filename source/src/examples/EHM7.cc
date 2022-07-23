@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:42:34 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 26 18:13:39 2018
-// Update Count     : 32
+// Last Modified On : Tue Apr 26 15:03:16 2022
+// Update Count     : 33
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,8 +31,8 @@ using std::endl;
 
 _Event Fred {
   public:
-    int k;
-    Fred ( int k ) : k(k) {}
+  int k;
+  Fred ( int k ) : k(k) {}
 };
 
 _Task Mary {

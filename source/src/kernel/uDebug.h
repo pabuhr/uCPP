@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 12:56:10 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  1 16:21:45 2019
-// Update Count     : 54
+// Last Modified On : Sat Apr 23 11:37:18 2022
+// Update Count     : 59
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,9 +37,10 @@
 extern "C" void uDebugWrite( int fd, const char *buffer, int len );
 extern "C" void uDebugAcquire();
 extern "C" void uDebugRelease();
-extern "C" void uDebugPrt( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
-extern "C" void uDebugPrt2( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
-extern "C" void uDebugPrtBuf( char buffer[], const char fmt[], ... ) __attribute__(( format (printf, 2, 3) ));
+extern "C" int uDebugPrt( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
+extern "C" int uDebugPrt2( const char fmt[], ... ) __attribute__(( format (printf, 1, 2) ));
+extern "C" int uDebugPrtBuf( char buffer[], const char fmt[], ... ) __attribute__(( format (printf, 2, 3) ));
+extern "C" int uDebugPrtBuf2( int fd, char buffer[], int buflen, const char fmt[], ... ) __attribute__(( format (printf, 4, 5) ));
 
 
 // Local Variables: //

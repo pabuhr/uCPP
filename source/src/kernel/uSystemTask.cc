@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun 22 15:25:53 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Feb 18 18:41:58 2017
-// Update Count     : 117
+// Last Modified On : Sun Apr  3 10:50:56 2022
+// Update Count     : 118
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,35 +33,35 @@
 
 
 void uSystemTask::pthreadDetachEnd( uBaseTask &victim ) {
-    uSystemTask::victim = &victim;
+	uSystemTask::victim = &victim;
 } // uSystemTask::pthreadDetachEnd
 
 
 void uSystemTask::main() {
-    for ( ;; ) {
-	_Accept( ~uSystemTask ) {
-	    break;
-	} or _Accept( reaper ) {
-	    delete victim;
-	} or _Accept( pthreadDetachEnd ) {
-	    delete victim;
+	for ( ;; ) {
+		_Accept( ~uSystemTask ) {
+			break;
+		} or _Accept( reaper ) {
+			delete victim;
+		} or _Accept( pthreadDetachEnd ) {
+			delete victim;
 // #if __U_LOCALDEBUGGER_H__
 // 	} or _Timeout( uDuration( 1 ) ) {		// 1 second
 // #endif // __U_LOCALDEBUGGER_H__
-	} // _Accept
+		} // _Accept
 
 #if __U_LOCALDEBUGGER_H__
-	// check for debugger attach request
+		// check for debugger attach request
 
-	if ( uKernelModule::attaching != 0 ) {
-	    uDEBUFPRT( uDebugPrt( "(uSystemTask &)%p.main, attaching\n", this ); )
-	    int port = uKernelModule::attaching;
-	    uKernelModule::attaching = 0;		// reset flag so don't do this again
-	    uLocalDebugger::uLocalDebuggerInstance = new uLocalDebugger( port );
-	    uDEBUGPRT( uDebugPrt( "(uSystemTask &)%p.main, local debugger started\n", this ); )
-	} // if
+		if ( uKernelModule::attaching != 0 ) {
+			uDEBUFPRT( uDebugPrt( "(uSystemTask &)%p.main, attaching\n", this ); );
+			int port = uKernelModule::attaching;
+			uKernelModule::attaching = 0;		// reset flag so don't do this again
+			uLocalDebugger::uLocalDebuggerInstance = new uLocalDebugger( port );
+			uDEBUGPRT( uDebugPrt( "(uSystemTask &)%p.main, local debugger started\n", this ); );
+		} // if
 #endif // __U_LOCALDEBUGGER_H__
-    } // for
+	} // for
 } // uSystemTask::main
 
 
@@ -74,7 +74,7 @@ uSystemTask::~uSystemTask() {
 
 
 void uSystemTask::reaper( uBaseTask &victim ) {
-    uSystemTask::victim = &victim;
+	uSystemTask::victim = &victim;
 } // uSystemTask::reaper
 
 

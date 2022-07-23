@@ -6,8 +6,8 @@
 # Author           : Lynn Tran
 # Created On       : Mon Oct 1 22:06:09 2018
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Sun Oct 11 11:55:08 2020
-# Update Count     : 25
+# Last Modified On : Sun Feb 20 23:07:47 2022
+# Update Count     : 44
 # 
 
 """
@@ -236,7 +236,7 @@ class Task(gdb.Command):
     """Print information and switch stacks for tasks"""
     usage_msg = """
     task                            : print tasks (ids) in userCluster, application tasks only
-    task <clusterName>              : print tasks (ids) in  clusterName, application tasks only
+    task <clusterName>              : print tasks (ids) in clusterName, application tasks only
     task all                        : print all clusters, all tasks
     task <id>                       : switch debugging stack to task id on userCluster
     task 0x<address>	            : switch debugging stack to task 0x<address> on any cluster
@@ -257,13 +257,13 @@ class Task(gdb.Command):
 
     def print_formatted_tasks(self, task_id, break_addr, curr):
         if str(curr['task_'].reference_value())[1:] == break_addr:
-            self.print_formatted_task(self.task_str_format, '* ' + str(task_id), curr['task_']['name'].string(),
+            self.print_formatted_task(self.task_str_format, '* ' + str(task_id), curr['task_']['name_'].string(),
                     str(curr['task_'].reference_value())[1:],
-                    str(curr['task_']['state']))
+                    str(curr['task_']['state_']))
         else:
-            self.print_formatted_task(self.task_str_format, str(task_id), curr['task_']['name'].string(),
+            self.print_formatted_task(self.task_str_format, str(task_id), curr['task_']['name_'].string(),
                     str(curr['task_'].reference_value())[1:],
-                    str(curr['task_']['state']))
+                    str(curr['task_']['state_']))
 
     def print_formatted_cluster(self, str_format, cluster_name, cluster_addr):
         print(str_format.format(cluster_name, cluster_addr))
@@ -308,7 +308,7 @@ class Task(gdb.Command):
 
         while True:
             global SysTask_Name
-            if (curr['task_']['name'].string() in SysTask_Name):
+            if (curr['task_']['name_'].string() in SysTask_Name):
                 self.print_formatted_tasks(systask_id, breakpoint_addr, curr)
                 systask_id -= 1
             else:
@@ -376,7 +376,7 @@ class Task(gdb.Command):
 
         while True:
             global SysTask_Name
-            if (curr['task_']['name'].string() not in SysTask_Name):
+            if (curr['task_']['name_'].string() not in SysTask_Name):
                 self.print_formatted_tasks(task_id, breakpoint_addr, curr)
 
                 curr = curr['next'].cast(uCPPTypes.uBaseTaskDL_ptr_type)
@@ -463,11 +463,11 @@ class Task(gdb.Command):
 
         uContext_t_ptr_type = gdb.lookup_type('UPP::uMachContext::uContext_t').pointer()
 
-        task_state = task['state']
+        task_state = task['state_']
         if task_state == gdb.parse_and_eval('uBaseTask::Terminate'):
             print('Cannot switch to a terminated thread')
             return
-        task_context = task['context'].cast(uContext_t_ptr_type)
+        task_context = task['context_'].cast(uContext_t_ptr_type)
 
         # lookup for sp,fp and uSwitch
         uSwitch_offset = 48
@@ -557,7 +557,7 @@ class Task(gdb.Command):
         elif task_id < 0:
             curr = task_root
             rootflag = False
-            while (curr['task_']['name'].string() not in SysTask_Name):
+            while (curr['task_']['name_'].string() not in SysTask_Name):
                 curr = curr['next'].cast(uCPPTypes.uBaseTaskDL_ptr_type)
                 if curr == task_root:
                     rootflag = True
@@ -569,7 +569,7 @@ class Task(gdb.Command):
                     while True:
                         curr = curr['next'].cast(uCPPTypes.uBaseTaskDL_ptr_type)
 
-                        if (curr['task_']['name'].string() in SysTask_Name):
+                        if (curr['task_']['name_'].string() in SysTask_Name):
                             systask_id -= 1
                             if curr == task_root:
                                 break
@@ -583,7 +583,7 @@ class Task(gdb.Command):
         else:
             curr = task_root
             rootflag = False
-            while (curr['task_']['name'].string() in SysTask_Name):
+            while (curr['task_']['name_'].string() in SysTask_Name):
                 curr = curr['next'].cast(uCPPTypes.uBaseTaskDL_ptr_type)
                 if curr == task_root:
                     rootflag = True
@@ -595,7 +595,7 @@ class Task(gdb.Command):
                     while True:
                         curr = curr['next'].cast(uCPPTypes.uBaseTaskDL_ptr_type)
 
-                        if (curr['task_']['name'].string() not in SysTask_Name):
+                        if (curr['task_']['name_'].string() not in SysTask_Name):
                             user_id += 1
                             if curr == task_root:
                                 break

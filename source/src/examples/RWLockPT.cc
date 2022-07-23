@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 23:01:36 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:02:15 2016
-// Update Count     : 2
+// Last Modified On : Wed Apr 20 23:06:52 2022
+// Update Count     : 3
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,61 +34,61 @@ const unsigned int Work = 100;
 pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 void * reader( void * ) {
-    for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
-	pthread_rwlock_rdlock( &rwlock );
-	for ( volatile unsigned int b = 0; b < Work; b += 1 );
-	pthread_rwlock_unlock( &rwlock );
-    } // for
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+		pthread_rwlock_rdlock( &rwlock );
+		for ( volatile unsigned int b = 0; b < Work; b += 1 );
+		pthread_rwlock_unlock( &rwlock );
+	} // for
 } // reader
 
 void *writer( void * ) {
-    for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
-	for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
-	pthread_rwlock_wrlock( &rwlock );
-	for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
-	pthread_rwlock_unlock( &rwlock );
-	for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
-    } // for
+	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+		for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
+		pthread_rwlock_wrlock( &rwlock );
+		for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
+		pthread_rwlock_unlock( &rwlock );
+		for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
+	} // for
 } // writer
 
 int main() {
-    enum { Readers = 6, Writers = 2 };
+	enum { Readers = 6, Writers = 2 };
 
-    pthread_t readers[Readers];
-    pthread_t writers[Writers];
-    int rc_readers[Readers];
-    int rc_writers[Writers];
+	pthread_t readers[Readers];
+	pthread_t writers[Writers];
+	int rc_readers[Readers];
+	int rc_writers[Writers];
 
-    //int rc_rwlock = pthread_rwlock_init(&rwlock,nullptr);
-    //int rc_mutex = pthread_mutex_init(&mutex, nullptr);
+	//int rc_rwlock = pthread_rwlock_init(&rwlock,nullptr);
+	//int rc_mutex = pthread_mutex_init(&mutex, nullptr);
 	
-    // create
+	// create
 
-    for ( unsigned int i = 0; i < Writers; i += 1 ) {
-	if ( rc_writers[i] = pthread_create( &writers[i], nullptr, writer, nullptr ) ) {
-	    perror( "pthread_create" );
-	    exit( EXIT_FAILURE );
-	} // if
-    } // for
-    for ( unsigned int i = 0; i < Readers; i += 1 ) {
-	if ( rc_readers[i] = pthread_create( &readers[i], nullptr, reader, nullptr ) ) {
-	    perror( "pthread_create" );
-	    exit( EXIT_FAILURE );
-	} // if
-    } // for
+	for ( unsigned int i = 0; i < Writers; i += 1 ) {
+		if ( rc_writers[i] = pthread_create( &writers[i], nullptr, writer, nullptr ) ) {
+			perror( "pthread_create" );
+			exit( EXIT_FAILURE );
+		} // if
+	} // for
+	for ( unsigned int i = 0; i < Readers; i += 1 ) {
+		if ( rc_readers[i] = pthread_create( &readers[i], nullptr, reader, nullptr ) ) {
+			perror( "pthread_create" );
+			exit( EXIT_FAILURE );
+		} // if
+	} // for
 
-    for ( unsigned int i = 0; i < Readers; i += 1 ) {
-	if ( pthread_join( readers[i], nullptr ) ) {
-	    perror( "pthread_join" );
-	    exit( EXIT_FAILURE );
-	} // if
-    } // for
-    for ( unsigned int i = 0; i < Writers; i += 1 ) {
-	if ( pthread_join(writers[i], nullptr) ) {
-	    perror( "pthread_join" );
-	    exit( EXIT_FAILURE );
-	} // if
-    } // for
+	for ( unsigned int i = 0; i < Readers; i += 1 ) {
+		if ( pthread_join( readers[i], nullptr ) ) {
+			perror( "pthread_join" );
+			exit( EXIT_FAILURE );
+		} // if
+	} // for
+	for ( unsigned int i = 0; i < Writers; i += 1 ) {
+		if ( pthread_join(writers[i], nullptr) ) {
+			perror( "pthread_join" );
+			exit( EXIT_FAILURE );
+		} // if
+	} // for
 } // main
 
 // Local Variables: //

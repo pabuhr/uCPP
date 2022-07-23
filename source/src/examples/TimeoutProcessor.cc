@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr  5 08:06:57 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 10:04:33 2017
-// Update Count     : 7
+// Last Modified On : Sun Apr 24 18:27:38 2022
+// Update Count     : 8
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,29 +31,29 @@ using namespace std;
 // "clus". When the processor is returned to "clus", the task "t" can wakeup from the sleep and continue.
 
 _Task T {
-    void main() {
-	osacquire( cout ) << "start " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
-	sleep( uDuration( 5 ) );
-	osacquire( cout ) << "done " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
-    } // T:: main
+	void main() {
+		osacquire( cout ) << "start " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
+		sleep( uDuration( 5 ) );
+		osacquire( cout ) << "done " << uThisCluster().getName() << " " << &uThisProcessor() << endl;
+	} // T:: main
   public:
-    T( uCluster &clus ) : uBaseTask( clus ) {}
+	T( uCluster &clus ) : uBaseTask( clus ) {}
 }; // T
 
 int main() {
-    uCluster clus( "clus" );
-    osacquire( cout ) << "cluster: " << &clus << endl;
-    uProcessor p;
-    T t( clus );
-    osacquire( cout ) << "over" << endl;
-    p.setCluster( clus );
-    sleep( 1 );
-    osacquire( cout ) << "back" << endl;
-    p.setCluster( uThisCluster() );
-    sleep( 10 );
-    osacquire( cout ) << "over" << endl;
-    p.setCluster( clus );
-    osacquire( cout ) << "finish" << endl;
+	uCluster clus( "clus" );
+	osacquire( cout ) << "cluster: " << &clus << endl;
+	uProcessor p;
+	T t( clus );
+	osacquire( cout ) << "over" << endl;
+	p.setCluster( clus );
+	sleep( 1 );
+	osacquire( cout ) << "back" << endl;
+	p.setCluster( uThisCluster() );
+	sleep( 10 );
+	osacquire( cout ) << "over" << endl;
+	p.setCluster( clus );
+	osacquire( cout ) << "finish" << endl;
 } // main
 
 // Local Variables: //

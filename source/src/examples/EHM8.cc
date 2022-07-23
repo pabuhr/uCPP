@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 15:50:51 2018
-// Update Count     : 86
+// Last Modified On : Wed Apr 20 23:10:14 2022
+// Update Count     : 87
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,55 +36,55 @@ _Event E1 {};
 _Event E2 {};
 
 void one() {
-    abort( "invalid 1\n" );
+	abort( "invalid 1\n" );
 }
 void two() {
-    abort( "invalid 2\n" );
+	abort( "invalid 2\n" );
 }
 void three() {
-    osacquire( cout ) << "success" << endl;
-    exit( EXIT_SUCCESS );
+	osacquire( cout ) << "success" << endl;
+	exit( EXIT_SUCCESS );
 }
 
 _Task fred {
-    int id;
+	int id;
 
-    void main() {
-	if ( id % 2 ) { 
-	    std::set_terminate( one );
-	    std::set_unexpected( two );
-	} else {
-	    std::set_terminate( two );
-	    std::set_unexpected( one );
-	} // if
+	void main() {
+		if ( id % 2 ) { 
+			std::set_terminate( one );
+			std::set_unexpected( two );
+		} else {
+			std::set_terminate( two );
+			std::set_unexpected( one );
+		} // if
 
-	for ( int i = 0; i < ROUNDS; i += 1 ) {
-	    yield();
-	    if ( id % 2 ) {
-		assert( one == std::set_terminate( one ) );
-		assert( two == std::set_unexpected( two ) );
-	    } else {
-		assert( two == std::set_terminate( two ) );
-		assert( one == std::set_unexpected( one ) );
-	    } // if	    
-	} // for
-    } // fred::main
+		for ( int i = 0; i < ROUNDS; i += 1 ) {
+			yield();
+			if ( id % 2 ) {
+				assert( one == std::set_terminate( one ) );
+				assert( two == std::set_unexpected( two ) );
+			} else {
+				assert( two == std::set_terminate( two ) );
+				assert( one == std::set_unexpected( one ) );
+			} // if	    
+		} // for
+	} // fred::main
   public:
-    fred( int id ) : id( id ) {}
+	fred( int id ) : id( id ) {}
 }; // fred
 
 
 void T1() {
-    osacquire( cout ) << "T1" << endl;
-    _Throw E2();
+	osacquire( cout ) << "T1" << endl;
+	_Throw E2();
 }
 void T2() {
-    osacquire( cout ) << "T2" << endl;
-    _Throw E2();
+	osacquire( cout ) << "T2" << endl;
+	_Throw E2();
 }
 void T3() {
-    osacquire( cout ) << "T3" << endl;
-    _Throw E2();
+	osacquire( cout ) << "T3" << endl;
+	_Throw E2();
 }
 
 #if __cplusplus < 201703L // c++17
@@ -93,57 +93,57 @@ void T3() {
 
 _Task mary {
   public:
-    void mem() throw(E2) {
-	_Throw E1();
-    }
+	void mem() throw(E2) {
+		_Throw E1();
+	}
   private:
-    void m1() throw(E2) {
-	std::set_unexpected( T3 );
-	_Throw E1();
-    }
-    void m2() throw(E2) {
-	_Throw E1();
-    }
-    void main() {
-	try {
-	    _Accept( mem );
-	} catch( uMutexFailure::RendezvousFailure & ) {
-	    osacquire( cout ) << "mary::main 0 caught uRendezvousFailure" << endl;
+	void m1() throw(E2) {
+		std::set_unexpected( T3 );
+		_Throw E1();
 	}
-	try {
-	    m1();
-	} catch( E2 & ) {
-	    osacquire( cout ) << "mary::main 1 caught E2" << endl;
+	void m2() throw(E2) {
+		_Throw E1();
 	}
-	std::set_unexpected( T1 );
-	try {
-	    m2();
-	} catch( E2 & ) {
-	    osacquire( cout ) << "mary::main 2 caught E2" << endl;
+	void main() {
+		try {
+			_Accept( mem );
+		} catch( uMutexFailure::RendezvousFailure & ) {
+			osacquire( cout ) << "mary::main 0 caught uRendezvousFailure" << endl;
+		}
+		try {
+			m1();
+		} catch( E2 & ) {
+			osacquire( cout ) << "mary::main 1 caught E2" << endl;
+		}
+		std::set_unexpected( T1 );
+		try {
+			m2();
+		} catch( E2 & ) {
+			osacquire( cout ) << "mary::main 2 caught E2" << endl;
+		}
 	}
-    }
 };
 #endif // __cplusplus <= 201703L
 
 int main() {
-    uProcessor processors[NP - 1] __attribute__(( unused )); // more than one processor
-    fred *f[NP];
-    int i;
+	uProcessor processors[NP - 1] __attribute__(( unused )); // more than one processor
+	fred *f[NP];
+	int i;
 
-    for ( i = 0; i < NP; i += 1 ) {
-	f[i] = new fred( i );
-    } // for
-    for ( i = 0; i < NP; i += 1 ) {
-	delete f[i];
-    } // for
+	for ( i = 0; i < NP; i += 1 ) {
+		f[i] = new fred( i );
+	} // for
+	for ( i = 0; i < NP; i += 1 ) {
+		delete f[i];
+	} // for
 
 #if __cplusplus < 201703L // c++17
-    mary m;
-    std::set_unexpected( T2 );
-    try {
-	m.mem();
-    } catch( E2 & ) {
-	osacquire( cout ) << "main caught E2" << endl;
-    } // try
+	mary m;
+	std::set_unexpected( T2 );
+	try {
+		m.mem();
+	} catch( E2 & ) {
+		osacquire( cout ) << "main caught E2" << endl;
+	} // try
 #endif // __cplusplus <= 201703L
 } // main

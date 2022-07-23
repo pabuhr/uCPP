@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 17:48:28 2021
-// Update Count     : 716
+// Last Modified On : Tue Apr  5 08:09:21 2022
+// Update Count     : 722
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -71,7 +71,7 @@ void uLocalDebugger::uLocalDebuggerBeginCode() {}		// marker beginning of debugg
 
 
 void uLocalDebugger::readPDU( uSocketClient &sockClient, uDebuggerProtocolUnit &pdu ) {
-    uDEBUGPRT( uDebugPrt( "%d readPDU, called by task:%p\n", __LINE__, &uThisTask() ); )
+	uDEBUGPRT( uDebugPrt( "%d readPDU, called by task:%p\n", __LINE__, &uThisTask() ); );
 
 	uDebuggerProtocolUnit::RequestType request_type;
 
@@ -82,7 +82,7 @@ void uLocalDebugger::readPDU( uSocketClient &sockClient, uDebuggerProtocolUnit &
 	} // if
 
 	pdu.re_init( request_type );
-    uDEBUGPRT( uDebugPrt( "%d uLocalDebugger/readPDU : got request %d\n", __LINE__, request_type ); )
+	uDEBUGPRT( uDebugPrt( "%d uLocalDebugger/readPDU : got request %d\n", __LINE__, request_type ); );
 	if ( pdu.data_size() ) {
 		if ( sockClient.read( (char *)pdu.data_buffer(), pdu.data_size() ) != pdu.data_size() ) {
 			uLocalDebugger::uGlobalDebuggerActive = false;
@@ -91,7 +91,7 @@ void uLocalDebugger::readPDU( uSocketClient &sockClient, uDebuggerProtocolUnit &
 		} // if
 	} // if
 
-    uDEBUGPRT( uDebugPrt( "%d readPDU, done\n", __LINE__ ); )
+	uDEBUGPRT( uDebugPrt( "%d readPDU, done\n", __LINE__ ); );
 } // uLocalDebugger::readPDU
 
 
@@ -103,19 +103,19 @@ void uLocalDebugger::readPDU( uSocketClient &sockClient, uDebuggerProtocolUnit &
 // debugger task.
 
 _Task uLocalDebuggerReader {
-    uLocalDebugger &debugger;
-    uSocketClient &sockClient;
-    uDebuggerProtocolUnit &pdu;
+	uLocalDebugger &debugger;
+	uSocketClient &sockClient;
+	uDebuggerProtocolUnit &pdu;
 
-    void main();
+	void main();
   public:
-    uLocalDebuggerReader( uLocalDebugger& debugger, uSocketClient& sockClient );
-    ~uLocalDebuggerReader();
+	uLocalDebuggerReader( uLocalDebugger& debugger, uSocketClient& sockClient );
+	~uLocalDebuggerReader();
 }; // uLocalDebuggerReader
 
 
 void uLocalDebuggerReader::main() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, starts\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, starts\n", __LINE__, this ); );
 
 	uCluster *cluster;
 	uProcessor *processor;
@@ -132,22 +132,22 @@ void uLocalDebuggerReader::main() {
 			break;
 		  case uDebuggerProtocolUnit::OshutdownConnection:
 			debugger.finish();
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OshutdownConnection\n", __LINE__, this ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OshutdownConnection\n", __LINE__, this ); );
 			break;
 		  case uDebuggerProtocolUnit::CfinishLocalDebugger:
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw CfinishLocalDebugger, bye\n", __LINE__, this ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw CfinishLocalDebugger, bye\n", __LINE__, this ); );
 			break endloop;
 		  case uDebuggerProtocolUnit::OstartAtomicOperation:
 			debugger.performAtomicOperation();
 			break;
 		  case uDebuggerProtocolUnit::OignoreClusterMigration:
 			pdu.readOignoreClusterMigration( cluster, ignore );
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OignoreClusterMigration, cluster:%p, ignore:%d\n", __LINE__, this, cluster, ignore ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OignoreClusterMigration, cluster:%p, ignore:%d\n", __LINE__, this, cluster, ignore ); );
 			cluster->debugIgnore = ignore;
 			break;
 		  case uDebuggerProtocolUnit::OignoreKernelThreadMigration:
 			pdu.readOignoreKernelThreadMigration( processor, ignore );
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OignoreKernelThreadMigration, processor:%p, ignore:%d\n", __LINE__, this, processor, ignore ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, saw OignoreKernelThreadMigration, processor:%p, ignore:%d\n", __LINE__, this, processor, ignore ); );
 			processor->debugIgnore = ignore;
 			break;
 		  case uDebuggerProtocolUnit::BbpMarkCondition:
@@ -156,7 +156,7 @@ void uLocalDebuggerReader::main() {
 				ULThreadId ul_thread_id;
 				pdu.readBbpMarkCondition( bp_no, ul_thread_id );
 				debugger.setConditionMask( bp_no, ul_thread_id );
-				uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, read BbpMarkCondition %d\n", __LINE__, this, bp_no ); )
+				uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, read BbpMarkCondition %d\n", __LINE__, this, bp_no ); );
 				break;
 			}
 		  case uDebuggerProtocolUnit::BbpClearCondition:
@@ -165,7 +165,7 @@ void uLocalDebuggerReader::main() {
 				ULThreadId ul_thread_id;
 				pdu.readBbpClearCondition( bp_no, ul_thread_id );
 				debugger.resetConditionMask( bp_no, ul_thread_id );
-				uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, read BbpClearCondition %d\n", __LINE__, this, bp_no ); )
+				uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerReader &)%p.main, read BbpClearCondition %d\n", __LINE__, this, bp_no ); );
 				break;
 			}
 		  default:
@@ -189,7 +189,7 @@ uLocalDebuggerReader::~uLocalDebuggerReader() {
 
 
 void uLocalDebugger::main() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, starts\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, starts\n", __LINE__, this ); );
 
 	if ( ! attaching ) {
 		char fullpath[FILENAME_MAX];
@@ -218,10 +218,10 @@ void uLocalDebugger::main() {
 		send( pdu );
 	} // if
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, port:%d, machine:%p, name:%p\n", __LINE__, this, port, machine, name ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, port:%d, machine:%p, name:%p\n", __LINE__, this, port, machine, name ); );
 
 	for ( ;; ) {
-		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, loop\n", __LINE__, this ); )
+		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, loop\n", __LINE__, this ); );
 		_Accept( ~uLocalDebugger ) {
 			break;
 		} or _Accept( breakpointHandler ) {
@@ -257,20 +257,20 @@ void uLocalDebugger::main() {
 
 	delete [] bpc_list;
 
-    // SKULLDUGGERY: uLocalDebuggerReader has to execute one more time to receive
-    // the confirmation of the shutdown. However, when it executes, it appears
-    // to the deadlock detection algorithm that the system is deadlocked
-    // because there are no user tasks executing at this point in the shutdown.
-    // To trick the deadlock detection algorithm, the number of debugger
-    // blocked tasks is incremented so that it "appears" there is still a user
-    // task executing.
+	// SKULLDUGGERY: uLocalDebuggerReader has to execute one more time to receive
+	// the confirmation of the shutdown. However, when it executes, it appears
+	// to the deadlock detection algorithm that the system is deadlocked
+	// because there are no user tasks executing at this point in the shutdown.
+	// To trick the deadlock detection algorithm, the number of debugger
+	// blocked tasks is incremented so that it "appears" there is still a user
+	// task executing.
 
 	debugger_blocked_tasks += 1;
 
-    delete dispatcher;
+	delete dispatcher;
 	delete sockClient;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.main, done\n", __LINE__, this ); );
 } // uLocalDebugger::main
 
 
@@ -292,21 +292,21 @@ void uLocalDebugger::resetConditionMask( int bp_no, void *ul_thread_id ) {
 
 
 void uLocalDebugger::deregister() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.deregister, called\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.deregister, called\n", __LINE__, this ); );
 
   if ( ! uLocalDebuggerActive ) return;
 
 	uDebuggerProtocolUnit pdu;
 
 	// de-register the systemProcessor
-	pdu.createNdestroyKernelThread( U_THIS_TASK, uKernelModule::systemProcessor );
+	pdu.createNdestroyKernelThread( U_THIS_TASK, &uKernelModule::systemProcessor );
 	send( pdu );
 
 	// just consume the confirmation PDU and trust the global debugger
 	receive();
 
 	// de-register the systemCluster
-	pdu.createNdestroyCluster( uKernelModule::systemCluster );
+	pdu.createNdestroyCluster( &uKernelModule::systemCluster );
 	send( pdu );
 
 	pdu.re_init( uDebuggerProtocolUnit::NoType );
@@ -317,14 +317,14 @@ void uLocalDebugger::deregister() {
 
 
 void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const char *name ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, on its way...\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, on its way...\n", __LINE__, this ); );
 
 	sockClient = new uSocketClient( port, uSocket::gethostbyname( machine ) ); // create the socket client
 	uGlobalDebuggerActive = true;						// global debugger has connected to socket
 
 	// Turn on local debugger requests only after the socket is created.
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, sending init data : max_no_of_breakpoints %d\n", __LINE__, this, max_no_of_breakpoints ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, sending init data : max_no_of_breakpoints %d\n", __LINE__, this, max_no_of_breakpoints ); );
 
 	int length = strlen( name ) + 1;
 	pdu.createNinitLocalDebugger( max_no_of_breakpoints, length );
@@ -339,8 +339,8 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 
 	uKernelModule::systemCluster->debugIgnore = true;
 #else
-    // TEMPORARY: THE GLOBAL DEBUGGER FAILS IF THIS IS NOT SET TO FALSE: SOURCE
-    // CODE FOR TASKS CANNOT BE FOUND. IT NEEDS FIXING.
+	// TEMPORARY: THE GLOBAL DEBUGGER FAILS IF THIS IS NOT SET TO FALSE: SOURCE
+	// CODE FOR TASKS CANNOT BE FOUND. IT NEEDS FIXING.
 
 	uKernelModule::systemProcessor->debugIgnore = false;
 #endif // __U_MULTI__
@@ -353,7 +353,7 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 	uClusterDL *cr;
 	for ( ci.over( *uKernelModule::globalClusters ); ci >> cr; ) {
 		uCluster &cluster = cr->cluster();
-		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, cluster is %s (%p)\n", __LINE__, this, cluster.getName(), &cluster ); )
+		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, cluster is %s (%p)\n", __LINE__, this, cluster.getName(), &cluster ); );
 		createCluster( cluster );
 		send( pdu );
 
@@ -361,7 +361,7 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 		uProcessorDL *pr;
 		for ( uSeqIter<uProcessorDL> iter( cluster.processorsOnCluster ); iter >> pr; ) {
 			uProcessor &processor = pr->processor();
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, processor is %p\n", __LINE__, this, &processor ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, processor is %p\n", __LINE__, this, &processor ); );
 			pdu.createNcreateKernelThread( U_THIS_TASK, U_THIS_CLUSTER, &processor, &cluster, processor.pid, processor.debugIgnore );
 			send( pdu );
 			receive();
@@ -371,7 +371,7 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 		uBaseTaskDL *bt;
 		for ( uSeqIter<uBaseTaskDL> iter( cluster.tasksOnCluster ); iter >> bt; ) {
 			uBaseTask &task = bt->task();
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, task %s (%p)\n", __LINE__, this, task.getName(), &task ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, task %s (%p)\n", __LINE__, this, task.getName(), &task ); );
 			// ignore  boot, system, local debugger, dispatcher and processor tasks
 
 			if ( &task != uKernelModule::bootTask && &task != uKernelModule::systemTask &&
@@ -386,7 +386,7 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 				pdu.createNattachULThread( &task, U_THIS_TASK, &cluster, regs, task.getName() );
 #else
 				// in uni-processor, pretend that every task exist on the system cluster
-				pdu.createNattachULThread( &task, U_THIS_TASK, uKernelModule::systemCluster, regs, task.getName() );
+				pdu.createNattachULThread( &task, U_THIS_TASK, &uKernelModule::systemCluster, regs, task.getName() );
 #endif
 				send( pdu );
 				receive();
@@ -395,26 +395,26 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 		} // for
 	} // for
 
-    // initialize conditional breakpoint array
+	// initialize conditional breakpoint array
 	bpc_list = new uBConditionList[max_no_of_breakpoints]();
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uCreateLocalDebugger, done\n", __LINE__, this ); );
 } // uLocalDebugger::uCreateLocalDebugger
 
 
 uLocalDebugger::uLocalDebugger( const char *port, const char *machine, const char *name ) :
 		uBaseTask ( *uKernelModule::systemCluster ), port( atoi(port) ), machine( machine ), name( name ), pdu( *new uDebuggerProtocolUnit ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger( port:%s, machine:%s, name:%s, done\n", __LINE__, this, port, machine, name ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger( port:%s, machine:%s, name:%s, done\n", __LINE__, this, port, machine, name ); );
 
 	debugger_blocked_tasks = 0;
 	uLocalDebuggerActive = true;
 	attaching = false;
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger, exit( port:%s, machine:%s, name:%s, done\n", __LINE__, this, port, machine, name ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger, exit( port:%s, machine:%s, name:%s, done\n", __LINE__, this, port, machine, name ); );
 } // uLocalDebugger::uLocalDebugger
 
 
 uLocalDebugger::uLocalDebugger( int port ) : uBaseTask ( *uKernelModule::systemCluster ), port( port ), pdu( *new uDebuggerProtocolUnit ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger( port:%d ), done\n", __LINE__, this, port ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.uLocalDebugger( port:%d ), done\n", __LINE__, this, port ); );
 
 	debugger_blocked_tasks = 0;
 	uLocalDebuggerActive = true;
@@ -423,49 +423,49 @@ uLocalDebugger::uLocalDebugger( int port ) : uBaseTask ( *uKernelModule::systemC
 
 
 uLocalDebugger::~uLocalDebugger() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.~uLocalDebugger, called\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.~uLocalDebugger, called\n", __LINE__, this ); );
 
 	uLocalDebuggerActive = false;
 	delete &pdu;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.~uLocalDebugger, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.~uLocalDebugger, done\n", __LINE__, this ); );
 } // uLocalDebugger::~uLocalDebugger
 
 
 void uLocalDebugger::send( uDebuggerProtocolUnit &pdu ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.send, type %d, total_size %d\n", __LINE__, this, pdu.getType(), pdu.total_size() ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.send, type %d, total_size %d\n", __LINE__, this, pdu.getType(), pdu.total_size() ); );
 
-    assert( uLocalDebuggerActive );
-    sockClient->write( pdu.total_buffer(), pdu.total_size() );
+	assert( uLocalDebuggerActive );
+	sockClient->write( pdu.total_buffer(), pdu.total_size() );
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.send, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.send, done\n", __LINE__, this ); );
 } // uLocalDebugger::send
 
 
 void uLocalDebugger::receive() {						// only called by the local debugger
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, task %s (%p) goes to sleep\n", __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, task %s (%p) goes to sleep\n", __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK ); );
 
-    assert( uLocalDebuggerActive );
-    debugger_blocked_tasks += 1;
+	assert( uLocalDebuggerActive );
+	debugger_blocked_tasks += 1;
 	_Accept( unblockTask );
 	debugger_blocked_tasks -= 1;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, done\n", __LINE__, this ); );
 } // uLocalDebugger::receive
 
 
 bool uLocalDebugger::receive( uDebuggerProtocolUnit &pdu ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, task %s (%p) goes to sleep / pdu is %p\n", __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK, &pdu ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, task %s (%p) goes to sleep / pdu is %p\n", __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK, &pdu ); );
 
-    assert( uLocalDebuggerActive );
-    debugger_blocked_tasks += 1;
-    blockedNode node( U_THIS_TASK, pdu );
+	assert( uLocalDebuggerActive );
+	debugger_blocked_tasks += 1;
+	blockedNode node( U_THIS_TASK, pdu );
 	blockedTasks.add( &node );
 	node.wait.wait();
 	blockedTasks.remove( &node );
 	debugger_blocked_tasks -= 1;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, done, %p woke up\n", __LINE__, this, U_THIS_TASK ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.receive, done, %p woke up\n", __LINE__, this, U_THIS_TASK ); );
 
 	return true;
 } // uLocalDebugger::receive
@@ -475,7 +475,7 @@ uLocalDebugger::blockedNode::blockedNode( uBaseTask *key, uDebuggerProtocolUnit 
 
 
 void uLocalDebugger::unblockTask( uBaseTask *ul_thread, uDebuggerProtocolUnit &pdu ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.unblockTask, waking %p\n", __LINE__, this, ul_thread ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.unblockTask, waking %p\n", __LINE__, this, ul_thread ); );
 
 	blockedNode *p;
 	for ( uSeqIter<blockedNode> iter(blockedTasks); iter >> p; ) {	// search for thread
@@ -488,7 +488,7 @@ void uLocalDebugger::unblockTask( uBaseTask *ul_thread, uDebuggerProtocolUnit &p
 		p->wait.signal();								// wake thread
 	} // if
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.unblockTask, woke %p\n", __LINE__, this, ul_thread ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.unblockTask, woke %p\n", __LINE__, this, ul_thread ); );
 } // uLocalDebugger::unblockTask
 
 
@@ -496,7 +496,7 @@ int uLocalDebugger::breakpointHandler( int no ) {
 	int adjustment = 0;
 	MinimalRegisterSet regs;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.breakpointHandler, %d called\n", __LINE__, this, no ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.breakpointHandler, %d called\n", __LINE__, this, no ); );
 
 	// save some important registers
 	CREATE_MINIMAL_REGISTER_SET( regs );
@@ -507,7 +507,7 @@ int uLocalDebugger::breakpointHandler( int no ) {
 		send( pdu );
 		if ( receive( pdu ) ) {
 			pdu.readAreplyAddress( cond->bp_cond );
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.breakpointHandler, address received for bp[%d]: var1 [%d %d %d %d] var2 [%d %d %d %d] operation %d.\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.breakpointHandler, address received for bp[%d]: var1 [%d %d %d %d] var2 [%d %d %d %d] operation %d.\n",
 					   __LINE__, this, no,
 					   cond->bp_cond.var[0].offset, cond->bp_cond.var[0].field_off, cond->bp_cond.var[0].atype,
 					   cond->bp_cond.var[0].vtype,
@@ -536,7 +536,7 @@ int uLocalDebugger::breakpointHandler( int no ) {
 			pdu.readOcontULThread( task_address, U_THIS_TASK->taskDebugMask, adjustment );
 		} // if
 	} // if
-    uDEBUGPRT( uDebugPrt( "%d uLocalDebugger::breakpointHandler : leaving with adjustment : %d\n", __LINE__, adjustment ); )
+	uDEBUGPRT( uDebugPrt( "%d uLocalDebugger::breakpointHandler : leaving with adjustment : %d\n", __LINE__, adjustment ); );
 	return adjustment;
 } // uLocalDebugger::breakpointHandler
 
@@ -549,14 +549,14 @@ void uLocalDebugger::performAtomicOperation() {
 	uCluster *cluster;
 	uDebuggerProtocolUnit pdu;
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, sending atomic operation confirmation\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, sending atomic operation confirmation\n", __LINE__, this ); );
 
 	pdu.createCconfirmAtomicOperation( true );
 	send( pdu );
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, waiting for code change check request\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, waiting for code change check request\n", __LINE__, this ); );
 
-    debugger_blocked_tasks += 1;						// pretend to be user task during this operation
+	debugger_blocked_tasks += 1;						// pretend to be user task during this operation
 	readPDU( *sockClient, pdu );
 	debugger_blocked_tasks -= 1;
 
@@ -575,7 +575,7 @@ void uLocalDebugger::performAtomicOperation() {
 			cluster = &cr->cluster();
 #endif // __U_MULTI__
 
-			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, checking cluster %p\n", __LINE__, this, cluster ); )
+			uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, checking cluster %p\n", __LINE__, this, cluster ); );
 
 			uSeqIter<uBaseTaskDL> ci;
 			uBaseTaskDL *cr;
@@ -588,7 +588,7 @@ void uLocalDebugger::performAtomicOperation() {
 					|| ( (long *)cr->task().debugPCandSRR >= low2 && (long *)cr->task().debugPCandSRR < high2 ) ) {
 					result = false;
 
-					uDEBUGPRT( 	uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, interference !!!!\n", __LINE__, this ); )
+					uDEBUGPRT( 	uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, interference !!!!\n", __LINE__, this ); );
 
 					goto end;
 				} // if
@@ -600,7 +600,7 @@ void uLocalDebugger::performAtomicOperation() {
 
 	  end: ;
 
-		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, sending confirmation\n", __LINE__, this ); )
+		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, sending confirmation\n", __LINE__, this ); );
 
 		pdu.re_init( uDebuggerProtocolUnit::NoType );
 		pdu.createCconfirmCodeRange( result );
@@ -608,7 +608,7 @@ void uLocalDebugger::performAtomicOperation() {
 
 		// now the poke is done by the global debugger
 
-		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, wait for confirmation\n", __LINE__, this ); )
+		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, wait for confirmation\n", __LINE__, this ); );
 
 		debugger_blocked_tasks += 1;					// pretend to be user task during this operation
 		readPDU( *sockClient, pdu );
@@ -617,16 +617,16 @@ void uLocalDebugger::performAtomicOperation() {
 
 	pdu.readCfinishAtomicOperation();
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, done, got CfinishAtomicOperation\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.performAtomicOperation, done, got CfinishAtomicOperation\n", __LINE__, this ); );
 } // uLocalDebugger::performAtomicOperation
 
 
 void uLocalDebugger::attachULThread( uBaseTask *this_task, uCluster *this_cluster __attribute__(( unused )) ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, task %s (%p) / cluster %p\n", __LINE__, this, this_task->getName(), this_task, this_cluster ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, task %s (%p) / cluster %p\n", __LINE__, this, this_task->getName(), this_task, this_cluster ); );
 
   if ( ! uLocalDebuggerActive ) return;
 
-    // retrieve some important registers
+	// retrieve some important registers
 	MinimalRegisterSet regs;
 	int *registers = (int *)this_task->taskDebugMask;
 	regs.pc = 0;
@@ -637,20 +637,20 @@ void uLocalDebugger::attachULThread( uBaseTask *this_task, uCluster *this_cluste
 #else
 	// in uni-processor, pretend that every task exist on the system cluster
 	// WHY IS THIS DONE LIKE THIS?
-	pdu.createNattachULThread( this_task, U_THIS_TASK, uKernelModule::systemCluster, regs, this_task->getName() );
+	pdu.createNattachULThread( this_task, U_THIS_TASK, &uKernelModule::systemCluster, regs, this_task->getName() );
 #endif
 
 	if ( receive( pdu ) ) {
-		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, attach confirmation received\n", __LINE__, this ); )
+		uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, attach confirmation received\n", __LINE__, this ); );
 		memset( this_task->taskDebugMask, 0, 8 );
 	} // if
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.attachULThread, done\n", __LINE__, this ); );
 } // uLocalDebugger::attachULThread
 
 
 void uLocalDebugger::checkPoint() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.checkPoint, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.checkPoint, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER ); );
 
   if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || (uProcessor *)(&U_THIS_TASK->bound_) != nullptr ) return;
 	checkPointMX();
@@ -658,12 +658,12 @@ void uLocalDebugger::checkPoint() {
 
 
 void uLocalDebugger::checkPointMX() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.checkPointMX, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.checkPointMX, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER ); );
 } // uLocalDebugger::checkPointMX
 
 
 void uLocalDebugger::createULThread() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThread, task %p (%s) / cluster %p (%s)\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThread, task %p (%s) / cluster %p (%s)\n",
 						  __LINE__, this, U_THIS_TASK, U_THIS_TASK->getName(), U_THIS_CLUSTER, U_THIS_CLUSTER->getName() ); )
 	MinimalRegisterSet regs;
 	CREATE_MINIMAL_REGISTER_SET( regs );				// save caller information
@@ -681,7 +681,7 @@ void uLocalDebugger::createULThread() {
 
 
 void uLocalDebugger::createULThreadMX( MinimalRegisterSet &regs ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThreadMX, task %p (%s) / cluster %p (%s)\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThreadMX, task %p (%s) / cluster %p (%s)\n",
 
 						  __LINE__, this, U_THIS_TASK, U_THIS_TASK->getName(), U_THIS_CLUSTER, U_THIS_CLUSTER->getName() ); )
 
@@ -692,19 +692,19 @@ void uLocalDebugger::createULThreadMX( MinimalRegisterSet &regs ) {
 #else
 	// in uni-processor, pretend that every task exist on the system cluster
 	// WHY IS THIS DONE LIKE THIS?
-	pdu.createNcreateULThread( U_THIS_TASK, uKernelModule::systemCluster, regs, U_THIS_TASK->getName() );
+	pdu.createNcreateULThread( U_THIS_TASK, &uKernelModule::systemCluster, regs, U_THIS_TASK->getName() );
 #endif
 	if ( receive( pdu ) ) {
 		int dummy;
 		uBaseTask *task_address;
 		pdu.readOcontULThread( task_address, U_THIS_TASK->taskDebugMask, dummy );
 	} // if
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThreadMX, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createULThreadMX, done\n", __LINE__, this ); );
 } // uLocalDebugger::createULThreadMX
 
 
 void uLocalDebugger::destroyULThread() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThread, task %p (%s) / cluster %p (%s)\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThread, task %p (%s) / cluster %p (%s)\n",
 						  __LINE__, this, U_THIS_TASK, U_THIS_TASK->getName(), U_THIS_CLUSTER, U_THIS_CLUSTER->getName() ); )
 
   if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || U_THIS_TASK == uThisProcessor().procTask ) return;
@@ -714,7 +714,7 @@ void uLocalDebugger::destroyULThread() {
 
 
 void uLocalDebugger::destroyULThreadMX() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThreadMX, task %p (%s) / cluster %p (%s)\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThreadMX, task %p (%s) / cluster %p (%s)\n",
 						  __LINE__, this, U_THIS_TASK, U_THIS_TASK->getName(), U_THIS_CLUSTER, U_THIS_CLUSTER->getName() ); )
 
   if ( ! uLocalDebuggerActive ) return;
@@ -722,34 +722,34 @@ void uLocalDebugger::destroyULThreadMX() {
 	pdu.createNdestroyULThread( U_THIS_TASK );
 	receive( pdu );										// receive confirmation
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThreadMX, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyULThreadMX, done\n", __LINE__, this ); );
 } // uLocalDebugger::destroyULThreadMX
 
 
 void uLocalDebugger::createCluster( uCluster &cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createCluster, cluster %p\n", __LINE__, this, &cluster ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createCluster, cluster %p\n", __LINE__, this, &cluster ); );
 
   if ( ! uLocalDebuggerActive ) return;
 
 	pdu.createNcreateCluster( &cluster, cluster.getName(), cluster.debugIgnore );
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createCluster, type %d, done\n", __LINE__, this, pdu.getType() ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createCluster, type %d, done\n", __LINE__, this, pdu.getType() ); );
 } // uLocalDebugger::createCluster
 
 
 void uLocalDebugger::destroyCluster( uCluster &cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyCluster, cluster %p\n", __LINE__, this, &cluster ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyCluster, cluster %p\n", __LINE__, this, &cluster ); );
 
   if ( ! uLocalDebuggerActive ) return;
 
 	pdu.createNdestroyCluster( &cluster );
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyCluster, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyCluster, done\n", __LINE__, this ); );
 } // uLocalDebugger::destroyCluster
 
 
 void uLocalDebugger::createKernelThread( uProcessor &process, uCluster &cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createKernelThread, creating task: %s (%p), creating cluster:%p, process %p / cluster %p / pid %d\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createKernelThread, creating task: %s (%p), creating cluster:%p, process %p / cluster %p / pid %d\n",
 						  __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK, U_THIS_CLUSTER, &process, &cluster, process.pid ); )
 
   if ( ! uLocalDebuggerActive ) return;
@@ -757,24 +757,24 @@ void uLocalDebugger::createKernelThread( uProcessor &process, uCluster &cluster 
 	pdu.createNcreateKernelThread( U_THIS_TASK, U_THIS_CLUSTER, &process, &cluster, process.pid, process.debugIgnore );
 	receive( pdu );										// receive confirmation
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createKernelThread, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.createKernelThread, done\n", __LINE__, this ); );
 } // uLocalDebugger::createKernelThread
 
 
 void uLocalDebugger::destroyKernelThread( uProcessor &process ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyKernelThread, process %p\n", __LINE__, this, &process ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyKernelThread, process %p\n", __LINE__, this, &process ); );
 
   if ( ! uLocalDebuggerActive ) return;
 
 	pdu.createNdestroyKernelThread( U_THIS_TASK, &process );
 	receive( pdu );										// receive confirmation
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyKernelThread, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.destroyKernelThread, done\n", __LINE__, this ); );
 } // uLocalDebugger::destroyKernelThread
 
 
 void uLocalDebugger::migrateKernelThread( uProcessor &process, uCluster &to_cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateKernelThread, process %p / to_cluster %p\n", __LINE__, this, &process, &to_cluster ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateKernelThread, process %p / to_cluster %p\n", __LINE__, this, &process, &to_cluster ); );
 
   if ( ! uLocalDebuggerActive ) return;
   if ( U_THIS_CLUSTER->debugIgnore || to_cluster.debugIgnore || process.debugIgnore ) return;
@@ -782,12 +782,12 @@ void uLocalDebugger::migrateKernelThread( uProcessor &process, uCluster &to_clus
 	pdu.createNmigrateKernelThread( U_THIS_TASK, &process, &to_cluster );
 	receive( pdu );										// receive confirmation
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateKernelThread, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateKernelThread, done\n", __LINE__, this ); );
 } // uLocalDebugger::migrateKernelThread
 
 
 void uLocalDebugger::migrateULThread( uCluster &to_cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThread, task %s (%p) / to_cluster %p\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThread, task %s (%p) / to_cluster %p\n",
 						  __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK, &to_cluster ); )
 
   if ( U_THIS_CLUSTER->debugIgnore || to_cluster.debugIgnore ) return;
@@ -797,7 +797,7 @@ void uLocalDebugger::migrateULThread( uCluster &to_cluster ) {
 
 
 void uLocalDebugger::migrateULThreadMX( uCluster &to_cluster ) {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThreadMX, task %s (%p) / to_cluster %p\n",
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThreadMX, task %s (%p) / to_cluster %p\n",
 						  __LINE__, this, (U_THIS_TASK)->getName(), U_THIS_TASK, &to_cluster ); )
 
   if ( ! uLocalDebuggerActive ) return;
@@ -805,25 +805,25 @@ void uLocalDebugger::migrateULThreadMX( uCluster &to_cluster ) {
 	pdu.createNmigrateULThread( U_THIS_TASK, &to_cluster );
 	receive( pdu );										// receive confirmation
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThreadMX, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.migrateULThreadMX, done\n", __LINE__, this ); );
 } // uLocalDebugger::migrateULThreadMX
 
 
 void uLocalDebugger::finish() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.finish, called\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.finish, called\n", __LINE__, this ); );
 
 	pdu.createNfinishLocalDebugger( false );
 } // uLocalDebugger::finish
 
 
 void uLocalDebugger::cont_handler( __U_SIGTYPE__ ) {
-    uDEBUGPRT( uDebugPrt( "%d uLocalDebugger::cont_handler, got signal\n", __LINE__ ); )
+	uDEBUGPRT( uDebugPrt( "%d uLocalDebugger::cont_handler, got signal\n", __LINE__ ); );
 	abort_confirmed = true;
 } // cont_handler
 
 
 void uLocalDebugger::abortApplication() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.abortApplication\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.abortApplication\n", __LINE__, this ); );
 
   if ( ! uLocalDebuggerActive ) return;
   if ( U_THIS_TASK == uLocalDebuggerInstance ) return;	// prevent recursion
@@ -835,7 +835,7 @@ void uLocalDebugger::abortApplication() {
 		sigpause( 0 );
 	} // while
 
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.abortApplication, done\n", __LINE__, this ); )
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.abortApplication, done\n", __LINE__, this ); );
 } // uLocalDebugger::abortApplication
 
 
@@ -843,8 +843,8 @@ void uLocalDebugger::abortApplication() {
 
 
 uLocalDebuggerBoot::uLocalDebuggerBoot() {
-    uCount += 1;
-    if ( uCount == 1 ) {
+	uCount += 1;
+	if ( uCount == 1 ) {
 		char *port = getenv( "_KDB_DEBUGGER_PORT_" );
 		char *machine = getenv( "_KDB_DEBUGGER_MACHINE_" );
 		char *name = getenv( "_KDB_DEBUGGER_TARGET_NAME_" );
@@ -855,19 +855,19 @@ uLocalDebuggerBoot::uLocalDebuggerBoot() {
 		if ( port != nullptr && machine != nullptr && name != nullptr ) {
 			uLocalDebugger::uLocalDebuggerInstance = new uLocalDebugger( port, machine, name );
 		} // if
-    } // if
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerBoot &)%p.uLocalDebuggerBoot\n", __LINE__, this ); )
+	} // if
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerBoot &)%p.uLocalDebuggerBoot\n", __LINE__, this ); );
 } // uLocalDebuggerBoot::uLocalDebuggerBoot
 
 uLocalDebuggerBoot::~uLocalDebuggerBoot() {
-    uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerBoot &)%p.~uLocalDebuggerBoot\n", __LINE__, this ); )
-    uCount -= 1;
-    if ( uCount == 0 ) {
+	uDEBUGPRT( uDebugPrt( "%d (uLocalDebuggerBoot &)%p.~uLocalDebuggerBoot\n", __LINE__, this ); );
+	uCount -= 1;
+	if ( uCount == 0 ) {
 		if ( uLocalDebugger::uLocalDebuggerInstance != nullptr ) {
 			delete uLocalDebugger::uLocalDebuggerInstance;
 			uLocalDebugger::uLocalDebuggerInstance = nullptr; // no more calls to local debugger
 		} // if
-    } // if
+	} // if
 } // uLocalDebuggerBoot::~uLocalDebuggerBoot
 
 

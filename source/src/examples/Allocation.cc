@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  7 18:49:40 2020
-// Update Count     : 198
+// Last Modified On : Thu Mar 24 22:41:55 2022
+// Update Count     : 206
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,14 +24,14 @@
 // along  with this library.
 // 
 
-#include <unistd.h>					// sbrk
+#include <unistd.h>										// sbrk
 #include <iostream>
-using std::cout;
-using std::osacquire;
-using std::endl;
 #include <iomanip>
-using std::setw;
+using namespace std;
 
+// unsigned int uDefaultPreemption() {
+// 	return 0;
+// } // uDefaultPreemption
 
 _Task Worker {
 	void main();
@@ -101,7 +101,7 @@ void Worker::main() {
 	// check malloc/free (mmap)
 
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		char * area = (char *)malloc( s );
 		area[0] = '\345'; area[s - 1] = '\345';			// fill first/last
 		area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
@@ -109,13 +109,13 @@ void Worker::main() {
 	} // for
 
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		locns[i] = (char *)malloc( s );
 		locns[i][0] = '\345'; locns[i][s - 1] = '\345';	// fill first/last
 		locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
 	} // for
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
 			 locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "malloc/free corrupt storage" );
 		free( locns[i] );
@@ -153,7 +153,7 @@ void Worker::main() {
 	// check calloc/free (mmap)
 
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		char * area = (char *)calloc( 1, s );
 		if ( area[0] != '\0' || area[s - 1] != '\0' ) abort( "calloc/free corrupt storage4.1" );
 		if ( area[malloc_size( area ) - 1] != '\0' ) abort( "calloc/free corrupt storage4.2" );
@@ -164,7 +164,7 @@ void Worker::main() {
 	} // for
 
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		locns[i] = (char *)calloc( 1, s );
 		if ( locns[i][0] != '\0' || locns[i][s - 1] != '\0' ||
 			 locns[i][malloc_size( locns[i] ) - 1] != '\0' ||
@@ -173,7 +173,7 @@ void Worker::main() {
 		locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
 	} // for
 	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
 			 locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "calloc/free corrupt storage6" );
 		free( locns[i] );
@@ -200,7 +200,7 @@ void Worker::main() {
 	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
 		//cout << setw(6) << alignments[a] << endl;
 		for ( int i = 1; i < NoOfMmaps; i += 1 ) {
-			size_t s = i + uDefaultMmapStart();			// cross over point
+			size_t s = i + malloc_mmap_start();			// cross over point
 			char * area = (char *)memalign( a, s );
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
@@ -235,7 +235,7 @@ void Worker::main() {
 
 	for ( int i = 2; i < NoOfAllocs; i += 12 ) {
 		// initial N byte allocation
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		char * area = (char *)malloc( s );
 		area[0] = '\345'; area[s - 1] = '\345';			// fill first/penultimate byte
 
@@ -272,7 +272,7 @@ void Worker::main() {
 
 	for ( int i = 2; i < NoOfAllocs; i += 12 ) {
 		// initial N byte allocation
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		char * area = (char *)malloc( s );
 		area[0] = '\345'; area[s - 1] = '\345';			// fill first/penultimate byte
 
@@ -310,7 +310,7 @@ void Worker::main() {
 
 	for ( int i = 1; i < 1000; i += 12 ) {
 		// initial N byte allocation
-		size_t s = i + uDefaultMmapStart();				// cross over point
+		size_t s = i + malloc_mmap_start();				// cross over point
 		char * area = (char *)calloc( 1, s );
 		if ( area[0] != '\0' || area[s - 1] != '\0' ||
 			 area[malloc_size( area ) - 1] != '\0' ||
@@ -485,6 +485,8 @@ void Worker::main() {
 
 
 int main() {
+	setlocale( LC_NUMERIC, "en_US.UTF-8" );
+
 	const unsigned int NoOfWorkers = 4;
 	{
 		uProcessor processors[NoOfWorkers - 1] __attribute__(( unused )); // more than one processor

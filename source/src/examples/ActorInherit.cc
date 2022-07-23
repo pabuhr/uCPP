@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 23 17:05:06 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov  1 23:33:35 2020
-// Update Count     : 12
+// Last Modified On : Tue Apr 26 13:06:48 2022
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,36 +28,36 @@ using namespace std;
 #include <uActor.h>
 
 _Actor B {
-    Allocation receive( Message & ) { return Finished; }
-    int i;
+	Allocation receive( Message & ) { return Finished; }
+	int i;
   protected:
-    void preStart() {
-	osacquire( cout ) << "B" << endl;
-    } // B::preStart
+	void preStart() {
+		osacquire( cout ) << "B" << endl;
+	} // B::preStart
   public:
-    B() {}
-    B( int i ) { B::i = i; }
+	B() {}
+	B( int i ) { B::i = i; }
 }; // B
 
 _Actor D : public B {
-    void preStart() {
-	B::preStart();					// call base member
-	osacquire( cout ) << "D" << endl;
-    } // D::preStart
-    Allocation receive( Message & ) { return Finished; }
+	void preStart() {
+		B::preStart();									// call base member
+		osacquire( cout ) << "D" << endl;
+	} // D::preStart
+	Allocation receive( Message & ) { return Finished; }
   public:
-    D() {}
-    D( int i ) : B( i ) {}
+	D() {}
+	D( int i ) : B( i ) {}
 }; // D
 
 int main() {
-    uActor::start();					// start actor system
-    B b;
-    D d;
-    // Output is non-deterministic because actor b or d may run first.
-    b | uActor::stopMsg;
-    d | uActor::stopMsg;
-    uActor::stop();					// wait for all actors to terminate
+	uActor::start();									// start actor system
+	B b;
+	D d;
+	// Output is non-deterministic because actor b or d may run first.
+	b | uActor::stopMsg;
+	d | uActor::stopMsg;
+	uActor::stop();										// wait for all actors to terminate
 } // main
 
 // Local Variables: //

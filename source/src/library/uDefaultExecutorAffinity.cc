@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan  2 20:50:47 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  2 20:51:29 2020
-// Update Count     : 1
+// Last Modified On : Tue Apr 19 11:24:45 2022
+// Update Count     : 2
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 
 
 int uDefaultExecutorAffinity() {
-    return __U_DEFAULT_EXECUTOR_AFFINITY__;		// affinity and CPU offset (-1 => no affinity, default)
+	return __U_DEFAULT_EXECUTOR_AFFINITY__;				// affinity and CPU offset (-1 => no affinity, default)
 } // uDefaultExecutorAffinity
 
 

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov  1 23:34:29 2020
-// Update Count     : 425
+// Last Modified On : Sun Apr 24 09:52:56 2022
+// Update Count     : 426
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -133,7 +133,7 @@ int main( int argc, char * argv[] ) {
 	consumers = new Cons *[cons];						// large size => use heap
 	for ( int i = 0; i < cons; i += 1 ) consumers[i] = new Cons; // create consumers
 	for ( int i = 0; i < prods; i += 1 ) *(new Prod( prods, cons, times ) ) | uActor::startMsg; // create and start producers
-    uActor::stop();										// wait for all actors to terminate
+	uActor::stop();										// wait for all actors to terminate
 	delete [] consumers;
 	malloc_stats();										// print memory statistics
 } // main

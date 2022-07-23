@@ -11,8 +11,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Aug  2 11:55:37 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:48:39 2016
-// Update Count     : 41
+// Last Modified On : Wed Apr 20 23:04:08 2022
+// Update Count     : 42
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,42 +33,42 @@ using std::cout;
 using std::endl;
 
 _Coroutine fibonacci {
-    int fn;
+	int fn;
 
-    void main() {
-	int fn1, fn2;
+	void main() {
+		int fn1, fn2;
 
-	fn = 1;						// special case f0
-	fn1 = fn;
-	suspend();
-	fn = 1;						// special case f1
-	fn2 = fn1;
-	fn1 = fn;
-	suspend();
-	for ( ;; ) {					// general case fn
-	    fn = fn1 + fn2;
-	    suspend();
-	    fn2 = fn1;
-	    fn1 = fn;
-	} // for
-    } // fibonacci::main
+		fn = 1;											// special case f0
+		fn1 = fn;
+		suspend();
+		fn = 1;											// special case f1
+		fn2 = fn1;
+		fn1 = fn;
+		suspend();
+		for ( ;; ) {									// general case fn
+			fn = fn1 + fn2;
+			suspend();
+			fn2 = fn1;
+			fn1 = fn;
+		} // for
+	} // fibonacci::main
   public:
-    int next() {
-	resume();
-	return fn;
-    }; // next
+	int next() {
+		resume();
+		return fn;
+	}; // next
 }; // fibonacci
 
 int main() {
-    const int NoOfFibs = 10;
-    fibonacci f1, f2;					// create two fibonacci generators
-    int i;
+	const int NoOfFibs = 10;
+	fibonacci f1, f2;									// create two fibonacci generators
+	int i;
 
-    cout << "Fibonacci Numbers" << endl;
-    for ( i = 1; i <= NoOfFibs; i += 1 ) {
-	cout << f1.next() << " " << f2.next() << endl;
-    } // for
-    cout << "successful completion" << endl;
+	cout << "Fibonacci Numbers" << endl;
+	for ( i = 1; i <= NoOfFibs; i += 1 ) {
+		cout << f1.next() << " " << f2.next() << endl;
+	} // for
+	cout << "successful completion" << endl;
 } // main
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Tue Mar 26 23:01:30 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 22 21:49:16 2017
-// Update Count     : 149
+// Last Modified On : Mon Apr 25 20:53:00 2022
+// Update Count     : 150
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,28 +35,28 @@ using std::endl;
 
 
 _Monitor atomicCnt {
-    int c;
+	int c;
   public:
-    atomicCnt( int c = -1 ) : c(c) {}
+	atomicCnt( int c = -1 ) : c(c) {}
 
-    int inc() {
+	int inc() {
 		c += 1;
 		return c;
-    } // inc
+	} // inc
 }; // atomicCnt
 
 
 _Task worker {
-    int id, round;
+	int id, round;
 
 	void main();
   public:
-    worker ( int id ) : id(id), round(ROUNDS) {
+	worker ( int id ) : id(id), round(ROUNDS) {
 		osacquire( cout ) << "task " << this << " creation" << endl;
 	} 
-    ~worker() {
+	~worker() {
 		osacquire( cout ) << "task " << this << " destruction" << endl;
-    }
+	}
 }; // worker
 
 
@@ -68,12 +68,12 @@ worker *f[NTASK];										// shared resource controlled by barrier
 
 _Event Rev {
   public:
-    int ticket;
-    Rev( const char *msg, int ticket ) : ticket( ticket ) { setMsg( msg ); }
+  int ticket;
+  Rev( const char *msg, int ticket ) : ticket( ticket ) { setMsg( msg ); }
 };
 
 void worker::main() {
-    b.block();											// wait for all tasks to start
+	b.block();											// wait for all tasks to start
 	osacquire( cout ) << "task " << this << " starting" << endl;
 	yield( NTASK );
 
@@ -107,25 +107,25 @@ void worker::main() {
 		} // if
 	} // try
 
-    b.block();											// wait for all tasks to finish
+	b.block();											// wait for all tasks to finish
 	osacquire( cout ) << "task " << this << " finishing" << endl;
 } // worker::main
 
 
 int main() {
-    uProcessor processors[4] __attribute__(( unused ));	// more than one processor
+	uProcessor processors[4] __attribute__(( unused ));	// more than one processor
 
-    for ( int i = 0; i < NTASK; i += 1 ) {
+	for ( int i = 0; i < NTASK; i += 1 ) {
 		f[i] = new worker( i );
-    } // for
-    b.block();											// wait for all tasks to start
+	} // for
+	b.block();											// wait for all tasks to start
 
-    b.block();											// wait for all tasks to finish
+	b.block();											// wait for all tasks to finish
 	int total = 0;
-    for ( int i = 0; i < NTASK; i += 1 ) {
+	for ( int i = 0; i < NTASK; i += 1 ) {
 		delete f[i];
 		total += handled[i];							// sum exceptions handled by each task
-    } // for
+	} // for
 	osacquire( cout ) << "cnt:" << cnt.inc() << "  handled:" << total << endl;
 } // main
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 19 12:10:12 2020
-// Update Count     : 52
+// Last Modified On : Tue Apr 19 11:28:14 2022
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,65 +29,65 @@
 
 
 _Mutex _Coroutine uBarrier {
-    uCondition Waiters;
-    unsigned int Total, Count;
+	uCondition Waiters;
+	unsigned int Total, Count;
 
-    void init( unsigned int total ) {
-	Count = 0;
-	Total = total;
-    } // uBarrier::init
+	void init( unsigned int total ) {
+		Count = 0;
+		Total = total;
+	} // uBarrier::init
   protected:
-    void main() {
-	for ( ;; ) {
-	    suspend();
-	} // for
-    } // uBarrier::main
+	void main() {
+		for ( ;; ) {
+			suspend();
+		} // for
+	} // uBarrier::main
 
-    virtual void last() {				// called by last task to reach the barrier
-	resume();
-    } // uBarrier::last
+	virtual void last() {								// called by last task to reach the barrier
+		resume();
+	} // uBarrier::last
   public:
-    uBarrier() {					// for use with reset
-	init( 0 );
-    } // uBarrier::uBarrier
+	uBarrier() {										// for use with reset
+		init( 0 );
+	} // uBarrier::uBarrier
 
-    uBarrier( unsigned int total ) {
-	init( total );
-    } // uBarrier::uBarrier
+	uBarrier( unsigned int total ) {
+		init( total );
+	} // uBarrier::uBarrier
 
-    virtual ~uBarrier() {
-    } // uBarrier::~uBarrier
+	virtual ~uBarrier() {
+	} // uBarrier::~uBarrier
 
-    _Nomutex unsigned int total() const {		// total participants in the barrier
-	return Total;
-    } // uBarrier::total
+	_Nomutex unsigned int total() const {				// total participants in the barrier
+		return Total;
+	} // uBarrier::total
 
-    _Nomutex unsigned int waiters() const {		// number of waiting tasks
-	return Count;
-    } // uBarrier::waiters
+	_Nomutex unsigned int waiters() const {				// number of waiting tasks
+		return Count;
+	} // uBarrier::waiters
 
-    void reset( unsigned int total ) {
+	void reset( unsigned int total ) {
 #ifdef __U_DEBUG__
-	if ( Count != 0 ) {
-	    abort( "(uBarrier &)%p.reset( %d ) : Attempt to reset barrier total while tasks blocked on barrier.", this, total );
-	} // if
+		if ( Count != 0 ) {
+			abort( "(uBarrier &)%p.reset( %d ) : Attempt to reset barrier total while tasks blocked on barrier.", this, total );
+		} // if
 #endif // __U_DEBUG__
-	init( total );
-    } // uBarrier::reset
+		init( total );
+	} // uBarrier::reset
 
-    virtual void block() {
-	Count += 1;
-	if ( Count < Total ) {				// all tasks arrived ?
-	    Waiters.wait();
-	} else {
-	    last();					// call the last routine
-	    for ( ; ! Waiters.empty(); ) {		// restart all waiting tasks
-		Waiters.signal();			// LIFO release, N-1 cxt switches
-//		Waiters.signalBlock();			// FIFO release, 2N cxt switches
-	    } // for
-	} // if
-	Count -= 1;
-    } // uBarrier::block
+	virtual void block() {
+		Count += 1;
+		if ( Count < Total ) {							// all tasks arrived ?
+			Waiters.wait();
+		} else {
+			last();										// call the last routine
+			for ( ; ! Waiters.empty(); ) {				// restart all waiting tasks
+				Waiters.signal();						// LIFO release, N-1 cxt switches
+//				Waiters.signalBlock();					// FIFO release, 2N cxt switches
+			} // for
+		} // if
+		Count -= 1;
+	} // uBarrier::block
 }; // uBarrier
 
 

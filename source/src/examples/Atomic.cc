@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Sep 10 16:47:22 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 18 23:49:14 2016
-// Update Count     : 16
+// Last Modified On : Tue Apr 26 08:18:52 2022
+// Update Count     : 17
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,30 +34,30 @@ using namespace std;
 volatile int locn1 = 0, locn2 = 0;
 
 _Task IncTester {
-    void main() {
-	int cur;
-	for ( int i = 0; i < NITER; i += 1 ) {
-	    uFetchAdd( locn1, 1 );
-	    uFetchAdd( locn1, -1 );
+	void main() {
+		int cur;
+		for ( int i = 0; i < NITER; i += 1 ) {
+			uFetchAdd( locn1, 1 );
+			uFetchAdd( locn1, -1 );
 
-	    do {
-		cur = locn2;
-	    } while( ! uCompareAssign( locn2, cur, cur + 1 ) );
-	    do {
-		cur = locn2;
-	    } while( ! uCompareAssign( locn2, cur, cur - 1 ) );
-	} // for
-    } // IncTester::main
+			do {
+				cur = locn2;
+			} while( ! uCompareAssign( locn2, cur, cur + 1 ) );
+			do {
+				cur = locn2;
+			} while( ! uCompareAssign( locn2, cur, cur - 1 ) );
+		} // for
+	} // IncTester::main
 }; // IncTester
 
 int main() {
-    uProcessor p[ NPROCS - 1 ] __attribute__(( unused ));
-    {
-	IncTester testers[ NTASKS ] __attribute__(( unused ));
-    }
-    if ( locn1 == 0 && locn2 == 0 ) {
-	cout << "successful completion" << endl;
-    } else {
-	cout << "error: expected values 0, 0 but got values " << locn1 << ", " << locn2 << endl;
-    } // if
+	uProcessor p[ NPROCS - 1 ] __attribute__(( unused ));
+	{
+		IncTester testers[ NTASKS ] __attribute__(( unused ));
+	}
+	if ( locn1 == 0 && locn2 == 0 ) {
+		cout << "successful completion" << endl;
+	} else {
+		cout << "error: expected values 0, 0 but got values " << locn1 << ", " << locn2 << endl;
+	} // if
 } // main

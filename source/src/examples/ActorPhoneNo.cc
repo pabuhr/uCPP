@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May  1 09:18:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 21 07:45:46 2021
-// Update Count     : 179
+// Last Modified On : Tue Jun 14 16:14:09 2022
+// Update Count     : 180
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,7 @@ using namespace std;
 _CorActor PhoneNo {
   public:
 	enum Status { CONT, MATCH, ERROR };
-	struct DigitMsg : public uActor::Message { Status status; char ch; };
+	struct DigitMsg : public uActor::SenderMsg { Status status; char ch; };
   private:
 	DigitMsg * msg;
 	char ch;											// character passed by cocaller

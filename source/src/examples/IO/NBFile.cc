@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 27 20:39:18 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  1 07:16:09 2017
-// Update Count     : 26
+// Last Modified On : Thu Apr 21 18:42:51 2022
+// Update Count     : 27
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,38 +28,38 @@
 #include <iostream>
 using std::cin;
 
-char ch = '0';						// shared by reader and writer
+char ch = '0';											// shared by reader and writer
 
 _Task Reader {
-    void main() {
-	char tch;
+	void main() {
+		char tch;
 
-	for ( ;; ) {
-	    cin >> tch;					// read number from stdin
-	    if ( tch != '\n' ) ch = tch;
-	  if ( cin.fail() ) break;
-	} // for
-    } // Reader::main
+		for ( ;; ) {
+			cin >> tch;									// read number from stdin
+			if ( tch != '\n' ) ch = tch;
+		  if ( cin.fail() ) break;
+		} // for
+	} // Reader::main
 }; // Reader
 
 _Task Writer {
-    void main() {
-	uFile::FileAccess output( "xxx", O_WRONLY | O_CREAT | O_TRUNC, 0666 );
-	int i;
+	void main() {
+		uFile::FileAccess output( "xxx", O_WRONLY | O_CREAT | O_TRUNC, 0666 );
+		int i;
 
-	for ( i = 0;; i += 1 ) {
-	  if ( cin.fail() ) break;
-	    if ( i % 500 == 0 ) {			// don't print too much
-		output.write( &ch, 1 );			// write number to stdout
-	    } // if
-	    yield( 1 );
-	} // for
-    } // Writer::main
+		for ( i = 0;; i += 1 ) {
+		  if ( cin.fail() ) break;
+			if ( i % 500 == 0 ) {						// don't print too much
+				output.write( &ch, 1 );					// write number to stdout
+			} // if
+			yield( 1 );
+		} // for
+	} // Writer::main
 }; // Writer
 
 int main() {
-    Reader reader;
-    Writer writer;
+	Reader reader;
+	Writer writer;
 } // main
 
 // Local Variables: //

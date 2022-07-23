@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:32:37 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 13:22:45 2019
-// Update Count     : 222
+// Last Modified On : Tue Apr  5 08:10:12 2022
+// Update Count     : 224
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ struct MinimalRegisterSet;								// forward declaration
 
 
 _Task uLocalDebugger {
-	friend class uSystemTask;							// access: uLocalDebuggerInstance, uLocalDebugger
+	friend _Task uSystemTask;							// access: uLocalDebuggerInstance, uLocalDebugger
 	friend class uBaseTask;								// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint, migrateULThread
 	friend _Coroutine UPP::uProcessorKernel;			// access: uLocalDebuggerInstance, dispatcher, debugger_blocked_tasks
 	friend _Task uProcessorTask;						// access: uLocalDebuggerInstance, uLocalDebuggerActive, checkPoint, createKernelThread, destroyKernelThread, migrateKernelThread
@@ -70,11 +70,11 @@ _Task uLocalDebugger {
 	int port;
 	const char *machine, *name;
 
-    uSocketClient		*sockClient;					// socket client object for communication with global debugger
-    uLocalDebuggerReader *dispatcher;					// the dispatcher task
+	uSocketClient		*sockClient;					// socket client object for communication with global debugger
+	uLocalDebuggerReader *dispatcher;					// the dispatcher task
 	uBConditionList		*bpc_list;						// list of handler associated conditions
 	int 				debugger_blocked_tasks;			// number of debugger blocked tasks
-    uDebuggerProtocolUnit &pdu;							// communication
+	uDebuggerProtocolUnit &pdu;							// communication
 
 	// This flag is set to true by the cont_handler, when the global debugger
 	// continues the application at the end of an abort.
@@ -102,36 +102,36 @@ _Task uLocalDebugger {
 	void resetConditionMask( int no, void *ul_thread_id );
 
 	void main();
-    void deregister( );									// deregister from the global debugger
+	void deregister( );									// deregister from the global debugger
 
 	void uCreateLocalDebugger( int port, const char *machine, const char *fullpath );
 	uLocalDebugger( int port );							// dynamically initialize global debugger
 	uLocalDebugger( const char *port, const char *machine, const char *name );
-    ~uLocalDebugger();
+	~uLocalDebugger();
 
-    void send( uDebuggerProtocolUnit& pdu );			// send data to the global debugger
-    void receive();										// receive data from the global debugger / task is put to sleep
-    bool receive( uDebuggerProtocolUnit& pdu );			// receive data from the global debugger / task is put to sleep
+	void send( uDebuggerProtocolUnit& pdu );			// send data to the global debugger
+	void receive();										// receive data from the global debugger / task is put to sleep
+	bool receive( uDebuggerProtocolUnit& pdu );			// receive data from the global debugger / task is put to sleep
 
 	_Mutex void unblockTask( uBaseTask *ul_thread, uDebuggerProtocolUnit &pdu );
-    _Mutex int breakpointHandler( int no );
-    void checkPoint();									// called before modifying kernel lists
-    _Mutex void checkPointMX();
-    _Mutex void performAtomicOperation();				// executing in a certain code range (called by uLocalDebuggerReader)
-    _Mutex void attachULThread( uBaseTask* this_task, uCluster* this_cluster );
-    void createULThread();
-    _Mutex void createULThreadMX( MinimalRegisterSet &regs );
-    void destroyULThread();
-    _Mutex void destroyULThreadMX();
-    _Mutex void createCluster( uCluster &cluster_address );
-    _Mutex void destroyCluster( uCluster &cluster_address );
-    _Mutex void createKernelThread( uProcessor &process_address, uCluster &cluster_address );
-    _Mutex void destroyKernelThread( uProcessor &process_address );
-    _Mutex void migrateKernelThread( uProcessor &process_address, uCluster &to_address );
-    void migrateULThread( uCluster &to_address );
-    _Mutex void migrateULThreadMX( uCluster &to_address );
-    _Mutex void finish();
-    _Mutex void abortApplication();
+	_Mutex int breakpointHandler( int no );
+	void checkPoint();									// called before modifying kernel lists
+	_Mutex void checkPointMX();
+	_Mutex void performAtomicOperation();				// executing in a certain code range (called by uLocalDebuggerReader)
+	_Mutex void attachULThread( uBaseTask* this_task, uCluster* this_cluster );
+	void createULThread();
+	_Mutex void createULThreadMX( MinimalRegisterSet &regs );
+	void destroyULThread();
+	_Mutex void destroyULThreadMX();
+	_Mutex void createCluster( uCluster &cluster_address );
+	_Mutex void destroyCluster( uCluster &cluster_address );
+	_Mutex void createKernelThread( uProcessor &process_address, uCluster &cluster_address );
+	_Mutex void destroyKernelThread( uProcessor &process_address );
+	_Mutex void migrateKernelThread( uProcessor &process_address, uCluster &to_address );
+	void migrateULThread( uCluster &to_address );
+	_Mutex void migrateULThreadMX( uCluster &to_address );
+	_Mutex void finish();
+	_Mutex void abortApplication();
 }; // uLocalDebugger
 
 
@@ -139,10 +139,10 @@ _Task uLocalDebugger {
 
 
 class uLocalDebuggerBoot {
-    static int uCount;
+	static int uCount;
   public:
-    uLocalDebuggerBoot();
-    ~uLocalDebuggerBoot();
+	uLocalDebuggerBoot();
+	~uLocalDebuggerBoot();
 }; // uLocalDebuggerBoot
 
 

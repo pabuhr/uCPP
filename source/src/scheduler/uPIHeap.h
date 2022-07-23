@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Jan 14 17:53:22 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:49:33 2019
-// Update Count     : 26
+// Last Modified On : Sat Apr  9 17:07:15 2022
+// Update Count     : 27
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,27 +37,27 @@
 
 
 class uPIHeap : public uBasePIQ {
-    struct uHeapBaseSeq {
+	struct uHeapBaseSeq {
 	int index;
 	int count;
 	int queueNum;
 	//uBaseTaskSeq queue;
-    };
+	};
 
-    uHeapBaseSeq objects[ __U_MAX_NUMBER_PRIORITIES__ ];
-    uHeap<int, uHeapBaseSeq *, __U_MAX_NUMBER_PRIORITIES__> heap;
-    uSpinLock lock;
+	uHeapBaseSeq objects[ __U_MAX_NUMBER_PRIORITIES__ ];
+	uHeap<int, uHeapBaseSeq *, __U_MAX_NUMBER_PRIORITIES__> heap;
+	uSpinLock lock;
 
-    static int compare(int k1, int k2);
-    static void exchange( uHeapable<int, uHeapBaseSeq *> &x, uHeapable<int, uHeapBaseSeq *> &y );
+	static int compare(int k1, int k2);
+	static void exchange( uHeapable<int, uHeapBaseSeq *> &x, uHeapable<int, uHeapBaseSeq *> &y );
   public:
-    uPIHeap();
-    virtual bool empty() const;
-    virtual int head() const;
-    virtual int getHighestPriority();
-    virtual void add( int priority, int queueNum );
-    virtual int drop();
-    virtual void remove( int priority, int queueNum );
+	uPIHeap();
+	virtual bool empty() const;
+	virtual int head() const;
+	virtual int getHighestPriority();
+	virtual void add( int priority, int queueNum );
+	virtual int drop();
+	virtual void remove( int priority, int queueNum );
 }; // PIHeap
 
 

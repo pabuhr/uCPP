@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 24 17:30:59 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:27:15 2016
-// Update Count     : 13
+// Last Modified On : Wed Apr 20 23:11:25 2022
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,82 +29,82 @@ using std::cout;
 using std::osacquire;
 using std::endl;
 
-_Coroutine C;						// foward declaration
+_Coroutine C;											// foward declaration
 _Cormonitor CM;
 
 _Monitor M {
-    CM &c;
+	CM &c;
   public:
-    M( CM &c ) : c( c ) {}
-    void mem();
+	M( CM &c ) : c( c ) {}
+	void mem();
 }; // M
 
 _Coroutine C {
-    M &m;
+	M &m;
 
-    void main() {
-	m.mem();
-    } // C::main
+	void main() {
+		m.mem();
+	} // C::main
   public:
-    C( M &m ) : m( m ) {}
-    ~C() {
-	cout << "Here1" << endl;
-    }
-    void mem() {
-	resume();
-    } // C::mem
+	C( M &m ) : m( m ) {}
+	~C() {
+		cout << "Here1" << endl;
+	}
+	void mem() {
+		resume();
+	} // C::mem
 
-    void mem2() {
-	suspend();
-    } // C::mem
+	void mem2() {
+		suspend();
+	} // C::mem
 }; // C
 
 _Cormonitor CM {
-    uCondition c;
+	uCondition c;
   public:
-    CM() {}
+	CM() {}
 
-    void mem() {
-	resume();
-    } // CM::mem
+	void mem() {
+		resume();
+	} // CM::mem
 
-    void mem2() {
-	cout << "Here1.1" << endl;
-	c.wait();
-    } // CM::mem2
+	void mem2() {
+		cout << "Here1.1" << endl;
+		c.wait();
+	} // CM::mem2
   private:
-    void main() {
-	cout << "Here2" << endl;
-	c.signalBlock();
-	_Accept( mem2 );
-	cout << "Here3" << endl;
-    } // C::main
+	void main() {
+		cout << "Here2" << endl;
+		c.signalBlock();
+		_Accept( mem2 );
+		cout << "Here3" << endl;
+	} // C::main
 }; // CM
 
 void M::mem() {
-    c.mem();
+	c.mem();
 } // M::mem
 
 _Task T {
-    C &c;
+	C &c;
   public:
-    T( C &c, const char *name ) : c( c ) {
-	setName( name );
-    } // T::T
+	T( C &c, const char *name ) : c( c ) {
+		setName( name );
+	} // T::T
 
-    void mem() {}
+	void mem() {}
   private:
-    void main() {
-	c.mem();
-	cout << "Here4" << endl;
-    } // T::main
+	void main() {
+		c.mem();
+		cout << "Here4" << endl;
+	} // T::main
 }; // T
 
 int main() {
-    CM cm;
-    M m( cm );
-    C c( m );
-    T &t = *new T( c, "T" );
-    cm.mem2();
-    cout << "Here5" << endl;
+	CM cm;
+	M m( cm );
+	C c( m );
+	T &t = *new T( c, "T" );
+	cm.mem2();
+	cout << "Here5" << endl;
 } // main

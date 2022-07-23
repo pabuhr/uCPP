@@ -101,7 +101,7 @@
   \item active, \hyperpage{4}, \hyperpage{16}
   \item active priority, \hyperpage{148}
   \item actor, \hyperpage{58}
-    \subitem coroutine, \hyperpage{64}
+    \subitem coroutine, \hyperpage{65}
     \subitem inheritance, \hyperpage{64}
   \item actor model, \hyperpage{58}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{add}}}\endlgrinde\LGend{}, 
@@ -138,7 +138,7 @@
 		\hyperpage{63}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{BEGIN}}}\endlgrinde\LGend{}, 
 		\hyperpage{28}
-  \item behaviours, \hyperpage{58}
+  \item behaviour, \hyperpage{58}
   \item binomial theorem, \hyperpage{22}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
@@ -230,7 +230,7 @@
     \subitem inherited members, \hyperpage{14}
     \subitem semi, \hyperpage{12}
     \subitem termination, \hyperpage{13}
-  \item coroutine actor, \hyperpage{64}
+  \item coroutine actor, \hyperpage{65}
   \item coroutine main, \hyperpage{12}, \hyperpage{16}, \hyperpage{39}, 
 		\hyperpage{116}
   \item coroutine monitor, \hyperpage{5}, \hyperpage{7}, \hyperpage{27}
@@ -478,7 +478,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Halt}}}\endlgrinde\LGend{}, 
 		\hyperpage{15}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Handle}}}\endlgrinde\LGend{}, 
-		\hyperpage{63}
+		\hyperpage{64}
   \item handler, \hyperpage{83, 84}, \hyperpage{88}
     \subitem resumption, \hyperpage{84}, \hyperpage{89}
     \subitem termination, \hyperpage{84}, \hyperpage{88}
@@ -487,6 +487,7 @@
   \item heap allocator, \hyperpage{159}
   \item heap area, \hyperpage{14}, \hyperpage{29}, \hyperpage{153}
     \subitem expansion size, \hyperpage{154}
+    \subitem malloc unfreed, \hyperpage{154}
     \subitem mmap start, \hyperpage{154}
   \item heavy blocking, \hyperpage{132}
   \item heavyweight, \hyperpage{132}
@@ -602,14 +603,20 @@
 		\hyperpage{127}, \hyperpage{159}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_alignment}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_expansion}}}\endlgrinde\LGend{}, 
+		\hyperpage{154}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_mmap\_start}}}\endlgrinde\LGend{}, 
+		\hyperpage{154}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_size}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_unfreed}}}\endlgrinde\LGend{}, 
+		\hyperpage{154}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_usable\_size}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_zero\_fill}}}\endlgrinde\LGend{}, 
@@ -621,9 +628,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}, 
 		\hyperpage{59}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}, 
-		\hyperpage{59}
-    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}, 
-		\hyperpage{59}
+		\hyperpage{60}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{migrate}}}\endlgrinde\LGend{}, 
 		\hyperpage{31}
   \item monitor, \hyperpage{5}, \hyperpage{7}, \hyperpage{26}
@@ -728,13 +733,15 @@
     \subitem number on cluster, \hyperpage{129}
     \subitem pre-emption time, \hyperpage{129}
     \subitem spin amount, \hyperpage{129}
-  \item program main, \hyperpage{8}, \hyperpage{65}, \hyperpage{104}, 
+  \item program main, \hyperpage{8}, \hyperpage{66}, \hyperpage{104}, 
 		\hyperpage{112--115}, \hyperpage{122}, \hyperpage{124}, 
 		\hyperpage{136}, \hyperpage{153}
-  \item promise, \hyperpage{59, 60}
+  \item promise, \hyperpage{59}, \hyperpage{61}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{60}, \hyperpage{63}
+		\hyperpage{61, 62}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}, 
+		\hyperpage{60}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{result}}}\endlgrinde\LGend{}, 
 		\hyperpage{60}
   \item propagate, \hyperpage{86}
   \item pseudo random-number generators, \hyperpage{161}
@@ -864,7 +871,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resize}}}\endlgrinde\LGend{}, 
 		\hyperpage{160}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}, 
-		\hyperpage{63}
+		\hyperpage{64}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{}, 
 		\hyperpage{14}, \hyperpage{16}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resumer}}}\endlgrinde\LGend{}, 
@@ -893,6 +900,12 @@
   \item select blocked, \hyperpage{52}
   \item semaphore, \hyperpage{35}
   \item semi-coroutine, \hyperpage{12}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}}}\endlgrinde\LGend{}, 
+		\hyperpage{59}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}, 
+		\hyperpage{60}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}, 
+		\hyperpage{60}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{77}, \hyperpage{79}, \hyperpage{81}, 
 		\hyperpage{99}
@@ -975,7 +988,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Start}}}\endlgrinde\LGend{}, 
 		\hyperpage{31}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{}, 
-		\hyperpage{63}
+		\hyperpage{64}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{starter}}}\endlgrinde\LGend{}, 
 		\hyperpage{15}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StartMsg}}}\endlgrinde\LGend{}, 
@@ -990,7 +1003,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StatusFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{74}, \hyperpage{99}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}, 
-		\hyperpage{63}
+		\hyperpage{64}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopdMsg}}}\endlgrinde\LGend{}, 
 		\hyperpage{64}
   \item subtyping, \hyperpage{33}
@@ -1040,7 +1053,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{60}
+		\hyperpage{61}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{}, 
 		\hyperpage{60}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{}, 
@@ -1072,19 +1085,19 @@
 		\hyperpage{61}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}
       \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
       \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
       \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
       \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}, 
 		\hyperpage{59}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}, 
@@ -1092,40 +1105,40 @@
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}, 
 		\hyperpage{59}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{forward}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Handler}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
-    \subitem Message
-      \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}, 
-		\hyperpage{59}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}, 
 		\hyperpage{59}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
+    \subitem SenderMsg
+      \subsubitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}, 
+		\hyperpage{60}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StartMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{startMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stopMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}, 
-		\hyperpage{62}
+		\hyperpage{63}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
@@ -1349,10 +1362,6 @@
 		\hyperpage{57}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorWorkers}}}\endlgrinde\LGend{}, 
 		\hyperpage{57}
-  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultHeapExpansion}}}\endlgrinde\LGend{}, 
-		\hyperpage{154}
-  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultMmapStart}}}\endlgrinde\LGend{}, 
-		\hyperpage{154}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultPreemption}}}\endlgrinde\LGend{}, 
 		\hyperpage{153}
     \subitem see \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setPreemption}}}\endlgrinde\LGend{} and pre-emption, 

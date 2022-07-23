@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct 11 15:53:22 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 11 15:55:05 2020
-// Update Count     : 2
+// Last Modified On : Tue Apr 19 16:39:30 2022
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,23 +29,23 @@
 #include <uCobegin.h>
 
 void uCobegin( std::initializer_list< std::function< void ( unsigned int ) >> funcs ) {
-    unsigned int uLid = 0;
-    _Task Runner {
-	typedef std::function<void ( unsigned int )> Func; // function type
-	unsigned int parm;				// local thread lid
-	Func f;						// function to run for each lid
+	unsigned int uLid = 0;
+	_Task Runner {
+		typedef std::function<void ( unsigned int )> Func; // function type
+		unsigned int parm;								// local thread lid
+		Func f;											// function to run for each lid
 
-	void main() { f( parm ); }
-      public:
-	Runner( unsigned int parm, Func f ) : parm( parm ), f( f ) {}
-    }; // Runner
+		void main() { f( parm ); }
+	  public:
+		Runner( unsigned int parm, Func f ) : parm( parm ), f( f ) {}
+	}; // Runner
 
-    const unsigned int size = funcs.size();
-    Runner **runners = new Runner *[size];		// do not use up task stack
+	const unsigned int size = funcs.size();
+	Runner ** runners = new Runner *[size];				// do not use up task stack
 
-    for ( auto f : funcs ) { runners[uLid] = new Runner( uLid, f ); uLid += 1; }
-    for ( uLid = 0; uLid < size; uLid += 1 ) delete runners[uLid];
-    delete [] runners;
+	for ( auto f : funcs ) { runners[uLid] = new Runner( uLid, f ); uLid += 1; }
+	for ( uLid = 0; uLid < size; uLid += 1 ) delete runners[uLid];
+	delete [] runners;
 } // uCobegin
 
 

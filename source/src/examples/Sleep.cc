@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Wed Jan 10 17:02:39 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  4 13:52:27 2020
-// Update Count     : 25
+// Last Modified On : Tue Apr 26 13:05:01 2022
+// Update Count     : 26
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,34 +32,34 @@ using std::endl;
 volatile int x = 0, y = 1;
 
 _Task fred {
-    void main() {
-	for ( ;; ) {
-	  if ( x == 20 ) break;
-	    if ( x < y ) x += 1;
-	    uTime start = uClock::currTime();
-	    _Timeout( uDuration( 1 ) );
-	    osacquire( cout ) << "fred slept for " << uClock::currTime() - start << " seconds" << endl;
-	} // for
-	osacquire( cout ) << "fred finished" << endl;
-    } // fred::main
+	void main() {
+		for ( ;; ) {
+		  if ( x == 20 ) break;
+			if ( x < y ) x += 1;
+			uTime start = uClock::currTime();
+			_Timeout( uDuration( 1 ) );
+			osacquire( cout ) << "fred slept for " << uClock::currTime() - start << " seconds" << endl;
+		} // for
+		osacquire( cout ) << "fred finished" << endl;
+	} // fred::main
 }; // fred
 
 _Task mary {
-    void main() {
-	for ( ;; ) {
-	  if ( y == 20 ) break;
-	    if ( y == x ) y += 1;
-	    uTime start = uClock::currTime();
-	    _Timeout( uDuration( 2 ) );
-	    osacquire( cout ) << "mary slept for " << uClock::currTime() - start << " seconds" << endl;
-	} // for
-	osacquire( cout ) << "mary finished" << endl;
-    } // mary::main
+	void main() {
+		for ( ;; ) {
+		  if ( y == 20 ) break;
+			if ( y == x ) y += 1;
+			uTime start = uClock::currTime();
+			_Timeout( uDuration( 2 ) );
+			osacquire( cout ) << "mary slept for " << uClock::currTime() - start << " seconds" << endl;
+		} // for
+		osacquire( cout ) << "mary finished" << endl;
+	} // mary::main
 }; // mary
 
 int main() {
-    fred f;
-    mary m;
+	fred f;
+	mary m;
 } // main
 
 // Local Variables: //

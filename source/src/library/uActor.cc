@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:41:44 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 23 20:39:43 2021
-// Update Count     : 110
+// Last Modified On : Sat Jun 11 05:55:18 2022
+// Update Count     : 114
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,8 @@
 #include <iostream>
 using namespace std;
 
-uExecutor * uActor::executor_ = nullptr;
+uExecutor * uActor::executor_ = nullptr;				// executor for all actors
+bool uActor::executorp = false;							// executor passed to start member
 uSemaphore uActor::wait_( 0 );							// wait for all actors to be destroyed
 unsigned long int uActor::actors_ = 0;					// number of actor objects in system
 uActor::StartMsg uActor::startMsg;						// start actor
@@ -38,21 +39,21 @@ uActor::StopMsg uActor::stopMsg;						// terminate actor
 uActor::UnhandledMsg uActor::unhandledMsg;				// tell error
 
 void uActor::TraceMsg::print() {
-    enum { PerLine = 8 };
-    TraceMsg::Hop * route;
+	enum { PerLine = 8 };
+	TraceMsg::Hop * route;
 
-    cout << "message " << this
+	cout << "message " << this
 		 << " source:" << hops.head()
 		 << " cursor (node:" << cursor << ", actor:" << (cursor ? cursor->actor : nullptr) << ')'
 		 << endl << "  trace ";
-    unsigned int cnt = 0;
-    for ( uQueueIter<TraceMsg::Hop> iter(cursor); iter >> route; cnt += 1 ) { // print route
+	unsigned int cnt = 0;
+	for ( uQueueIter<TraceMsg::Hop> iter(cursor); iter >> route; cnt += 1 ) { // print route
 		if ( cnt != 0 && cnt % PerLine == 0 ) cout << endl << "\t";
 		cout << route->actor;
 		// HACK, know queue is circular
 		if ( route->getnext() != route && (cnt + 1) % PerLine != 0 ) cout << " ";
-    } // for
-    cout << endl;
+	} // for
+	cout << endl;
 } // uActor::TraceMsg::print
 
 

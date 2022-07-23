@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov  9 10:16:30 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 22 12:13:16 2005
-// Update Count     : 29
+// Last Modified On : Sun Apr  3 10:49:28 2022
+// Update Count     : 30
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -71,7 +71,7 @@ uSwitch:
 
 	ld $sp,0($5)
 #else
-    #error uC++ : internal error, unsupported architecture
+	#error uC++ : internal error, unsupported architecture
 #endif
 	// Load volatile registers (16-23,30,31,gp) from the stack.
 

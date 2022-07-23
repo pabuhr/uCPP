@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 23 08:46:19 2021
-// Update Count     : 1102
+// Last Modified On : Thu May 26 10:43:54 2022
+// Update Count     : 1132
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -693,7 +693,7 @@ class uExecutor {
 #else
 	template< typename ELEMTYPE > class Buffer {		// unbounded buffer
 		uSpinLock mutex;
-		uQueue< ELEMTYPE > input, output;				// unbounded list of work requests
+		uQueue< ELEMTYPE > input;						// unbounded list of work requests
 	  public:
 		void insert( ELEMTYPE * elem ) {
 			mutex.acquire();
@@ -701,15 +701,11 @@ class uExecutor {
 			mutex.release();
 		} // Buffer::insert
 
-		ELEMTYPE * remove() {
-			if ( output.empty() ) {						// take a gulp ?
-				mutex.acquire();
-				output.transfer( input );				// transfer input to output
-				mutex.release();
-			} // if
-			ELEMTYPE * ret = output.dropHead();			// could be null
-			return ret;
-		} // Buffer::remove
+        void transfer( uQueue< ELEMTYPE > * transferTo ) {
+            mutex.acquire();
+            transferTo->transfer( input );              // transfer input to output
+            mutex.release();
+        } // Buffer::transfer
 	}; // Buffer
 #endif // 0
 
@@ -757,31 +753,36 @@ class uExecutor {
 	// and server, where work requests arrive and are distributed into buffers in a roughly round-robin order.
 	_Task Worker {
 		Buffer< WRequest > * requests;
+		uQueue< WRequest > output;
 		WRequest * request;
 		unsigned int start, range;
 		// unsigned int doits = 0, spins = 0;
 
 		void main() {
 			setName( "Executor Worker" );
-			for ( int i = 0;; i = (i + 1) % range ) {	// cycle through set of requests buffers
-				request = requests[i + start].remove();
-				if ( ! request ) {
-					#if ! defined( __U_MULTI__ )
-					uThisTask().uYieldNoPoll();
-					#endif // ! __U_MULTI__
-					// spins += 1;
-					continue;
-				} // if
-				if ( request->stop() )  {
-					// printf( "worker %p requests %d spins %d\n", this, doits, spins );
-					break;
-				} // exit
+		  Exit:
+			for ( unsigned int i = 0;; i = (i + 1) % range ) { // cycle through set of request buffers
+                requests[i + start].transfer( &output );
+                while ( ! output.empty() ) {
+                    request = output.dropHead();
+                    if ( ! request ) {
+                        #if ! defined( __U_MULTI__ )
+                        uThisTask().uYieldNoPoll();
+                        #endif // ! __U_MULTI__
+                        // spins += 1;
+                        continue;
+                    } // if
+              if ( request->stop() )  {
+                        //printf( "worker %p requests %d spins %d\n", this, doits, spins );
+                        break Exit;
+                    } // exit
 
-				// doits += 1;
-				request->doit();
-				//printf( "worker start %p %d %d\n", this, start, range );
-				delete request;
-			} // for
+					//doits += 1;
+                    request->doit();
+                    //printf( "worker start %p %d %d\n", this, start, range );
+                    delete request;
+                } // while
+            } // for
 		} // Worker::main
 	  public:
 		Worker( uCluster & wc, Buffer< WRequest > * requests, unsigned int start, unsigned int range ) :
@@ -799,8 +800,8 @@ class uExecutor {
 	static unsigned int next;							// demultiplex across worker buffers
 
 	unsigned int tickets() {
-		//return uFetchAdd( next, 1 ) % nrqueues;
-		return next++ % nrqueues;						// no locking, interference randomizes
+		return uFetchAdd( next, 1 ) % nrqueues;
+		// return next++ % nrqueues;						// no locking, interference randomizes
 	} // uExecutor::tickets
 
 	template< typename Func > void send( Func action, unsigned int ticket ) { // asynchronous call, no return value

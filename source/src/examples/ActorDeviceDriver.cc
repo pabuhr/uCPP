@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  4 21:20:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 20 17:53:22 2021
-// Update Count     : 91
+// Last Modified On : Tue Jun 14 16:14:58 2022
+// Update Count     : 92
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,7 +36,7 @@ _CorActor Driver {
   public:
 	enum Status { CONT, MSG, ESTX, ELNTH, ECRC };
 	enum { MaxMsg = 64 };
-	struct ByteMsg : public uActor::Message { Status status; unsigned char byte; unsigned char * msgtext; };
+	struct ByteMsg : public uActor::SenderMsg { Status status; unsigned char byte; unsigned char * msgtext; };
   private:
 	ByteMsg * msg;
 	unsigned char byte;									// byte passed by interrupt

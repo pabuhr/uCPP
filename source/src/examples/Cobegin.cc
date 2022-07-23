@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 27 18:20:07 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 29 10:29:23 2018
-// Update Count     : 38
+// Last Modified On : Sun Apr 24 18:33:11 2022
+// Update Count     : 39
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,67 +31,66 @@ void p( int i, double d ) { std::osacquire( std::cout ) << "p " << i << " " << d
 int f( int i, double d ) { std::osacquire( std::cout ) << "f " << i << " " << d << std::endl; return 7; }
 
 void loop( int N ) {
-    if ( N != 0 ) {
-	COBEGIN
-	    BEGIN p( N, 3.2 ); END
-	    BEGIN loop( N - 1 ); END
-	COEND
-    } // if
+	if ( N != 0 ) {
+		COBEGIN
+			BEGIN p( N, 3.2 ); END
+			BEGIN loop( N - 1 ); END
+		COEND
+	} // if
 } // loop
 
 int main() {
-
-    // COBEGIN
-    
-    COBEGIN						// concurrent
-	BEGIN std::cout << "foo " << uLid << std::endl; END
-	BEGIN std::cout << "bar " << uLid << std::endl; END
-	BEGIN std::cout << "xxx " << uLid << std::endl; END
-	BEGIN
-	    std::cout << "yyy " << std::endl;
-	    COBEGIN					// concurrent
+	// COBEGIN
+	
+	COBEGIN												// concurrent
 		BEGIN std::cout << "foo " << uLid << std::endl; END
 		BEGIN std::cout << "bar " << uLid << std::endl; END
 		BEGIN std::cout << "xxx " << uLid << std::endl; END
-	    COEND
-	END
-    COEND
+		BEGIN
+			std::cout << "yyy " << std::endl;
+			COBEGIN										// concurrent
+				BEGIN std::cout << "foo " << uLid << std::endl; END
+				BEGIN std::cout << "bar " << uLid << std::endl; END
+				BEGIN std::cout << "xxx " << uLid << std::endl; END
+			COEND
+		END
+	COEND
 
-    loop( 5 );						// create dynamic number of threads
+	loop( 5 );											// create dynamic number of threads
 
-    // COFOR
+	// COFOR
 
-    const unsigned int rows = 10, cols = 10;		// sequential
-    int matrix[rows][cols], subtotals[rows], total = 0;
+	const unsigned int rows = 10, cols = 10;			// sequential
+	int matrix[rows][cols], subtotals[rows], total = 0;
 
-    for ( unsigned int r = 0; r < rows; r += 1 ) {
-	for ( unsigned int c = 0; c < cols; c += 1 ) {
-	    matrix[r][c] = 1;
+	for ( unsigned int r = 0; r < rows; r += 1 ) {
+		for ( unsigned int c = 0; c < cols; c += 1 ) {
+			matrix[r][c] = 1;
+		} // for
 	} // for
-    } // for
 
-    COFOR( row, 0, rows,				// for row = 0 to rows { loop body }
-	int & subtotal = subtotals[row];		// concurrent
-	subtotal = 0;
-	for ( unsigned int c = 0; c < cols; c += 1 ) {
-	    subtotal += matrix[row][c];
+	COFOR( row, 0, rows,								// for row = 0 to rows { loop body }
+		int & subtotal = subtotals[row];				// concurrent
+		subtotal = 0;
+		for ( unsigned int c = 0; c < cols; c += 1 ) {
+			subtotal += matrix[row][c];
+		} // for
+	); // COFOR
+
+	// START/WAIT
+
+	for ( unsigned int r = 0; r < rows; r += 1 ) {		// sequential
+		total += subtotals[r];
 	} // for
-    ); // COFOR
 
-    // START/WAIT
+	std::cout << "total:" << total << std::endl;
 
-    for ( unsigned int r = 0; r < rows; r += 1 ) {	// sequential
-	total += subtotals[r];
-    } // for
-
-    std::cout << "total:" << total << std::endl;
-
-    auto tp = START( p, 2, 4.1 );
-    std::cout << "m1" << std::endl;			// concurrent
-    WAIT( tp );
-    auto tf = START( f, 3, 5.2 ); // f( 3, 5.2 )
-    std::cout << "m2" << std::endl;			// concurrent
-    std::cout << WAIT( tf ) << std::endl;
+	auto tp = START( p, 2, 4.1 );
+	std::cout << "m1" << std::endl;						// concurrent
+	WAIT( tp );
+	auto tf = START( f, 3, 5.2 );						// f( 3, 5.2 )
+	std::cout << "m2" << std::endl;						// concurrent
+	std::cout << WAIT( tf ) << std::endl;
 } // main
 
 // Local Variables: //

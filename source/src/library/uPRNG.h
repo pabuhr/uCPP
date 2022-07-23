@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 17:48:48 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 29 09:06:14 2021
-// Update Count     : 12
+// Last Modified On : Mon Jan 17 09:27:42 2022
+// Update Count     : 33
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -51,22 +51,21 @@
 
 class PRNG {
 	uint32_t callcnt = 0;
-	uint32_t seed;										// current seed
+	uint32_t seed;										// local seed
 	uint32_t state;										// random state
   public:
 	PRNG() { set_seed( uRdtsc() ); }					// random seed
 	PRNG( uint32_t seed ) { set_seed( seed ); }			// fixed seed
-	void set_seed( uint32_t seed_ ) { state = seed = seed_; } // set seed
-	uint32_t get_seed() const __attribute__(( warn_unused_result )) { return seed; } // get seed
-	uint32_t operator()() __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+	void set_seed( uint32_t seed_ ) { state = seed = seed_; LCG( state ); } // set seed
+	uint32_t get_seed() const __attribute__(( warn_unused_result )) { return seed; } // get local seed
+	uint32_t operator()() __attribute__(( warn_unused_result )) { callcnt += 1; return LCG( state ); } // [0,UINT_MAX]
 	uint32_t operator()( uint32_t u ) __attribute__(( warn_unused_result )) { return operator()() % u; } // [0,u)
 	uint32_t operator()( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return operator()( u - l + 1 ) + l; } // [l,u]
 	uint32_t calls() const __attribute__(( warn_unused_result )) { return callcnt; }
 }; // PRNG
 
-//===============================================================
 
-// Concurrent per Kernel-Thread Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
+// Concurrent Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
 //
 // Interface :
 //   set_seed( 1009 ) - fixed seed for all kernel threads versus random seed
@@ -80,14 +79,14 @@ class PRNG {
 //   prng( 16 + 1 ) + 5;
 //   prng( 5, 21 );
 
-extern void set_seed( uint32_t seed );					// set per thread seed
-extern uint32_t get_seed();								// get seed
-extern uint32_t prng() __attribute__(( warn_unused_result )); // [0,UINT_MAX]
+// set_seed and prng are also members of uBaseTask to eliminate expensive call to uThisTask.
+void set_seed( uint32_t seed );							// set global seed
+uint32_t get_seed() __attribute__(( warn_unused_result )); // get global seed, not inline because static/friend problem
+uint32_t prng() __attribute__(( warn_unused_result ));	// [0,UINT_MAX]
 static inline uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result ));
 static inline uint32_t prng( uint32_t u ) { return prng() % u; } // [0,u)
 static inline uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result ));
 static inline uint32_t prng( uint32_t l, uint32_t u ) { return prng( u - l + 1 ) + l; } // [l,u]
-
 
 // Local Variables: //
 // compile-command: "make install" //

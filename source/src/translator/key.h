@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 09:16:07 2021
-// Update Count     : 101
+// Last Modified On : Fri Feb  4 10:19:46 2022
+// Update Count     : 103
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,6 +72,7 @@ enum key_value_t {
 	NUMBER,												// integer (oct,dec,hex) and floating-point constants
 
 	IDENTIFIER,											// variable names
+	STRING_IDENTIFIER,									// variable names, "abc"abc
 	LABEL,												// statement labels
 	TYPE,												// builtin and user defined types
 
@@ -80,7 +81,6 @@ enum key_value_t {
 
 	COLON_COLON,										// ::
 
-	USER_LITERAL,										// meta, user literal name
 	ERROR,												// meta, error mesage
 	WARNING,											// meta, warning message
 	CODE,												// meta, generated code

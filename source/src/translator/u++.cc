@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul 29 14:49:15 2021
-// Update Count     : 1026
+// Last Modified On : Tue Jun 28 21:42:22 2022
+// Update Count     : 1027
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -291,7 +291,7 @@ int main( int argc, char * argv[] ) {
 			} else if ( arg[1] == 'l' ) {
 				// if the user specifies a library, load it after user code
 				libs[nlibs++] = argv[i];
-			} else if ( arg == "-openmp" ) {
+			} else if ( arg == "-fopenmp" ) {
 				openmp = true;							// openmp mode
 				args[nargs++] = argv[i];				// pass argument along
 			} else {

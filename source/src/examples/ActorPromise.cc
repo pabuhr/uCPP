@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:37 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 26 14:15:22 2021
-// Update Count     : 705
+// Last Modified On : Fri Jul 22 10:52:22 2022
+// Update Count     : 726
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,52 +28,34 @@
 using namespace std;
 #include <uActor.h>
 
-
-struct IntMsg : public uActor::PromiseMsg< int > {
-	int val;											//  server value
-	IntMsg() {}
-	IntMsg( int val ) : PromiseMsg( uActor::Delete ), val( val ) {}
-}; // IntMsg
-
-struct StrMsg : public uActor::PromiseMsg< string > {
-	string val;											//  server value
-	StrMsg() {}
-	StrMsg( string val ) : PromiseMsg( uActor::Delete ), val( val ) {}
-}; // StrMsg
-
-struct IntStrMsg : public uActor::PromiseMsg< int > {
-	string val;											//  server value
-	IntStrMsg() {}
-	IntStrMsg( string val ) : PromiseMsg( uActor::Delete ), val( val ) {}
-}; // IntStrMsg
-
+struct IntMsg : public uActor::PromiseMsg<int> { int val; };
+struct StrMsg : public uActor::PromiseMsg<string> { string val; };
+struct IntStrMsg : public uActor::PromiseMsg< int > { string val; };
 static struct ClientStopMsg : public uActor::Message {} clientStopmsg;
 
-//#define Delay( N )
-#define Delay( N ) for ( volatile unsigned int delay = 0; delay < N; delay += 1 ) {}
-//#define Delay( N ) uThisTask().yield( 1 )
+int Delay = 10;
+#define delay( N ) for ( volatile int delay = 0; delay < N; delay += 1 ) {}
 
 _Actor Server {
 	const unsigned int NoOfClients;
 	unsigned int cntClients = 0;
 
 	Allocation receive( uActor::Message & msg ) {
-		Delay( 140 );									// pretend to perform client work
-		Case( IntMsg, msg ) {							// ask messages
-			msg_d->delivery( 7 );
-		} else Case( StrMsg, msg ) {
-			msg_d->delivery( "XYZ" );
-		} else Case( IntStrMsg, msg ) {
-			msg_d->delivery( 12 );
-		} else Case( ClientStopMsg, msg ) {
+        delay( Delay )							// pretend to perform client work
+		// work
+		Case( IntMsg, msg ) { msg_d->delivery( 7 ); }
+		else Case( StrMsg, msg ) { msg_d->delivery( "XYZ" ); }
+		else Case( IntStrMsg, msg ) { msg_d->delivery( 12 ); }
+		// admin
+		else Case( ClientStopMsg, msg ) {
 			cntClients += 1;
 			if ( cntClients == NoOfClients ) return Delete; // delete actor
-		// error cases
+		// errors
 		} else Case( UnhandledMsg, msg ) {				// receiver complained
-			abort( "sent unknown message to %p", msg.sender() );
+			abort( "sent unknown message to %p", msg_d->sender() );
 		} else {										// unknown void message
 			osacquire( cout ) << "server unhandled" << endl;
-			*msg.sender() | uActor::unhandledMsg;		// complain to sender
+			*msg_d->sender() | uActor::unhandledMsg;	// complain to sender
 		} // Case
 		return Nodelete;								// reuse actor
 	} // Server::receive
@@ -85,7 +67,7 @@ _Actor Server {
 _Actor Client {
 	enum { MsgKinds = 3,								// number of message kinds
 		   Messages = 100,								// number of message kinds sent
-		   Times = 10000 };								// number of send repetitions
+		   Times = 1000  };								// number of send repetitions
 
 	Server & server;
 	unsigned int times = 0, processed = 0, maybes = 0, callbacks = 0, tmaybes = 0, tcallbacks = 0;
@@ -98,14 +80,12 @@ _Actor Client {
 	uActor::Promise< string > ps[Messages];
 	uActor::Promise< int > pis[Messages];
 
-	// function< void( int ) > icb = [this]( int i ) { callbacks += 1; *this | *new IntMsg( i ); };
-	// function< void( string ) > scb = [this]( string s ) { callbacks += 1; *this | *new StrMsg( s ); };
-	#define ICB [this, li = i]( int ) { callbacks += 1; *this | intmsg[li]; }
-	#define SCB [this, li = i]( string ) { callbacks += 1; *this | strmsg[li]; }
+	#define ICB [this, li = i]( int ) { callbacks += 1; *this | intmsg[li]; return Nodelete; }
+	#define SCB [this, li = i]( string ) { callbacks += 1; *this | strmsg[li]; return Nodelete; }
 
 	void preStart() {
 		become( &Client::send );
-			*this | uActor::startMsg;
+		*this | uActor::startMsg;
 	} // Client::preStart
 
 	Allocation shutdown() {
@@ -125,37 +105,34 @@ _Actor Client {
 
 	Allocation send( uActor::Message & ) {
 		for ( unsigned int i = 0; i < Messages; i += 1 ) { // send out work
-			// pi[i] = server || *new IntMsg( 4 );		// ask messages
 			intmsg[i].val = 4;
 			pi[i] = server || intmsg[i];				// ask messages
-			// ps[i] = server || *new StrMsg( "DEF" );	// store promise
 			strmsg[i].val = "DEF";
 			ps[i] = server || strmsg[i];				// store promise
 		} // for
-		Delay( 5000 );									// work asynchronously
+		delay( Delay );									// work asynchronously
 		// check for finished work
 		for ( unsigned int i = 0; i < Messages; i += 1 ) { // any promise fulfilled ?
 			#ifdef THEN
 			pi[i].then( ICB );
 			ps[i].then( SCB );
 			#else
-			if ( pi[i].maybe( ICB ) ) { maybes += 1; assert( pi[i]() == 7 ); Delay( 500 ); }
-			if ( ps[i].maybe( SCB ) ) { maybes += 1; assert( ps[i]() == "XYZ" ); Delay( 500 ); }
+			if ( pi[i].maybe( ICB ) ) { maybes += 1; assert( pi[i]() == 7 ); }
+			if ( ps[i].maybe( SCB ) ) { maybes += 1; assert( ps[i]() == "XYZ" ); }
 			#endif // THEN
 		} // for
 
 		for ( unsigned int i = 0; i < Messages; i += 1 ) { // send out work
-			// pis[i] = server || *new IntStrMsg( "HIJ" );		// ask messages
 			intstrmsg[i].val = "DEF";
 			pis[i] = server || intstrmsg[i];			// store promise
 		} // for
-		Delay( 5000 );									// work asynchronously
+		delay( Delay );									// work asynchronously
 		// check for finished work
 		for ( unsigned int i = 0; i < Messages; i += 1 ) { // access promise values
 			#ifdef THEN
 			pis[i].then( ICB );
 			#else
-			if ( pis[i].maybe( ICB ) ) { maybes += 1; assert( pis[i]() == 12 ); Delay( 500 ); }
+			if ( pis[i].maybe( ICB ) ) { maybes += 1; assert( pis[i]() == 12 ); }
 			#endif // THEN
 		} // for
 
@@ -167,15 +144,15 @@ _Actor Client {
 
 	Allocation receive( uActor::Message & msg ) {		// receive callback messages
 		Case( IntMsg, msg ) {							// ask messages
-			processed += 1; assert( (*msg_d)() == 7 || (*msg_d)() == 12 ); Delay( 500 ); // touch result
+			processed += 1; assert( (*msg_d)() == 7 || (*msg_d)() == 12 ); delay( 500 ); // touch result
 		} else Case( StrMsg, msg ) {
-			processed += 1; assert( (*msg_d)() == "XYZ" ); Delay( 500 ); // touch result
+			processed += 1; assert( (*msg_d)() == "XYZ" ); delay( 500 ); // touch result
 		// error cases
 		} else Case( UnhandledMsg, msg ) {				// receiver complained
-			abort( "sent unknown message to %p", msg.sender() );
+			abort( "sent unknown message to %p", msg_d->sender() );
 		} else {										// unknown void message
-			osacquire( cout ) << "client unhandled " << &msg << ' ' << msg.sender() << endl;
-			*msg.sender() | uActor::unhandledMsg;		// complain to sender
+			osacquire( cout ) << "client unhandled " << &msg << ' ' << msg_d->sender() << endl;
+			*msg_d->sender() | uActor::unhandledMsg;		// complain to sender
 			return Nodelete;							// reuse actor
 		} // Case
 
@@ -187,7 +164,22 @@ _Actor Client {
 }; // Client
 
 
-int main() {
+int main( int argc, char * argv[] ) {
+    switch ( argc ) {
+	  case 2:
+		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
+			if ( stoi( argv[1] ) < 0 ) goto Usage;
+			Delay = stoi( argv[1] );
+		} // if
+	  case 1:											// use defaults
+		break;
+	  default:
+	  Usage:
+		cerr << "Usage: " << argv[0]
+			 << " [ delay >= 0 | d ]" << endl;
+		exit( EXIT_FAILURE );
+	} // switch
+
 	enum { Times = 1, NoOfServers = 1, NoOfClients = 2 };
 	uProcessor p[NoOfServers + NoOfClients - 1];		// processor for server and client
 

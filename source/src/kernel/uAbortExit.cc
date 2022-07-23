@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 23 18:34:20 2021
-// Update Count     : 667
+// Last Modified On : Fri Feb 25 07:17:16 2022
+// Update Count     : 670
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -148,7 +148,7 @@ void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_li
 
 #ifdef __U_STATISTICS__
 	if ( Statistics::prtStatTerm() ) Statistics::print();
-	if ( uHeapControl::prtHeapTerm() ) uHeapManager::printStats();
+	if ( uHeapControl::prtHeapTerm() ) malloc_stats();
 #endif // __U_STATISTICS__
 
 	uBaseTask &task = uThisTask();						// optimization

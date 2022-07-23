@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  8 11:19:32 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  8 11:21:04 2019
-// Update Count     : 1
+// Last Modified On : Tue Apr 26 15:02:59 2022
+// Update Count     : 2
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,7 +29,7 @@ using namespace std;
 #include <uFuture.h>
 
 struct Adder {											// routine, functor or lambda
-    int * row, cols;									// communication
+	int * row, cols;									// communication
 	int operator()() {									// functor-call operator
 		int subtotal = 0;
 		for ( int c = 0; c < cols; c += 1 ) {

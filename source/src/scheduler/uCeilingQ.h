@@ -7,8 +7,8 @@
 // Author           :
 // Created On       : Thu Aug  9 14:50:41 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:48:43 2019
-// Update Count     : 12
+// Last Modified On : Sat Apr  9 16:57:01 2022
+// Update Count     : 14
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,52 +37,52 @@
 
 class uCeilingQ : public uBasePrioritySeq {
   protected:
-    uBaseTaskSeq objects[__U_MAX_NUMBER_PRIORITIES__];
-    unsigned int mask;					// allow access to all queue flags
+	uBaseTaskSeq objects[__U_MAX_NUMBER_PRIORITIES__];
+	unsigned int mask;									// allow access to all queue flags
 
-    int currPriority;
+	int currPriority;
   public:
-    uCeilingQ() {
-	executeHooks = true;
-    } // uCeilingQ::uCeilingQ
+	uCeilingQ() {
+		executeHooks = true;
+	} // uCeilingQ::uCeilingQ
 
-    bool empty() const {
-	return list.empty();
-    } // uCeilingQ::empty
+	bool empty() const {
+		return list.empty();
+	} // uCeilingQ::empty
 
-    uBaseTaskDL *head() const {
-	return list.head();
-    } // uCeilingQ::head
+	uBaseTaskDL *head() const {
+		return list.head();
+	} // uCeilingQ::head
 
-    int add( uBaseTaskDL *node, uBaseTask *owner ) {
-#ifdef KNOT
-	uFetchAdd( UPP::Statistics::mutex_queue, 1 );
-#endif // KNOT
-	list.addTail( node );
-	return 0;
-    } // uCeilingQ::add
+	int add( uBaseTaskDL *node, uBaseTask *owner ) {
+		#ifdef KNOT
+		uFetchAdd( UPP::Statistics::mutex_queue, 1 );
+		#endif // KNOT
+		list.addTail( node );
+		return 0;
+	} // uCeilingQ::add
 
-    uBaseTaskDL *drop() {
-#ifdef KNOT
-	uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // KNOT
-	return list.dropHead();
-    } // uCeilingQ::drop
+	uBaseTaskDL *drop() {
+		#ifdef KNOT
+		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
+		#endif // KNOT
+		return list.dropHead();
+	} // uCeilingQ::drop
 
-    void remove( uBaseTaskDL *node ) {
-#ifdef KNOT
-	uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // KNOT
-	list.remove( node );
-    } // uCeilingQ::remove
+	void remove( uBaseTaskDL *node ) {
+		#ifdef KNOT
+		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
+		#endif // KNOT
+		list.remove( node );
+	} // uCeilingQ::remove
 
-    void onAcquire( uBaseTask &owner ) {
-	setActivePriority( owner, getActivePriorityValue( owner ) + 1 );
-    } // uCeilingQ::onAcquire
+	void onAcquire( uBaseTask &owner ) {
+		setActivePriority( owner, getActivePriorityValue( owner ) + 1 );
+	} // uCeilingQ::onAcquire
 
-    void onRelease( uBaseTask &oldOwner ) {
-	setActivePriority( oldOwner, getActivePriorityValue( oldOwner ) - 1 );
-    } // uCeilingQ::onRelease
+	void onRelease( uBaseTask &oldOwner ) {
+		setActivePriority( oldOwner, getActivePriorityValue( oldOwner ) - 1 );
+	} // uCeilingQ::onRelease
 }; // uCeilingQ
 
 

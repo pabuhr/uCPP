@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:03:54 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 18:08:28 2017
-// Update Count     : 6
+// Last Modified On : Sun Apr 24 09:50:18 2022
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,30 +28,30 @@
 using namespace std;
 
 _Task worker {
-    void main() {
-	migrate( clus );
-	cout << "Task " << &uThisTask() << " deleting processor " << &uThisProcessor() << "\n";
-	delete &uThisProcessor();
-	cout << "Task " << &uThisTask() << " now on processor " << &uThisProcessor() << "\n";
-	yield();
-	cout << "Task " << &uThisTask() << " still on processor " << &uThisProcessor() << "\n";
-    }
+	void main() {
+		migrate( clus );
+		cout << "Task " << &uThisTask() << " deleting processor " << &uThisProcessor() << "\n";
+		delete &uThisProcessor();
+		cout << "Task " << &uThisTask() << " now on processor " << &uThisProcessor() << "\n";
+		yield();
+		cout << "Task " << &uThisTask() << " still on processor " << &uThisProcessor() << "\n";
+	}
 
-    uCluster &clus;
+	uCluster &clus;
   public:
-    worker( uCluster &cl ): clus( cl ) {}
+	worker( uCluster &cl ): clus( cl ) {}
 }; // worker
 
 int main(){
-    uCluster cluster;
-    uProcessor *processor = new uProcessor( cluster );
-    cout << "Task main created processor " << processor << "\n";
-    {
-	worker f( cluster );
-	sleep( 2 );
-	processor = new uProcessor( cluster );
+	uCluster cluster;
+	uProcessor *processor = new uProcessor( cluster );
 	cout << "Task main created processor " << processor << "\n";
-    }
-    delete processor;
-    cout << "successful completion\n";
+	{
+		worker f( cluster );
+		sleep( 2 );
+		processor = new uProcessor( cluster );
+		cout << "Task main created processor " << processor << "\n";
+	}
+	delete processor;
+	cout << "successful completion\n";
 }

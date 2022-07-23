@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec  2 22:46:18 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  4 17:30:20 2018
-// Update Count     : 25
+// Last Modified On : Tue Apr 19 11:22:29 2022
+// Update Count     : 26
 // 
 
 #define __U_KERNEL__
@@ -17,20 +17,20 @@
 
 
 extern "C" unsigned int sleep( unsigned int sec ) {
-    _Timeout( uDuration( sec, 0 ) );
-    return 0;
+	_Timeout( uDuration( sec, 0 ) );
+	return 0;
 } // sleep
 
 
 extern "C" int usleep( unsigned int usec ) {
-    _Timeout( uDuration( 0, usec ) );
-    return 0;
+	_Timeout( uDuration( 0, usec ) );
+	return 0;
 } // usleep
 
 
 extern "C" unsigned int alarm( unsigned int /* sec */ ) __THROW {
-    abort( "alarm : not implemented" );
-    return 0;
+	abort( "alarm : not implemented" );
+	return 0;
 } // alarm
 
 

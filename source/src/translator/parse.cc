@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 12:09:21 2021
-// Update Count     : 5026
+// Last Modified On : Sat Apr  2 08:19:37 2022
+// Update Count     : 5057
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -505,11 +505,7 @@ static token_t * op() {
 
 	if ( match( LP ) && match( RP ) ) return back;
 	if ( match( LB ) && match( RB ) ) return back;
-	if ( match( STRING ) ) {							// C++14 user defined literals
-		ahead->value = USER_LITERAL;					// do not separate string from identifier on output
-		scan();
-		return back;
-	} // if
+	if ( match( STRING_IDENTIFIER ) ) return back;		// C++14 user defined literals
 
 	ahead = back; return nullptr;
 } // op
@@ -3067,6 +3063,19 @@ static token_t * class_head( attribute_t & attribute ) {
 				make_type( token, symbol, root );
 				symbol->data->key = key;				// set the symbol's class key to the class key
 			} else if ( ( token = type() ) != nullptr ) {
+				symbol = token->symbol;
+				uassert( symbol != nullptr );
+				// verify that its kind is the same as the previous definition
+				if ( symbol->data->key != key ) {
+					// struct and class are equivalent for prototype
+					if ( ! ( ( symbol->data->key == STRUCT && key == CLASS ) || ( symbol->data->key == CLASS && key == STRUCT ) ) ) {
+						char msg[strlen(symbol->hash->text) + 256];
+						sprintf( msg, "\"%s\" redeclared with different kind.", symbol->hash->text );
+						gen_error( ahead, msg );
+					} else {
+						symbol->data->key = key;
+					} // if
+				} // if
 			} // if
 			return token;
 		} // if

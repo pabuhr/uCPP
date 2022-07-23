@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 15 23:28:39 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 28 10:52:05 2010
-// Update Count     : 9
+// Last Modified On : Sun Apr  3 09:47:06 2022
+// Update Count     : 10
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@
 
 
 unsigned int uMainStackSize() {
-    return __U_DEFAULT_MAIN_STACK_SIZE__;
+	return __U_DEFAULT_MAIN_STACK_SIZE__;
 } // uMainStackSize
 
 

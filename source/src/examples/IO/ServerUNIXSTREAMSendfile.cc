@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:45:06 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:07:40 2019
-// Update Count     : 30
+// Last Modified On : Thu Apr 21 18:47:02 2022
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,7 +72,7 @@ _Task Server {
 			} or _Accept( complete ) {					// acceptor has completed with client
 				delete terminate;						// delete must appear here or deadlock
 				acceptorCnt -= 1;
-		  if ( acceptorCnt == 0 ) break;				// if no outstanding connections, stop
+			  if ( acceptorCnt == 0 ) break;				// if no outstanding connections, stop
 				if ( timeout ) {
 					new Acceptor( sockserver, *this );	// create new acceptor after a timeout
 					acceptorCnt += 1;
@@ -122,7 +122,7 @@ int main( int argc, char *argv[] ) {
 	{
 		Server s( sockserver );							// execute until acceptor times out
 	}
-    unlink( argv[1] );									// remove socket file
+	unlink( argv[1] );									// remove socket file
 } // uMain
 
 // Local Variables: //

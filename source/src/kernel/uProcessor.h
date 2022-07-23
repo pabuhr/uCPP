@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 26 09:36:12 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 08:45:28 2019
-// Update Count     : 53
+// Last Modified On : Sun Apr  3 10:12:30 2022
+// Update Count     : 54
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,21 +32,21 @@
 
 
 _Task uProcessorTask {
-    friend class uProcessor;				// access: setPreemption
+	friend class uProcessor;				// access: setPreemption
 
-    uProcessor &processor;				// associated processor
-    uCondition result;
+	uProcessor &processor;				// associated processor
+	uCondition result;
 
 
-    unsigned int preemption;				// communication: setPreemption
-    uCluster *cluster;					// communication: setCluster
+	unsigned int preemption;				// communication: setPreemption
+	uCluster *cluster;					// communication: setCluster
 
-    void main();
-    _Mutex void setPreemption( unsigned int ms );
-    _Mutex void setCluster( uCluster &cluster );
+	void main();
+	_Mutex void setPreemption( unsigned int ms );
+	_Mutex void setCluster( uCluster &cluster );
 
-    uProcessorTask( uCluster &cluster, uProcessor &processor );
-    ~uProcessorTask();
+	uProcessorTask( uCluster &cluster, uProcessor &processor );
+	~uProcessorTask();
   public:
 }; // uProcessorTask
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 23 17:32:14 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 13:51:32 2021
-// Update Count     : 74
+// Last Modified On : Sun Apr  3 09:37:58 2022
+// Update Count     : 75
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,43 +34,43 @@
 
 
 uContext::uContext( void *key ) : key( key ) {
-    // Check the lists of additional contexts for this execution state for a context with the same unique key as the
-    // context being added in this call.  If there is a similar context already active for this state, do not add this
-    // context again.
+	// Check the lists of additional contexts for this execution state for a context with the same unique key as the
+	// context being added in this call.  If there is a similar context already active for this state, do not add this
+	// context again.
 
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
-    uContext *context;
-    for ( uSeqIter<uContext> iter( coroutine.additionalContexts_ ); iter >> context; ) {
-      if ( context->key == key ) return;
-    } // for
+	uBaseCoroutine &coroutine = uThisCoroutine();		// optimization
+	uContext *context;
+	for ( uSeqIter<uContext> iter( coroutine.additionalContexts_ ); iter >> context; ) {
+		if ( context->key == key ) return;
+	} // for
 
-    // If no similar context is found, add this context to the list of contexts active for this state.
+	// If no similar context is found, add this context to the list of contexts active for this state.
 
-    THREAD_GETMEM( This )->disableInterrupts();
-    coroutine.additionalContexts_.addTail( this );
-    coroutine.extras_.is.usercxts = 1;
-    THREAD_GETMEM( This )->enableInterrupts();
+	THREAD_GETMEM( This )->disableInterrupts();
+	coroutine.additionalContexts_.addTail( this );
+	coroutine.extras_.is.usercxts = 1;
+	THREAD_GETMEM( This )->enableInterrupts();
 } // uContext::uContext
 
 uContext::uContext() : key( this ) {
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
-    THREAD_GETMEM( This )->disableInterrupts();
-    coroutine.additionalContexts_.addTail( this );
-    coroutine.extras_.is.usercxts = 1;
-    THREAD_GETMEM( This )->enableInterrupts();
+	uBaseCoroutine &coroutine = uThisCoroutine();		// optimization
+	THREAD_GETMEM( This )->disableInterrupts();
+	coroutine.additionalContexts_.addTail( this );
+	coroutine.extras_.is.usercxts = 1;
+	THREAD_GETMEM( This )->enableInterrupts();
 } // uContext::uContext
 
 uContext::~uContext() {
-    uBaseCoroutine &coroutine = uThisCoroutine();	// optimization
-    // If the usercxts is present on a list of contexts, remove it.
-    if ( listed() ) {
-	THREAD_GETMEM( This )->disableInterrupts();
-	coroutine.additionalContexts_.remove( this );
-	if ( coroutine.additionalContexts_.empty() ) {
-	    coroutine.extras_.is.usercxts = 0;
+	uBaseCoroutine &coroutine = uThisCoroutine();		// optimization
+	// If the usercxts is present on a list of contexts, remove it.
+	if ( listed() ) {
+		THREAD_GETMEM( This )->disableInterrupts();
+		coroutine.additionalContexts_.remove( this );
+		if ( coroutine.additionalContexts_.empty() ) {
+			coroutine.extras_.is.usercxts = 0;
+		} // if
+		THREAD_GETMEM( This )->enableInterrupts();
 	} // if
-	THREAD_GETMEM( This )->enableInterrupts();
-    } // if
 } // uContext::~uContext
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 19 13:24:20 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:06:14 2019
-// Update Count     : 19
+// Last Modified On : Tue Apr 19 11:26:45 2022
+// Update Count     : 21
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,155 +36,151 @@
 
 
 namespace std {
+	//######################### ifstream #########################
 
 
-    //######################### ifstream #########################
+	template< typename Ch, typename Tr >
+	class basic_ifstream : public std::basic_istream<Ch, Tr> {
+		basic_filebuf<Ch,Tr> sb;
+	  public:
+		basic_ifstream();
+		basic_ifstream( const char *name, std::ios_base::openmode mode = std::ios_base::in );
+		bool is_open();
+		void open( const char *name, std::ios_base::openmode mode = std::ios_base::in );
+		void close();
+		basic_filebuf<Ch,Tr> *rdbuf() const;
+	}; // basic_ifstream
 
 
-    template< typename Ch, typename Tr >
-    class basic_ifstream : public std::basic_istream<Ch, Tr> {
-	basic_filebuf<Ch,Tr> sb;
-      public:
-	basic_ifstream();
-	basic_ifstream( const char *name, std::ios_base::openmode mode = std::ios_base::in );
-	bool is_open();
-	void open( const char *name, std::ios_base::openmode mode = std::ios_base::in );
-	void close();
-	basic_filebuf<Ch,Tr> *rdbuf() const;
-    }; // basic_ifstream
+	//######################### ofstream #########################
 
 
-    //######################### ofstream #########################
+	template< typename Ch, typename Tr >
+	class basic_ofstream : public std::basic_ostream<Ch, Tr> {
+		basic_filebuf<Ch,Tr> sb;
+	  public:
+		basic_ofstream();
+		basic_ofstream( const char *name, std::ios_base::openmode mode = std::ios_base::out );
+		bool is_open();
+		void open( const char *name, std::ios_base::openmode mode = std::ios_base::out );
+		void close();
+		basic_filebuf<Ch,Tr> *rdbuf();
+	}; // basic_ofstream
 
 
-    template< typename Ch, typename Tr >
-    class basic_ofstream : public std::basic_ostream<Ch, Tr> {
-	basic_filebuf<Ch,Tr> sb;
-      public:
-	basic_ofstream();
-	basic_ofstream( const char *name, std::ios_base::openmode mode = std::ios_base::out );
-	bool is_open();
-	void open( const char *name, std::ios_base::openmode mode = std::ios_base::out );
-	void close();
-	basic_filebuf<Ch,Tr> *rdbuf();
-    }; // basic_ofstream
+	//######################### fstream #########################
 
 
-    //######################### fstream #########################
+	template< typename Ch, typename Tr >
+	class basic_fstream : public std::basic_iostream<Ch, Tr> {
+		basic_filebuf<Ch,Tr> sb;
+	  public:
+		basic_fstream();
+		basic_fstream( const char *name, ios_base::openmode mode = ios_base::in | ios_base::out );
+		bool is_open();
+		void open( const char *name, ios_base::openmode mode = ios_base::in | ios_base::out );
+		void close();
+		basic_filebuf<Ch,Tr> *rdbuf();
+	}; // basic_fstream
 
 
-    template< typename Ch, typename Tr >
-    class basic_fstream : public std::basic_iostream<Ch, Tr> {
-	basic_filebuf<Ch,Tr> sb;
-      public:
-	basic_fstream();
-	basic_fstream( const char *name, ios_base::openmode mode = ios_base::in | ios_base::out );
-	bool is_open();
-	void open( const char *name, ios_base::openmode mode = ios_base::in | ios_base::out );
-	void close();
-	basic_filebuf<Ch,Tr> *rdbuf();
-    }; // basic_fstream
+	//######################### ifstream #########################
 
 
-    //######################### ifstream #########################
+	template< typename Ch, typename Tr >
+	basic_ifstream<Ch, Tr>::basic_ifstream() : std::basic_istream<Ch, Tr>( &sb ) {
+	} // ifstream<Ch, Tr>::ifstream
+
+	template< typename Ch, typename Tr >
+	basic_ifstream<Ch, Tr>::basic_ifstream( const char *name, std::ios_base::openmode mode ) : std::basic_istream<Ch, Tr>( &sb ) {
+		rdbuf()->open( name, mode );
+	} // ifstream<Ch, Tr>::ifstream
+
+	template< typename Ch, typename Tr >
+	bool basic_ifstream<Ch, Tr>::is_open() {
+		return rdbuf()->is_open();
+	} // ifstream<Ch, Tr>::is_open
+
+	template< typename Ch, typename Tr >
+	void basic_ifstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
+		rdbuf()->open( name, mode );
+	} // ifstream<Ch, Tr>::ifstream
+
+	template< typename Ch, typename Tr >
+	void basic_ifstream<Ch, Tr>::close() {
+		rdbuf()->close();
+	} // ifstream<Ch, Tr>::close
+
+	template< typename Ch, typename Tr >
+	basic_filebuf<Ch,Tr> *basic_ifstream<Ch, Tr>::rdbuf() const {
+		return (basic_filebuf<Ch,Tr> *)std::basic_istream<Ch, Tr>::rdbuf();
+	} // ifstream<Ch, Tr>::rdbuf
 
 
-    template< typename Ch, typename Tr >
-    basic_ifstream<Ch, Tr>::basic_ifstream() : std::basic_istream<Ch, Tr>( &sb ) {
-    } // ifstream<Ch, Tr>::ifstream
-
-    template< typename Ch, typename Tr >
-    basic_ifstream<Ch, Tr>::basic_ifstream( const char *name, std::ios_base::openmode mode ) : std::basic_istream<Ch, Tr>( &sb ) {
-	rdbuf()->open( name, mode );
-    } // ifstream<Ch, Tr>::ifstream
-
-    template< typename Ch, typename Tr >
-    bool basic_ifstream<Ch, Tr>::is_open() {
-	return rdbuf()->is_open();
-    } // ifstream<Ch, Tr>::is_open
-
-    template< typename Ch, typename Tr >
-    void basic_ifstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
-	rdbuf()->open( name, mode );
-    } // ifstream<Ch, Tr>::ifstream
-
-    template< typename Ch, typename Tr >
-    void basic_ifstream<Ch, Tr>::close() {
-	rdbuf()->close();
-    } // ifstream<Ch, Tr>::close
-
-    template< typename Ch, typename Tr >
-    basic_filebuf<Ch,Tr> *basic_ifstream<Ch, Tr>::rdbuf() const {
-	return (basic_filebuf<Ch,Tr> *)std::basic_istream<Ch, Tr>::rdbuf();
-    } // ifstream<Ch, Tr>::rdbuf
+	//######################### ofstream #########################
 
 
-    //######################### ofstream #########################
+	template< typename Ch, typename Tr >
+	basic_ofstream<Ch, Tr>::basic_ofstream() : std::basic_ostream<Ch, Tr>( &sb ) {
+	} // ofstream<Ch, Tr>::ofstream
+
+	template< typename Ch, typename Tr >
+	basic_ofstream<Ch, Tr>::basic_ofstream( const char *name, std::ios_base::openmode mode ) : std::basic_ostream<Ch, Tr>( &sb ) {
+		rdbuf()->open( name, mode );
+	} // ofstream<Ch, Tr>::ofstream
+
+	template< typename Ch, typename Tr >
+	bool basic_ofstream<Ch, Tr>::is_open() {
+		return rdbuf()->is_open();
+	} // ofstream<Ch, Tr>::is_open
+
+	template< typename Ch, typename Tr >
+	void basic_ofstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
+		rdbuf()->open( name, mode );
+	} // ofstream<Ch, Tr>::ofstream
+
+	template< typename Ch, typename Tr >
+	void basic_ofstream<Ch, Tr>::close() {
+		rdbuf()->close();
+	} // ofstream<Ch, Tr>::close
+
+	template< typename Ch, typename Tr >
+	basic_filebuf<Ch,Tr> *basic_ofstream<Ch, Tr>::rdbuf() {
+		return (basic_filebuf<Ch,Tr> *)std::basic_ostream<Ch, Tr>::rdbuf();
+	} // ofstream<Ch, Tr>::rdbuf
 
 
-    template< typename Ch, typename Tr >
-    basic_ofstream<Ch, Tr>::basic_ofstream() : std::basic_ostream<Ch, Tr>( &sb ) {
-    } // ofstream<Ch, Tr>::ofstream
-
-    template< typename Ch, typename Tr >
-    basic_ofstream<Ch, Tr>::basic_ofstream( const char *name, std::ios_base::openmode mode ) : std::basic_ostream<Ch, Tr>( &sb ) {
-	rdbuf()->open( name, mode );
-    } // ofstream<Ch, Tr>::ofstream
-
-    template< typename Ch, typename Tr >
-    bool basic_ofstream<Ch, Tr>::is_open() {
-	return rdbuf()->is_open();
-    } // ofstream<Ch, Tr>::is_open
-
-    template< typename Ch, typename Tr >
-    void basic_ofstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
-	rdbuf()->open( name, mode );
-    } // ofstream<Ch, Tr>::ofstream
-
-    template< typename Ch, typename Tr >
-    void basic_ofstream<Ch, Tr>::close() {
-	rdbuf()->close();
-    } // ofstream<Ch, Tr>::close
-
-    template< typename Ch, typename Tr >
-    basic_filebuf<Ch,Tr> *basic_ofstream<Ch, Tr>::rdbuf() {
-	return (basic_filebuf<Ch,Tr> *)std::basic_ostream<Ch, Tr>::rdbuf();
-    } // ofstream<Ch, Tr>::rdbuf
+	//######################### fstream #########################
 
 
-    //######################### fstream #########################
+	template< typename Ch, typename Tr >
+	basic_fstream<Ch, Tr>::basic_fstream() : std::basic_iostream<Ch, Tr>( &sb ) {
+	} // fstream<Ch, Tr>::fstream
 
+	template< typename Ch, typename Tr >
+	basic_fstream<Ch, Tr>::basic_fstream( const char *name, std::ios_base::openmode mode ) : std::basic_iostream<Ch, Tr>( &sb ) {
+		rdbuf()->open( name, mode );
+	} // fstream<Ch, Tr>::fstream
 
-    template< typename Ch, typename Tr >
-    basic_fstream<Ch, Tr>::basic_fstream() : std::basic_iostream<Ch, Tr>( &sb ) {
-    } // fstream<Ch, Tr>::fstream
+	template< typename Ch, typename Tr >
+	bool basic_fstream<Ch, Tr>::is_open() {
+		return rdbuf()->is_open();
+	} // fstream<Ch, Tr>::is_open
 
-    template< typename Ch, typename Tr >
-    basic_fstream<Ch, Tr>::basic_fstream( const char *name, std::ios_base::openmode mode ) : std::basic_iostream<Ch, Tr>( &sb ) {
-	rdbuf()->open( name, mode );
-    } // fstream<Ch, Tr>::fstream
+	template< typename Ch, typename Tr >
+	void basic_fstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
+		rdbuf()->open( name, mode );
+	} // fstream<Ch, Tr>::fstream
 
-    template< typename Ch, typename Tr >
-    bool basic_fstream<Ch, Tr>::is_open() {
-	return rdbuf()->is_open();
-    } // fstream<Ch, Tr>::is_open
+	template< typename Ch, typename Tr >
+	void basic_fstream<Ch, Tr>::close() {
+		rdbuf()->close();
+	} // fstream<Ch, Tr>::close
 
-    template< typename Ch, typename Tr >
-    void basic_fstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
-	rdbuf()->open( name, mode );
-    } // fstream<Ch, Tr>::fstream
-
-    template< typename Ch, typename Tr >
-    void basic_fstream<Ch, Tr>::close() {
-	rdbuf()->close();
-    } // fstream<Ch, Tr>::close
-
-    template< typename Ch, typename Tr >
-    basic_filebuf<Ch,Tr> *basic_fstream<Ch, Tr>::rdbuf() {
-	return (basic_filebuf<Ch,Tr> *)std::basic_iostream<Ch, Tr>::rdbuf();
-    } // fstream<Ch, Tr>::rdbuf
-
-
+	template< typename Ch, typename Tr >
+	basic_filebuf<Ch,Tr> *basic_fstream<Ch, Tr>::rdbuf() {
+		return (basic_filebuf<Ch,Tr> *)std::basic_iostream<Ch, Tr>::rdbuf();
+	} // fstream<Ch, Tr>::rdbuf
 } // namespace std
 
 

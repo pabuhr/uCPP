@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim and Ashif S. Harji
 // Created On       : Fri Jul 19 23:20:17 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 07:53:17 2019
-// Update Count     : 138
+// Last Modified On : Sat Apr  9 16:59:05 2022
+// Update Count     : 139
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,11 +32,11 @@
 
 
 class uDeadlineMonotonic : public uPriorityScheduleSeq<uBaseTaskSeq, uBaseTaskDL> {
-    int compare( uBaseTask &task1, uBaseTask &task2 );
+	int compare( uBaseTask &task1, uBaseTask &task2 );
   public:
-    void addInitialize( uSequence<uBaseTaskDL> &taskList );
-    void removeInitialize( uSequence<uBaseTaskDL> & );
-    void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
+	void addInitialize( uSequence<uBaseTaskDL> &taskList );
+	void removeInitialize( uSequence<uBaseTaskDL> & );
+	void rescheduleTask( uBaseTaskDL *taskNode, uBaseTaskSeq &taskList );
 }; // uDeadlineMonotonic
 
 

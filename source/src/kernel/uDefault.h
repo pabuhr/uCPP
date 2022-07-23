@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 16 11:02:46 2020
-// Update Count     : 74
+// Last Modified On : Thu Mar 24 22:10:09 2022
+// Update Count     : 78
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -26,18 +26,6 @@
 
 
 #pragma once
-
-
-// Define the default extension heap amount in units of bytes. When the uC++ supplied heap reaches the brk address, the
-// brk address is extended by the extension amount.
-
-#define __U_DEFAULT_HEAP_EXPANSION__ (10 * 1024 * 1024)
-
-
-// Define the mmap crossover point during allocation. Allocations less than this amount are allocated from buckets;
-// values greater than or equal to this value are mmap from the operating system.
-
-#define __U_DEFAULT_MMAP_START__ (512 * 1024 + 1)
 
 
 // Define the default scheduling pre-emption time in milliseconds.  A scheduling pre-emption is attempted every default
@@ -69,16 +57,14 @@
 #define __U_DEFAULT_USER_PROCESSORS__ 1
 
 
-extern unsigned int uDefaultHeapExpansion();		// heap expansion size (bytes)
-extern unsigned int uDefaultMmapStart();		// cross over point to use mmap rather than buckets
-extern unsigned int uDefaultStackSize();		// cluster coroutine/task stack size (bytes)
-extern unsigned int uMainStackSize();			// uMain task stack size (bytes)
-extern unsigned int uDefaultSpin();			// processor spin time for idle task (context switches)
-extern unsigned int uDefaultPreemption();		// processor scheduling pre-emption durations (milliseconds)
-extern unsigned int uDefaultProcessors();		// number of processors created on the user cluster
-extern unsigned int uDefaultBlockingIOProcessors();	// number of blocking I/O processors created on the blocking I/O cluster
+extern unsigned int uDefaultStackSize();				// cluster coroutine/task stack size (bytes)
+extern unsigned int uMainStackSize();					// uMain task stack size (bytes)
+extern unsigned int uDefaultSpin();						// processor spin time for idle task (context switches)
+extern unsigned int uDefaultPreemption();				// processor scheduling pre-emption durations (milliseconds)
+extern unsigned int uDefaultProcessors();				// number of processors created on the user cluster
+extern unsigned int uDefaultBlockingIOProcessors();		// number of blocking I/O processors created on the blocking I/O cluster
 
-extern void uStatistics();				// print user defined statistics on interrupt
+extern void uStatistics();								// print user defined statistics on interrupt
 
 
 // Local Variables: //

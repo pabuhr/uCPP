@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jun 22 15:23:25 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 08:50:03 2019
-// Update Count     : 23
+// Last Modified On : Sun Apr  3 10:51:23 2022
+// Update Count     : 25
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,19 +29,19 @@
 
 
 _Task uSystemTask {
-    friend _Task UPP::uPthread;				// access: pthreadDetachEnd
+	friend _Task UPP::uPthread;							// access: pthreadDetachEnd
 
-    uBaseTask *victim;					// communication
+	uBaseTask *victim;									// communication
 
-    // pthread
+	// pthread
 
-    _Mutex void pthreadDetachEnd( uBaseTask &victim );
+	_Mutex void pthreadDetachEnd( uBaseTask &victim );
 
-    void main();
+	void main();
   public:
-    uSystemTask();
-    ~uSystemTask();
-    void reaper( uBaseTask &victim );
+	uSystemTask();
+	~uSystemTask();
+	void reaper( uBaseTask &victim );
 }; // uSystemTask
 
 

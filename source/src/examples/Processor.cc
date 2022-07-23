@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 22:28:04 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:28:38 2016
-// Update Count     : 1
+// Last Modified On : Thu Apr 21 18:39:13 2022
+// Update Count     : 2
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,33 +31,33 @@ using std::endl;
 volatile bool stop = false;
 
 _Task Worker {
-    void main() {
-	while ( ! stop ) {
-	    yield();
+	void main() {
+		while ( ! stop ) {
+			yield();
+		}
 	}
-    }
 };
 
 int main() {
-    uProcessor *processor2 = nullptr;
-    {
-	Worker tasks[2];
+	uProcessor *processor2 = nullptr;
+	{
+		Worker tasks[2];
 
-	uProcessor *processor1 = new uProcessor();
+		uProcessor *processor1 = new uProcessor();
 
-	while ( &uThisProcessor() != processor1 ) {
-	    yield();
-	} // while
+		while ( &uThisProcessor() != processor1 ) {
+			yield();
+		} // while
 
-	processor2 = new uProcessor();
+		processor2 = new uProcessor();
 
 //	delete processor2;
-	delete processor1;
+		delete processor1;
 
-	stop = true;
-    }
-    cout << "here" << endl;
-    delete processor2;
+		stop = true;
+	}
+	cout << "here" << endl;
+	delete processor2;
 } // main
 
 // Local Variables: //

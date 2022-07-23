@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Oct 15 13:16:10 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr  6 13:45:01 2012
-// Update Count     : 14
+// Last Modified On : Tue Apr  5 08:06:46 2022
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -594,7 +594,7 @@ void uDebuggerProtocolUnit::readArequestAddress (ULThreadId& ul_thread_id, Minim
 
 void uDebuggerProtocolUnit::readAreplyAddress (BreakpointCondition& bp_condition) {
 	                                                assert( pdu_data.request_type == AreplyAddress );
-    bp_condition = pdu_data.data.addr_reply.bp_condition;													
+	bp_condition = pdu_data.data.addr_reply.bp_condition;													
 }
 
 void uDebuggerProtocolUnit::readBbpMarkCondition(int& bp_no, ULThreadId& ul_thread_id) {

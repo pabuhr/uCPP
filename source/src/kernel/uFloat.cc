@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 10 08:30:46 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 12 17:42:31 2019
-// Update Count     : 41
+// Last Modified On : Sun Apr  3 09:46:29 2022
+// Update Count     : 42
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,28 +35,24 @@ uFloatingPointContext::uFloatingPointContext() : uContext( &uniqueKey ) {
 #endif // __U_FLOATINGPOINTDATASIZE__
 
 void uFloatingPointContext::save() {
-    
 #if defined( __i386__ )
-    // saved by caller
+	// saved by caller
 #elif defined( __x86_64__ )
-    // saved by caller
+	// saved by caller
 #else
-    #error uC++ : internal error, unsupported architecture
+	#error uC++ : internal error, unsupported architecture
 #endif
-
 } // uFloatingPointContext::save
 
 
 void uFloatingPointContext::restore() {
-    
 #if defined( __i386__ )
-    // restored by caller
+	// restored by caller
 #elif defined( __x86_64__ )
-    // restored by caller
+	// restored by caller
 #else
-    #error uC++ : internal error, unsupported architecture
+	#error uC++ : internal error, unsupported architecture
 #endif
-
 } // uFloatingPointContext::restore
 
 

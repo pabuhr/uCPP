@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 16 14:12:08 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Feb 14 21:07:03 2021
-// Update Count     : 42
+// Last Modified On : Sun Apr 24 18:21:30 2022
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,13 +28,13 @@
 using std::cout;
 using std::endl;
 
-#define TIMES 5'000'000'000LL				//' cannot be larger or overflow occurs
+#define TIMES 5'000'000'000LL							//' cannot be larger or overflow occurs
 
 int main() {
-    uTime start = uClock::getCPUTime();
-    for ( volatile unsigned long long int i = 1; i <= TIMES; i += 1 ) {
-    } // for
-    cout << "#define ITERATIONS_FOR_100USECS " << 100000LL * TIMES / ( (uClock::getCPUTime() - start).nanoseconds() ) << endl;
+	uTime start = uClock::getCPUTime();
+	for ( volatile unsigned long long int i = 1; i <= TIMES; i += 1 ) {
+	} // for
+	cout << "#define ITERATIONS_FOR_100USECS " << 100000LL * TIMES / ( (uClock::getCPUTime() - start).nanoseconds() ) << endl;
 } // main
 
 // Local Variables: //

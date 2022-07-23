@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:36:45 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 22 14:23:17 2011
-// Update Count     : 58
+// Last Modified On : Tue Apr  5 08:12:46 2022
+// Update Count     : 59
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,9 +39,9 @@
 #define uDefAttachName "-*-uAttachName-*-"
 
 struct BreakpointCondition {
-    enum OperationType {
-		NOT_SET,           // Not yet set
-		NONE,              // set with no condition (error in condition)
+	enum OperationType {
+		NOT_SET,										// Not yet set
+		NONE,											// set with no condition (error in condition)
 		EQUAL,
 		NOT_EQUAL,
 		GREATER,
@@ -62,29 +62,28 @@ struct BreakpointCondition {
 	enum VariableType {
 		INVALID,
 		INT,
-		PTR,					// pointer type
+		PTR,											// pointer type
 		FLOAT,
 		DOUBLE,
 		CHAR
 	};
 	
 	struct ConditionVar {
-		long               field_off;   // field offset of a field in a struct or class
-		long               offset;
-		AddressType        atype;
-		VariableType       vtype;
+		long field_off;									// field offset of a field in a struct or class
+		long offset;
+		AddressType atype;
+		VariableType vtype;
 	};
 
-    ConditionVar      var[2];
-    OperationType     Operator;
+	ConditionVar var[2];
+	OperationType Operator;
 	long fp;
 	long sp;
 };
 
 
 class uDebuggerProtocolUnit {
-
-public:
+  public:
 	enum GRequestType {
 		NoType = 0,
 		// notifications local debugger -> global debugger
@@ -120,12 +119,11 @@ public:
 		ArequestAddress,                                // 27
 		AreplyAddress,                                  // 28
 		BbpMarkCondition,                               // 29
-        BbpClearCondition,                              // 30
+	    BbpClearCondition,                              // 30
 	};
 
-	static const int	maxEntityName = 64;
-
-private:
+	static const int maxEntityName = 64;
+  private:
 	struct createULThreadPDU {
 		ULThreadId			ul_thread_id;
 		ClusterId			cluster_id;
@@ -221,7 +219,7 @@ private:
 		int                 bp_no;
 	};
 
-    struct replyAddressPDU {
+	struct replyAddressPDU {
 		BreakpointCondition bp_condition;
 		ULThreadId	        ul_thread_id;
 	};
@@ -254,7 +252,7 @@ private:
 			uPid_t							pid;
 			bool							deliver;
 			requestAddressPDU               addr_request;
-            replyAddressPDU                 addr_reply;
+	        replyAddressPDU                 addr_reply;
 			bpMarkConditionPDU              bp_add;
 			bpMarkConditionPDU              bp_clear;
 		} data;

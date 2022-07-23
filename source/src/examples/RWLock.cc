@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Aug 29 21:39:45 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 22:29:07 2016
-// Update Count     : 30
+// Last Modified On : Tue Apr 26 15:02:30 2022
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,46 +35,46 @@ const unsigned int Work = 100;
 uRWLock rwlock;
 
 _Task Reader {
-    void main() {
-	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
-	    rwlock.rdacquire();
-	    // if ( rwlock.wrcnt() != 0 )
-	    // 	abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
-	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
-		// if ( rwlock.wrcnt() != 0 )
-		//     abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
-	    rwlock.rdrelease();
-	} // for
-    } // main
+	void main() {
+		for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+			rwlock.rdacquire();
+			// if ( rwlock.wrcnt() != 0 )
+			// 	abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+			for ( volatile unsigned int b = 0; b < Work; b += 1 );
+			// if ( rwlock.wrcnt() != 0 )
+			//     abort( "reader interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+			rwlock.rdrelease();
+		} // for
+	} // main
   public:
 };
 
 _Task Writer {
-    void main() {
-	for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
-	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
-	    rwlock.wracquire();
-	    // if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
-	    // 	abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
-	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
-		// if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
-		//     abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
-	    rwlock.wrrelease();
-	    for ( volatile unsigned int b = 0; b < Work; b += 1 );
-	} // for
-    } // main
+	void main() {
+		for ( unsigned int i = 0; i < NoOfTimes; i += 1 ) {
+			for ( volatile unsigned int b = 0; b < Work; b += 1 );
+			rwlock.wracquire();
+			// if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
+			// 	abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+			for ( volatile unsigned int b = 0; b < Work; b += 1 );
+			// if ( rwlock.wrcnt() != 1 || rwlock.rdcnt() != 0 )
+			//     abort( "writer interference: wcnt %d, rcnt %d", rwlock.wrcnt(), rwlock.rdcnt() );
+			rwlock.wrrelease();
+			for ( volatile unsigned int b = 0; b < Work; b += 1 );
+		} // for
+	} // main
   public:
 }; // Writer
 
 
 int main() {
-    enum { NoOfReaders = 6, NoOfWriters = 2 };
-    uProcessor p[8];
-    {
-	Writer writers[NoOfWriters];
-	Reader readers[NoOfReaders];
-    }
-    cout << "successful completion" << endl;
+	enum { NoOfReaders = 6, NoOfWriters = 2 };
+	uProcessor p[8];
+	{
+		Writer writers[NoOfWriters];
+		Reader readers[NoOfReaders];
+	}
+	cout << "successful completion" << endl;
 } // main
 
 // Local Variables: //

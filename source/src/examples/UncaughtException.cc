@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jul 18 11:14:42 2010
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep  8 15:59:16 2018
-// Update Count     : 7
+// Last Modified On : Wed Apr 20 23:01:58 2022
+// Update Count     : 8
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,30 +28,30 @@
 using namespace std;
 
 _Task T1 {
-    void main() {
-	for( ;; ) {
-	    _Accept( ~T1 ) break;
-	    try {
-		throw 1;
-	    } catch( int ) {
-	    } // try
-	} // for
-    } // T1::main
+	void main() {
+		for( ;; ) {
+			_Accept( ~T1 ) break;
+			try {
+				throw 1;
+			} catch( int ) {
+			} // try
+		} // for
+	} // T1::main
 }; // T1
 
 _Task T2 {
-    void main() {
-	for( ;; ) {
-	    _Accept( ~T2 ) break;
-	    assert( ! std::__U_UNCAUGHT_EXCEPTION__() );
-	    yield();
-	} // for
-    } // T2::main
+	void main() {
+		for( ;; ) {
+			_Accept( ~T2 ) break;
+			assert( ! std::__U_UNCAUGHT_EXCEPTION__() );
+			yield();
+		} // for
+	} // T2::main
 }; // T2
 
 int main() {
-    T1 t1;
-    T2 t2;
-    sleep( 5 );
-    cout << "Successful completion" << endl;
+	T1 t1;
+	T2 t2;
+	sleep( 5 );
+	cout << "Successful completion" << endl;
 } // main

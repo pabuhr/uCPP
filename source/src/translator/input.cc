@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 17:26:48 2021
-// Update Count     : 134
+// Last Modified On : Fri Feb  4 10:20:41 2022
+// Update Count     : 161
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,7 +24,7 @@
 // along  with this library.
 //
 
-#include <cstdio>					// sprintf
+#include <cstdio>										// sprintf
 
 #include "main.h"
 #include "hash.h"
@@ -33,7 +33,7 @@
 #include "input.h"
 
 #include <iostream>
-#include <cstdlib>					// exit
+#include <cstdlib>										// exit
 
 using std::cerr;
 using std::endl;
@@ -45,7 +45,9 @@ static char * bptr = buffer;
 static char * eptr = buffer + BUFLEN;
 static char * cptr;
 
-#define DELIMITER_MAX_LENGTH (16)			// C++11
+static bool strliteral = false;
+
+#define DELIMITER_MAX_LENGTH (16)						// C++11
 static char delimiter_name[DELIMITER_MAX_LENGTH];
 static unsigned int delimiter_lnth, delimiter_lnth_ctr;
 
@@ -300,7 +302,12 @@ token_t * getinput() {
 			  default:
 				unget( c );
 				wrap();
-				return new token_t( IDENTIFIER, hash_table->lookup( buffer ) );
+				if ( strliteral ) {
+					strliteral = false;
+					return new token_t( STRING_IDENTIFIER, hash_table->lookup( buffer ) );
+				} else {
+					return new token_t( IDENTIFIER, hash_table->lookup( buffer ) );
+				} // if
 			} // switch
 			break;
 		  case wide_string:
@@ -321,7 +328,7 @@ token_t * getinput() {
 		  case unicode_string:
 			switch ( c ) {
 			  case '8':
-				state = unicode_string;			// under constrain, allow multiple 8s, which are subsequently invalid
+				state = unicode_string;					// under constrain, allow multiple 8s, which are subsequently invalid
 				break;
 			  case 'R':
 				state = raw_string;
@@ -354,7 +361,7 @@ token_t * getinput() {
 				if ( delimiter_lnth < DELIMITER_MAX_LENGTH ) { // exceed max delimiter length
 					delimiter_name[delimiter_lnth] = c;
 					delimiter_lnth += 1;
-				} else {				// syntax error, panic and look for end of string
+				} else {								// syntax error, panic and look for end of string
 					state = raw_character;
 				} // if
 			} // if
@@ -371,8 +378,8 @@ token_t * getinput() {
 			} else if ( delimiter_lnth_ctr < delimiter_lnth && c == delimiter_name[delimiter_lnth_ctr] ) {
 				delimiter_lnth_ctr += 1;
 			} else {
-				delimiter_lnth_ctr = 0;			// reset counter
-				state = raw_character;			// not delimiter, continue scan
+				delimiter_lnth_ctr = 0;					// reset counter
+				state = raw_character;					// not delimiter, continue scan
 			} // if
 			break;
 		  case character:
@@ -393,8 +400,18 @@ token_t * getinput() {
 		  case string:
 			switch ( c ) {
 			  case '\"':
+				{
+					int c = get();						// temporary lookahead
+					unget( c );
+					if ( isalpha( c ) || c == '_' ) {	// identifier ?
+						strliteral = true;				// global state
+						state = identifier;				// now lex the identifier juxtaposed to string, "abc"abc
+						break;
+					} // if
+				}
 				wrap();
 				return new token_t( STRING, hash_table->lookup( buffer ) );
+				break;
 			  case '\\':
 				state = string_escape;
 				break;

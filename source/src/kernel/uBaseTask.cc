@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 17:33:44 2021
-// Update Count     : 425
+// Last Modified On : Sat Feb 12 14:26:47 2022
+// Update Count     : 433
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,6 +42,11 @@ using namespace UPP;
 //######################### uBaseTask #########################
 
 
+uint32_t uBaseTask::thread_random_seed = uRdtsc();
+uint32_t uBaseTask::thread_random_prime = 4'294'967'291u;
+uint32_t uBaseTask::thread_random_mask = false;
+
+
 void uBaseTask::createTask( uCluster & cluster ) {
 	uDEBUG(
 		currSerialOwner_ = this;
@@ -50,6 +55,7 @@ void uBaseTask::createTask( uCluster & cluster ) {
 	);
 	state_ = Start;
 	recursion_ = mutexRecursion_ = 0;
+	random_state = thread_random_mask ? thread_random_prime : thread_random_prime ^ uRdtsc();
 	currCluster_ = &cluster;							// remember the cluster task is created on
 	currCoroutine_ = this;								// the first coroutine that a task executes is itself
 	priority = activePriority = 0;

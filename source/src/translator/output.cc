@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 18:09:00 2021
-// Update Count     : 253
+// Last Modified On : Fri Feb  4 09:16:45 2022
+// Update Count     : 254
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -129,9 +129,6 @@ void putoutput( token_t * token ) {
 		break;
 	  case WARNING:
 		cerr << file << ":" << line << ": uC++ Translator warning: " << token->hash->text << endl;
-		break;
-	  case USER_LITERAL:
-		*yyout << token->hash->text;					// no space
 		break;
 	  case AT:											// do not print these keywords
 	  case CATCHRESUME:

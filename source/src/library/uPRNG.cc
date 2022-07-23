@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 17:50:36 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  1 13:42:09 2022
-// Update Count     : 37
+// Last Modified On : Sat Feb 12 15:25:54 2022
+// Update Count     : 78
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -30,38 +30,23 @@
 #include <uC++.h>
 #include <uPRNG.h>
 
-static uint32_t seed = 0;								// current seed
-static thread_local uint32_t state;						// random state
-
-void set_seed( uint32_t seed_ ) { state = seed = seed_; }
-uint32_t get_seed() { return seed; }
-
-#define GENERATOR LCG
-
 //=========================================================
 
-uint32_t MarsagliaXor( uint32_t & state ) {
-	if ( UNLIKELY( seed == 0 ) ) set_seed( uRdtsc() );
-	else if ( UNLIKELY( state == 0 ) ) state = seed;
-	state ^= state << 6;
-	state ^= state >> 21;
-	state ^= state << 7;
-	return state;
-} // MarsagliaXor
 
-//=========================================================
+// Cannot be inline in uC++.h because of stupid friendship problem with static.
 
-uint32_t LCG( uint32_t & state ) {						// linear congruential generator
-	if ( UNLIKELY( seed == 0 ) ) set_seed( uRdtsc() );
-	else if ( UNLIKELY( state == 0 ) ) state = seed;
-	return state = 36969 * (state & 65535) + (state >> 16);
-} // LCG
-
-//=========================================================
-
-uint32_t PRNG::operator()() { callcnt += 1; return GENERATOR( state ); }
-
-uint32_t prng() { return GENERATOR( state ); }
+void set_seed( uint32_t seed ) {
+	uint32_t & state = uThisTask().random_state;
+	state = uBaseTask::thread_random_seed = seed;
+	LCG( uThisTask().random_state );
+	uBaseTask::thread_random_prime = state;
+	uBaseTask::thread_random_mask = true;
+} // set_seed
+uint32_t get_seed() { return uBaseTask::thread_random_seed; }
+uint32_t prng() {
+	uint32_t & state = uThisTask().random_state;
+	return LCG( state );
+} // prng
 
 
 // Local Variables: //

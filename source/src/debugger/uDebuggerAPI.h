@@ -7,8 +7,8 @@
 // Author           : Jun Shih
 // Created On       : Thu May 30 15:26:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 28 16:51:25 2001
-// Update Count     : 35
+// Last Modified On : Tue Apr  5 08:05:21 2022
+// Update Count     : 36
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,38 +41,38 @@ typedef void *ListId;
 typedef int  NotifyMsg;
 
 enum MessageType {
-    BP_SET,
-    BP_CLEAR,
-    CONTINUE,
+	BP_SET,
+	BP_CLEAR,
+	CONTINUE,
 	STOP,
-    PRINT,
-    ATTACH,
+	PRINT,
+	ATTACH,
 	CLUSTER_LIST,
 	PROCESSOR_LIST,
 	THREAD_LIST,
-    BP_HIT,
-    PROGRAM_TERMINATED,
-    TERMINATE,
+	BP_HIT,
+	PROGRAM_TERMINATED,
+	TERMINATE,
 };
 
 
 struct BP_SET_MSG {
-    MessageType msg;
-    ThreadId thread_id;
-    char break_cmd[MAX_CMD_LEN + MAX_COND_LEN];
+	MessageType msg;
+	ThreadId thread_id;
+	char break_cmd[MAX_CMD_LEN + MAX_COND_LEN];
 };
 
 
 struct BP_CLEAR_MSG {
-    MessageType msg;
-    ThreadId thread_id;
-    char clear_cmd[MAX_CMD_LEN];
+	MessageType msg;
+	ThreadId thread_id;
+	char clear_cmd[MAX_CMD_LEN];
 };
 
 
 struct CONTINUE_MSG {
-    MessageType msg;
-    ThreadId thread_id;
+	MessageType msg;
+	ThreadId thread_id;
 };
 
 
@@ -80,21 +80,21 @@ typedef CONTINUE_MSG STOP_MSG;
 
 
 struct PRINT_MSG {
-    MessageType msg;
-    ThreadId thread_id;
-    char var_name[MAX_VAR_LEN];
+	MessageType msg;
+	ThreadId thread_id;
+	char var_name[MAX_VAR_LEN];
 };
 
 
 struct ATTACH_MSG {
-    MessageType msg;
-    int  pid;
-    char path[MAX_PATH_LEN];
+	MessageType msg;
+	int  pid;
+	char path[MAX_PATH_LEN];
 };
 
 
 struct TERMNIATE_MSG {
-    MessageType msg;
+	MessageType msg;
 };
 
 
@@ -104,8 +104,8 @@ typedef TERMNIATE_MSG LIST_MSG;
 // Notify Messages
 
 struct BP_HIT_NOTIFY {
-    MessageType msg;
-    ThreadId thread_id;
+	MessageType msg;
+	ThreadId thread_id;
 };
 
 
@@ -119,16 +119,16 @@ struct GENERAL_NOTIFY {
 
 
 struct PRINT_NOTIFY {
-    MessageType msg;
-    NotifyMsg nmsg;
-    char print[MAX_PRINT_LEN];
+	MessageType msg;
+	NotifyMsg nmsg;
+	char print[MAX_PRINT_LEN];
 };
 
 
 struct LIST_NOTIFY {
-    MessageType msg;
-    NotifyMsg nmsg;
-    ListId id;
+	MessageType msg;
+	NotifyMsg nmsg;
+	ListId id;
 };
 
 

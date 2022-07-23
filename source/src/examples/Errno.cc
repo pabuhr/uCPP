@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Sep 12 08:45:31 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:47:16 2016
-// Update Count     : 2
+// Last Modified On : Sun Apr 24 18:28:41 2022
+// Update Count     : 3
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,16 +28,16 @@
 using namespace std;
 
 _Task Worker {
-    void main() {
-	for ( int i = 0; i < 1000000; i += 1 ) {
-	    errno = i;
-	    yield();
-	    if ( i != errno ) abort( "Error: interference on errno %p %p %d %d\n", &uThisTask(), &uThisProcessor(), i, errno );
-	} // for
-    } // Worker::main
+	void main() {
+		for ( int i = 0; i < 1000000; i += 1 ) {
+			errno = i;
+			yield();
+			if ( i != errno ) abort( "Error: interference on errno %p %p %d %d\n", &uThisTask(), &uThisProcessor(), i, errno );
+		} // for
+	} // Worker::main
 }; // Worker
 
 int main() {
-    uProcessor p[3];
-    Worker w[10];
+	uProcessor p[3];
+	Worker w[10];
 }

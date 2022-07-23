@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Fri Feb  4 11:10:44 2000
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec  5 23:42:02 2012
-// Update Count     : 51
+// Last Modified On : Sat Apr  9 17:10:23 2022
+// Update Count     : 52
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,19 +30,19 @@
 #include <uStaticPIQ.h>
 //#include <uDebug.h>
 
-#include <cstring>					// access: ffs
+#include <cstring>										// access: ffs
 
 
 uStaticPIQ::uStaticPIQ() {
-    for ( int i = 0; i < __U_MAX_NUMBER_PRIORITIES__ ; i += 1 ) {
-	objects[i] = 0;
-    } // for
-    mask = 0;
+	for ( int i = 0; i < __U_MAX_NUMBER_PRIORITIES__ ; i += 1 ) {
+		objects[i] = 0;
+	} // for
+	mask = 0;
 
 } // uStaticPIQ::uStaticPIQ
 
 bool uStaticPIQ::empty() const {
-    return mask == 0;
+	return mask == 0;
 } // uStaticPIQ::empty
 
 //int uStaticPIQ::head() {
@@ -57,53 +57,53 @@ bool uStaticPIQ::empty() const {
 //} // uStaticPIQ::head
 
 int uStaticPIQ::getHighestPriority() {
-    int highestPriority = ffs( mask ) - 1;
+	int highestPriority = ffs( mask ) - 1;
 
-    if ( highestPriority >= 0 ) {
-	return highestPriority;
-    } else {
-	return -1;
-    } // if
+	if ( highestPriority >= 0 ) {
+		return highestPriority;
+	} else {
+		return -1;
+	} // if
 } // uStaticPIQ::getHighestPriority
 
 void uStaticPIQ::add( int priority ) {
-    lock.acquire();
+	lock.acquire();
 
-    assert( 0 <= priority && priority <= __U_MAX_NUMBER_PRIORITIES__ - 1 );
-    objects[priority] += 1;
-    mask |= 1ul << priority;
+	assert( 0 <= priority && priority <= __U_MAX_NUMBER_PRIORITIES__ - 1 );
+	objects[priority] += 1;
+	mask |= 1ul << priority;
 
-    lock.release();
+	lock.release();
 } // uPriorityScheduleQueue::add
 
 int uStaticPIQ::drop() {
-    lock.acquire();
+	lock.acquire();
 
-    int highestPriority = ffs( mask ) - 1;
+	int highestPriority = ffs( mask ) - 1;
 
-    if ( highestPriority >= 0 ) {
-	objects[highestPriority] -= 1;
+	if ( highestPriority >= 0 ) {
+		objects[highestPriority] -= 1;
 
-	if ( objects[highestPriority] == 0 ) {
-	    mask &= ~ ( 1ul << highestPriority );
+		if ( objects[highestPriority] == 0 ) {
+			mask &= ~ ( 1ul << highestPriority );
+		} // if
+
 	} // if
 
-    } // if
-
-    lock.release();
-    return highestPriority;
+	lock.release();
+	return highestPriority;
 } // uStaticPIQ::drop
 
 void uStaticPIQ::remove( int priority ) {
-    lock.acquire();
+	lock.acquire();
 
-    assert( 0 <= priority && priority <= __U_MAX_NUMBER_PRIORITIES__ - 1 );
-    objects[priority] -= 1;
-    if ( objects[priority] == 0 ) {
-	mask &= ~ ( 1ul << priority );
-    } // if
+	assert( 0 <= priority && priority <= __U_MAX_NUMBER_PRIORITIES__ - 1 );
+	objects[priority] -= 1;
+	if ( objects[priority] == 0 ) {
+		mask &= ~ ( 1ul << priority );
+	} // if
 
-    lock.release();
+	lock.release();
 } // uStaticPIQ::remove
 
 

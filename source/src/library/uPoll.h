@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:01:20 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 21 09:08:13 2019
-// Update Count     : 34
+// Last Modified On : Tue Apr 19 12:23:42 2022
+// Update Count     : 35
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,21 +34,21 @@
 
 class uPoll {
   public:
-    enum PollStatus { NeverPoll, PollOnDemand, AlwaysPoll };
+	enum PollStatus { NeverPoll, PollOnDemand, AlwaysPoll };
   private:
-    PollStatus uStatus;
+	PollStatus uStatus;
   public:
-    PollStatus getStatus() {
-	return uStatus;
-    } // uPoll::getStatus
+	PollStatus getStatus() {
+		return uStatus;
+	} // uPoll::getStatus
 
-    void setStatus( PollStatus s ) {
-	uStatus = s;
-    } // uPoll::setStatus
+	void setStatus( PollStatus s ) {
+		uStatus = s;
+	} // uPoll::setStatus
 
-    void setPollFlag( int fd );
-    void clearPollFlag( int fd );
-    void computeStatus( int fd );
+	void setPollFlag( int fd );
+	void clearPollFlag( int fd );
+	void computeStatus( int fd );
 }; // uPoll
 
 

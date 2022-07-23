@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 17:13:11 2021
-// Update Count     : 6070
+// Last Modified On : Mon Jul  4 08:05:21 2022
+// Update Count     : 6205
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,8 +41,11 @@
 // #pragma clang diagnostic ignored "-Wnull-dereference"
 
 #if __GNUC__ >= 7										// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// Mute g++-7
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// mute g++-7
 #endif // __GNUC__ >= 7
+#pragma GCC diagnostic error   "-Wreturn-type"			// always wrong so make an error
+#pragma GCC diagnostic error   "-Wreorder"				// always wrong so make an error
+#pragma GCC diagnostic error   "-Wparentheses"			// usually wrong so make an error
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -113,6 +116,20 @@
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
+
+template< typename T > class uNoCtor {
+	char storage[sizeof(T)] __attribute__(( aligned(alignof(T)) ));
+  public:
+	inline T * operator&() const { return (T *)(&storage); }
+	inline T & operator*() const { return (T &)*((T *)(&storage)); }
+	inline T * operator->() const { return (T *)(&storage); }
+	void ctor() { new( &storage ) T; }
+	template< typename A1 > void ctor( A1 & arg1 ) { new( &storage ) T( arg1 ); }
+	template< typename A1, typename A2 > void ctor( A1 & arg1, A2 arg2 ) { new( &storage ) T( arg1, arg2 ); }
+	template< typename A1, typename A2, typename A3 > void ctor( A1 & arg1, A2 arg2, A3 arg3 ) { new( &storage ) T( arg1, arg2, arg3 ); }
+};
+
+
 //######################### InterposeSymbol #########################
 
 
@@ -154,23 +171,7 @@ namespace UPP {
 #include "uKernelThreads.h"
 #include "uAtomic.h"
 
-// C-heap allocation extensions
-extern "C" {
-	void * aalloc( size_t dim, size_t elemSize ) __THROW;
-	void * resize( void * oaddr, size_t size ) __THROW;
-	void * amemalign( size_t align, size_t dim, size_t elemSize ) __THROW;
-	void * cmemalign( size_t alignment, size_t noOfElems, size_t elemSize ) __THROW;
-	size_t malloc_alignment( void * addr ) __THROW;
-	bool malloc_zero_fill( void * addr ) __THROW;
-	size_t malloc_size( void * addr ) __THROW;
-	size_t malloc_dimension( void * addr ) __THROW;
-	size_t malloc_usable_size( void * addr ) __THROW;
-	void malloc_stats() __THROW;
-	int malloc_stats_fd( int fd ) __THROW;
-} // extern "C"
-// Must have C++ linkage to overload with C linkage realloc.
-void * resize( void * oaddr, size_t alignment, size_t size ) __THROW;
-void * realloc( void * addr, size_t alignment, size_t size ) __THROW;
+#include "uHeapLmmm.h"
 
 #if defined( __U_MULTI__ )
 	typedef pthread_t uPid_t;
@@ -190,9 +191,9 @@ void * realloc( void * addr, size_t alignment, size_t size ) __THROW;
 #ifdef __U_STATISTICS__
 namespace UPP {
 	struct Statistics {
-		// Kernel, signed because of the atomic inc/dec
-		static long int ready_queue, spins, spin_sched, mutex_queue, mutex_lock_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
-		static long int uSpinLocks, uLocks, uMutexLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
+		// Kernel/Lock statistics
+		static unsigned long int ready_queue, spins, spin_sched, mutex_queue, mutex_lock_queue, owner_lock_queue, adaptive_lock_queue, io_lock_queue;
+		static unsigned long int uSpinLocks, uLocks, uMutexLocks, uOwnerLocks, uCondLocks, uSemaphores, uSerials;
 
 		// I/O statistics
 		static unsigned long int select_syscalls, select_errors, select_eintr;
@@ -403,7 +404,43 @@ extern "C" {											// TEMPORARY: profiler allocating memory from the kernel 
 #endif // __U_PROFILER__
 
 
+// C++ cannot handle static friend functions. Stupid!
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void * doMalloc( size_t size
+					    #ifdef __U_STATISTICS__
+					    , unsigned int counter
+					    #endif // __U_STATISTICS__
+					  );
+static void doFree( void * addr );
+static void * memalignNoStats( size_t alignment, size_t size
+							   #ifdef __U_STATISTICS__
+							   , unsigned int counter
+							   #endif // __U_STATISTICS__
+							 );
+
 class uKernelModule {
+	// heap
+
+	friend struct ThreadManager;
+	friend void * doMalloc( size_t size
+						    #ifdef __U_STATISTICS__
+						    , unsigned int counter
+						    #endif // __U_STATISTICS__
+						  );
+	friend void doFree( void * addr );
+	friend void * memalignNoStats( size_t alignment, size_t size
+							   #ifdef __U_STATISTICS__
+							   , unsigned int counter
+							   #endif // __U_STATISTICS__
+							 );
+#pragma GCC diagnostic pop
+	friend void free( void * addr ) __THROW;
+	friend void * resize( void * oaddr, size_t size ) __THROW;
+	friend void * realloc( void * oaddr, size_t size ) __THROW;
+	friend void * resize( void * oaddr, size_t nalign, size_t size ) __THROW;
+	friend void * realloc( void * oaddr, size_t nalign, size_t size ) __THROW;
+
 	friend void uAbort( UPP::uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_list args ); // access: globalAbort
 	friend void exit( int retcode ) __THROW;			// access: globalAbort
 	friend class UPP::uSigHandlerModule;				// access: uKernelModuleBoot, rollForward
@@ -496,43 +533,53 @@ class uKernelModule {
 
 		// unsigned long threadPointer;
 
-		void disableInterrupts() volatile {
+		inline void disableInterrupts() volatile {
 			THREAD_SETMEM( disableInt, true );
-			int old = THREAD_GETMEM( disableIntCnt );
-			THREAD_SETMEM( disableIntCnt, old + 1 );
+			THREAD_SETMEM( disableIntCnt, THREAD_GETMEM( disableIntCnt ) + 1 );
 		} // uKernelModule::uKernelModuleData::disableInterrupts
 
-		void enableInterrupts() volatile {
-			uDEBUG( assert( disableInt && disableIntCnt > 0 ); )
+		inline void enableInterrupts() volatile {
+			uDEBUG( assert( disableInt && disableIntCnt > 0 ); );
 
 			disableIntCnt -= 1;							// decrement number of disablings
-			if ( disableIntCnt == 0 ) {
+			if ( LIKELY( disableIntCnt == 0 ) ) {
 				disableInt = false;						// enable interrupts
-				if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( disableIntSpin ) ) { // rollForward callable ?
+				if ( UNLIKELY( THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( RFinprogress ) ) ) { // rollForward callable ?
 					rollForward();
 				} // if
 			} // if
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); )
+
+			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); );
 		} // KernelModule::uKernelModuleData::enableInterrupts
 
-		void disableIntSpinLock() volatile {
+		inline void enableInterruptsNoRF() volatile {
+			uDEBUG( assert( disableInt && disableIntCnt > 0 ); )
+
+			disableIntCnt -= 1;							// decrement number of disablings
+			if ( LIKELY( disableIntCnt == 0 ) ) {
+				disableInt = false;						// enable interrupts
+				// NO roll forward
+			} // if
+
+			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); )
+		} // KernelModule::uKernelModuleData::enableInterruptsNoRF
+
+		inline void disableIntSpinLock() volatile {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 
 			THREAD_SETMEM( disableIntSpin, true );
-			int old = THREAD_GETMEM( disableIntSpinCnt ); // processor independent increment
-			THREAD_SETMEM( disableIntSpinCnt, old + 1 );
+			THREAD_SETMEM( disableIntSpinCnt, THREAD_GETMEM( disableIntSpinCnt ) + 1 );
 
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 		} // uKernelModule::uKernelModuleData::disableIntSpinLock
 
-		void enableIntSpinLock() volatile {
+		inline void enableIntSpinLock() volatile {
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 			disableIntSpinCnt -= 1;						// decrement number of disablings
-			if ( disableIntSpinCnt == 0 ) {
+			if ( LIKELY( disableIntSpinCnt == 0 ) ) {
 				disableIntSpin = false;					// enable interrupts
-
-				if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( disableInt ) ) {		// rollForward callable ?
+				if ( UNLIKELY( THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( RFinprogress ) && ! THREAD_GETMEM( disableInt ) ) ) {	// rollForward callable ?
 					rollForward();
 				} // if
 			} // if
@@ -540,11 +587,11 @@ class uKernelModule {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 		} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
-		void enableIntSpinLockNoRF() volatile {
+		inline void enableIntSpinLockNoRF() volatile {
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 			disableIntSpinCnt -= 1;						// decrement number of disablings
-			if ( disableIntSpinCnt == 0 ) {
+			if ( LIKELY( disableIntSpinCnt == 0 ) ) {
 				disableIntSpin = false;					// enable interrupts
 			} // if
 
@@ -574,13 +621,11 @@ class uKernelModule {
 	static uSpinLock * globalClusterLock;				// mutual exclusion for global cluster operations
 	static uClusterSeq * globalClusters;				// global list of cluster
 	static uDefaultScheduler * systemScheduler;			// pointer to systen scheduler for system cluster
-	static uProcessor * systemProcessor;				// pointer to system processor
 	static UPP::uBootTask * bootTask;					// pointer to boot task for global constructors/destructors
 	static uProcessor ** userProcessors;				// pointer to user processors
 	static unsigned int numUserProcessors;				// number of user processors
-	static char systemProcessorStorage[];
-	static char systemClusterStorage[];
-	static uCluster * systemCluster;						// pointer to system cluster
+	static uNoCtor<uProcessor> systemProcessor;
+	static uNoCtor<uCluster> systemCluster;
 	static uCluster * userCluster;						// pointer to user cluster
 	static char bootTaskStorage[];
 
@@ -662,13 +707,15 @@ class uBaseSpinLock {									// non-yielding spinlock
 
 
 class uSpinLock : public uBaseSpinLock {				// handle alignment to prevent false sharing
-//	char padding[128 - sizeof(uBaseSpinLock)];			// pad to size of cacheline
   public:
 	void * operator new( size_t size ) {				// dynamic allocation
-//		return ::memalign( 128, size );
 		return ::malloc( size );
 	} // uSpinLock::operator new
-}; // __attribute__(( aligned (128) ));					// static allocation
+
+	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
+		return storage;
+	} // uSpinLock::operator new
+}; // uSpinLock
 
 
 // RAII mutual-exclusion lock.  Useful for mutual exclusion in free routines.  Handles exception termination and
@@ -1129,7 +1176,7 @@ extern "C" void uSwitch( void * from, void * to ) asm ("uSwitch"); // assembler 
 namespace UPP {
 	class uMachContext {
 		friend class ::uContext;						// access: extras, additionalContexts
-		friend class ::uProcessorTask;					// access: size, base, limit
+		friend _Task ::uProcessorTask;					// access: size, base, limit
 		friend class ::uBaseCoroutine;					// access: storage
 		friend class ::uBaseTask;						// access: context
 		friend _Coroutine uProcessorKernel;				// access: storage
@@ -1709,10 +1756,27 @@ class uBasePIQ {
 #endif // KNOT
 
 
+//######################### LCG (random number genrator) #########################
+
+
+// Pipelined to allow OoO overlap with reduced dependencies. Critically, return the current value, and compute and store
+// the next value.
+
+static inline uint32_t LCG( uint32_t & state ) {		// linear congruential generator
+	uint32_t ret = state;
+	state = 36969 * (state & 65535) + (state >> 16);	// Yes, 36969 is NOT prime! No not change it!
+	return ret;
+} // LCG
+
+
 //######################### uBaseTask (cont) #########################
 
 
 class uBaseTask : public uBaseCoroutine {
+	static uint32_t thread_random_seed;
+	static uint32_t thread_random_prime;
+	static uint32_t thread_random_mask;
+
 	friend class UPP::uSerial;							// access: everything
 	friend class UPP::uSerialConstructor;				// access: profileActive, setSerial
 	friend class UPP::uSerialDestructor;				// access: mutexRef_, profileActive, mutexRecursion, setState
@@ -1734,11 +1798,14 @@ class uBaseTask : public uBaseCoroutine {
 	friend _Task UPP::uBootTask;						// access: wake
 	friend class UPP::uHeapManager;						// access: profileActive
 	friend class uKernelModule;							// access: currCoroutine_, inheritTask
-	friend void * malloc( size_t size ) __THROW;			// access: profileActive
+	friend void * malloc( size_t size ) __THROW;		// access: profileActive
 	friend void * memalign( size_t alignment, size_t size ) __THROW; // access: profileActive
 	friend class uEventList;							// access: profileActive
 	friend class UPP::uHeapControl;						// access: heapData
 	friend class uEventListPop;							// access: currCluster
+	friend void set_seed( uint32_t );					// access: thread_seed
+	friend uint32_t get_seed();							// access: thread_seed
+	friend uint32_t prng();								// access: random_state
 #ifdef KNOT
 	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
 	friend int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
@@ -1785,6 +1852,8 @@ class uBaseTask : public uBaseCoroutine {
 	State state_;										// current state of task
 	unsigned int recursion_;							// allow recursive entry of main member
 	unsigned int mutexRecursion_;						// number of recursive calls while holding mutex
+	uint32_t random_state;								// fast random numbers
+
 	uCluster * currCluster_;							// cluster task is executing on
 	uBaseCoroutine * currCoroutine_;					// coroutine being executed by tasks thread
 	uintptr_t info_;									// condition information stored with blocked task
@@ -1990,6 +2059,16 @@ class uBaseTask : public uBaseCoroutine {
 		return * currSerial;
 	} // uBaseTask::getSerial
 
+	void set_seed( uint32_t seed ) {
+		random_state = thread_random_seed = seed;
+		LCG( random_state );
+		thread_random_prime = random_state;
+		thread_random_mask = true;
+	} // uBaseTask::set_seed
+	uint32_t get_seed() { return thread_random_seed; }
+	uint32_t prng() __attribute__(( warn_unused_result )) { return LCG( random_state ); } // [0,UINT_MAX]
+	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
+	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
 #ifdef __U_PROFILER__
 	// profiling
 
@@ -2581,10 +2660,6 @@ class uProcessor {
 	mutable
 #endif // ! __U_MULTI__
 	uProfileProcessorSampler * profileProcessorSamplerInstance; // pointer to related profiling object
-
-	void * operator new( size_t, void * storage ) {
-		return storage;
-	} // uProcessor::operator new
   protected:
 	uPid_t pid;
 
@@ -2608,13 +2683,13 @@ class uProcessor {
 	void setContextSwitchEvent( int msecs );			// set the real-time timer
 	void setContextSwitchEvent( uDuration duration );	// set the real-time timer
 
-	uProcessor( uCluster & cluster, double );			// used solely during kernel boot
   public:
 	uProcessor( const uProcessor & ) = delete;			// no copy
 	uProcessor( uProcessor && ) = delete;
 	uProcessor & operator=( const uProcessor & ) = delete; // no assignment
 	uProcessor & operator=( uProcessor && ) = delete;
 
+	uProcessor( uCluster & cluster, double );			// used solely during kernel boot
 	uProcessor( unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
 	uProcessor( bool detached, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
 	uProcessor( uCluster & cluster, unsigned int ms = uDefaultPreemption(), unsigned int spin = uDefaultSpin() );
@@ -2664,6 +2739,10 @@ class uProcessor {
 
 	void * operator new( size_t size ) {
 		return ::operator new( size );
+	} // uProcessor::operator new
+
+	void * operator new( size_t, void * storage ) {
+		return storage;
 	} // uProcessor::operator new
 } __attribute__(( unused )); // uProcessor
 
@@ -2737,12 +2816,8 @@ class uCluster {
 
 	uClusterDL globalRef;								// double link field: list of all clusters
   protected:
-	void * operator new( size_t, void * storage ) {
-		return storage;
-	} // uCluster::operator new
-
 	const char * name;									// textual name for cluster, default value
-	uBaseSchedule<uBaseTaskDL> * readyQueue;				// list of tasks awaiting execution by processors on this cluster
+	uBaseSchedule<uBaseTaskDL> * readyQueue;			// list of tasks awaiting execution by processors on this cluster
 	bool defaultReadyQueue;								// indicates if the cluster allocated the ready queue
 	unsigned int idleProcessorsCnt;						// number of idle processors
 	uProcessorSeq idleProcessors;						// list of idle processors associated with this cluster
@@ -2796,10 +2871,10 @@ class uCluster {
 	uCluster & operator=( const uCluster & ) = delete;	// no assignment
 	uCluster & operator=( uCluster && ) = delete;
 
-	uCluster( unsigned int stackSize = uDefaultStackSize(), const char * name = "* unnamed*" );
+	uCluster( unsigned int stackSize = uDefaultStackSize(), const char * name = "*unnamed*" );
 	uCluster( const char * name );
-	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, unsigned int stackSize = uDefaultStackSize(), const char * name = "* unnamed*" );
-	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, const char * name = "* unnamed*" );
+	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, unsigned int stackSize = uDefaultStackSize(), const char * name = "*unnamed*" );
+	uCluster( uBaseSchedule<uBaseTaskDL> & ReadyQueue, const char * name = "*unnamed*" );
 	virtual ~uCluster();
 
 	const char * setName( const char * name ) {
@@ -2811,7 +2886,7 @@ class uCluster {
 	const char * getName() const {
 		return
 			uDEBUG(
-				( name == nullptr || name == (const char *)-1 ) ? "* unknown*" : // storage might be scrubbed
+				( name == nullptr || name == (const char *)-1 ) ? "*unknown*" : // storage might be scrubbed
 			)
 			name;
 	} // uCluster::getName
@@ -2852,6 +2927,10 @@ class uCluster {
 	void * operator new( size_t size ) {
 		return ::memalign( 128, size );					// size of cache line to prevent false sharing
 	} // uCluster::operator new
+
+	void * operator new( size_t, void * storage ) {
+		return storage;
+	} // uCluster::operator new
 }; // uCluster
 
 
@@ -2869,8 +2948,8 @@ inline uBaseCoroutine::uBaseCoroutine() : UPP::uMachContext( uThisCluster().getS
 extern "C" {											// not all prototypes in pthread.h
 	void _pthread_cleanup_push( _pthread_cleanup_buffer *, void (*) (void *), void * ) __THROW;
 	void _pthread_cleanup_pop( _pthread_cleanup_buffer *, int ) __THROW;  
-	int pthread_tryjoin_np( pthread_t, void **) __THROW;
-	int pthread_getattr_np(pthread_t, pthread_attr_t*) __THROW;
+	int pthread_tryjoin_np( pthread_t, void ** ) __THROW;
+	int pthread_getattr_np( pthread_t, pthread_attr_t * ) __THROW;
 	int pthread_attr_setstack( pthread_attr_t * attr, void * stackaddr, size_t stackSize ) __THROW;
 	int pthread_attr_getstack( const pthread_attr_t * attr, void ** stackaddr, size_t * stackSize ) __THROW;
 } // extern "C"
@@ -2901,11 +2980,11 @@ _Task uPthreadable {									// abstract class (inheritance only)
 	friend int pthread_attr_setschedparam( pthread_attr_t * attr, const struct sched_param * param ) __THROW;
 	friend int pthread_attr_getschedparam( const pthread_attr_t * attr, struct sched_param * param ) __THROW;
 	friend void pthread_exit( void * status );			// access: joinval
-	friend int pthread_join( pthread_t, void **);		// access: attr
-	friend int pthread_tryjoin_np( pthread_t, void **) __THROW;
+	friend int pthread_join( pthread_t, void ** );		// access: attr
+	friend int pthread_tryjoin_np( pthread_t, void ** ) __THROW;
 	friend int pthread_detach( pthread_t ) __THROW;
-	friend void _pthread_cleanup_push( _pthread_cleanup_buffer *, void (*) (void *), void *) __THROW;
-	friend void _pthread_cleanup_pop ( _pthread_cleanup_buffer *, int) __THROW;
+	friend void _pthread_cleanup_push( _pthread_cleanup_buffer *, void (*)(void *), void * ) __THROW;
+	friend void _pthread_cleanup_pop ( _pthread_cleanup_buffer *, int ) __THROW;
 	struct Pthread_attr_t {								// thread attributes
 		int contentionscope;
 		int detachstate;
@@ -3053,7 +3132,6 @@ namespace UPP {
 			uHeapControl::traceHeap_ = false;
 			return temp;
 		} // uHeapControl::traceHeapOff
-
 	  private:
 		static bool prtHeapTerm_;						// print heap on termination
 	  public:
@@ -3098,9 +3176,6 @@ namespace UPP {
 //######################### Kernel Boot #########################
 
 
-//#define __U_DEBUG_H__
-//#include <uDebug.h>
-
 namespace UPP {
 	class uKernelBoot {
 		static int count;
@@ -3113,11 +3188,11 @@ namespace UPP {
 			if ( count == 1 ) {
 				startup();
 			} // if
-			uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.uKernelBoot\n", this ); )
+			uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.uKernelBoot count %d\n", this, count ); );
 		} // uKernelBoot::uKernelBoot
 
 		~uKernelBoot() {
-			uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.~uKernelBoot\n", this ); )
+			uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.~uKernelBoot count %d\n", this, count ); );
 			if ( count == 1 ) {
 				finishup();
 			} // if
@@ -3137,11 +3212,11 @@ namespace UPP {
 			if ( count == 1 ) {
 				startup();
 			} // if
-			uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.uInitProcessorsBoot\n", this ); )
+			uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.uInitProcessorsBoot count %d\n", this, count ); );
 		} // uInitProcessorsBoot::uInitProcessorsBoot
 
 		~uInitProcessorsBoot() {
-			uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.~uInitProcessorsBoot\n", this ); )
+			uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.~uInitProcessorsBoot count %d\n", this, count ); );
 			if ( count == 1 ) {
 				finishup();
 			} // if

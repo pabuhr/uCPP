@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Dec 27 14:44:40 2021
-%% Update Count     : 8313
+%% Last Modified On : Tue Jul 19 08:47:15 2022
+%% Update Count     : 8430
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3871,12 +3871,12 @@ Currently, the defaults are 2 processors, 2 threads 2 request queues, and the ex
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
 Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
 
-\VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of multiple \newterm{behaviours} (work) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages
+\VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of a \newterm{mailbox} (message queue/bounded buffer), and a set of \newterm{behaviour}s that receive from the mailbox to perform work.
 A behaviour is an actor member that takes a single message parameter, where the default behaviour is the member named \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}.
 An actor's behaviours create other actors and communicate with these new actors by sending messages to their mailbox (including an actor sending to itself).
 An actor's constructor or behaviour can set/hand-off message reception to another behaviour.
 
-An actor's mailbox contains heterogeneous typed messages.
+An actor's mailbox contains heterogeneous typed-messages.
 Anything can be passed in an actor message, e.g., actor references, promises, and routines/functors/lambdas.
 Messages are divided into those that do and do not require a response.
 Responses are handled asynchronously through \emph{\Index{promise}}s (not futures \VRef{s:Futures}), where the actor processing the message deliveries the promise result.
@@ -3907,37 +3907,114 @@ Therefore, programmers must deal with actor/message life-time by returning to th
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Finished@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}}%
 \vspace*{-15pt}% FIX ME
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}] means the actor/message persists after a behaviour returns.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}] means the actor/message persists and there is no action by the executor.
 Use for multi-use actors or messages during their life time. (actor/message default)
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}] means the actor/message is deleted by the executor after a behaviour returns.
-Use with dynamically allocated actors or messages at completion.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}] means the actor's/message's destructor is called by the executor after a behaviour returns, but storage is not deallocated.
-Use with \Index{placement allocate}d actors or messages, where the storage is subsequently deallocated.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}] means the actor/message is marked finished so the executor knows there is one less actor after a behaviour returns, but neither the destructor is called nor is storage deallocated.
-Use with stack allocated actors or messages at completion.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}] means the actor is removed from the actor system and the actor/message is deleted by the executor.
+Use with dynamically allocated actors or messages when their life-time has expired.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Destroy}}}\endlgrinde\LGend{}] means the actor is removed from the actor system and the actor/message's destructor is called by the executor but storage is \emph{not} deallocated.
+Use with \Index{placement allocate}d actors or messages, i.e., @new(...)@, where the storage is managed elsewhere, possibly to be reused for a new actor/message.
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Finished}}}\endlgrinde\LGend{}] means the actor is removed from the actor system (no action for a message), but neither the destructor is called nor is storage deallocated.
+Use with global or stack allocated actors or messages destructor call and deallocation are implicitly called at the end of a lexically scope.
 \end{prefix}
+Once an actor/message is deleted/destroyed/finished, no subsequent access is allowed until the storage is reallocated.
 
 
 \subsection{Messages}
 
-All actor messages must inherit from base-type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{Message}}}\endlgrinde\LGend{}:
+\VRef[Figure]{f:BaseMessage} shows the basic type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{Message}}}\endlgrinde\LGend{}, which is used for simple messages and all other actor messages types must inherit from it.
+The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}\index{Message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}} has the following form:
+\begin{prefix}
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0)}}\endlgrinde\LGend{}]
+-- creates a message with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}.
+\end{prefix}
+Note, the default constructor assumes the message persists.
+
+\begin{figure}
+\LGindent=5pt
+\subfloat[Base]{\label{f:BaseMessage}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{Message}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation};}\Tab{56}{\C{}\1\1\0allocation\0action}}
-\CE{}\L{\LB{}\Tab{4}{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{Message}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0allocation\0=\0Delete}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\*\0\V{sender}();}\Tab{56}{\C{}\1\1\0sender\0actor}}
-\CE{}\L{\LB{\};}\Tab{4}{}}
+\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation};}\Tab{40}{\C{}\1\1\0allocation\0action}}
+\CE{}\L{\LB{}\Tab{4}{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0);}}
+\L{\LB{\};}\Tab{4}{}}
 \endlgrinde\LGend
-\index{Message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
+}% subfloat
 \index{Message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}!allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}}%
-\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Message!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
-The overloaded constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}\index{Message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}}}\endlgrinde\LGend{}} has the following forms:
+
+\medskip
+
+\subfloat[Sender]{\label{f:SenderMessage}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{class}\0\V{SenderMsg}\0:\0\K{public}\0\V{Message}\0\{}}
+\L{\LB{}\Tab{4}{\K{friend}\0\K{class}\0\V{uActor};}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\*\0\V{sender\_};}\Tab{40}{\C{}\1\1\0delegated\0sender}}
+\CE{}\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{SenderMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{SenderMsg}(\0\V{uActor}\0\*\0\V{sender}\0);}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\*\0\V{sender}();}\Tab{40}{\C{}\1\1\0sender\0actor}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+}% subfloat
+\index{SenderMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}}}\endlgrinde\LGend{}!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
+\index{SenderMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}}}\endlgrinde\LGend{}!allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}}%
+\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!SenderMsg!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
+
+\medskip
+
+\subfloat[Trace]{\label{f:TraceMessage}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{TraceMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0:\0\V{Message}(\0\V{allocation},\0\V{sender}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{TraceMsg}(\0\V{uActor}\0\*\0\V{sender}\0)\0:\0\V{Message}(\0\V{sender}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{erase}();}\Tab{36}{\C{}\1\1\0delete\0all\0message\0hops\0except\0cursor\0hop}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{36}{\C{}\1\1\0delete\0all\0message\0hops\0from\0head\0to\0cursor}}
+\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{Return}();}\Tab{36}{\C{}\1\1\0move\0cursor\0back\0(towards\0tail)\0one\0hop\0and}}
+\CE{}\L{\LB{}\Tab{36}{\C{}\1\1\0\0\0\0send\0trace\0message\0to\0cursor\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{retSender}();}\Tab{36}{\C{}\1\1\0set\0cursor\0to\0tail\0and\0send\0trace\0message\0to\0cursor\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{returned}();}\Tab{36}{\C{}\1\1\0check\0if\0cursor\0not\0at\0head}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{resume}();}\Tab{36}{\C{}\1\1\0reset\0cursor\0to\0head\0and\0send\0trace\0message\0to\0cursor\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{print}();}\Tab{36}{\C{}\1\1\0prints\0trace\0information\0from\0cursor\0to\0the\0end\0of\0the\0trace}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+}% subfloat
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!erase@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!reset@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!Return@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!retSender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{retSender}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!returned@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!resume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{}}%
+\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!print@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{}}%
+
+\medskip
+
+\subfloat[Promise]{\label{f:PromiseMessage}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{template}\<\K{typename}\0\V{Result}\>\0\K{class}\0\V{PromiseMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{}}
+\L{\LB{}\Tab{4}{\V{Promise}\<\0\V{Result}\0\>\0\V{result\_};}\Tab{36}{\C{}\1\1\0delivered\0promise}}
+\CE{}\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{PromiseMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
+\L{\LB{}\Tab{4}{\V{PromiseMsg}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{36}{\C{}\1\1\0allocation\0=\0Delete}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{Result}\0\V{res}\0);}\Tab{36}{\C{}\1\1\0make\0result\0available\0in\0promise}}
+\CE{}\L{\LB{}\Tab{4}{\V{Result}\0\V{result}();}\Tab{36}{\C{}\1\1\0return\0promise\0result}}
+\CE{}\L{\LB{}\Tab{4}{\V{Result}\0\K{operator}()();}\Tab{36}{\C{}\1\1\0alternate\0syntax\0for\0result}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+}% subfloat
+\index{PromiseMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}!delivery@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}}%
+\index{PromiseMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}!result@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{result}}}\endlgrinde\LGend{}}%
+
+\caption{Actor Messages}
+\label{f:ActorMessages}
+\end{figure}
+
+\VRef[Figure]{f:SenderMessage} shows the message type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{SenderMsg}}}\endlgrinde\LGend{}, which remembers the message sender.
+The overloaded constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}}}\endlgrinde\LGend{}\index{SenderMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}}}\endlgrinde\LGend{}} has the following forms:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)}}\endlgrinde\LGend{}]
 -- creates a message with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}, and specifies the actor that sent the message or an actor delegated as the message sender.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Message}(\0\V{uActor}\0\*\0\V{sender}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SenderMsg}(\0\V{uActor}\0\*\0\V{sender}\0)}}\endlgrinde\LGend{}]
 -- creates a message with a default allocation of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Delete}}}\endlgrinde\LGend{}, and specifies the actor that sent the message or an actor delegated as the message sender.
 \end{prefix}
 Note, the default constructor assumes the message persists, while specifying the sender constructor assumes the message is deleted.
@@ -3959,50 +4036,6 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{} moves the cursor to head and sends the message to the cursor actor.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{} prints the address of the trace message, trace head, cursor, and actors at each hop from cursor to tail, which is useful for debugging.
 
-\begin{figure}
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{Message}\0\{}}
-\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{TraceMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0:\0\V{Message}(\0\V{allocation},\0\V{sender}\0)\0\{\}}}
-\L{\LB{}\Tab{4}{\V{TraceMsg}(\0\V{uActor}\0\*\0\V{sender}\0)\0:\0\V{Message}(\0\V{sender}\0)\0\{\}}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{erase}();}\Tab{36}{\C{}\1\1\0delete\0all\0message\0hops\0except\0cursor\0hop}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{36}{\C{}\1\1\0delete\0all\0message\0hops\0from\0head\0to\0cursor}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{Return}();}\Tab{36}{\C{}\1\1\0move\0cursor\0back\0(towards\0tail)\0one\0hop\0and}}
-\CE{}\L{\LB{}\Tab{36}{\C{}\1\1\0\0\0\0send\0trace\0message\0to\0cursor\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{retSender}();}\Tab{36}{\C{}\1\1\0set\0cursor\0to\0tail\0and\0send\0trace\0message\0to\0cursor\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{returned}();}\Tab{36}{\C{}\1\1\0check\0if\0cursor\0not\0at\0head}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{resume}();}\Tab{36}{\C{}\1\1\0reset\0cursor\0to\0head\0and\0send\0trace\0message\0to\0cursor\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{print}();}\Tab{36}{\C{}\1\1\0prints\0trace\0information\0from\0cursor\0to\0the\0end\0of\0the\0trace}}
-\CE{}\L{\LB{\};}}
-\endlgrinde\LGend
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!erase@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!reset@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!Return@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!retSender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{retSender}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!returned@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!resume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{}}%
-\index{TraceMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}!print@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{}}%
-\caption{Trace Message}
-\label{f:TraceMessage}
-\end{figure}
-
-\begin{figure}
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\K{class}\0\V{PromiseMsg}\0:\0\K{public}\0\V{Message}\0\{}}
-\L{\LB{}\Tab{4}{\V{Promise}\<\0\V{Result}\0\>\0\V{result\_};}\Tab{36}{\C{}\1\1\0delivered\0promise}}
-\CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{PromiseMsg}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0);}}
-\L{\LB{}\Tab{4}{\V{PromiseMsg}(\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{36}{\C{}\1\1\0allocation\0=\0Delete}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{Result}\0\V{res}\0);}\Tab{36}{\C{}\1\1\0make\0result\0available\0in\0promise}}
-\CE{}\L{\LB{}\Tab{4}{\V{Result}\0\V{result}();}\Tab{36}{\C{}\1\1\0return\0promise\0result}}
-\CE{}\L{\LB{}\Tab{4}{\V{Result}\0\K{operator}()();}\Tab{36}{\C{}\1\1\0alternate\0syntax\0for\0result}}
-\CE{}\L{\LB{\};}}
-\endlgrinde\LGend
-\index{PromiseMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}!delivery@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}}%
-\caption{Promise Message}
-\label{f:PromiseMessage}
-\end{figure}
-
 An actor cannot block because it is executed by a thread in the executor (see \VRef[Figure]{f:ActorModel}).
 A \newterm{promise} provides an alternate mechanism from message passing between two asynchronous actors (client/server) to communicate.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{} (see \VRef{s:ActorType}) message send returns a promise, which is subsequently used in an atomic check for completion and optional registration of a callback executed on completion.
@@ -4013,43 +4046,44 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{result}}}\endlgrinde\LGend{} is used by a client actor to access the promise result in the message.
 
 \VRef[Figure]{f:PromiseType} shows the type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{Promise}}}\endlgrinde\LGend{}, which holds the result of a computation by a server actor.
-In general, a client actor creates a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{} containing an empty \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Promise}}}\endlgrinde\LGend{} and sends this message to a server actor.
+In general, a client actor creates a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{} containing data for the server to process and an empty \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Promise}}}\endlgrinde\LGend{}, which it sends to a server actor.
 The send returns a copy of the empty \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Promise}}}\endlgrinde\LGend{} in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{} for use in the \emph{future} by the client to access the promise result.
 A promise is responsible for storage management by using reference counts and can be copied like a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{} (see \VRef{s:FutureISM}).
-The server actor does some work asynchronously, based on the values in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}, and delivers the result into the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}'s promise.
+The server actor works asynchronously, based on the data in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}, and delivers the result into the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}'s promise.
 When the client needs the promise result, it races with the server to install a callback, which takes as a parameter a reference to the promise result type.
+If the server wins, the client can immediately process the result in the future.
+If the client wins, it sees the installed callback during result \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{deliver}}}\endlgrinde\LGend{}, and the server posts (special message send) the callback function onto the mailbox queue for the client's executor.
+Hence, the callback is executed by the sending client's actor in FIFO order with the client's messages, and the lambda function safely executes in the client actor's receive-member as it may reference the client's members.
+Conceptually, the callback is a one-shot @become@ for the actor, i.e., the current receive member is ignored and the callback executed instead.
+The callback must return an @Allocation@, so the executor knows how to process the actor following a callback's execution, if it is installed.
 
-The server calls member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}, which races \emph{after} it delivers (fulfills) the promise result and then
-\begin{itemize}[topsep=5pt,parsep=0pt]
-\item
-if it wins the race, there is no callback to invoke.
-\item
-if it loses the race, it invokes the callback passing the result, where the callback often sends the promise result back to the client or the client's proxy.
-\end{itemize}
-The client calls member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{maybe}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{then}}}\endlgrinde\LGend{}, which runs the race in one of two ways:
+The client has two mechanisms to interact with the promise:
 \begin{description}[leftmargin=3pt,topsep=5pt,parsep=0pt]
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{maybe}}}\endlgrinde\LGend{}] 
-atomically installs the callback and returns:
+atomically attempts to install the callback and returns:
 \begin{itemize}
 \item
-true meaning the client lost the race and the server has fulfilled the promise and the result is visible in the client's promise;
-the callback is not called by the server.
-The client can now process the promise result immediately, without further message sends or invoke the callback in lieu of the server.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} meaning the client lost the race and the server has fulfilled the promise, the result is visible in the client's promise, and the server did not post the callback for execution by the client.
+The client can now process the promise result immediately.
 \item
-false meaning the client won the race and the server has not fulfilled the promise yet, the callback is installed, and will be called by the server after fulfillment.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} meaning the client won the race and the server has not fulfilled the promise yet, the callback is installed, and is posted by the server during fulfilment for subsequent execution by the client.
 The client now has to do other work, possibly expecting the callback to return the promise result in a message.
 \end{itemize}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{then}}}\endlgrinde\LGend{}]
-is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{maybe}}}\endlgrinde\LGend{}, but if the client loses the race, it implicitly calls the callback.
+is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{maybe}}}\endlgrinde\LGend{}, except that the callback passed is called unconditionally once the promise has been fulfilled.
+If the client wins the race, the behaviour is identically to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{maybe}}}\endlgrinde\LGend{}, and the callback is installed.
+If the client loses the race, it implicitly calls the callback immediately instead of installing it to be called later.
+Hence, the callback passed to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{then}}}\endlgrinde\LGend{} is always called, but may either be installed or immediately called.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{then}}}\endlgrinde\LGend{} returns a boolean indicating if the result has been processed during the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{then}}}\endlgrinde\LGend{}.
 \end{description}
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{result}}}\endlgrinde\LGend{} returns the server result in the promise.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{} allows the promise to be reused by reseting for a new race.
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{template}\<\K{typename}\0\V{T}\>\0\K{class}\0\V{Promise}\0\{}}
-\L{\LB{}\Tab{4}{\V{std}::\V{function}\<\0\K{void}\0(\0\V{T}\0\&\0)\0\>\0\V{callback};}}
-\L{\LB{\0\0\K{public}:}}
+\L{\LB{\K{template}\<\K{typename}\0\V{Result}\>\0\K{class}\0\V{Promise}\0\{}}
+\L{\LB{}\Tab{4}{\V{std}::\V{function}\<\0\K{void}\0(\0\V{Result}\0\&\0)\0\>\0\V{callback};}\Tab{56}{\C{}\1\1\0functor\0type}}
+\CE{}\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\K{\_Event}\0\V{PromiseFailure}\0\{\};}}
 \L{\LB{}\Tab{4}{\K{\_Event}\0\V{DupCallback}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0callback}}
 \CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{DupDelivery}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0delivery}}
@@ -4057,18 +4091,18 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ChainedReset}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0pending\0chained\0callback}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{Promise}()\0\{\}}}
-\L{\LB{}\Tab{4}{\V{Promise}(\0\K{const}\0\V{Promise}\<\V{T}\>\0\&\0\V{rhs}\0);}}
-\L{\LB{}\Tab{4}{\V{Promise}\<\V{T}\>\0\&\0\K{operator}=(\0\K{const}\0\V{Promise}\<\V{T}\>\0\&\0\V{rhs}\0);}}
+\L{\LB{}\Tab{4}{\V{Promise}(\0\K{const}\0\V{Promise}\<\V{Result}\>\0\&\0\V{rhs}\0);}}
+\L{\LB{}\Tab{4}{\V{Promise}\<\V{Result}\>\0\&\0\K{operator}=(\0\K{const}\0\V{Promise}\<\V{Result}\>\0\&\0\V{rhs}\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0USED\0BY\0CLIENT}}
-\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{maybe}(\0\V{std}::\V{function}\<\K{void}\0(\0\V{T}\0)\>\0\V{callback}\0);}\Tab{56}{\C{}\1\1\0access\0result}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{then}(\0\V{std}::\V{function}\<\K{void}\0(\0\V{T}\0)\>\0\V{callback}\0);}\Tab{56}{\C{}\1\1\0access\0result}}
-\CE{}\L{\LB{}\Tab{4}{\V{T}\0\V{result}();}}
-\L{\LB{}\Tab{4}{\V{T}\0\K{operator}()()}\Tab{56}{\C{}\1\1\0alternate\0syntax\0for\0result}}
+\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{maybe}(\0\V{std}::\V{function}\<\V{Allocation}\0(\0\V{Result}\0)\>\0\V{callback}\0);}\Tab{56}{\C{}\1\1\0access\0result}}
+\CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{then}(\0\V{std}::\V{function}\<\V{Allocation}\0(\0\V{Result}\0)\>\0\V{callback}\0);}\Tab{56}{\C{}\1\1\0access\0result}}
+\CE{}\L{\LB{}\Tab{4}{\V{Result}\0\V{result}();}}
+\L{\LB{}\Tab{4}{\V{Result}\0\K{operator}()()}\Tab{56}{\C{}\1\1\0alternate\0syntax\0for\0result}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{56}{\C{}\1\1\0mark\0promise\0as\0empty\0(for\0reuse)}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0USED\0BY\0SERVER}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{56}{\C{}\1\1\0make\0result\0available\0in\0the\0promise}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{Result}\0\V{result}\0);}\Tab{56}{\C{}\1\1\0make\0result\0available\0in\0the\0promise}}
 \CE{}\L{\LB{\};\0\C{}\1\1\0Promise}}
 \CE{}\endlgrinde\LGend
 \caption{Promise Type}
@@ -4076,6 +4110,7 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \end{figure}
 
 \begin{figure}
+\LGindent=5pt
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uActor}\0\{}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{msg}\0)\0=\00;}\Tab{56}{\C{}\1\1\0user\0supplied\0message\0handler}}
@@ -4085,22 +4120,26 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation}();}\Tab{56}{\C{}\1\1\0getter}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{allocation}(\0\V{Allocation}\0\V{alloc}\0);}\Tab{56}{\C{}\1\1\0setter}}
 \CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
+\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0status}}
+\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
 \CE{}\L{\LB{}\Tab{4}{\K{class}\0\V{Message}\0\{\0.\,.\,.\0\};}}
-\L{\LB{}\Tab{4}{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\};}}
+\L{\LB{}\Tab{4}{\K{class}\0\V{SenderMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\}}}
+\L{\LB{}\Tab{4}{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{\0.\,.\,.\0\};}}
 \L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{T}\>\0\K{class}\0\V{Promise}\0\{\0.\,.\,.\0\};}}
-\L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{Result}\>\0\K{struct}\0\V{PromiseMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\}}}
+\L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{Result}\>\0\K{struct}\0\V{PromiseMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{\0.\,.\,.\0\}}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Storage\0management}}
-\CE{}\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0status}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0);}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{inline}\0\V{uActor}\0\*\0\V{sender}();}\Tab{56}{\C{}\1\1\0current\0executing\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0message\0send,\0no\0return}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0tell\0alternative}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
-\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0do\0not\0update\0message\0sender}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0tell\0alternatives}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{SenderMsg}\0\&\0\V{msg}\0)}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\K{operator}\0\|\0(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{Message}\0\&\0\V{msg}\0);}}
+\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{SenderMsg}\0\&\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0send\0but\0retain\0original\0sender}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{forward}(\0\V{TraceMsg}\0\&\0\V{msg}\0);}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Result}\0\>\0\V{Promise}\<\0\V{Result}\0\>}}
 \L{\LB{}\Tab{8}{\V{ask}(\0\V{PromiseMsg}\<\0\V{Result}\0\>\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0=\0\K{nullptr}\0)\0\{\0\C{}\1\1\0message\0send,\0return\0promise}}
@@ -4111,9 +4150,9 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{start}(\0\V{uExecutor}\0\*\0\V{executor}\0=\0\K{nullptr}\0)}\Tab{56}{\C{}\1\1\0create\0executor\0to\0run\0actors}}
 \CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{bool}\0\V{stop}(\0\V{uDuration}\0\V{duration}\0=\00\0)\0\{}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate\0or\0timeout}}
 \CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Builtin\0Messages}}
-\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StartMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{startMsg};\0\C{}\1\1\0start\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StopMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{stopMsg};\0\C{}\1\1\0terminate\0actor}}
-\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{UnhandledMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{\}\0\V{unhandledMsg};\0\C{}\1\1\0tell\0error}}
+\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StartMsg}\0:\0\K{public}\0\V{uActor}::\V{SenderMsg}\0\{\}\0\V{startMsg};\0\C{}\1\1\0start\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{StopMsg}\0:\0\K{public}\0\V{uActor}::\V{SenderMsg}\0\{\}\0\V{stopMsg};\0\C{}\1\1\0terminate\0actor}}
+\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{struct}\0\V{UnhandledMsg}\0:\0\K{public}\0\V{uActor}::\V{SenderMsg}\0\{\}\0\V{unhandledMsg};\0\C{}\1\1\0tell\0error}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Allocation}}}\endlgrinde\LGend{}!Nodelete@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Nodelete}}}\endlgrinde\LGend{}}%
@@ -4156,7 +4195,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} send has t
 \L{\LB{\V{IntMsg}\0\V{msg};}}
 \L{\LB{\V{actor}\-\>\BF{\V{tell}}(\0\*\K{new}\0\V{IntMsg}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor\0containing\0current\0sender}}
 \CE{}\L{\LB{\*\V{actor}\0\BF{\|}\0\*\K{new}\0\V{IntMsg};}\Tab{36}{\C{}\1\1\0short\0form}}
-\CE{}\L{\LB{\V{actor}\-\>\V{tell}(\0\V{msg},\0\BF{\V{proxysender}}\0);}\Tab{48}{\C{}\1\1\0send\0message\0to\0actor\0containing\0proxy\0sender}}
+\CE{}\L{\LB{\V{actor}\-\>\V{tell}(\0\V{msg},\0\BF{\V{proxysender}}\0);}\Tab{36}{\C{}\1\1\0send\0message\0to\0actor\0containing\0proxy\0sender}}
 \CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{} message sends can be cascaded:
 \LGinlinefalse\LGbegin\lgrinde
@@ -4187,7 +4226,7 @@ Finally, a receive member ends by returning whether the actor is to persist (\LG
 
 For \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}\index{PromiseMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PromiseMsg}}}\endlgrinde\LGend{}} messages, the receive can deliver a value into the promise associated with the message:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{}\Tab{4}{\V{Case}(\0\V{PMsg},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0PMsg\0type\0?}}
+\L{\LB{\Proc{Case}}\Tab{4}{\V{Case}(\0\V{PMsg},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0PMsg\0type\0?}}
 \CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0compute\0val}}
 \CE{}\L{\LB{}\Tab{8}{\V{msg\_d}\-\>\BF{\V{delivery}}(\0\V{val}\0);}\Tab{56}{\C{}\1\1\0deliver\0value\0into\0promise}}
 \CE{}\L{\LB{}\Tab{4}{\}\0.\,.\,.}}
@@ -4203,7 +4242,7 @@ An actor is created from an actor type, which has all the properties of a \LGinl
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{.\,.\,.}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\Proc{MyActor}}\Tab{4}{\V{MyActor}(\0\V{OtherActor}\0\*\0\V{partner}\0)\0:\0\V{partner}(\0\V{partner}\0)\0\{\}\0\C{}\1\1\0executed\0by\0creator\'s\0thread}}
+\L{\LB{}\Tab{4}{\V{MyActor}(\0\V{OtherActor}\0\*\0\V{partner}\0)\0:\0\V{partner}(\0\V{partner}\0)\0\{\}\0\C{}\1\1\0executed\0by\0creator\'s\0thread}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{MyActor}}}\endlgrinde\LGend{} is created with a partner actor passed to its constructor and its first action is to send a message to its partner in member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{}.
@@ -4228,7 +4267,7 @@ Initially, messages are delivered to member \LGinlinetrue\LGbegin\lgrinde\L{\LB{
 A similar redirection occurs in member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive2}}}\endlgrinde\LGend{}.
 The use of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{} allows an actor to behave like a finite-state machine, where each receive member is a state and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{} makes the transitions among states. 
 
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}\index{restart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}} resets an actor's receive member to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} and reruns member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{} so the actor can be re-purposed for a new use rather than being deleting and creating a new actor.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}\index{restart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{restart}}}\endlgrinde\LGend{}} resets an actor's receive member to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} and reruns member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{preStart}}}\endlgrinde\LGend{} so the actor can be re-purposed for a new use rather than being deleted and creating a new actor.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{}\index{start@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{}} is passed an external executor or it creates an executor to run the actor thread-pool.
 An executor must have sufficient workers and processors to match with the actor workload (see \VRef{s:Executors});
@@ -4237,10 +4276,10 @@ If no executor is passed to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endl
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{uExecutor}(\00,\0\V{uThisCluster}().\V{getProcessors}(),\0\K{false},\0\-1\0);}}
 \endlgrinde\LGend
-which contains 0 new processors, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisCluster}().\V{getProcessors}()}}\endlgrinde\LGend{} worker threads and queues on the current cluster without affinity.
+which contains 0 new processors, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uThisCluster}\V{uThisCluster}().\V{getProcessors}()}}\endlgrinde\LGend{} worker threads and queues on the current cluster without affinity.
 This executor uses processors in the current cluster to execute actors, so the level of parallelism can be set in the program main by declaring \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}s.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}\index{stop@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}} is optionally passed a timeout duration;
-it then wait for all actors to end or the timeout duration to expire, deletes the actor executor, and returns true if the actor system stopped, and false if the timeout expired.
+it then wait for all actors to end or the timeout duration to expire, deletes the actor executor if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{start}}}\endlgrinde\LGend{} creates it, and returns true if the actor system stopped, and false if the timeout expired.
 The command pattern for using these two members is:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{uActor}::\V{start}();}\Tab{52}{\C{}\1\1\0start\0actor\0system}}
@@ -4258,7 +4297,7 @@ The following mechanism is used to deal with message errors, such as sending a m
 The mechanism is to return the message \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{unhandledMsg}}}\endlgrinde\LGend{}\index{unhandledMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}} of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}::\V{UnhandledMsg}}}\endlgrinde\LGend{}\index{UnhandledMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledMsg}}}\endlgrinde\LGend{}} to the sender indicating it sent an unhandleable message, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{msg}\0)\0\{}}
-\L{\LB{\Proc{Case}}\Tab{4}{\V{Case}(\0\V{MsgType1},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0handle\0known\0message\0types}}
+\L{\LB{}\Tab{4}{\V{Case}(\0\V{MsgType1},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0handle\0known\0message\0types}}
 \CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0error\0cases}}
 \CE{}\L{\LB{}\Tab{4}{\}\0\K{else}\0\V{Case}(\0\BF{\V{UnhandledMsg}},\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0receiver\0complain}}
@@ -4282,8 +4321,8 @@ Actors may inherit from other actors\index{actor!inheritance}:
 \L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{preStart}()\0\{\0.\,.\,.\0\}}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\Proc{B}}\Tab{4}{\V{B}()\0\{\}}}
-\L{\LB{\Proc{B}}\Tab{4}{\V{B}(\0\K{int}\0\V{i}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{B}()\0\{\}}}
+\L{\LB{}\Tab{4}{\V{B}(\0\K{int}\0\V{i}\0)\0\{\}}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 &
@@ -4293,8 +4332,8 @@ Actors may inherit from other actors\index{actor!inheritance}:
 \L{\LB{}\Tab{4}{\K{void}\0\V{preStart}()\0\{\0\V{B}::\V{preStart}();\0\}\0\0\C{}\1\1\0call\0base\0member}}
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0)\0\{\0\K{return}\0\V{Delete};\0\}}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\Proc{D}}\Tab{4}{\V{D}()\0\{\}}}
-\L{\LB{\Proc{D}}\Tab{4}{\V{D}(\0\K{int}\0\V{i}\0)\0:\0\V{B}(\0\V{i}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{D}()\0\{\}}}
+\L{\LB{}\Tab{4}{\V{D}(\0\K{int}\0\V{i}\0)\0:\0\V{B}(\0\V{i}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\V{B}\0\V{b};\0\C{}\1\1\0B::preStart\0called\0after\0constructor}}
 \CE{}\L{\LB{\V{D}\0\V{d};\0\C{}\1\1\0D::prestart\0called\0after\0constructor,\0which\0calls\0B::preStart}}
@@ -4330,7 +4369,7 @@ It is still possible to use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\end
 \L{\LB{}}
 \L{\LB{\K{struct}\0\V{StrMsg}\0:\0\K{public}\0\V{uActor}::\V{Message}\0\{}\Tab{56}{\C{}\1\1\0actor\0message}}
 \CE{}\L{\LB{}\Tab{4}{\V{string}\0\V{val};}}
-\L{\LB{\Proc{StrMsg}}\Tab{4}{\V{StrMsg}(\0\V{string}\0\V{val}\0)\0:\0\V{Message}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{StrMsg}(\0\V{string}\0\V{val}\0)\0:\0\V{Message}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{\_Actor}\0\V{Hello}\0\{}}
 \L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{Message}\0\&\0\V{str}\0)\0\{}}
@@ -4354,7 +4393,7 @@ It is still possible to use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\end
 \label{f:HelloActor}
 \end{figure}
 
-\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containg strings.
+\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containing strings.
 There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{} discriminates the kind of message and then examines the string within the message to print an appropriate message.
 In a discrimination clause, the variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{msg\_d}}}\endlgrinde\LGend{} is used to access the string in the message.
@@ -4455,7 +4494,7 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{NextMsg}}}\endlgrinde\LGend{} contain
 \L{\LB{}\Tab{8}{\K{return}\0\V{Nodelete};}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{\K{public}:}}
-\L{\LB{\Proc{Fib}}\Tab{4}{\V{Fib}()\0\{\0\BF{\V{become}(\0\&\V{Fib}::\V{f0}\0);}\0\}}}
+\L{\LB{}\Tab{4}{\V{Fib}()\0\{\0\BF{\V{become}(\0\&\V{Fib}::\V{f0}\0);}\0\}}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 }% subfloat
@@ -4632,13 +4671,13 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{}}
 \L{\LB{\K{struct}\0\V{IntMsg}\0:\0\K{public}\0\V{uActor}::\V{PromiseMsg}\<\0\K{int}\0\>\0\{}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{val};}}
-\L{\LB{\Proc{IntMsg}}\Tab{4}{\V{IntMsg}()\0\{\}}}
-\L{\LB{\Proc{IntMsg}}\Tab{4}{\V{IntMsg}(\0\K{int}\0\V{val}\0)\0:\0\V{PromiseMsg}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{IntMsg}()\0\{\}}}
+\L{\LB{}\Tab{4}{\V{IntMsg}(\0\K{int}\0\V{val}\0)\0:\0\V{PromiseMsg}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{struct}\0\V{StrMsg}\0:\0\K{public}\0\V{uActor}::\V{PromiseMsg}\<\0\V{string}\0\>\0\{}}
 \L{\LB{}\Tab{4}{\V{string}\0\V{val};}}
-\L{\LB{\Proc{StrMsg}}\Tab{4}{\V{StrMsg}()\0\{\}}}
-\L{\LB{\Proc{StrMsg}}\Tab{4}{\V{StrMsg}(\0\V{string}\0\V{val}\0)\0:\0\V{PromiseMsg}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{StrMsg}()\0\{\}}}
+\L{\LB{}\Tab{4}{\V{StrMsg}(\0\V{string}\0\V{val}\0)\0:\0\V{PromiseMsg}(\0\V{uActor}::\V{Delete}\0),\0\V{val}(\0\V{val}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{\_Actor}\0\V{Server}\0\{}}
 \L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{uActor}::\V{Message}\0\&\0\V{msg}\0)\0\{}}
@@ -4657,8 +4696,8 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{}\Tab{4}{\K{int}\0\V{results}\0=\00;}}
 \L{\LB{}\Tab{4}{\V{Server}\0\&\0\V{server};}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\#define}\0\V{ICB}\0[\K{this},\0\V{li}\0=\0\V{i}](\0\K{int}\0)\0\{\0\*\K{this}\0\|\0\V{intmsg}[\V{li}];\0\}}}
-\L{\LB{}\Tab{4}{\K{\#define}\0\V{SCB}\0[\K{this},\0\V{li}\0=\0\V{i}](\0\V{string}\0)\0\{\0\*\K{this}\0\|\0\V{strmsg}[\V{li}];\0\}}}
+\L{\LB{}\Tab{4}{\K{\#define}\0\V{ICB}\0[\K{this},\0\V{li}\0=\0\V{i}](\0\K{int}\0)\0\{\0\*\K{this}\0\|\0\V{intmsg}[\V{li}];\0\K{return}\0\V{Nodelete};\0\}}}
+\L{\LB{}\Tab{4}{\K{\#define}\0\V{SCB}\0[\K{this},\0\V{li}\0=\0\V{i}](\0\V{string}\0)\0\{\0\*\K{this}\0\|\0\V{strmsg}[\V{li}];\0\K{return}\0\V{Nodelete};\0\}}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{uActor}::\V{Message}\0\&\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0receive\0callback\0messages}}
 \CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Messages};\0\V{i}\0+=\01\0)\0\{\0\C{}\1\1\0send\0out\0work}}
@@ -4680,13 +4719,13 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{}\Tab{8}{\K{return}\0\V{Nodelete};}\Tab{56}{\C{}\1\1\0reuse\0actor}}
 \CE{}\L{\LB{}\Tab{4}{\}}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\Proc{Client}}\Tab{4}{\V{Client}(\0\V{Server}\0\&\0\V{server}\0)\0:\0\V{server}(\0\V{server}\0)\0\{\}}}
+\L{\LB{}\Tab{4}{\V{Client}(\0\V{Server}\0\&\0\V{server}\0)\0:\0\V{server}(\0\V{server}\0)\0\{\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{4}{\V{uActor}::\V{start}();}\Tab{56}{\C{}\1\1\0start\0actor\0system}}
 \CE{}\L{\LB{}\Tab{4}{\V{Server}\0\V{server};}}
 \L{\LB{}\Tab{4}{\V{Client}\0\V{client}(\0\V{server}\0);}}
-\L{\LB{}\Tab{4}{\V{client}\0\|\0\V{uActor}::\V{startMsg};}\Tab{56}{\C{}\1\1\0terminate\0actor}}
+\L{\LB{}\Tab{4}{\V{client}\0\|\0\V{uActor}::\V{startMsg};}\Tab{56}{\C{}\1\1\0start\0actors}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}::\V{stop}();}\Tab{56}{\C{}\1\1\0wait\0for\0all\0actors\0to\0terminate}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
@@ -4816,9 +4855,9 @@ For an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{fstream}}}\endlgrinde\LGend{}, whi
 The only restriction is that the kind of stream locker has to match with kind of I/O operation, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{fstream}\0\V{file}(\0\S{}\"abc\"\SE{}\0);}}
-\L{\LB{\V{osacquire}(\0\V{file}\0)\0\<\<\0.\,.\,.\0\C{}\1\1\0output\0operations}}
+\L{\LB{\Proc{osacquire}\V{osacquire}(\0\V{file}\0)\0\<\<\0.\,.\,.\0\C{}\1\1\0output\0operations}}
 \CE{}\L{\LB{.\,.\,.}}
-\L{\LB{\V{isacquire}(\0\V{file}\0)\0\>\>\0.\,.\,.\0\C{}\1\1\0input\0operations}}
+\L{\LB{\Proc{isacquire}\V{isacquire}(\0\V{file}\0)\0\>\>\0.\,.\,.\0\C{}\1\1\0input\0operations}}
 \CE{}\endlgrinde\LGend
 For protecting multiple I/O statements on an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{fstream}}}\endlgrinde\LGend{}, either \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{isacquire}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{} can be used to acquire the stream lock, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
@@ -4840,7 +4879,7 @@ This scenario can lead to \Index{deadlock}, if the task that is going to unblock
 To prevent nested locking, a simple precaution is to factor out the blocking call from the expression, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{int}\0\BF{\V{data}}\0=\0\V{monitor}.\V{rtn}(.\,.\,.);}}
-\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\BF{\V{data}}\0\<\<\0\V{endl};}}
+\L{\LB{\Proc{osacquire}\V{osacquire}(\0\V{cout}\0)\0\<\<\0\S{}\"data:\"\SE{}\0\<\<\0\BF{\V{data}}\0\<\<\0\V{endl};}}
 \endlgrinde\LGend
 
 \Textbf{WARNING:} A stream may be \emph{tied} to another output stream, so when the first stream performs any I/O, the second stream is implicitly flushed first.
@@ -4857,7 +4896,7 @@ Having to lock in this situation is non-intuitive because the stream operations 
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{}\Tab{4}{\textbf{Task$_1$}}\Tab{44}{\textbf{Task$_2$}}}
 \L{\LB{}\Tab{40}{\{}}
-\L{\LB{\Proc{osacquire}\V{osacquire}(\0\V{cout}\0)\0\<\<\0.\,.\,.\0\C{}\1\1\0acquire\0cout}\Tab{44}{osacquire\0lock(\0cout\0);\0\0\1\1\0acquire\0cout\0due\0to\0tie}}
+\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0.\,.\,.\0\C{}\1\1\0acquire\0cout}\Tab{44}{osacquire\0lock(\0cout\0);\0\0\1\1\0acquire\0cout\0due\0to\0tie}}
 \CE{}\L{\LB{}\Tab{44}{\V{cin}\0\>\>\0\V{number};}}
 \L{\LB{}\Tab{40}{\}}}
 \endlgrinde\LGend
@@ -5768,7 +5807,7 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 
 The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{} has the following form:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uBaseEvent}\V{uBaseEvent}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0)}}\endlgrinde\LGend{}]
 -- creates an exception with specified message, which is printed in an error message if the exception is not handled.
 The message is copied when an exception is created so it is safe to use within an exception even if the context of the raise is deleted.
 \end{prefix}
@@ -5889,7 +5928,7 @@ Note, \Emph{\Index{nonlocal exception}s\index{exception!nonlocal} are initially 
 \CE{}\L{\LB{}\Tab{8}{\}\0\K{catch}(\0\V{E}\0)\0\{\0.\,.\,.\0\}}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{\Proc{C}}\Tab{4}{\V{C}()\0\{\0\V{resume}();\0\}}\Tab{24}{\C{}\1\1\0prime\0loop}}
+\L{\LB{}\Tab{4}{\V{C}()\0\{\0\V{resume}();\0\}}\Tab{24}{\C{}\1\1\0prime\0loop}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{mem}()\0\{\0\V{resume}();\0\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
@@ -10319,15 +10358,19 @@ When the user cluster is created, at least this many processors are implicitly c
 
 The following default routine directly affects the heap:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{unsigned}\0\K{int}\0\V{uDefaultHeapExpansion}();\0\C{}\1\1\0heap\0expansion\0size\0(bytes)}}
-\CE{}\L{\LB{\K{unsigned}\0\K{int}\0\V{uDefaultMmapStart}();}\Tab{36}{\C{}\1\1\0division\0point\0(bytes)}}
+\L{\LB{\K{unsigned}\0\K{int}\0\V{malloc\_expansion}();}\Tab{36}{\C{}\1\1\0heap\0expansion\0size\0(bytes)}}
+\CE{}\L{\LB{\K{unsigned}\0\K{int}\0\V{malloc\_mmap\_start}();}\Tab{36}{\C{}\1\1\0division\0point\0(bytes)}}
+\CE{}\L{\LB{\V{size\_t}\0\V{malloc\_unfreed}();}\Tab{36}{\C{}\1\1\0}}
 \CE{}\endlgrinde\LGend
-\index{uDefaultHeapExpansion@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultHeapExpansion}}}\endlgrinde\LGend{}}%
-\index{uDefaultMmapStart@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultMmapStart}}}\endlgrinde\LGend{}}%
+\index{malloc_expansion@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_expansion}}}\endlgrinde\LGend{}}%
+\index{malloc_mmap_start@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_mmap\_start}}}\endlgrinde\LGend{}}%
+\index{malloc_unfreed@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_unfreed}}}\endlgrinde\LGend{}}%
 \index{heap area!expansion size}%
 \index{heap area!mmap start}%
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultHeapExpansion}}}\endlgrinde\LGend{} returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
-Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultMmapStart}}}\endlgrinde\LGend{} returns the division point after which allocation requests are separately mmapped rather than being allocated from the heap area.
+\index{heap area!malloc unfreed}%
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_expansion}}}\endlgrinde\LGend{} returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_mmap\_start}}}\endlgrinde\LGend{} returns the division point after which allocation requests are separately mmapped rather than being allocated from the heap area.
+Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_unfreed}}}\endlgrinde\LGend{} returns the amount subtracted to adjust for unfreed program storage (debug only).
 
 
 \section{Installation Requirements}
@@ -10630,9 +10673,9 @@ The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{options}}}\endlgrinde\LGend{} argumen
 \label{s:PRNG}
 
 Random numbers are values generated independently, i.e., new values do not depend on previous values (independent trials), e.g., lottery numbers, shuffled cards, dice roll, coin flip.
-While a primary goal of programming is computing values that are \emph{not} random, random values are useful. e.g., simulation, cryptography, games, etc.
-A random-number generator is an algorithm computing independent values.
-If the algorithm uses deterministic computation (predictable sequence of values), it generates \emph{pseudo} random numbers versus \emph{true} random numbers.
+While a primary goal of programming is computing values that are \emph{not} random, random values are useful in simulation, cryptography, games, etc.
+A random-number generator is an algorithm that computes independent values.
+If the algorithm uses deterministic computation (a predictable sequence of values), it generates \emph{pseudo} random numbers versus \emph{true} random numbers.
 
 All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some technique to scramble bits of a value, e.g., multiplicative recurrence:
 \LGinlinefalse\LGbegin\lgrinde
@@ -10641,120 +10684,172 @@ All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some tech
 Multiplication of large values adds new least-significant bits and drops most-significant bits.
 \begin{quote}
 \begin{tabular}{@{}r|l@{}}
-bits 63--32	& bits 31--0	\\
+bits 63--32 (most)	& bits 31--0 (least)	\\
 \hline
-0x0			& 0x3e8e36		\\
-0x5f		& 0x718c25e1	\\
-0xad3e		& 0x7b5f1dbe	\\
-0xbc3b		& 0xac69ff19	\\
-0x1070f		& 0x2d258dc6	\\
+0x0					& 0x3e8e36				\\
+0x5f				& 0x718c25e1			\\
+0xad3e				& 0x7b5f1dbe			\\
+0xbc3b				& 0xac69ff19			\\
+0x1070f				& 0x2d258dc6			\\
 \end{tabular}
 \end{quote}
 By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
-The least-significant bits \emph{appear} random but the same bits always appear given a fixed starting value, called the \newterm{seed} (value 0x3e8e36 above).
-Hence, if a program uses the same seed, the same sequence of random values is generated from the PRNG.
-Often, the seed it set to some other random value like the a program's process identifier (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}\index{getpid@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}}) or time when the program is run;
+The least-significant bits \emph{appear} random but the same bits are always generated given a fixed starting value, called the \newterm{seed} (value 0x3e8e36 above).
+Hence, if a program uses the same seed, the same sequence of pseudo-random values is generated from the PRNG.
+Often the seed is set to another random value like a program's process identifier (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}\index{getpid@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getpid}}}\endlgrinde\LGend{}}) or time when the program is run;
 hence, one random value bootstraps another.
-Finally, a PRNG usually generates large values in the range of \LGinlinetrue\LGbegin\lgrinde\L{\LB{[0,\0\V{UINT\_MAX}]}}\endlgrinde\LGend{}, and programmers scales these values using the modulus operator, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}()\0\%\05}}\endlgrinde\LGend{} produces random values in the range 0--4.
+Finally, a PRNG usually generates a range of large values, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{[0,\0\V{UINT\_MAX}]}}\endlgrinde\LGend{}, which are scaled using the modulus operator, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}()\0\%\05}}\endlgrinde\LGend{} produces random values in the range 0--4.
 
-\uC provides a sequential and concurrent PRNG.
+\uC provides a sequential PRNG class only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
 \begin{itemize}
 \item
-For sequential programs, like coroutining, the PRNG can be used to randomize behaviour or values during execution, e.g., in games a character makes a random move or an object takes on a random value.
-Sequential execution is repeatable given the same starting seeds for all PRNGs. 
-In this scenario, it is useful to have multiple PRNG, e.g., one per player or object so a class is provided to generate multiple instances.
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} class is for sequential programs, like coroutining:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{PRNG}\0\{}}
-\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type}}
+\CE{}\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{PRNG}();}\Tab{52}{\C{}\1\1\0random\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{PRNG}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed\_}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{calls}()\0\K{const};}}
-\L{\LB{\};}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{calls}()\0\K{const};}\Tab{52}{\C{}\1\1\0number\0of\0calls}}
+\CE{}\L{\LB{\};}}
 \endlgrinde\LGend
-The following example creates two sequential PRNGs, sets them both to the same seed (1009), and shows the 3 forms for generating random values, where both PRNGs generate the same sequence of values.
+A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} object is used to randomize behaviour or values during execution, e.g., in games, a character makes a random move or an object takes on a random value.
+In this scenario, it is useful to have multiple \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} objects, e.g., one per player or object.
+However, sequential execution is still repeatable given the same starting seeds for all \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s. 
+\VRef[Figure]{f:SequentialPRNG} shows an example that creates two sequential \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s, sets both to the same seed (1009), and illustrates the three forms for generating random values, where both \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s generate the same sequence of values.
+
+\begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{PRNG}\0\V{sprng1},\0\V{sprng2};}}
-\L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0);\0\0\0\V{sprng2}.\V{set\_seed}(\01009\0);}}}
-\L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\015;\0\V{i}\0+=\01\0)\0\{}}
-\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng1}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng1}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng1}(\00,\05\0)}\0\<\<\0\S{}\'\2t\2t\'\SE{};}}
-\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng2}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng2}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{sprng2}(\00,\05\0)}\0\<\<\0\V{endl};}}
+\L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0)};\0\0\0\BF{\V{sprng2}.\V{set\_seed}(\01009\0);}}}
+\L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Do\0not\0cascade\0prng\0calls\0because\0side\-effect\0functions\0called\0in\0arbitrary\0order.}}
+\CE{}\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng1}()}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng1}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng1}(\00,\05\0)}\0\<\<\0\S{}\'\2t\'\SE{};}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng2}()}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng2}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng2}(\00,\05\0)}\0\<\<\0\V{endl};}}
 \L{\LB{\}}}
 \endlgrinde\LGend
+\begin{tabular}{@{}ll@{}}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\0\0\037305757\03\03}\Tab{20}{\0\0\037305757\03\03}}
-\L{\LB{1821310498\04\01}\Tab{20}{1821310498\04\01}}
-\L{\LB{\0603686050\03\04}\Tab{20}{\0603686050\03\04}}
-\L{\LB{1354865902\00\00}\Tab{20}{1354865902\00\00}}
-\L{\LB{\0419569906\04\01}\Tab{20}{\0419569906\04\01}}
-\L{\LB{\0224287468\00\03}\Tab{20}{\0224287468\00\03}}
-\L{\LB{2338967995\02\04}\Tab{20}{2338967995\02\04}}
-\L{\LB{\0925028647\03\00}\Tab{20}{\0925028647\03\00}}
-\L{\LB{\0553419481\00\01}\Tab{20}{\0553419481\00\01}}
-\L{\LB{\0890860879\01\04}\Tab{20}{\0890860879\01\04}}
-\L{\LB{1488185164\03\04}\Tab{20}{1488185164\03\04}}
-\L{\LB{2393505511\01\03}\Tab{20}{2393505511\01\03}}
-\L{\LB{1935722428\02\02}\Tab{20}{1935722428\02\02}}
-\L{\LB{1861488646\00\02}\Tab{20}{1861488646\00\02}}
-\L{\LB{2246946481\03\04}\Tab{20}{2246946481\03\04}}
+\L{\LB{37301721\02\02}}
+\L{\LB{1681308562\01\03}}
+\L{\LB{290112364\03\02}}
+\L{\LB{1852700364\04\03}}
+\L{\LB{733221210\01\03}}
+\L{\LB{1775396023\02\03}}
+\L{\LB{123981445\02\03}}
+\L{\LB{2062557687\02\00}}
+\L{\LB{283934808\01\00}}
+\L{\LB{672325890\01\03}}
 \endlgrinde\LGend
-\item
-For concurrent programs, the PRNG can be used to randomize execution in short-running concurrent programs, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}(\0\V{prng}()\0\%\05\0)}}\endlgrinde\LGend{}.
-Beause concurrent execution is non-deterministic, seeding the concurrent PRNG is less important, because repeatable execution is impossible.
-It is important for the PRNG to be thread-safe and not a point of contention.
-Hence, only one system-wide PRNG is needed, and each kernel thread (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}) has its own implicit PRNG used by wherever user threads happen to execute on that processor.
+&
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0kernel\-thread\0seed}}
-\CE{}\L{\LB{\V{uint32\_t}\0\V{get\_seed}();}\Tab{52}{\C{}\1\1\0get\0seed}}
+\L{\LB{37301721\02\02}}
+\L{\LB{1681308562\01\03}}
+\L{\LB{290112364\03\02}}
+\L{\LB{1852700364\04\03}}
+\L{\LB{733221210\01\03}}
+\L{\LB{1775396023\02\03}}
+\L{\LB{123981445\02\03}}
+\L{\LB{2062557687\02\00}}
+\L{\LB{283934808\01\00}}
+\L{\LB{672325890\01\03}}
+\endlgrinde\LGend
+\end{tabular}
+\caption{Sequential PRNG}
+\label{f:SequentialPRNG}
+\end{figure}
+
+\item
+The PRNG global routines and companion task members are for concurrent programming, such as randomizing execution in short-running programs, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}(\0\V{prng}()\0\%\05\0)}}\endlgrinde\LGend{}.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0global\0seed}}
+\CE{}\L{\LB{\V{uint32\_t}\0\V{get\_seed}();}\Tab{52}{\C{}\1\1\0get\0global\0seed}}
+\CE{}\L{\LB{\C{}\1\1\0SLOWER,\0global\0routines}}
 \CE{}\L{\LB{\V{uint32\_t}\0\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
 \CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
 \CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{\C{}\1\1\0FASTER,\0task\0members}}
+\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
 \CE{}\endlgrinde\LGend
-The following example uses the system-wide PRNG, sets the starting seed (1009) for all kernel threads, and shows the 3 forms for generating random values.
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\BF{\V{set\_seed}(\01009\0);}}}
-\L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\015;\0\V{i}\0+=\01\0)\0\{}}
-\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\BF{\V{prng}(\00,\05\0)}\0\<\<\0\V{endl};}}
-\L{\LB{\}}}
-\endlgrinde\LGend
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\0\0\037305757\03\03}}
-\L{\LB{1821310498\04\01}}
-\L{\LB{\0603686050\03\04}}
-\L{\LB{1354865902\00\00}}
-\L{\LB{\0419569906\04\01}}
-\L{\LB{\0224287468\00\03}}
-\L{\LB{2338967995\02\04}}
-\L{\LB{\0925028647\03\00}}
-\L{\LB{\0553419481\00\01}}
-\L{\LB{\0890860879\01\04}}
-\L{\LB{1488185164\03\04}}
-\L{\LB{2393505511\01\03}}
-\L{\LB{1935722428\02\02}}
-\L{\LB{1861488646\00\02}}
-\L{\LB{2246946481\03\04}}
-\endlgrinde\LGend
-\end{itemize}
+The only difference between the two sets of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}}}\endlgrinde\LGend{} routines is performance.
 
-To ensure each \uC task generates the same random number, independent of nondeterministic time-slicing, requires each task to have its own fixed seed and run its own PRNG.
+Because concurrent execution is non-deterministic, seeding the concurrent PRNG is less important, as repeatable execution is impossible.
+Hence, there is one system-wide PRNG (global seed) but each \uC task has its own non-contended PRNG state.
+If the global seed is set, tasks start with this seed, until it is reset and then tasks start with the reset seed.
+Hence, these tasks generate the same sequence of random numbers from their specific starting seed.
+If the global seed is \emph{not} set, tasks start with a random seed, until the global seed is set.
+Hence, these tasks generate different sequences of random numbers.
+If each task needs its own seed, use a sequential \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} in each task.
+The slower \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}}}\endlgrinde\LGend{} global routines call \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisTask}}}\endlgrinde\LGend{} internally to indirectly access the current task's PRNG state, while the faster \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{prng}}}\endlgrinde\LGend{} members directly access the task through the implicit \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{this}}}\endlgrinde\LGend{} pointer.
+If a task pointer is available, e.g., in task main, eliminating the call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisTask}}}\endlgrinde\LGend{} significantly reduces the cost of accessing the task's PRNG state.
+\VRef[Figure]{f:ConcurrentPRNG} shows an example using the slower/faster concurrent PRNG in the program main and a thread.
+
+\begin{figure}
+\LGindent=0pt
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Task}\0\V{T}\0\{}}
-\L{\LB{}\Tab{4}{\K{const}\0\K{unsigned}\0\K{int}\0\V{tid};}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{8}{\V{PRNG}\0\V{prng}(\0\V{tid}\0\*\01009\0);}\Tab{52}{\C{}\1\1\0repeatable\0seed}}
-\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\05;\0\V{i}\0+=\01\0)\0\{}}
-\L{\LB{}\Tab{12}{\V{yield}(\0\V{prng}(\010\0)\0);}\Tab{52}{\C{}\1\1\0random\0integer\0between\00\-9}}
-\CE{}\L{\LB{}\Tab{12}{.\,.\,.}}
-\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\0\C{}\1\1\0thread\0address\0is\0\'this\'\0pointer}}
+\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{12}{\C{}\1\1\0Do\0not\0cascade\0prng\0calls\0because\0side\-effect\0functions\0called\0in\0arbitrary\0order.}}
+\CE{}\L{\LB{}\Tab{12}{\V{cout}\0\<\<\0\BF{::\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{::\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{::\V{prng}(\00,\05\0)}\0\<\<\0\S{}\'\2t\'\SE{};\0\C{}\1\1\0SLOWER}}
+\CE{}\L{\LB{}\Tab{12}{\V{cout}\0\<\<\0\BF{\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{\V{prng}(\00,\05\0)}\0\<\<\0\V{endl};\0\C{}\1\1\0FASTER}}
+\CE{}\L{\LB{}\Tab{8}{\}}}
 \L{\LB{}\Tab{4}{\}}}
-\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{T}(\0\K{unsigned}\0\K{int}\0\V{tid}\0)\0:\0\V{tid}(\0\V{tid}\0)\0\{\}}}
-\L{\LB{\};}}
+\L{\LB{\};\0\C{}\1\1\0T}}
+\CE{}\L{\LB{\K{int}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{4}{\V{set\_seed}(\01009\0);}}
+\L{\LB{}\Tab{4}{\BF{\V{uBaseTask}\0\&\0\V{th}\0=\0\V{uThisTask}()};\0\0\C{}\1\1\0program\-main\0thread\-address}}
+\CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0Do\0not\0cascade\0prng\0calls\0because\0side\-effect\0functions\0called\0in\0arbitrary\0order.}}
+\CE{}\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\BF{::\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{::\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{::\V{prng}(\00,\05\0)}\0\<\<\0\S{}\'\2t\'\SE{};\0\C{}\1\1\0SLOWER}}
+\CE{}\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\BF{\V{th}.\V{prng}()}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{\V{th}.\V{prng}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\0\V{cout}\0\<\<\0\BF{\V{th}.\V{prng}(\00,\05\0)}\0\<\<\0\V{endl};\0\C{}\1\1\0FASTER}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\V{T}\0\V{t};\0\0\C{}\1\1\0run\0task}}
+\CE{}\L{\LB{\}}}
 \endlgrinde\LGend
+\begin{tabular}{@{}ll@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{37301721\02\02}}
+\L{\LB{290112364\03\02}}
+\L{\LB{733221210\01\03}}
+\L{\LB{123981445\02\03}}
+\L{\LB{283934808\01\00}}
+\L{\LB{1414344101\01\03}}
+\L{\LB{871831898\03\04}}
+\L{\LB{2142057611\04\04}}
+\L{\LB{802117363\00\04}}
+\L{\LB{2346353643\01\03}}
+\endlgrinde\LGend
+&
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{1681308562\01\03}}
+\L{\LB{1852700364\04\03}}
+\L{\LB{1775396023\02\03}}
+\L{\LB{2062557687\02\00}}
+\L{\LB{672325890\01\03}}
+\L{\LB{873424536\03\04}}
+\L{\LB{866783532\00\01}}
+\L{\LB{17310256\02\05}}
+\L{\LB{492964499\00\00}}
+\L{\LB{2143013105\03\02}}
+\endlgrinde\LGend
+\end{tabular}
+\\
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\C{}\1\1\0same\0output\0as\0above\0from\0thread\0t}}
+\CE{}\endlgrinde\LGend
+\caption{Concurrent PRNG}
+\label{f:ConcurrentPRNG}
+\end{figure}
+\end{itemize}
 
 
 \chapter{Data Structure Library (DSL)}

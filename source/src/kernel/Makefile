@@ -17,8 +17,6 @@ include ${PACKAGE}/src/MakeTools
 ## Define the C++ source files.
 
 LIBSRC = ${addprefix ${SRCDIR}/, ${addsuffix .cc, \
-uDefaultHeapExpansion \
-uDefaultMmapStart \
 uDefaultStackSize \
 uMainStackSize \
 uDefaultSpin \
@@ -72,7 +70,7 @@ uDefaultProcessors-OpenMP \
 
 ## Define the header files
 
-HEADERS = assert.h uAlign.h uDefault.h uCalendar.h uAlarm.h uEHM.h uC++.h uSystemTask.h uDebug.h uKernelThreads.h uAtomic.h uBaseSelector.h uAdaptiveLock.h unwind-cxx.h unwind.h
+HEADERS = assert.h uAlign.h uDefault.h uCalendar.h uAlarm.h uEHM.h uHeapLmmm.h uC++.h uSystemTask.h uDebug.h uKernelThreads.h uAtomic.h uBaseSelector.h uAdaptiveLock.h unwind-cxx.h unwind.h
 
 ## Define which libraries should be built.
 

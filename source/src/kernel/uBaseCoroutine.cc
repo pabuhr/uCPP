@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 17:26:05 2021
-// Update Count     : 706
+// Last Modified On : Sat Mar 12 16:09:01 2022
+// Update Count     : 707
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -197,6 +197,7 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 
 	uDEBUGPRT( uDebugPrt( "(uBaseCoroutine &)%p.corCxtSw, coroutine:%p, coroutine.SP:%p\n",
 						  this, &coroutine, coroutine.stackPointer() ); )
+
 	coroutine.save();									// save user specified contexts
 	currTask.currCoroutine_ = this;						// set new coroutine that task is executing
 

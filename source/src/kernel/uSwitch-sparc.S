@@ -7,8 +7,8 @@
 ! Author           : Peter A. Buhr
 ! Created On       : Tue Mar  1 14:42:19 1994
 ! Last Modified By : Peter A. Buhr
-! Last Modified On : Fri Apr  6 13:44:49 2012
-! Update Count     : 43
+! Last Modified On : Sun Apr  3 10:50:06 2022
+! Update Count     : 44
 !
 ! This  library is free  software; you  can redistribute  it and/or  modify it
 ! under the terms of the GNU Lesser General Public License as published by the
@@ -41,7 +41,7 @@
 #   define STORE_OP	stx
 #   define LOAD_OP	ldx
 #else
-    #error uC++ : internal error, unsupported ABI data model
+	#error uC++ : internal error, unsupported ABI data model
 #endif
 
 #define SP_OFFSET	( 0 * PTR_BYTE )

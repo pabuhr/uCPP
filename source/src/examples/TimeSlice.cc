@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Apr 26 11:04:37 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 23:03:46 2016
-// Update Count     : 34
+// Last Modified On : Fri Feb  4 14:33:47 2022
+// Update Count     : 37
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -26,33 +26,33 @@
 
 
 unsigned int uDefaultPreemption() {
-    return 1;
+	return 1;
 } // uDefaultPreemption
 
 enum { NoOfTimes = 1000 };
 volatile int x = 0, y = 1;
 
 _Task T1 {
-    void main() {
-	for ( ;; ) {
-	  if ( x == NoOfTimes ) break;
-	    if ( x < y ) x += 1;
-	} // for
-    } // T1::main
+	void main() {
+		for ( ;; ) {
+			if ( x == NoOfTimes ) break;
+			if ( x < y ) x += 1;
+		} // for
+	} // T1::main
 }; // T1
 
 _Task T2 {
-    void main() {
-	for ( ;; ) {
-	  if ( y == NoOfTimes ) break;
-	    if ( y == x ) y += 1;
-	} // for
-    } // T2::main
+	void main() {
+		for ( ;; ) {
+			if ( y == NoOfTimes ) break;
+			if ( y == x ) y += 1;
+		} // for
+	} // T2::main
 }; // T2
 
 int main() {
-    T1 t1;
-    T2 t2;
+	T1 t1;
+	T2 t2;
 } // main
 
 // Local Variables: //

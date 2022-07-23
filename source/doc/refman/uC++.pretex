@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Dec 27 14:44:40 2021
-%% Update Count     : 8313
+%% Last Modified On : Tue Jul 19 08:47:15 2022
+%% Update Count     : 8430
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3871,12 +3871,12 @@ Currently, the defaults are 2 processors, 2 threads 2 request queues, and the ex
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
 Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
 
-\VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of multiple \newterm{behaviours} (work) front-ended by a \newterm{mailbox} (message queue/bounded buffer) containing messages
+\VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of a \newterm{mailbox} (message queue/bounded buffer), and a set of \newterm{behaviour}s that receive from the mailbox to perform work.
 A behaviour is an actor member that takes a single message parameter, where the default behaviour is the member named %(receive%).
 An actor's behaviours create other actors and communicate with these new actors by sending messages to their mailbox (including an actor sending to itself).
 An actor's constructor or behaviour can set/hand-off message reception to another behaviour.
 
-An actor's mailbox contains heterogeneous typed messages.
+An actor's mailbox contains heterogeneous typed-messages.
 Anything can be passed in an actor message, e.g., actor references, promises, and routines/functors/lambdas.
 Messages are divided into those that do and do not require a response.
 Responses are handled asynchronously through \emph{\Index{promise}}s (not futures \VRef{s:Futures}), where the actor processing the message deliveries the promise result.
@@ -3907,37 +3907,114 @@ enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 \index{uActor@%(uActor%)!Finished@%(Finished%)}%
 \vspace*{-15pt}% FIX ME
 \begin{prefix}
-\item[%(Nodelete%)] means the actor/message persists after a behaviour returns.
+\item[%(Nodelete%)] means the actor/message persists and there is no action by the executor.
 Use for multi-use actors or messages during their life time. (actor/message default)
-\item[%(Delete%)] means the actor/message is deleted by the executor after a behaviour returns.
-Use with dynamically allocated actors or messages at completion.
-\item[%(Destroy%)] means the actor's/message's destructor is called by the executor after a behaviour returns, but storage is not deallocated.
-Use with \Index{placement allocate}d actors or messages, where the storage is subsequently deallocated.
-\item[%(Finished%)] means the actor/message is marked finished so the executor knows there is one less actor after a behaviour returns, but neither the destructor is called nor is storage deallocated.
-Use with stack allocated actors or messages at completion.
+\item[%(Delete%)] means the actor is removed from the actor system and the actor/message is deleted by the executor.
+Use with dynamically allocated actors or messages when their life-time has expired.
+\item[%(Destroy%)] means the actor is removed from the actor system and the actor/message's destructor is called by the executor but storage is \emph{not} deallocated.
+Use with \Index{placement allocate}d actors or messages, i.e., @new(...)@, where the storage is managed elsewhere, possibly to be reused for a new actor/message.
+\item[%(Finished%)] means the actor is removed from the actor system (no action for a message), but neither the destructor is called nor is storage deallocated.
+Use with global or stack allocated actors or messages destructor call and deallocation are implicitly called at the end of a lexically scope.
 \end{prefix}
+Once an actor/message is deleted/destroyed/finished, no subsequent access is allowed until the storage is reallocated.
 
 
 \subsection{Messages}
 
-All actor messages must inherit from base-type %(uActor::Message%):
+\VRef[Figure]{f:BaseMessage} shows the basic type %(uActor::Message%), which is used for simple messages and all other actor messages types must inherit from it.
+The constructor routine %(Message%)\index{Message@%(Message%)} has the following form:
+\begin{prefix}
+\item[%(Message( Allocation allocation = Nodelete )%)]
+-- creates a message with a default allocation of %(Nodelete%).
+\end{prefix}
+Note, the default constructor assumes the message persists.
+
+\begin{figure}
+\LGindent=5pt
+\subfloat[Base]{\label{f:BaseMessage}
 %[
 class Message {
   public:
-	Allocation allocation;								// allocation action
-	Message( Allocation allocation = Nodelete, uActor * sender = nullptr );
-	Message( uActor * sender );							// allocation = Delete
-	uActor * sender();									// sender actor
+	Allocation allocation;				// allocation action
+	Message( Allocation allocation = Nodelete );
 };	
 %]
-\index{Message@%(Message%)!sender@%(sender%)}%
+}% subfloat
 \index{Message@%(Message%)!allocation@%(allocation%)}%
-\index{uActor@%(uActor%)!Message!sender@%(sender%)}%
-The overloaded constructor routine %(Message%)\index{Message@%(Message%)} has the following forms:
+
+\medskip
+
+\subfloat[Sender]{\label{f:SenderMessage}
+%[
+class SenderMsg : public Message {
+	friend class uActor;
+	uActor * sender_;					// delegated sender
+  public:
+	SenderMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	SenderMsg( uActor * sender );
+	uActor * sender();					// sender actor
+};
+%]
+}% subfloat
+\index{SenderMsg@%(SenderMsg%)!sender@%(sender%)}%
+\index{SenderMsg@%(SenderMsg%)!allocation@%(allocation%)}%
+\index{uActor@%(uActor%)!SenderMsg!sender@%(sender%)}%
+
+\medskip
+
+\subfloat[Trace]{\label{f:TraceMessage}
+%[
+class TraceMsg : public SenderMsg {
+  public:
+	TraceMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
+	TraceMsg( uActor * sender ) : Message( sender ) {}
+	void erase();					// delete all message hops except cursor hop
+	void reset();					// delete all message hops from head to cursor
+	bool Return();					// move cursor back (towards tail) one hop and
+									//    send trace message to cursor actor
+	void retSender();				// set cursor to tail and send trace message to cursor actor
+	bool returned();				// check if cursor not at head
+	void resume();					// reset cursor to head and send trace message to cursor actor
+	void print();					// prints trace information from cursor to the end of the trace
+};
+%]
+}% subfloat
+\index{TraceMsg@%(TraceMsg%)!erase@%(erase%)}%
+\index{TraceMsg@%(TraceMsg%)!reset@%(reset%)}%
+\index{TraceMsg@%(TraceMsg%)!Return@%(Return%)}%
+\index{TraceMsg@%(TraceMsg%)!retSender@%(retSender%)}%
+\index{TraceMsg@%(TraceMsg%)!returned@%(returned%)}%
+\index{TraceMsg@%(TraceMsg%)!resume@%(resume%)}%
+\index{TraceMsg@%(TraceMsg%)!print@%(print%)}%
+
+\medskip
+
+\subfloat[Promise]{\label{f:PromiseMessage}
+%[
+template<typename Result> class PromiseMsg : public SenderMsg {
+	Promise< Result > result_;		// delivered promise
+  public:
+	PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	PromiseMsg( uActor * sender );	// allocation = Delete
+	void delivery( Result res );	// make result available in promise
+	Result result();				// return promise result
+	Result operator()();			// alternate syntax for result
+};
+%]
+}% subfloat
+\index{PromiseMsg@%(PromiseMsg%)!delivery@%(delivery%)}%
+\index{PromiseMsg@%(PromiseMsg%)!result@%(result%)}%
+
+\caption{Actor Messages}
+\label{f:ActorMessages}
+\end{figure}
+
+\VRef[Figure]{f:SenderMessage} shows the message type %(uActor::SenderMsg%), which remembers the message sender.
+The overloaded constructor routine %(SenderMsg%)\index{SenderMsg@%(SenderMsg%)} has the following forms:
 \begin{prefix}
-\item[%(Message( Allocation allocation = Nodelete, uActor * sender = nullptr )%)]
+\item[%(SenderMsg( Allocation allocation = Nodelete, uActor * sender = nullptr )%)]
 -- creates a message with a default allocation of %(Nodelete%), and specifies the actor that sent the message or an actor delegated as the message sender.
-\item[%(Message( uActor * sender )%)]
+\item[%(SenderMsg( uActor * sender )%)]
 -- creates a message with a default allocation of %(Delete%), and specifies the actor that sent the message or an actor delegated as the message sender.
 \end{prefix}
 Note, the default constructor assumes the message persists, while specifying the sender constructor assumes the message is deleted.
@@ -3959,50 +4036,6 @@ The member routine %(returned%) returns %(true%) if the cursor is not at head, o
 The member routine %(resume%) moves the cursor to head and sends the message to the cursor actor.
 The member routine %(print%) prints the address of the trace message, trace head, cursor, and actors at each hop from cursor to tail, which is useful for debugging.
 
-\begin{figure}
-%[
-class TraceMsg : public Message {
-  public:
-	TraceMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
-	TraceMsg( uActor * sender ) : Message( sender ) {}
-	void erase();					// delete all message hops except cursor hop
-	void reset();					// delete all message hops from head to cursor
-	bool Return();					// move cursor back (towards tail) one hop and
-									//    send trace message to cursor actor
-	void retSender();				// set cursor to tail and send trace message to cursor actor
-	bool returned();				// check if cursor not at head
-	void resume();					// reset cursor to head and send trace message to cursor actor
-	void print();					// prints trace information from cursor to the end of the trace
-};
-%]
-\index{TraceMsg@%(TraceMsg%)!erase@%(erase%)}%
-\index{TraceMsg@%(TraceMsg%)!reset@%(reset%)}%
-\index{TraceMsg@%(TraceMsg%)!Return@%(Return%)}%
-\index{TraceMsg@%(TraceMsg%)!retSender@%(retSender%)}%
-\index{TraceMsg@%(TraceMsg%)!returned@%(returned%)}%
-\index{TraceMsg@%(TraceMsg%)!resume@%(resume%)}%
-\index{TraceMsg@%(TraceMsg%)!print@%(print%)}%
-\caption{Trace Message}
-\label{f:TraceMessage}
-\end{figure}
-
-\begin{figure}
-%[
-template< typename Result > class PromiseMsg : public Message {
-	Promise< Result > result_;		// delivered promise
-  public:
-	PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
-	PromiseMsg( uActor * sender );	// allocation = Delete
-	void delivery( Result res );	// make result available in promise
-	Result result();				// return promise result
-	Result operator()();			// alternate syntax for result
-};
-%]
-\index{PromiseMsg@%(PromiseMsg%)!delivery@%(delivery%)}%
-\caption{Promise Message}
-\label{f:PromiseMessage}
-\end{figure}
-
 An actor cannot block because it is executed by a thread in the executor (see \VRef[Figure]{f:ActorModel}).
 A \newterm{promise} provides an alternate mechanism from message passing between two asynchronous actors (client/server) to communicate.
 The %(ask%) (see \VRef{s:ActorType}) message send returns a promise, which is subsequently used in an atomic check for completion and optional registration of a callback executed on completion.
@@ -4013,42 +4046,43 @@ The member routine %(delivery%) is used by a server actor to fulfill the contain
 The member routine %(result%) is used by a client actor to access the promise result in the message.
 
 \VRef[Figure]{f:PromiseType} shows the type %(uActor::Promise%), which holds the result of a computation by a server actor.
-In general, a client actor creates a %(PromiseMsg%) containing an empty %(Promise%) and sends this message to a server actor.
+In general, a client actor creates a %(PromiseMsg%) containing data for the server to process and an empty %(Promise%), which it sends to a server actor.
 The send returns a copy of the empty %(Promise%) in the %(PromiseMsg%) for use in the \emph{future} by the client to access the promise result.
 A promise is responsible for storage management by using reference counts and can be copied like a %(Future_ISM%) (see \VRef{s:FutureISM}).
-The server actor does some work asynchronously, based on the values in the %(PromiseMsg%), and delivers the result into the %(PromiseMsg%)'s promise.
+The server actor works asynchronously, based on the data in the %(PromiseMsg%), and delivers the result into the %(PromiseMsg%)'s promise.
 When the client needs the promise result, it races with the server to install a callback, which takes as a parameter a reference to the promise result type.
+If the server wins, the client can immediately process the result in the future.
+If the client wins, it sees the installed callback during result %(deliver%), and the server posts (special message send) the callback function onto the mailbox queue for the client's executor.
+Hence, the callback is executed by the sending client's actor in FIFO order with the client's messages, and the lambda function safely executes in the client actor's receive-member as it may reference the client's members.
+Conceptually, the callback is a one-shot @become@ for the actor, i.e., the current receive member is ignored and the callback executed instead.
+The callback must return an @Allocation@, so the executor knows how to process the actor following a callback's execution, if it is installed.
 
-The server calls member %(delivery%), which races \emph{after} it delivers (fulfills) the promise result and then
-\begin{itemize}[topsep=5pt,parsep=0pt]
-\item
-if it wins the race, there is no callback to invoke.
-\item
-if it loses the race, it invokes the callback passing the result, where the callback often sends the promise result back to the client or the client's proxy.
-\end{itemize}
-The client calls member %(maybe%) or %(then%), which runs the race in one of two ways:
+The client has two mechanisms to interact with the promise:
 \begin{description}[leftmargin=3pt,topsep=5pt,parsep=0pt]
 \item[%(maybe%)] 
-atomically installs the callback and returns:
+atomically attempts to install the callback and returns:
 \begin{itemize}
 \item
-true meaning the client lost the race and the server has fulfilled the promise and the result is visible in the client's promise;
-the callback is not called by the server.
-The client can now process the promise result immediately, without further message sends or invoke the callback in lieu of the server.
+%(true%) meaning the client lost the race and the server has fulfilled the promise, the result is visible in the client's promise, and the server did not post the callback for execution by the client.
+The client can now process the promise result immediately.
 \item
-false meaning the client won the race and the server has not fulfilled the promise yet, the callback is installed, and will be called by the server after fulfillment.
+%(false%) meaning the client won the race and the server has not fulfilled the promise yet, the callback is installed, and is posted by the server during fulfilment for subsequent execution by the client.
 The client now has to do other work, possibly expecting the callback to return the promise result in a message.
 \end{itemize}
 \item[%(then%)]
-is the same as %(maybe%), but if the client loses the race, it implicitly calls the callback.
+is the same as %(maybe%), except that the callback passed is called unconditionally once the promise has been fulfilled.
+If the client wins the race, the behaviour is identically to %(maybe%), and the callback is installed.
+If the client loses the race, it implicitly calls the callback immediately instead of installing it to be called later.
+Hence, the callback passed to %(then%) is always called, but may either be installed or immediately called.
+%(then%) returns a boolean indicating if the result has been processed during the call to %(then%).
 \end{description}
 The member routine %(result%) returns the server result in the promise.
 The member routine %(reset%) allows the promise to be reused by reseting for a new race.
 
 \begin{figure}
 %[
-template<typename T> class Promise {
-	std::function< void ( T & ) > callback;
+template<typename Result> class Promise {
+	std::function< void ( Result & ) > callback;		// functor type
   public:
 	_Event PromiseFailure {};
 	_Event DupCallback : public PromiseFailure {};		// raised if duplicate callback
@@ -4057,18 +4091,18 @@ template<typename T> class Promise {
 	_Event ChainedReset : public PromiseFailure {};		// raised if pending chained callback
 
 	Promise() {}
-	Promise( const Promise<T> & rhs );
-	Promise<T> & operator=( const Promise<T> & rhs );
+	Promise( const Promise<Result> & rhs );
+	Promise<Result> & operator=( const Promise<Result> & rhs );
 
 	// USED BY CLIENT
-	bool maybe( std::function<void ( T )> callback );	// access result
-	void then( std::function<void ( T )> callback );	// access result
-	T result();
-	T operator()()										// alternate syntax for result
+	bool maybe( std::function<Allocation ( Result )> callback );\(}\Tab{56}{\)// access result
+	bool then( std::function<Allocation ( Result )> callback );\(}\Tab{56}{\)// access result
+	Result result();
+	Result operator()()									// alternate syntax for result
 	void reset();										// mark promise as empty (for reuse)
 
 	// USED BY SERVER
-	void delivery( T result );							// make result available in the promise
+	void delivery( Result result );						// make result available in the promise
 }; // Promise
 %]
 \caption{Promise Type}
@@ -4076,6 +4110,7 @@ template<typename T> class Promise {
 \end{figure}
 
 \begin{figure}
+\LGindent=5pt
 %[
 class uActor {
 	virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
@@ -4085,22 +4120,26 @@ class uActor {
 	Allocation allocation();							// getter
 	void allocation( Allocation alloc );				// setter
   public:
+	enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 	// Message Types
 	class Message { ... };
-	class TraceMsg : public Message { ... };
+	class SenderMsg : public Message { ... }
+	class TraceMsg : public SenderMsg { ... };
 	template<typename T> class Promise { ... };
-	template<typename Result> struct PromiseMsg : public Message { ... }
+	template<typename Result> struct PromiseMsg : public SenderMsg { ... }
 	// Storage management
-	enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 	uActor( Allocation allocation = Nodelete );
 	// Communication
 	static inline uActor * sender();					// current executing actor
-	uActor & tell( Message & msg, uActor * sender );	// message send, no return
-	uActor & tell( Message & msg );
+	uActor & tell( Message & msg );						// async call, no return value
+	uActor & tell( SenderMsg & msg );					// async call, no return value
+	uActor & tell( SenderMsg & msg, uActor * sender );	// async call, no return value
 	uActor & tell( TraceMsg & msg );
-	uActor & operator | ( Message & msg );				// tell alternative
+	uActor & operator | ( Message & msg );				// tell alternatives
+	uActor & operator | ( SenderMsg & msg )
 	uActor & operator | ( TraceMsg & msg );
-	uActor & forward( Message & msg );					// do not update message sender
+	uActor & forward( Message & msg );
+	uActor & forward( SenderMsg & msg ) {				// send but retain original sender
 	uActor & forward( TraceMsg & msg );
 	template< typename Result > Promise< Result >
 		ask( PromiseMsg< Result > & msg, uActor * sender = nullptr ) { // message send, return promise
@@ -4111,9 +4150,9 @@ class uActor {
 	static void start( uExecutor * executor = nullptr )	// create executor to run actors
 	static bool stop( uDuration duration = 0 ) {		// wait for all actors to terminate or timeout
 	// Builtin Messages
-	static struct StartMsg : public uActor::Message {} startMsg; // start actor
-	static struct StopMsg : public uActor::Message {} stopMsg; // terminate actor
-	static struct UnhandledMsg : public uActor::Message {} unhandledMsg; // tell error
+	static struct StartMsg : public uActor::SenderMsg {} startMsg; // start actor
+	static struct StopMsg : public uActor::SenderMsg {} stopMsg; // terminate actor
+	static struct UnhandledMsg : public uActor::SenderMsg {} unhandledMsg; // tell error
 };
 %]
 \index{uActor@%(uActor%)!Allocation@%(Allocation%)!Nodelete@%(Nodelete%)}%
@@ -4156,7 +4195,7 @@ The %(tell%) send has the following two forms:
 IntMsg msg;
 actor->\(\BF{\)tell\(}\)( *new IntMsg );\(}\Tab{36}{\)// send message to actor containing current sender
 *actor \(\BF{\)|\(}\) *new IntMsg;	// short form
-actor->tell( msg, \(\BF{\)proxysender\(}\) );	// send message to actor containing proxy sender
+actor->tell( msg, \(\BF{\)proxysender\(}\) );\(}\Tab{36}{\)// send message to actor containing proxy sender
 %]
 %(tell%) message sends can be cascaded:
 %[
@@ -4228,7 +4267,7 @@ Initially, messages are delivered to member %(receive%) but are redirected to %(
 A similar redirection occurs in member %(receive2%).
 The use of %(become%) allows an actor to behave like a finite-state machine, where each receive member is a state and %(become%) makes the transitions among states. 
 
-The member routine %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleting and creating a new actor.
+The member routine %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleted and creating a new actor.
 
 The member routine %(start%)\index{start@%(start%)} is passed an external executor or it creates an executor to run the actor thread-pool.
 An executor must have sufficient workers and processors to match with the actor workload (see \VRef{s:Executors});
@@ -4240,7 +4279,7 @@ uExecutor( 0, uThisCluster().getProcessors(), false, -1 );
 which contains 0 new processors, %(uThisCluster().getProcessors()%) worker threads and queues on the current cluster without affinity.
 This executor uses processors in the current cluster to execute actors, so the level of parallelism can be set in the program main by declaring %(uProcessor%)s.
 The member routine %(stop%)\index{stop@%(stop%)} is optionally passed a timeout duration;
-it then wait for all actors to end or the timeout duration to expire, deletes the actor executor, and returns true if the actor system stopped, and false if the timeout expired.
+it then wait for all actors to end or the timeout duration to expire, deletes the actor executor if %(start%) creates it, and returns true if the actor system stopped, and false if the timeout expired.
 The command pattern for using these two members is:
 %[
 uActor::start();									// start actor system
@@ -4354,7 +4393,7 @@ int main() {
 \label{f:HelloActor}
 \end{figure}
 
-\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containg strings.
+\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containing strings.
 There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
 The %(receive%) discriminates the kind of message and then examines the string within the message to print an appropriate message.
 In a discrimination clause, the variable %(msg_d%) is used to access the string in the message.
@@ -4657,8 +4696,8 @@ _Actor Client {
 	int results = 0;
 	Server & server;
 
-	#define ICB [this, li = i]( int ) { *this | intmsg[li]; }
-	#define SCB [this, li = i]( string ) { *this | strmsg[li]; }
+	#define ICB [this, li = i]( int ) { *this | intmsg[li]; return Nodelete; }
+	#define SCB [this, li = i]( string ) { *this | strmsg[li]; return Nodelete; }
 
 	Allocation receive( uActor::Message & msg ) {		// receive callback messages
 		for ( unsigned int i = 0; i < Messages; i += 1 ) { // send out work
@@ -4686,7 +4725,7 @@ int main() {
 	uActor::start();									// start actor system
 	Server server;
 	Client client( server );
-	client | uActor::startMsg;							// terminate actor
+	client | uActor::startMsg;							// start actors
 	uActor::stop();										// wait for all actors to terminate
 }
 %]
@@ -10319,15 +10358,19 @@ When the user cluster is created, at least this many processors are implicitly c
 
 The following default routine directly affects the heap:
 %[
-unsigned int uDefaultHeapExpansion(); // heap expansion size (bytes)
-unsigned int uDefaultMmapStart();	// division point (bytes)
+unsigned int malloc_expansion();	// heap expansion size (bytes)
+unsigned int malloc_mmap_start();	// division point (bytes)
+size_t malloc_unfreed();			// 
 %]
-\index{uDefaultHeapExpansion@%(uDefaultHeapExpansion%)}%
-\index{uDefaultMmapStart@%(uDefaultMmapStart%)}%
+\index{malloc_expansion@%(malloc_expansion%)}%
+\index{malloc_mmap_start@%(malloc_mmap_start%)}%
+\index{malloc_unfreed@%(malloc_unfreed%)}%
 \index{heap area!expansion size}%
 \index{heap area!mmap start}%
-Routine %(uDefaultHeapExpansion%) returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
-Routine %(uDefaultMmapStart%) returns the division point after which allocation requests are separately mmapped rather than being allocated from the heap area.
+\index{heap area!malloc unfreed}%
+Routine %(malloc_expansion%) returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
+Routine %(malloc_mmap_start%) returns the division point after which allocation requests are separately mmapped rather than being allocated from the heap area.
+Routine %(malloc_unfreed%) returns the amount subtracted to adjust for unfreed program storage (debug only).
 
 
 \section{Installation Requirements}
@@ -10630,9 +10673,9 @@ The %(options%) argument must be zero.
 \label{s:PRNG}
 
 Random numbers are values generated independently, i.e., new values do not depend on previous values (independent trials), e.g., lottery numbers, shuffled cards, dice roll, coin flip.
-While a primary goal of programming is computing values that are \emph{not} random, random values are useful. e.g., simulation, cryptography, games, etc.
-A random-number generator is an algorithm computing independent values.
-If the algorithm uses deterministic computation (predictable sequence of values), it generates \emph{pseudo} random numbers versus \emph{true} random numbers.
+While a primary goal of programming is computing values that are \emph{not} random, random values are useful in simulation, cryptography, games, etc.
+A random-number generator is an algorithm that computes independent values.
+If the algorithm uses deterministic computation (a predictable sequence of values), it generates \emph{pseudo} random numbers versus \emph{true} random numbers.
 
 All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some technique to scramble bits of a value, e.g., multiplicative recurrence:
 %[
@@ -10641,120 +10684,172 @@ rand = 36973 * (rand & 65535) + (rand >> 16); // scramble bits
 Multiplication of large values adds new least-significant bits and drops most-significant bits.
 \begin{quote}
 \begin{tabular}{@{}r|l@{}}
-bits 63--32	& bits 31--0	\\
+bits 63--32 (most)	& bits 31--0 (least)	\\
 \hline
-0x0			& 0x3e8e36		\\
-0x5f		& 0x718c25e1	\\
-0xad3e		& 0x7b5f1dbe	\\
-0xbc3b		& 0xac69ff19	\\
-0x1070f		& 0x2d258dc6	\\
+0x0					& 0x3e8e36				\\
+0x5f				& 0x718c25e1			\\
+0xad3e				& 0x7b5f1dbe			\\
+0xbc3b				& 0xac69ff19			\\
+0x1070f				& 0x2d258dc6			\\
 \end{tabular}
 \end{quote}
 By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
-The least-significant bits \emph{appear} random but the same bits always appear given a fixed starting value, called the \newterm{seed} (value 0x3e8e36 above).
-Hence, if a program uses the same seed, the same sequence of random values is generated from the PRNG.
-Often, the seed it set to some other random value like the a program's process identifier (%(getpid%)\index{getpid@%(getpid%)}) or time when the program is run;
+The least-significant bits \emph{appear} random but the same bits are always generated given a fixed starting value, called the \newterm{seed} (value 0x3e8e36 above).
+Hence, if a program uses the same seed, the same sequence of pseudo-random values is generated from the PRNG.
+Often the seed is set to another random value like a program's process identifier (%(getpid%)\index{getpid@%(getpid%)}) or time when the program is run;
 hence, one random value bootstraps another.
-Finally, a PRNG usually generates large values in the range of %([0, UINT_MAX]%), and programmers scales these values using the modulus operator, e.g., %(prng() % 5%) produces random values in the range 0--4.
+Finally, a PRNG usually generates a range of large values, e.g., %([0, UINT_MAX]%), which are scaled using the modulus operator, e.g., %(prng() % 5%) produces random values in the range 0--4.
 
-\uC provides a sequential and concurrent PRNG.
+\uC provides a sequential PRNG class only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
 \begin{itemize}
 \item
-For sequential programs, like coroutining, the PRNG can be used to randomize behaviour or values during execution, e.g., in games a character makes a random move or an object takes on a random value.
-Sequential execution is repeatable given the same starting seeds for all PRNGs. 
-In this scenario, it is useful to have multiple PRNG, e.g., one per player or object so a class is provided to generate multiple instances.
+The %(PRNG%) class is for sequential programs, like coroutining:
 %[
 class PRNG {
+	// opaque type
   public:
 	PRNG();											// random seed
 	PRNG( uint32_t seed );							// fixed seed
-	void set_seed( uint32_t seed_ );				// set seed
+	void set_seed( uint32_t seed );					// set seed
 	uint32_t get_seed() const;						// get seed
-	uint32_t operator()();							// [0,UINT_MAX]
-	uint32_t operator()( uint32_t u );				// [0,u)
-	uint32_t operator()( uint32_t l, uint32_t u );	// [l,u]
-	uint32_t calls() const;
+	uint32_t prng( PRNG & prng );					// [0,UINT_MAX]
+	uint32_t prng( PRNG & prng, uint32_t u );		// [0,u)
+	uint32_t prng( PRNG & prng, uint32_t l, uint32_t u ); // [l,u]
+	uint32_t calls() const;							// number of calls
 };
 %]
-The following example creates two sequential PRNGs, sets them both to the same seed (1009), and shows the 3 forms for generating random values, where both PRNGs generate the same sequence of values.
+A %(PRNG%) object is used to randomize behaviour or values during execution, e.g., in games, a character makes a random move or an object takes on a random value.
+In this scenario, it is useful to have multiple %(PRNG%) objects, e.g., one per player or object.
+However, sequential execution is still repeatable given the same starting seeds for all %(PRNG%)s. 
+\VRef[Figure]{f:SequentialPRNG} shows an example that creates two sequential %(PRNG%)s, sets both to the same seed (1009), and illustrates the three forms for generating random values, where both %(PRNG%)s generate the same sequence of values.
+
+\begin{figure}
 %[
 PRNG sprng1, sprng2;
-\(\BF{\)sprng1.set_seed( 1009 );   sprng2.set_seed( 1009 );\(}\)
-for ( unsigned int i = 0; i < 15; i += 1 ) {
-	cout << \(\BF{\)sprng1()\(}\) << ' ' << \(\BF{\)sprng1( 5 )\(}\) << ' ' << \(\BF{\)sprng1( 0, 5 )\(}\) << '\t\t';
-	cout << \(\BF{\)sprng2()\(}\) << ' ' << \(\BF{\)sprng2( 5 )\(}\) << ' ' << \(\BF{\)sprng2( 0, 5 )\(}\) << endl;
+\(\BF{\)sprng1.set_seed( 1009 )\(}\);   \(\BF{\)sprng2.set_seed( 1009 );\(}\)
+for ( unsigned int i = 0; i < 10; i += 1 ) {
+	// Do not cascade prng calls because side-effect functions called in arbitrary order.
+	cout << \(\BF{\)sprng1()\(}\) << ' '; cout << \(\BF{\)sprng1( 5 )\(}\) << ' '; cout << \(\BF{\)sprng1( 0, 5 )\(}\) << '\t';
+	cout << \(\BF{\)sprng2()\(}\) << ' '; cout << \(\BF{\)sprng2( 5 )\(}\) << ' '; cout << \(\BF{\)sprng2( 0, 5 )\(}\) << endl;
 }
 %]
+\begin{tabular}{@{}ll@{}}
 %[
-   37305757 3 3		   37305757 3 3
-1821310498 4 1		1821310498 4 1
- 603686050 3 4		 603686050 3 4
-1354865902 0 0		1354865902 0 0
- 419569906 4 1		 419569906 4 1
- 224287468 0 3		 224287468 0 3
-2338967995 2 4		2338967995 2 4
- 925028647 3 0		 925028647 3 0
- 553419481 0 1		 553419481 0 1
- 890860879 1 4		 890860879 1 4
-1488185164 3 4		1488185164 3 4
-2393505511 1 3		2393505511 1 3
-1935722428 2 2		1935722428 2 2
-1861488646 0 2		1861488646 0 2
-2246946481 3 4		2246946481 3 4
+37301721 2 2
+1681308562 1 3
+290112364 3 2
+1852700364 4 3
+733221210 1 3
+1775396023 2 3
+123981445 2 3
+2062557687 2 0
+283934808 1 0
+672325890 1 3
 %]
-\item
-For concurrent programs, the PRNG can be used to randomize execution in short-running concurrent programs, e.g., %(yield( prng() % 5 )%).
-Beause concurrent execution is non-deterministic, seeding the concurrent PRNG is less important, because repeatable execution is impossible.
-It is important for the PRNG to be thread-safe and not a point of contention.
-Hence, only one system-wide PRNG is needed, and each kernel thread (%(uProcessor%)) has its own implicit PRNG used by wherever user threads happen to execute on that processor.
+&
 %[
-void set_seed( uint32_t seed );						// set kernel-thread seed
-uint32_t get_seed();								// get seed
+37301721 2 2
+1681308562 1 3
+290112364 3 2
+1852700364 4 3
+733221210 1 3
+1775396023 2 3
+123981445 2 3
+2062557687 2 0
+283934808 1 0
+672325890 1 3
+%]
+\end{tabular}
+\caption{Sequential PRNG}
+\label{f:SequentialPRNG}
+\end{figure}
+
+\item
+The PRNG global routines and companion task members are for concurrent programming, such as randomizing execution in short-running programs, e.g., %(yield( prng() % 5 )%).
+%[
+void set_seed( uint32_t seed );						// set global seed
+uint32_t get_seed();								// get global seed
+// SLOWER, global routines
 uint32_t prng();									// [0,UINT_MAX]
 uint32_t prng( uint32_t u );						// [0,u)
 uint32_t prng( uint32_t l, uint32_t u );			// [l,u]
+// FASTER, task members
+uint32_t \(\BF{\)uBaseTask::\(}\)prng();			// [0,UINT_MAX]
+uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t u ); // [0,u)
+uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t l, uint32_t u ); // [l,u]
 %]
-The following example uses the system-wide PRNG, sets the starting seed (1009) for all kernel threads, and shows the 3 forms for generating random values.
-%[
-\(\BF{\)set_seed( 1009 );\(}\)
-for ( unsigned int i = 0; i < 15; i += 1 ) {
-	cout << \(\BF{\)prng()\(}\) << ' ' << \(\BF{\)prng( 5 )\(}\) << ' ' << \(\BF{\)prng( 0, 5 )\(}\) << endl;
-}
-%]
-%[
-   37305757 3 3
-1821310498 4 1
- 603686050 3 4
-1354865902 0 0
- 419569906 4 1
- 224287468 0 3
-2338967995 2 4
- 925028647 3 0
- 553419481 0 1
- 890860879 1 4
-1488185164 3 4
-2393505511 1 3
-1935722428 2 2
-1861488646 0 2
-2246946481 3 4
-%]
-\end{itemize}
+The only difference between the two sets of %(prng%) routines is performance.
 
-To ensure each \uC task generates the same random number, independent of nondeterministic time-slicing, requires each task to have its own fixed seed and run its own PRNG.
+Because concurrent execution is non-deterministic, seeding the concurrent PRNG is less important, as repeatable execution is impossible.
+Hence, there is one system-wide PRNG (global seed) but each \uC task has its own non-contended PRNG state.
+If the global seed is set, tasks start with this seed, until it is reset and then tasks start with the reset seed.
+Hence, these tasks generate the same sequence of random numbers from their specific starting seed.
+If the global seed is \emph{not} set, tasks start with a random seed, until the global seed is set.
+Hence, these tasks generate different sequences of random numbers.
+If each task needs its own seed, use a sequential %(PRNG%) in each task.
+The slower %(prng%) global routines call %(uThisTask%) internally to indirectly access the current task's PRNG state, while the faster %(uBaseTask::prng%) members directly access the task through the implicit %(this%) pointer.
+If a task pointer is available, e.g., in task main, eliminating the call to %(uThisTask%) significantly reduces the cost of accessing the task's PRNG state.
+\VRef[Figure]{f:ConcurrentPRNG} shows an example using the slower/faster concurrent PRNG in the program main and a thread.
+
+\begin{figure}
+\LGindent=0pt
 %[
 _Task T {
-	const unsigned int tid;
-	void main() {
-		PRNG prng( tid * 1009 );					// repeatable seed
-		for ( int i = 0; i < 5; i += 1 ) {
-			yield( prng( 10 ) );					// random integer between 0-9
-			...
+	void main() {  // thread address is 'this' pointer
+		for ( unsigned int i = 0; i < 10; i += 1 ) {
+			// Do not cascade prng calls because side-effect functions called in arbitrary order.
+			cout << \(\BF{\)::prng()\(}\) << ' ';  cout << \(\BF{\)::prng( 5 )\(}\) << ' ';  cout << \(\BF{\)::prng( 0, 5 )\(}\) << '\t'; // SLOWER
+			cout << \(\BF{\)prng()\(}\) << ' ';  cout << \(\BF{\)prng( 5 )\(}\) << ' ';  cout << \(\BF{\)prng( 0, 5 )\(}\) << endl; // FASTER
 		}
 	}
-  public:
-	T( unsigned int tid ) : tid( tid ) {}
-};
+}; // T
+int main() {
+	set_seed( 1009 );
+	\(\BF{\)uBaseTask & th = uThisTask()\(}\);  // program-main thread-address
+	for ( unsigned int i = 0; i < 10; i += 1 ) {
+		// Do not cascade prng calls because side-effect functions called in arbitrary order.
+		cout << \(\BF{\)::prng()\(}\) << ' ';  cout << \(\BF{\)::prng( 5 )\(}\) << ' ';  cout << \(\BF{\)::prng( 0, 5 )\(}\) << '\t'; // SLOWER
+		cout << \(\BF{\)th.prng()\(}\) << ' ';  cout << \(\BF{\)th.prng( 5 )\(}\) << ' ';  cout << \(\BF{\)th.prng( 0, 5 )\(}\) << endl; // FASTER
+	}
+	cout << endl;
+	T t;  // run task
+}
 %]
+\begin{tabular}{@{}ll@{}}
+%[
+37301721 2 2
+290112364 3 2
+733221210 1 3
+123981445 2 3
+283934808 1 0
+1414344101 1 3
+871831898 3 4
+2142057611 4 4
+802117363 0 4
+2346353643 1 3
+%]
+&
+%[
+1681308562 1 3
+1852700364 4 3
+1775396023 2 3
+2062557687 2 0
+672325890 1 3
+873424536 3 4
+866783532 0 1
+17310256 2 5
+492964499 0 0
+2143013105 3 2
+%]
+\end{tabular}
+\\
+%[
+// same output as above from thread t
+%]
+\caption{Concurrent PRNG}
+\label{f:ConcurrentPRNG}
+\end{figure}
+\end{itemize}
 
 
 \chapter{Data Structure Library (DSL)}

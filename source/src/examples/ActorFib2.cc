@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:21:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 20 17:59:56 2021
-// Update Count     : 41
+// Last Modified On : Wed Jul  6 09:14:05 2022
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,43 +27,36 @@
 using namespace std;
 #include <uActor.h>
 
-struct NextMsg : public uActor::Message {};
-struct FibMsg : public uActor::Message {
-	long int fn;
-	FibMsg() : Message( uActor::Delete ) {}
-};
+struct FibMsg : public uActor::SenderMsg { long int fn; }; // Nodelete
 
 _Actor Fib {
 	long int fn1, fn2;
 
 	Allocation f0( Message & msg ) {
-		Case( NextMsg, msg ) {
-			FibMsg *fibMsg = new FibMsg;
-			long int & fn = fibMsg->fn;					// optimization
+		Case( FibMsg, msg ) {
+			long int & fn = msg_d->fn;					// compute answer in message
 			fn = 0; fn1 = fn;							// fib(0) => 0
-			*msg.sender() | *fibMsg;					// return fn
+			*msg_d->sender() | *msg_d;					// return fn
 			become( &Fib::f1 );							// change state
 		} else Case( StopMsg, msg ) return Finished;
 		return Nodelete;
 	} // Fib::f0
 
 	Allocation f1( Message & msg ) {
-		Case( NextMsg, msg ) {
-			FibMsg *fibMsg = new FibMsg;
-			long int & fn = fibMsg->fn;					// optimization
+		Case( FibMsg, msg ) {
+			long int & fn = msg_d->fn;					// compute answer in message
 			fn = 1; fn2 = fn1; fn1 = fn;				// fib(1) => 1
-			*msg.sender() | *fibMsg;					// return fn
+			*msg_d->sender() | *msg_d;					// return fn
 			become( &Fib::fn );							// change state
 		} else Case( StopMsg, msg ) return Finished;
 		return Nodelete;
 	} // Fib::f1
 
 	Allocation fn( Message & msg ) {
-		Case( NextMsg, msg ) {
-			FibMsg *fibMsg = new FibMsg;
-			long int & fn = fibMsg->fn;					// optimization
+		Case( FibMsg, msg ) {
+			long int & fn = msg_d->fn;					// compute answer in message
 			fn = fn1 + fn2; fn2 = fn1; fn1 = fn;		// fib(n) => fib(n-1) + fib(n-2)
-			*msg.sender() | *fibMsg;					// return fn
+			*msg_d->sender() | *msg_d;					// return fn
 		} else Case( StopMsg, msg ) return Finished;
 		return Nodelete;
 	} // Fib::fn
@@ -76,17 +69,17 @@ int Times = 10;											// default values
 _Actor Generator {
 	int i = 0;
 	Fib fib;
-	NextMsg nextMsg;
+	FibMsg figMsg;
 
 	void preStart() {
-		fib | nextMsg;
+		fib | figMsg;
 	} // Generator::preStart
 
 	Allocation receive( Message & msg ) {
 		if ( i < Times ) {
 			Case( FibMsg, msg ) {
 				cout << msg_d->fn << endl;
-				fib | nextMsg;
+				fib | figMsg;
 			} // Case
 			i += 1;
 			return Nodelete;

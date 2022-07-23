@@ -7,8 +7,8 @@
 // Author           : Ashif S. Harji
 // Created On       : Sun Jan  9 16:12:31 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 22 21:50:24 2017
-// Update Count     : 17
+// Last Modified On : Mon Apr 25 20:51:00 2022
+// Update Count     : 18
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,62 +32,62 @@ using std::endl;
 _Task T;
 
 _Cormonitor CM {
-    T *t;
+	T *t;
 
-    void main() {
-	osacquire( cout ) << "CM::main" << endl;
-	mem2();
-    } // CM::main
+	void main() {
+		osacquire( cout ) << "CM::main" << endl;
+		mem2();
+	} // CM::main
   public:
-    void mem1( T *t ) {
-	osacquire( cout ) << "CM::mem" << endl;
-	CM::t = t;
-	resume();
-    } // CM::mem1
+	void mem1( T *t ) {
+		osacquire( cout ) << "CM::mem" << endl;
+		CM::t = t;
+		resume();
+	} // CM::mem1
 
-    void mem2();
+	void mem2();
 }; // CM
 
 _Task T {
-    CM &cm;
+	CM &cm;
 
-    void main() {
-	osacquire( cout ) << "T::main" << endl;
-	cm.mem1( this );
-    } // T::main
+	void main() {
+		osacquire( cout ) << "T::main" << endl;
+		cm.mem1( this );
+	} // T::main
   public:
-    T( CM & cm ) : cm( cm ) {}
+	T( CM & cm ) : cm( cm ) {}
 
-    void mem() {
-	resume();
-    } // T::mem
+	void mem() {
+		resume();
+	} // T::mem
 }; // T
 
 void CM::mem2() {
-    osacquire( cout ) << "CM::mem2" << endl;
-    t->mem();
+	osacquire( cout ) << "CM::mem2" << endl;
+	t->mem();
 } // CM::mem2
 
 _Task Worker {
-    void main() {}
+	void main() {}
 }; // Worker
 
 
 // This test checks that creating tasks and processors not directly in main works correctly
 _Monitor nonMainTest {
   public:
-    void test() {
-	uProcessor processors[2];
-        Worker tasks[2];
-    } // nonMainTest::test
+  void test() {
+	  uProcessor processors[2];
+	  Worker tasks[2];
+  } // nonMainTest::test
 }; // nonMainTest
 
 int main() {
-    nonMainTest m;
-    osacquire( cout ) << "The first test should complete" << endl;
-    m.test();
-    osacquire( cout ) << "The first test successfully" << endl;
-    osacquire( cout ) << "The second test should fail" << endl;
-    CM cm;
-    T t( cm );
+	nonMainTest m;
+	osacquire( cout ) << "The first test should complete" << endl;
+	m.test();
+	osacquire( cout ) << "The first test successfully" << endl;
+	osacquire( cout ) << "The second test should fail" << endl;
+	CM cm;
+	T t( cm );
 } // main

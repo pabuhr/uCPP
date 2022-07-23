@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Apr 28 13:23:14 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  1 07:18:47 2017
-// Update Count     : 31
+// Last Modified On : Thu Apr 21 18:40:03 2022
+// Update Count     : 32
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,40 +28,40 @@
 using std::cin;
 using std::cerr;
 
-int d = 0;						// shared by reader and writer
+int d = 0;												// shared by reader and writer
 
 _Task Reader {
-    void main() {
-	try {
-	    for ( ;; ) {
-		cin >> d;				// read number from stdin
-	      if ( cin.fail() ) break;
-	    } // for
-	} catch( ... ) {
-	    abort( "reader failure" );
-	} // try
-    } // Reader::main
+	void main() {
+		try {
+			for ( ;; ) {
+				cin >> d;								// read number from stdin
+			  if ( cin.fail() ) break;
+			} // for
+		} catch( ... ) {
+			abort( "reader failure" );
+		} // try
+	} // Reader::main
 }; // Reader
 
 _Task Writer {
-    void main() {
-	try {
-	    for ( unsigned int i = 0;; i += 1 ) {
-	      if ( cin.fail() ) break;
-		if ( i % 500 == 0 ) {			// don't print too much
-		    cerr << d;				// write number to stderr (no buffering)
-		} // if
-		yield( 1 );
-	    } // for
-	} catch( ... ) {
-	    abort( "writer failure" );
-	} // try
-    } // Writer::main
+	void main() {
+		try {
+			for ( unsigned int i = 0;; i += 1 ) {
+			  if ( cin.fail() ) break;
+				if ( i % 500 == 0 ) {					// don't print too much
+					cerr << d;							// write number to stderr (no buffering)
+				} // if
+				yield( 1 );
+			} // for
+		} catch( ... ) {
+			abort( "writer failure" );
+		} // try
+	} // Writer::main
 }; // Writer
 
 int main() {
-    Reader r;
-    Writer w;
+	Reader r;
+	Writer w;
 } // main
 
 // Local Variables: //

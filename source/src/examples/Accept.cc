@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 21 18:16:14 2011
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 28 09:57:01 2017
-// Update Count     : 6
+// Last Modified On : Fri Feb 25 06:58:44 2022
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,72 +30,72 @@ using namespace std;
 
 
 _Task T1 {
-    int check;
-    void main();
+	int check;
+	void main();
   public:
-    void X();
-    void Y();
-    void Z();
+	void X();
+	void Y();
+	void Z();
 };
 
 _Task T0 {
-    T1 &t1;
-    void main() {
-	t1.Y();
-    }
+	T1 &t1;
+	void main() {
+		t1.Y();
+	}
   public:
-    T0( T1 &t1 ) : t1( t1 ) {}
+	T0( T1 &t1 ) : t1( t1 ) {}
 };
 
 void T1::X() {
-    check = 1;
+	check = 1;
 }
 void T1::Y() {
-    check = 2;
-    X();
-    check = 2;
+	check = 2;
+	X();
+	check = 2;
 }
 void T1::Z() {
-    check = 3;
-    T0 to( *this );
-    _Accept( X ) {
-	assert( check == 1 );
-    } or _Accept( Y ) {
-	assert( check == 2 );
-    } or _Accept( Z ) {
-	assert( check == 3 );
-    }
-    check = 3;
+	check = 3;
+	T0 to( *this );
+	_Accept( X ) {
+		assert( check == 1 );
+	} or _Accept( Y ) {
+		assert( check == 2 );
+	} or _Accept( Z ) {
+		assert( check == 3 );
+	}
+	check = 3;
 }
 void T1::main() {
-    for ( ;; ) {
-	_Accept( ~T1 ) {
-	    break;
-	} or _Accept( X ) {
-	    assert( check == 1 );
-	} or _Accept( Y ) {
-	    assert( check == 2 );
-	} or _Accept( Z ) {
-	    assert( check == 3 );
+	for ( ;; ) {
+		_Accept( ~T1 ) {
+			break;
+		} or _Accept( X ) {
+			assert( check == 1 );
+		} or _Accept( Y ) {
+			assert( check == 2 );
+		} or _Accept( Z ) {
+			assert( check == 3 );
+		}
 	}
-    }
 }
 
 _Task T2 {
-    T1 t1;
-    void main() {
-	t1.X();
-	t1.Y();
-	t1.Z();
-    }
+	T1 t1;
+	void main() {
+		t1.X();
+		t1.Y();
+		t1.Z();
+	}
 };
 
 int main() {
-    T1 t1;
-    t1.X();
-    uBaseTask::yield( 5 );
-    t1.Y();
-    t1.Z();
-    T2 t2;
-    cout << "successful completion" << endl;
+	T1 t1;
+	t1.X();
+	uBaseTask::yield( 5 );
+	t1.Y();
+	t1.Z();
+	T2 t2;
+	cout << "successful completion" << endl;
 }

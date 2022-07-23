@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 26 18:09:36 2018
-// Update Count     : 53
+// Last Modified On : Sun Apr 24 18:20:52 2022
+// Update Count     : 54
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,8 +33,8 @@ const int NUM = 3;
 
 _Event R1 {
   public:
-	int &i; char &c;
-	R1( int &i, char &c ) : i( i ), c( c ) {}
+  int &i; char &c;
+  R1( int &i, char &c ) : i( i ), c( c ) {}
 };
 
 _Event R2 {};
@@ -56,9 +56,9 @@ void g( int &x, char &y ) {
 _Event D {};
 
 _Task T1 {
-    uBaseTask &partner;
+	uBaseTask &partner;
 
-    void main() {
+	void main() {
 		osacquire( cout ) << "T1::main enter" << endl;
 		{
 			try {
@@ -83,13 +83,13 @@ _Task T1 {
 		osacquire( cout ) << "T1::main exit ^^ should be " << NUM + 1 << " identical lines above" << endl;
 	}
   public:
-    T1( uBaseTask &partner ) : partner( partner ) {}
+	T1( uBaseTask &partner ) : partner( partner ) {}
 };
 
 _Task T2 {
-    uBaseTask &partner;
+	uBaseTask &partner;
 
-    void main() {
+	void main() {
 		osacquire( cout ) << "T2::main enter" << endl;
 		{
 			try {
@@ -117,9 +117,9 @@ _Task T2 {
 			}
 		}
 		osacquire( cout ) << "T2::main exit" << endl;
-    }
+	}
   public:
-    T2( uBaseTask &partner ) : partner( partner ) {}
+	T2( uBaseTask &partner ) : partner( partner ) {}
 };
 
 
@@ -152,7 +152,7 @@ int main() {
 		r.i = 3; r.c = 'b';
 	} // try
 
-    osacquire( cout ) << "=============" << endl;
+	osacquire( cout ) << "=============" << endl;
 
 	try {												// test resume-any
 		try {
@@ -166,8 +166,8 @@ int main() {
 		osacquire( cout ) << "[2] Second raise handled here by resume-any handler" << endl;
 	} // try
 
-    osacquire( cout ) << "=============" << endl;
-    {													// test nonlocal reraise
+	osacquire( cout ) << "=============" << endl;
+	{													// test nonlocal reraise
 		T1 t( uThisTask() );
 		try {
 			_Enable {
@@ -177,9 +177,9 @@ int main() {
 		} _CatchResume( D ) {
 			osacquire( cout ) << "Handler second" << endl;
 		} // try
-    }
-    osacquire( cout ) << "=============" << endl;
-    {													// test nonlocal rethrow
+	}
+	osacquire( cout ) << "=============" << endl;
+	{													// test nonlocal rethrow
 		T2 t( uThisTask() );
 		try {
 			_Enable {

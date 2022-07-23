@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr  5 08:08:27 2012
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 13:42:13 2017
-// Update Count     : 81
+// Last Modified On : Wed Apr 20 23:00:08 2022
+// Update Count     : 82
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,27 +32,27 @@ using namespace std;
 // Check poke of cluster processor when there is no preemption and high-priority task unblocks after timeout.
 
 unsigned int uDefaultPreemption() {
-    return 0;
+	return 0;
 } // uDefaultPreemption
 
 
 _Task TestTask {
-    static const unsigned int Times = 10;
-    int id, priority;
-    volatile bool &flag;
+	static const unsigned int Times = 10;
+	int id, priority;
+	volatile bool &flag;
 
-    void main() {
-	if ( priority == 0 ) {				// high priority
-	    for ( unsigned int i = 0; i < Times; i += 1 ) {
-		sleep( uDuration( 1 ) );
-		flag = true;
-	    } // for
-	} else {					// low priority
-	    for ( unsigned int i = 0, c = 0; i < Times; c += 1 ) {
-		if ( flag ) {
-		    flag = false;
-		    i += 1;
-		} // if
+	void main() {
+		if ( priority == 0 ) {							// high priority
+			for ( unsigned int i = 0; i < Times; i += 1 ) {
+				sleep( uDuration( 1 ) );
+				flag = true;
+			} // for
+		} else {										// low priority
+			for ( unsigned int i = 0, c = 0; i < Times; c += 1 ) {
+				if ( flag ) {
+					flag = false;
+					i += 1;
+				} // if
 #if ! defined( __U_MULTI__ )
 // In uniprocessor, the program cannot work without some preemptions of the low-priority tasks, which is why this yield
 // is there. The obvious problem is that when the sleep expires, both high-priority tasks may run because they set their
@@ -68,34 +68,34 @@ _Task TestTask {
 //
 // In multiprocessor, the previous problem does not occur because the other low-priority task is spinning on the other
 // processor, and hence, both low-priority tasks see their companion high-priority flag change.
-		if ( c % 1000000 == 0 ) yield();
+				if ( c % 1000000 == 0 ) yield();
 #endif // __U_MULTI__
-	    } // for
-	} // if
-	osacquire( cerr ) << "end " << getName() << endl;
-    } // TestTask::main
+			} // for
+		} // if
+		osacquire( cerr ) << "end " << getName() << endl;
+	} // TestTask::main
   public:
-    TestTask( int id, int priority, volatile bool &flag, uRealTimeCluster &clust ) : uBaseTask( clust ), id( id ), priority( priority ), flag( flag ) {
-	setName( priority == 0 ? "high" : "low" );
-	setActivePriority( priority );
-	setBasePriority( priority );
-    } // TestTask::TestTask
+	TestTask( int id, int priority, volatile bool &flag, uRealTimeCluster &clust ) : uBaseTask( clust ), id( id ), priority( priority ), flag( flag ) {
+		setName( priority == 0 ? "high" : "low" );
+		setActivePriority( priority );
+		setBasePriority( priority );
+	} // TestTask::TestTask
 }; // TestTask
 
 int main() {
-    volatile bool flag1 = false, flag2 = false;
-    uPriorityScheduleSeq<uBaseTaskSeq, uBaseTaskDL> rq;
-    uRealTimeCluster rtCluster( rq );			// create real-time cluster with scheduler
-    uProcessor *processor1, *processor2;
-    {
-	processor1 = new uProcessor( rtCluster );	// now create the processor to do the work
-	processor2 = new uProcessor( rtCluster );	// now create the processor to do the work
-	TestTask high1( 0, 0, flag1, rtCluster ), high2( 1, 0, flag2, rtCluster );
-	TestTask low1( 0, 1, flag1, rtCluster ), low2( 1, 1, flag2, rtCluster );
-    }
-    delete processor1;
-    delete processor2;
-    cerr << "successful completion" << endl;
+	volatile bool flag1 = false, flag2 = false;
+	uPriorityScheduleSeq<uBaseTaskSeq, uBaseTaskDL> rq;
+	uRealTimeCluster rtCluster( rq );					// create real-time cluster with scheduler
+	uProcessor *processor1, *processor2;
+	{
+		processor1 = new uProcessor( rtCluster );		// now create the processor to do the work
+		processor2 = new uProcessor( rtCluster );		// now create the processor to do the work
+		TestTask high1( 0, 0, flag1, rtCluster ), high2( 1, 0, flag2, rtCluster );
+		TestTask low1( 0, 1, flag1, rtCluster ), low2( 1, 1, flag2, rtCluster );
+	}
+	delete processor1;
+	delete processor2;
+	cerr << "successful completion" << endl;
 } // main
 
 // Local Variables: //
