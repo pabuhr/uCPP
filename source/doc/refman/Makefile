@@ -43,6 +43,9 @@ DSLNodes \
 DSLStack \
 DSLQueue \
 DSLSequence \
+}
+
+PICTURES = ${addsuffix .pstex, \
 TraceMsg \
 }
 
@@ -96,7 +99,7 @@ ${DOCUMENT} : ${BASE}.ps
 ${BASE}.ps : ${BASE}.dvi
 	dvips $< -o $@
 
-${BASE}.dvi : Makefile ${PROGRAMS} ${FIGURES} ${SOURCES} ${BASE}.bbl \
+${BASE}.dvi : Makefile ${PROGRAMS} ${PICTURES} ${FIGURES} ${SOURCES} ${BASE}.bbl \
 		../TeXmacros/mystyle.sty ../TeXmacros/lgrind.sty ../TeXmacros/myalpha.bst
 	${LaTeX} ${basename $@}.tex
 	if fgrep -s "Label(s) may have changed" ${basename $@}.log ; then ${LaTeX} ${basename $@}.tex ; fi
@@ -129,6 +132,10 @@ endif
 
 %.tex : %.fig
 	fig2dev -L eepic $< > $@
+
+%.pstex : %.fig
+	fig2dev -L pstex $< > $@
+	fig2dev -L pstex_t -p $@ $< > $@_t
 
 ## Local Variables: ##
 ## compile-command: "make" ##

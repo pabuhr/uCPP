@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 17 12:08:35 2022
-// Update Count     : 1221
+// Last Modified On : Sat Jul 23 18:51:49 2022
+// Update Count     : 1222
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -214,7 +214,7 @@ class uActor {
 				Status prev = uFetchAssign( lock, FULFILLED ); // mark delivered
 				if ( prev == FULFILLED ) abort( "Duplicate delivery to promise; must reset promise" ); //_Throw DupDelivery();
 
-				// if maybeActor is null then the program main called maybe so we use a default ticket of 0
+				// if maybeActor is null then the program main called maybe so use a default ticket of 0
 				if ( prev == CHAINED ) {
 					executor_->send(
 						Deliver_Callback_( maybeActor, [=, result = result_, call = callback]() { return call( result ); } ),

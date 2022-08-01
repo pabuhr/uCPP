@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Jul 19 08:47:15 2022
-%% Update Count     : 8430
+%% Last Modified On : Mon Jul 25 09:05:17 2022
+%% Update Count     : 8434
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3912,7 +3912,7 @@ Use for multi-use actors or messages during their life time. (actor/message defa
 \item[%(Delete%)] means the actor is removed from the actor system and the actor/message is deleted by the executor.
 Use with dynamically allocated actors or messages when their life-time has expired.
 \item[%(Destroy%)] means the actor is removed from the actor system and the actor/message's destructor is called by the executor but storage is \emph{not} deallocated.
-Use with \Index{placement allocate}d actors or messages, i.e., @new(...)@, where the storage is managed elsewhere, possibly to be reused for a new actor/message.
+Use with \Index{placement allocate}d actors or messages, i.e., %(new(...)%), where the storage is managed elsewhere, possibly to be reused for a new actor/message.
 \item[%(Finished%)] means the actor is removed from the actor system (no action for a message), but neither the destructor is called nor is storage deallocated.
 Use with global or stack allocated actors or messages destructor call and deallocation are implicitly called at the end of a lexically scope.
 \end{prefix}
@@ -4024,7 +4024,7 @@ The member routine %(sender%) returns the actor that sent the message, which can
 Each step a message takes between actors is called a \newterm{hop}, and hop links point in the reverse direction to the message sends.
 The hop queue has a cursor that is used to dynamically restructure the trace.
 \begin{center}
-\input{TraceMsg}
+\input{TraceMsg.pstex_t}
 \end{center}
 The overloaded constructor routines, %(TraceMsg%)\index{TraceMsg@%(TraceMsg%)}, are the same as for %(Message%).
 The member routine %(erase%) deletes all message hops except the cursor hop.
@@ -4046,16 +4046,16 @@ The member routine %(delivery%) is used by a server actor to fulfill the contain
 The member routine %(result%) is used by a client actor to access the promise result in the message.
 
 \VRef[Figure]{f:PromiseType} shows the type %(uActor::Promise%), which holds the result of a computation by a server actor.
-In general, a client actor creates a %(PromiseMsg%) containing data for the server to process and an empty %(Promise%), which it sends to a server actor.
+A client actor creates a %(PromiseMsg%) containing data for the server to process and an empty %(Promise%), which it sends to a server actor.
 The send returns a copy of the empty %(Promise%) in the %(PromiseMsg%) for use in the \emph{future} by the client to access the promise result.
 A promise is responsible for storage management by using reference counts and can be copied like a %(Future_ISM%) (see \VRef{s:FutureISM}).
 The server actor works asynchronously, based on the data in the %(PromiseMsg%), and delivers the result into the %(PromiseMsg%)'s promise.
 When the client needs the promise result, it races with the server to install a callback, which takes as a parameter a reference to the promise result type.
 If the server wins, the client can immediately process the result in the future.
-If the client wins, it sees the installed callback during result %(deliver%), and the server posts (special message send) the callback function onto the mailbox queue for the client's executor.
-Hence, the callback is executed by the sending client's actor in FIFO order with the client's messages, and the lambda function safely executes in the client actor's receive-member as it may reference the client's members.
-Conceptually, the callback is a one-shot @become@ for the actor, i.e., the current receive member is ignored and the callback executed instead.
-The callback must return an @Allocation@, so the executor knows how to process the actor following a callback's execution, if it is installed.
+If the client wins, the client has installed the callback and the server posts (special message send) the callback function onto the mailbox queue for the client's executor.
+Hence, the callback is executed by the client actor in FIFO order with the client's messages, and the lambda function safely executes in the client actor's receive-member as it may reference the client's members.
+Conceptually, the callback is a one-shot %(become%) for the actor, i.e., the current receive member is ignored and the callback executed instead.
+The callback must return an %(Allocation%), so the executor knows how to process the actor following a callback's execution, if it is installed.
 
 The client has two mechanisms to interact with the promise:
 \begin{description}[leftmargin=3pt,topsep=5pt,parsep=0pt]
@@ -4070,10 +4070,10 @@ The client can now process the promise result immediately.
 The client now has to do other work, possibly expecting the callback to return the promise result in a message.
 \end{itemize}
 \item[%(then%)]
-is the same as %(maybe%), except that the callback passed is called unconditionally once the promise has been fulfilled.
+is the same as %(maybe%), except the callback is called unconditionally once the promise has been fulfilled.
+If the client loses the race, it implicitly calls the callback.
 If the client wins the race, the behaviour is identically to %(maybe%), and the callback is installed.
-If the client loses the race, it implicitly calls the callback immediately instead of installing it to be called later.
-Hence, the callback passed to %(then%) is always called, but may either be installed or immediately called.
+Hence, the callback passed to %(then%) is always called, but may either be immediately called or a posted message.
 %(then%) returns a boolean indicating if the result has been processed during the call to %(then%).
 \end{description}
 The member routine %(result%) returns the server result in the promise.

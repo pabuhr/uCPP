@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jun 16 18:55:53 2022
-// Update Count     : 3325
+// Last Modified On : Sun Jul 31 18:10:31 2022
+// Update Count     : 3330
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2136,6 +2136,10 @@ void UPP::uKernelBoot::startup() {
 	RealRtn::startup();									// must come before any call to uDebugPrt
 
 	tzset();											// initialize time global variables
+	#ifdef __U_STATISTICS__
+	char * lang = getenv("LANG");
+	if ( lang ) setlocale( LC_NUMERIC, lang );			// set lang for commas in statistics
+	#endif // __U_STATISTICS__
 
 	// Force dynamic loader to (pre)load and initialize all the code to use C printf I/O. The stack depth to do this
 	// initialization is significant as it includes all the calls to locale and can easily overflow the small stack of a

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 24 22:41:55 2022
-// Update Count     : 206
+// Last Modified On : Sun Jul 31 18:04:13 2022
+// Update Count     : 209
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -483,10 +483,7 @@ void Worker::main() {
 	osacquire( cout ) << "worker " << &uThisTask() << " successful completion" << endl;
 } // Worker::main
 
-
 int main() {
-	setlocale( LC_NUMERIC, "en_US.UTF-8" );
-
 	const unsigned int NoOfWorkers = 4;
 	{
 		uProcessor processors[NoOfWorkers - 1] __attribute__(( unused )); // more than one processor

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 26 16:17:17 2022
-// Update Count     : 998
+// Last Modified On : Sun Jul 31 07:53:51 2022
+// Update Count     : 1004
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -57,12 +57,12 @@ namespace UPP {
 		sigaddset( &act.sa_mask, SIGTERM );
 		sigaddset( &act.sa_mask, SIGINT );
 
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		sigaddset( &act.sa_mask, SIGVTALRM );
-#if defined( __U_HW_OVFL_SIG__ )
+		#if defined( __U_HW_OVFL_SIG__ )
 		sigaddset( &act.sa_mask, __U_HW_OVFL_SIG__ );
-#endif // __U_HW_OVFL_SIG__
-#endif // __U_PROFILER__
+		#endif // __U_HW_OVFL_SIG__
+		#endif // __U_PROFILER__
 
 		act.sa_flags = flags;
 
@@ -78,23 +78,23 @@ namespace UPP {
 
 
 	static inline void * signalContextPC( __U_SIGCXT__ cxt ) {
-#if defined( __i386__ )
+		#if defined( __i386__ )
 		return (void *)(cxt->uc_mcontext.gregs[REG_EIP]);
-#elif defined( __x86_64__ )
+		#elif defined( __x86_64__ )
 		return (void *)(cxt->uc_mcontext.gregs[REG_RIP]);
-#else
-#error uC++ : internal error, unsupported architecture
-#endif // architecture
+		#else
+			#error uC++ : internal error, unsupported architecture
+		#endif // architecture
 	} // signalContextPC
 
 
 	static inline void * signalContextSP( __U_SIGCXT__ cxt ) {
 		return (void *)cxt->uc_mcontext.gregs[
-#if __U_WORDSIZE__ == 32
+			#if __U_WORDSIZE__ == 32
 			REG_ESP
-#else
+			#else
 			REG_RSP
-#endif // __U_WORDSIZE__ == 32
+			#endif // __U_WORDSIZE__ == 32
 			];
 	} // signalContextSP
 
@@ -214,6 +214,16 @@ namespace UPP {
 	void sigSegvBusHandler( __U_SIGPARMS__ ) {
 		if ( sfp->si_addr == nullptr ) {
 			abort( uSigHandlerModule::Yes, "Null pointer (nullptr) dereference." );
+		} else if ( sfp->si_addr ==
+					#if __U_WORDSIZE__ == 32
+					(void *)0xffff'ffff
+					#else
+					(void *)0xffff'ffff'ffff'ffff
+					#endif // __U_WORDSIZE__ == 32
+			) {
+			abort( uSigHandlerModule::Yes, "Using a scrubbed pointer address %p.\n"
+				   "Possible cause is using uninitialized storage or using storage after it has been freed.",
+				   sfp->si_addr );
 		} else {
 			abort( uSigHandlerModule::Yes, "%s at memory location %p.\n"
 				   "Possible cause is reading outside the address space or writing to a protected area within the address space with an invalid pointer or subscript.",
@@ -266,7 +276,7 @@ namespace UPP {
 		// and generates a segment fault, the signal cannot be delivered on the sentinel page. Finally, calls to abort
 		// print a stack trace that uses substantial stack space.
 
-#define MINSTKSZ SIGSTKSZ * 8
+		#define MINSTKSZ SIGSTKSZ * 8
 		static char stack[MINSTKSZ] __attribute__(( aligned (16) ));
 		static stack_t ss;
 		uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + MINSTKSZ ); );
