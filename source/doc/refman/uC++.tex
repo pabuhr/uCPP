@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jul 25 09:05:17 2022
-%% Update Count     : 8434
+%% Last Modified On : Mon Sep  5 14:44:41 2022
+%% Update Count     : 8441
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2564,14 +2564,15 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}\i
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Mutex}\0\K{\_Coroutine}\0\V{uBarrier}\0\{}}
 \L{\LB{\0\0\K{protected}:}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{8}{\K{for}\0(\0;;\0)\0\{\0\V{suspend}();\0\}}}
-\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\K{for}\0(\0;;\0)\0\{\0\V{suspend}();\0\}\0\}}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{last}()\0\{\0\V{resume}();\0\}}}
 \L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\K{\_Event}\0\V{BlockFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0waiting\0tasks\0flushed}}
+\CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{uBarrier}(\0\K{unsigned}\0\K{int}\0\V{total}\0);}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{unsigned}\0\K{int}\0\V{total}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{unsigned}\0\K{int}\0\V{waiters}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{flush}();}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{reset}(\0\K{unsigned}\0\K{int}\0\V{total}\0);}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{block}();}}
 \L{\LB{\};}}
@@ -2581,6 +2582,7 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}\i
 \index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!last@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{last}}}\endlgrinde\LGend{}}%
 \index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!total@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}}%
 \index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!waiters@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{waiters}}}\endlgrinde\LGend{}}%
+\index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!flush@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}}%
 \index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!reset@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}}%
 \index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}!block@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}}%
 The declarations create two barrier variables and initializes the first to work with 10 tasks and the second to work with 20 tasks.
@@ -2612,6 +2614,8 @@ A 0 initialization value implies the barrier does not cause any task to wait, bu
 \end{prefix}
 
 The member routines \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}\index{total@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{waiters}}}\endlgrinde\LGend{}\index{waiters@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{waiters}}}\endlgrinde\LGend{}} return the total number of tasks participating in the synchronization and the total number of tasks currently waiting at the barrier, respectively.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}\index{flush@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}} raises the non-local exception \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{BlockFailure}}}\endlgrinde\LGend{} at each waiting task in the barrier and unblocks it.
+These tasks unblock in member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{} and immediately raise exception \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{BlockFailure}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}\index{reset@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}} changes the total number of tasks participating in the synchronization;
 no tasks may be waiting in the barrier when the total is changed.
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}\index{block@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}} is called to synchronize with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{} tasks;
@@ -5029,7 +5033,7 @@ The parameter for member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{status}}
 (The first parameter to the UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stat}}}\endlgrinde\LGend{} routine is unnecessary, as it is provided implicitly by the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}}}\endlgrinde\LGend{} object.)
 Because a file object is still inaccessible after a connection is made, there are no member routines to access its contents.
 
-To use the interface, include the file:
+To use the file interface in a \uC program, include the file:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\#include}\0\<\V{uFile}.\V{h}\>}}
 \endlgrinde\LGend
@@ -5220,7 +5224,7 @@ The initial remembered (default) address can be set when the client socket-endpo
 A similar convenience feature exists for the server socket-endpoint, where the last client address it receives a message from is remembered and can be implicitly used to send a message directly back to that client.
 
 \begin{sloppypar}
-To use the interface in a \uC program, include the file:
+To use the socket interface in a \uC program, include the file:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\#include}\0\<\V{uSocket}.\V{h}\>}}
 \endlgrinde\LGend
@@ -6824,6 +6828,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \L{\LB{}\Tab{12}{\V{uMutexFailure}::\V{EntryFailure}}}
 \L{\LB{}\Tab{12}{\V{uMutexFailure}::\V{RendezvousFailure}}}
 \L{\LB{}\Tab{8}{\V{uCondition}::\V{WaitingFailure}}}
+\L{\LB{}\Tab{8}{\V{uBarrier}::\V{BlockFailure}}}
 \L{\LB{}\Tab{8}{\V{uBaseCoroutine}::\V{Failure}}}
 \L{\LB{}\Tab{12}{\V{uBaseCoroutine}::\V{UnhandledException}}}
 \L{\LB{}\Tab{8}{\V{uPthreadable}::\V{Failure}}}
@@ -10850,6 +10855,12 @@ If a task pointer is available, e.g., in task main, eliminating the call to \LGi
 \label{f:ConcurrentPRNG}
 \end{figure}
 \end{itemize}
+
+To use the PRNG in a \uC program, include the file:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\#include}\0\<\V{uPRNG}.\V{h}\>}}
+\endlgrinde\LGend
+\index{uPRNG.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}}%
 
 
 \chapter{Data Structure Library (DSL)}

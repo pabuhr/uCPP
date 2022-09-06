@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:19:14 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 17:16:10 2021
-// Update Count     : 111
+// Last Modified On : Sat Aug 20 10:18:48 2022
+// Update Count     : 112
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -64,13 +64,6 @@ static token_manager_t token_boss;
 token_t * ahead;
 
 // token member functions
-
-void * token_t::operator new( size_t ) {
-	return token_boss.give_token();
-} // token_t::operator new
-
-void token_t::operator delete( void * ) {
-} // token_t::operator delete
 
 token_t::~token_t() {
 	value = -1;

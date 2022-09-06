@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 28 13:31:12 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 15:43:20 2021
-// Update Count     : 145
+// Last Modified On : Fri Aug 19 23:55:50 2022
+// Update Count     : 147
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,16 +34,6 @@ namespace UPP {
 	void uBootTask::main() {
 		// NEVER INVOKED BECAUSE BOOT TASK IS ALREADY RUNNING USING THE UNIX THREAD.
 	} // uBootTask::main
-
-
-	void *uBootTask::operator new( size_t, void *storage ) {
-		return storage;
-	} // uBootTask::operator new
-
-
-	void *uBootTask::operator new( size_t size ) {
-		return ::operator new( size );
-	} // uBootTask::operator new
 
 
 	uBootTask::uBootTask() : uBaseTask( *uKernelModule::systemCluster ) {

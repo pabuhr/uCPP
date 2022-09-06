@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 22:08:40 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May  9 17:09:20 2022
-// Update Count     : 56
+// Last Modified On : Sun Aug 28 20:47:56 2022
+// Update Count     : 57
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,7 +35,7 @@
 
 // Check for power of 2
 
-static inline bool uPow2( unsigned long int value ) {
+static inline __attribute__((always_inline)) bool uPow2( unsigned long int value ) {
 	// clears all bits below value, rounding value down to the next lower multiple of value
 	return (value & (value - 1)) == 0;
 } // uPow2
@@ -43,7 +43,7 @@ static inline bool uPow2( unsigned long int value ) {
 
 // Returns value aligned at the floor of align.
 
-static inline unsigned long int uFloor( unsigned long int value, unsigned long int align ) {
+static inline __attribute__((always_inline)) unsigned long int uFloor( unsigned long int value, unsigned long int align ) {
 	assert( uPow2( align ) );
 	// clears all bits above or equal to align, getting (value % align), the phase of value with regards to align
 	return value & -align;
@@ -52,7 +52,7 @@ static inline unsigned long int uFloor( unsigned long int value, unsigned long i
 
 // Returns value aligned at the ceiling of align.
 
-static inline unsigned long int uCeiling( unsigned long int value, unsigned long int align ) {
+static inline __attribute__((always_inline)) unsigned long int uCeiling( unsigned long int value, unsigned long int align ) {
 	assert( uPow2( align ) );
 	// "negate, round down, negate" is the same as round up
 	return -uFloor( -value, align );

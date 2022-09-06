@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 24 09:52:56 2022
-// Update Count     : 426
+// Last Modified On : Sun Aug 28 20:46:34 2022
+// Update Count     : 427
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,16 +42,6 @@ unsigned int uDefaultExecutorRQueues() { return N; }
 bool uDefaultExecutorSepClus() { return true; }
 int uDefaultExecutorAffinity() { return 0; }
 
-class Ran {
-	unsigned int seed;
-  public:
-	Ran( unsigned int seed_ = 1009 ) { seed = seed_; }	// set seed
-	void setSeed( int seed_ ) { seed = seed_; }			// set seed
-	unsigned int operator()() { seed ^= seed << 6;  seed ^= seed >> 21;  seed ^= seed << 7; return seed; } // [0,UINT_MAX]
-	unsigned int operator()( unsigned int u ) { return operator()() % (u + 1); } // [0,u]
-	unsigned int operator()( unsigned int l, unsigned int u ) { return operator()( u - l ) + l; } // [l,u]
-};
-
 struct ValueMsg : public uActor::Message {
 	size_t value;
 	ValueMsg( size_t value ) : Message( uActor::Delete ), value( value ) {}
@@ -69,7 +59,6 @@ _Actor Cons {
 }; // Cons
 
 Cons ** consumers; 										// consumer array, consumers are self-delete
-thread_local Ran ran;
 
 static struct DelayMsg : public uActor::Message {} delayMsg; // Delay producer
 
@@ -83,7 +72,6 @@ _Actor Prod {
 			//for ( volatile size_t delay = 0; delay < 100; delay += 1 );
 			PRT( osacquire( cout ) << "prod " << this << " " << i << endl; );
 			// WARNING: This allocation can flood the system with messages and cause huge contention in the heap.
-//			*(consumers[ran( cons - 1 )]) | *new ValueMsg{ i };	// random consumer send
 			*(consumers[i % cons]) | *new ValueMsg{ i }; // round-robin consumer send
 			if ( i % 10 == 0 ) {						// allow consumers to run
 				*this | delayMsg;

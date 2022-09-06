@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jul  4 08:05:21 2022
-// Update Count     : 6205
+// Last Modified On : Mon Sep  5 14:53:36 2022
+// Update Count     : 6219
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,9 +76,9 @@
 #endif // __U_DEBUG__
 
 #if defined( __U_MULTI__ )
-#   define __U_THREAD__ __thread
+#define __U_THREAD_LOCAL__ __thread /* __attribute__(( tls_model("initial-exec") )) */
 #else
-#   define __U_THREAD__
+#define __U_THREAD_LOCAL__
 #endif // __U_MULTI__
 
 #include <sys/types.h>									// select, fd_set
@@ -120,13 +120,14 @@
 template< typename T > class uNoCtor {
 	char storage[sizeof(T)] __attribute__(( aligned(alignof(T)) ));
   public:
-	inline T * operator&() const { return (T *)(&storage); }
-	inline T & operator*() const { return (T &)*((T *)(&storage)); }
-	inline T * operator->() const { return (T *)(&storage); }
+	inline __attribute__((always_inline)) const T * operator&() const { return (T *)(&storage); }
+	inline __attribute__((always_inline)) T * operator&() { return (T *)(&storage); }
+	inline __attribute__((always_inline)) const T & operator*() const { return (T &)*((T *)(&storage)); }
+	inline __attribute__((always_inline)) T & operator*() { return (T &)*((T *)(&storage)); }
+	inline __attribute__((always_inline)) const T * operator->() const { return (T *)(&storage); }
+	inline __attribute__((always_inline)) T * operator->() { return (T *)(&storage); }
 	void ctor() { new( &storage ) T; }
-	template< typename A1 > void ctor( A1 & arg1 ) { new( &storage ) T( arg1 ); }
-	template< typename A1, typename A2 > void ctor( A1 & arg1, A2 arg2 ) { new( &storage ) T( arg1, arg2 ); }
-	template< typename A1, typename A2, typename A3 > void ctor( A1 & arg1, A2 arg2, A3 arg3 ) { new( &storage ) T( arg1, arg2, arg3 ); }
+	template< typename... Args > void ctor( Args &&... args) { new( &storage ) T( std::forward<Args>(args)... ); }
 };
 
 
@@ -152,8 +153,6 @@ namespace UPP {
 		static __typeof__( ::pthread_kill ) * pthread_kill;
 		static __typeof__( ::pthread_join ) * pthread_join;
 		static __typeof__( ::pthread_self ) * pthread_self;
-		static __typeof__( ::pthread_setaffinity_np ) * pthread_setaffinity_np;
-		static __typeof__( ::pthread_getaffinity_np ) * pthread_getaffinity_np;
 	}; // RealRtn
 } // UPP
 
@@ -245,7 +244,7 @@ namespace UPP {
 _Task uSystemTask;										// forward declaration
 class uBaseCoroutine;									// forward declaration
 class __attribute__(( may_alias )) uBaseTask;			// forward declaration
-class uBaseSpinLock;									// forward declaration
+class uSpinLock;									// forward declaration
 class __attribute__(( may_alias )) uSpinLock;			// forward declaration
 class uLock;											// forward declaration
 class __attribute__(( may_alias )) uOwnerLock;			// forward declaration
@@ -448,7 +447,7 @@ class uKernelModule {
 	friend class uBaseCoroutine;						// access: uKernelModuleBoot
 	friend class uBaseTask;								// access: uKernelModuleBoot
 	friend class UPP::uSerial;							// access: uKernelModuleBoot
-	friend class uBaseSpinLock;							// access: uKernelModuleBoot
+	friend class uSpinLock;								// access: uKernelModuleBoot
 	friend class uMutexLock;							// access: uKernelModuleBoot, initialized
 	friend class uOwnerLock;							// access: uKernelModuleBoot, initialized
 	template< int, int, int > friend class uAdaptiveLock; // access: uKernelModuleBoot, initialized
@@ -533,12 +532,12 @@ class uKernelModule {
 
 		// unsigned long threadPointer;
 
-		inline void disableInterrupts() volatile {
+		inline __attribute__((always_inline)) void disableInterrupts() volatile {
 			THREAD_SETMEM( disableInt, true );
 			THREAD_SETMEM( disableIntCnt, THREAD_GETMEM( disableIntCnt ) + 1 );
 		} // uKernelModule::uKernelModuleData::disableInterrupts
 
-		inline void enableInterrupts() volatile {
+		inline __attribute__((always_inline)) void enableInterrupts() volatile {
 			uDEBUG( assert( disableInt && disableIntCnt > 0 ); );
 
 			disableIntCnt -= 1;							// decrement number of disablings
@@ -552,7 +551,7 @@ class uKernelModule {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); );
 		} // KernelModule::uKernelModuleData::enableInterrupts
 
-		inline void enableInterruptsNoRF() volatile {
+		inline __attribute__((always_inline)) void enableInterruptsNoRF() volatile {
 			uDEBUG( assert( disableInt && disableIntCnt > 0 ); )
 
 			disableIntCnt -= 1;							// decrement number of disablings
@@ -564,7 +563,7 @@ class uKernelModule {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); )
 		} // KernelModule::uKernelModuleData::enableInterruptsNoRF
 
-		inline void disableIntSpinLock() volatile {
+		inline __attribute__((always_inline)) void disableIntSpinLock() volatile {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 
 			THREAD_SETMEM( disableIntSpin, true );
@@ -573,7 +572,7 @@ class uKernelModule {
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 		} // uKernelModule::uKernelModuleData::disableIntSpinLock
 
-		inline void enableIntSpinLock() volatile {
+		inline __attribute__((always_inline)) void enableIntSpinLock() volatile {
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 			disableIntSpinCnt -= 1;						// decrement number of disablings
@@ -587,7 +586,7 @@ class uKernelModule {
 			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
 		} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
-		inline void enableIntSpinLockNoRF() volatile {
+		inline __attribute__((always_inline)) void enableIntSpinLockNoRF() volatile {
 			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
 
 			disableIntSpinCnt -= 1;						// decrement number of disablings
@@ -605,7 +604,7 @@ class uKernelModule {
 	// shared, initialized in uC++.cc
 
 	static bool kernelModuleInitialized;
-	static volatile __U_THREAD__ uKernelModuleData uKernelModuleBoot;
+	static volatile __U_THREAD_LOCAL__ uKernelModuleData uKernelModuleBoot;
 	uDEBUG( static bool initialized; )					// initialization/finalization incomplete
 #if __U_LOCALDEBUGGER_H__
 	static unsigned int attaching;						// flag to signal the local kernel to start attaching.
@@ -643,17 +642,17 @@ class uKernelModule {
 }; // uKernelModule
 
 
-inline uProcessor & uThisProcessor() {
+inline __attribute__((always_inline)) uProcessor & uThisProcessor() {
 	return *THREAD_GETMEM( activeProcessor );
 } // uThisProcessor
 
 
-inline uCluster & uThisCluster() {
+inline __attribute__((always_inline)) uCluster & uThisCluster() {
 	return *THREAD_GETMEM( activeCluster );
 } // uThisCluster
 
 
-inline uBaseTask & uThisTask() {
+inline __attribute__((always_inline)) uBaseTask & uThisTask() {
 	return *THREAD_GETMEM( activeTask );
 } // uThisTask
 
@@ -661,7 +660,7 @@ inline uBaseTask & uThisTask() {
 //######################### uSpinLock #########################
 
 
-class uBaseSpinLock {									// non-yielding spinlock
+class uSpinLock {										// non-yielding spinlock
 	friend class UPP::uKernelBoot;						// access: new
 	friend class uEventListPop;							// access: acquire_, release_
 	friend class uCluster;								// access: value
@@ -678,43 +677,31 @@ class uBaseSpinLock {									// non-yielding spinlock
 		} else {
 			THREAD_GETMEM( This )->enableIntSpinLock();
 		} // if
-	} // uBaseSpinLock::release_
+	} // uSpinLock::release_
   public:
-	uBaseSpinLock( const uBaseSpinLock & ) = delete;	// no copy
-	uBaseSpinLock( uBaseSpinLock && ) = delete;
-	uBaseSpinLock & operator=( const uBaseSpinLock & ) = delete; // no assignment
-	uBaseSpinLock & operator=( uBaseSpinLock && ) = delete;
+	uSpinLock( const uSpinLock & ) = delete;			// no copy
+	uSpinLock( uSpinLock && ) = delete;
+	uSpinLock & operator=( const uSpinLock & ) = delete; // no assignment
+	uSpinLock & operator=( uSpinLock && ) = delete;
 
-	uBaseSpinLock() {
+	uSpinLock() {
 #ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uSpinLocks, 1 );
 #endif // __U_STATISTICS__
 		value = 0;										// unlock
-	} // uBaseSpinLock::uBaseSpinLock
+	} // uSpinLock::uSpinLock
 
 	void acquire() {
 		acquire_( false );
 		asm( "" : : : "memory" );						// prevent code movement across barrier
-	} // uBaseSpinLock::acquire
+	} // uSpinLock::acquire
 
 	bool tryacquire();
 
 	void release() {
 		asm( "" : : : "memory" );						// prevent code movement across barrier
 		release_( false );
-	} // uBaseSpinLock::release
-}; // uBaseSpinLock
-
-
-class uSpinLock : public uBaseSpinLock {				// handle alignment to prevent false sharing
-  public:
-	void * operator new( size_t size ) {				// dynamic allocation
-		return ::malloc( size );
-	} // uSpinLock::operator new
-
-	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
-		return storage;
-	} // uSpinLock::operator new
+	} // uSpinLock::release
 }; // uSpinLock
 
 
@@ -773,10 +760,6 @@ class uLock {											// yielding spinlock
 	void release() {
 		value = 1;
 	} // uLock::release
-
-	void * operator new( size_t size ) {
-		return ::memalign( 128, size );					// size of cache line to prevent false sharing
-	} // uLock::operator new
 }; // uLock
 
 
@@ -882,7 +865,7 @@ class uMutexLock {
 	// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 	// pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uMutexLock).
 
-	uBaseSpinLock spinLock;								// must be first field for alignment
+	uSpinLock spinLock;								// must be first field for alignment
 	unsigned int count;									// number of recursive entries; no overflow checking
 	uSequence<uBaseTaskDL> waiting;						// sequence versus queue to reduce size to 24 bytes => more expensive
 
@@ -906,14 +889,6 @@ class uMutexLock {
 	void acquire();
 	bool tryacquire();
 	void release();
-
-	void * operator new( size_t size ) {
-		return ::operator new( size );
-	} // uMutexLock::operator new
-
-	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
-		return storage;
-	} // uMutexLock::operator new
 }; // uMutexLock
 
 
@@ -957,14 +932,6 @@ class uOwnerLock : public uMutexLock {
 	void acquire();
 	bool tryacquire();
 	void release();
-
-	void * operator new( size_t size ) {
-		return ::operator new( size );
-	} // uOwnerLock::operator new
-
-	void * operator new( size_t, void * storage ) {		// used in pthread_mutex
-		return storage;
-	} // uOwnerLock::operator new
 }; // uOwnerLock
 
 
@@ -984,7 +951,7 @@ class uCondLock {
 	// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 	// pthread_cond_t, if sizeof(pthread_cond_t) >= sizeof(uCondLock).
 
-	uBaseSpinLock spinLock;								// must be first field for alignment
+	uSpinLock spinLock;								// must be first field for alignment
 	uSequence<uBaseTaskDL> waiting;						// queue of blocked tasks
 	void waitTimeout( TimedWaitHandler & h );			// timeout
   public:
@@ -1020,14 +987,6 @@ class uCondLock {
 	} // uCondLock::empty
 
 	uintptr_t front() const;
-
-	void * operator new( size_t size ) {
-		return ::operator new( size );
-	} // Pthread_cleanup::operator new
-
-	void * operator new( size_t, void * storage ) {		// used in pthread_cond
-		return storage;
-	} // uCondLock::operator new
 }; // uCondLock
 
 
@@ -1048,7 +1007,7 @@ namespace UPP {
 		// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 		// sem_t, if sizeof(sem_t) >= sizeof(uSemaphore).
 
-		uBaseSpinLock spinLock;							// must be first field for alignment
+		uSpinLock spinLock;							// must be first field for alignment
 		int count;
 		uQueue<uBaseTaskDL> waiting;
 
@@ -1095,14 +1054,6 @@ namespace UPP {
 		bool empty() const {							// no tasks waiting on semaphore ?
 			return count >= 0;
 		} // uSemaphore::empty
-
-		void * operator new( size_t size ) {
-			return ::operator new( size );
-		} // uSemaphore::operator new
-
-		void * operator new( size_t, void * storage ) {	// used in sem_t
-			return storage;
-		} // uSemaphore::operator new
 	}; // uSemaphore
 } // UPP
 
@@ -1359,9 +1310,6 @@ class uBaseCoroutine : public UPP::uMachContext {
 	struct PthreadCleanup : uColable {
 		void (* routine )(void *);
 		void * args;
-		void * operator new( size_t, void * storage ) {
-			return storage;
-		} // Pthread_cleanup::operator new
 	}; // PthreadCleanup
 
 	typedef uStack<PthreadCleanup> Cleanup;
@@ -1788,7 +1736,7 @@ class uBaseTask : public uBaseCoroutine {
 	friend class uOwnerLock;							// access: entryRef_, profileActive, wake
 	template< int, int, int > friend class uAdaptiveLock; // access: entryRef_, profileActive, wake
 	friend class uCondLock;								// access: entryRef_, ownerLock, profileActive, wake
-	friend class uBaseSpinLock;							// access: profileActive
+	friend class uSpinLock;								// access: profileActive
 	friend class UPP::uSemaphore;						// access: entryRef_, wake, info
 	friend class uRWLock;								// access: entryRef_, wake, info
 	friend class uCondition;							// access: currCoroutine_, mutexRef_, info, profileActive
@@ -2069,6 +2017,7 @@ class uBaseTask : public uBaseCoroutine {
 	uint32_t prng() __attribute__(( warn_unused_result )) { return LCG( random_state ); } // [0,UINT_MAX]
 	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
 	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
+
 #ifdef __U_PROFILER__
 	// profiling
 
@@ -2102,7 +2051,7 @@ class uWakeupHndlr : public uSignalHandler {			// real-time
 }; // uWakeupHndlr
 
 
-inline uBaseCoroutine & uThisCoroutine() {
+inline __attribute__((always_inline)) uBaseCoroutine & uThisCoroutine() {
 	return * uThisTask().currCoroutine_;
 } // uThisCoroutine
 
@@ -2376,7 +2325,7 @@ namespace UPP {
 //######################### uEHM (cont) #########################
 
 
-inline bool uEHM::pollCheck() {
+inline __attribute__((always_inline)) bool uEHM::pollCheck() {
 	uBaseCoroutine & coroutine = uThisCoroutine();
 	return ! coroutine.asyncEBuf.empty() || coroutine.cancelled();
 } // uEHM::pollCheck 
@@ -2565,18 +2514,18 @@ namespace UPP {
 		friend class ::uEventListPop;					// access: kernelClock
 
 		unsigned int kind;								// specific kind of schedule operation
-		uBaseSpinLock * prevLock;						// comunication
+		uSpinLock * prevLock;							// comunication
 		uBaseTask * nextTask;							// task to be wakened
 
 		void taskIsBlocking();
 		static void schedule();
-		static void schedule( uBaseSpinLock * lock );
+		static void schedule( uSpinLock * lock );
 		static void schedule( uBaseTask * task );
-		static void schedule( uBaseSpinLock * lock, uBaseTask * task );
+		static void schedule( uSpinLock * lock, uBaseTask * task );
 		void scheduleInternal();
-		void scheduleInternal( uBaseSpinLock * lock );
+		void scheduleInternal( uSpinLock * lock );
 		void scheduleInternal( uBaseTask * task );
-		void scheduleInternal( uBaseSpinLock * lock, uBaseTask * task );
+		void scheduleInternal( uSpinLock * lock, uBaseTask * task );
 		void onBehalfOfUser();
 		void setTimer( uDuration time );
 		void setTimer( uTime time );
@@ -2587,10 +2536,6 @@ namespace UPP {
 
 		uProcessorKernel();
 		~uProcessorKernel();
-
-		void * operator new( size_t size ) {
-			return ::operator new( size );
-		} // uProcessorKernel::operator new
 	  public:
 	}; // uProcessorKernel
 } // UPP
@@ -2599,7 +2544,7 @@ namespace UPP {
 //######################### uBaseTask (cont) #########################
 
 
-inline void uBaseTask::uYieldNoPoll() {
+inline __attribute__((always_inline)) void uBaseTask::uYieldNoPoll() {
 	uDEBUG( assert( ! THREAD_GETMEM( disableIntSpin ) ); )
 	UPP::uProcessorKernel::schedule( this );			// find someone else to execute; wake on kernel stack
 } // uBaseTask::uYieldNoPoll
@@ -2669,7 +2614,7 @@ class uProcessor {
 	uProcessorTask * procTask;							// handle processor specific requests
 	uBaseTaskSeq external;								// ready queue for processor task
 
-	uCluster * currCluster_;								// cluster processor currently associated with
+	uCluster * currCluster_;							// cluster processor currently associated with
 
 	bool detached;										// processor detached ?
 	bool terminated;									// processor being deleted ?
@@ -2736,14 +2681,6 @@ class uProcessor {
 	bool idle() const {
 		return idleRef.listed();
 	} // uProcessor::idle
-
-	void * operator new( size_t size ) {
-		return ::operator new( size );
-	} // uProcessor::operator new
-
-	void * operator new( size_t, void * storage ) {
-		return storage;
-	} // uProcessor::operator new
 } __attribute__(( unused )); // uProcessor
 
 
@@ -2923,14 +2860,6 @@ class uCluster {
 	const uProcessorSeq & getProcessorsOnCluster() {
 		return processorsOnCluster;
 	} // uCluster::getProcessorsOnCluster
-
-	void * operator new( size_t size ) {
-		return ::memalign( 128, size );					// size of cache line to prevent false sharing
-	} // uCluster::operator new
-
-	void * operator new( size_t, void * storage ) {
-		return storage;
-	} // uCluster::operator new
 }; // uCluster
 
 

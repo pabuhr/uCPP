@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 12:23:14 2022
-// Update Count     : 1087
+// Last Modified On : Tue Aug  2 08:34:15 2022
+// Update Count     : 1091
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -693,7 +693,7 @@ extern "C" {
 	} // pthread_tryjoin_np
 
 	int pthread_timedjoin_np( pthread_t /* threadID */, void ** /* status */, const struct timespec * /* abstime */ ) { // GNU extension
-		abort( "pthread_timedjoin_np : not implemented" );
+		abort( "pthread_timedjoin_np not implemented" );
 		return 0;
 	} // pthread_timedjoin_np
 
@@ -894,7 +894,7 @@ extern "C" {
 	  if ( sig == 0 ) {
 			return 0;
 		} else {
-			abort( "pthread_kill : not implemented" );
+			abort( "pthread_kill not implemented" );
 		} // if
 		return 0;
 	} // pthread_kill
@@ -939,12 +939,12 @@ extern "C" {
 
 
 	int pthread_setschedparam( pthread_t /* thread */, int /* policy */, const struct sched_param * /* param */ ) __THROW {
-		abort( "pthread_setschedparam : not implemented" );
+		abort( "pthread_setschedparam not implemented" );
 		return 0;
 	} // pthread_setschedparam
 
 	int pthread_getschedparam( pthread_t /* thread */, int */* policy */, struct sched_param * /* param */ ) __THROW {
-		abort( "pthread_getschedparam : not implemented" );
+		abort( "pthread_getschedparam not implemented" );
 		return 0;
 	} // pthread_getschedparam
 
@@ -1188,75 +1188,75 @@ extern "C" {
 	//######################### Mutex #########################
 
 	int pthread_mutex_timedlock( pthread_mutex_t *__restrict /* __mutex */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
-		abort( "pthread_mutex_timedlock" );
+		abort( "pthread_mutex_timedlock not implemented" );
 	} // pthread_mutex_timedlock
 
 	//######################### Condition #########################
 
 	int pthread_condattr_getclock( __const pthread_condattr_t * __restrict /* __attr */, __clockid_t *__restrict /* __clock_id */ ) __THROW {
-		abort( "pthread_condattr_getclock" );
+		abort( "pthread_condattr_getclock not implemented" );
 	} // pthread_condattr_getclock
 
 	int pthread_condattr_setclock( pthread_condattr_t * /* __attr */, __clockid_t /* __clock_id */ ) __THROW {
-		abort( "pthread_condattr_setclock" );
+		abort( "pthread_condattr_setclock not implemented" );
 	} // pthread_condattr_setclock
 
 	//######################### Spinlock #########################
 
 	int pthread_spin_init( pthread_spinlock_t * /* __lock */, int /*__pshared */ ) __THROW {
-		abort( "pthread_spin_init" );
+		abort( "pthread_spin_init not implemented" );
 	} // pthread_spin_init
 
 	int pthread_spin_destroy( pthread_spinlock_t * /* __lock */ ) __THROW {
-		abort( "pthread_spin_destroy" );
+		abort( "pthread_spin_destroy not implemented" );
 	} // pthread_spin_destroy
 
 	int pthread_spin_lock( pthread_spinlock_t * /* __lock */ ) __THROW {
-		abort( "pthread_spin_lock" );
+		abort( "pthread_spin_lock not implemented" );
 	} // pthread_spin_lock
 
 	int pthread_spin_trylock( pthread_spinlock_t * /* __lock */ ) __THROW {
-		abort( "pthread_spin_trylock" );
+		abort( "pthread_spin_trylock not implemented" );
 	} // pthread_spin_trylock
 
 	int pthread_spin_unlock( pthread_spinlock_t * /* __lock */ ) __THROW {
-		abort( "pthread_spin_unlock" );
+		abort( "pthread_spin_unlock not implemented" );
 	} // pthread_spin_unlock
 
 	//######################### Barrier #########################
 
 	int pthread_barrier_init( pthread_barrier_t *__restrict /* __barrier */, __const pthread_barrierattr_t *__restrict /* __attr */, unsigned int /* __count */ ) __THROW {
-		abort( "pthread_barrier_init" );
+		abort( "pthread_barrier_init not implemented" );
 	} // pthread_barrier_init
 
 	int pthread_barrier_destroy( pthread_barrier_t * /* __barrier */ ) __THROW {
-		abort( "pthread_barrier_destroy" );
+		abort( "pthread_barrier_destroy not implemented" );
 	} // pthread_barrier_destroy
 
 	int pthread_barrier_wait( pthread_barrier_t * /* __barrier */ ) __THROW {
-		abort( "pthread_barrier_wait" );
+		abort( "pthread_barrier_wait not implemented" );
 	} // pthread_barrier_wait
 
 	int pthread_barrierattr_init( pthread_barrierattr_t * /* __attr */ ) __THROW {
-		abort( "pthread_barrierattr_init" );
+		abort( "pthread_barrierattr_init not implemented" );
 	} // pthread_barrierattr_init
 
 	int pthread_barrierattr_destroy( pthread_barrierattr_t * /* __attr */ ) __THROW {
-		abort( "pthread_barrierattr_destroy" );
+		abort( "pthread_barrierattr_destroy not implemented" );
 	} // pthread_barrierattr_destroy
 
 	int pthread_barrierattr_getpshared( __const pthread_barrierattr_t * __restrict /* __attr */, int *__restrict /* __pshared */ ) __THROW {
-		abort( "pthread_barrierattr_getpshared" );
+		abort( "pthread_barrierattr_getpshared not implemented" );
 	} // pthread_barrierattr_getpshared
 
 	int pthread_barrierattr_setpshared( pthread_barrierattr_t * /* __attr */, int /* __pshared */ ) __THROW {
-		abort( "pthread_barrierattr_setpshared" );
+		abort( "pthread_barrierattr_setpshared not implemented" );
 	} // pthread_barrierattr_setpshared
 
 	//######################### Clock #########################
 
 	int pthread_getcpuclockid( pthread_t /* __thread_id */, __clockid_t * /* __clock_id */ ) __THROW {
-		abort( "pthread_getcpuclockid" );
+		abort( "pthread_getcpuclockid not implemented" );
 	} // pthread_getcpuclockid
 
 	// pthread_atfork()
@@ -1266,98 +1266,96 @@ extern "C" {
 	//######################### Read/Write #########################
 
 	int pthread_rwlock_init( pthread_rwlock_t *__restrict /* __rwlock */, __const pthread_rwlockattr_t *__restrict /* __attr */ ) __THROW {
-		abort( "pthread_rwlock_init" );
+		abort( "pthread_rwlock_init not implemented" );
 	} // pthread_rwlock_init
 
 	int pthread_rwlock_destroy( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_destroy" );
+		abort( "pthread_rwlock_destroy not implemented" );
 	} // pthread_rwlock_destroy
 
 	int pthread_rwlock_rdlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_rdlock" );
+		abort( "pthread_rwlock_rdlock not implemented" );
 	} // pthread_rwlock_rdlock
 
 	int pthread_rwlock_tryrdlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_tryrdlock" );
+		abort( "pthread_rwlock_tryrdlock not implemented" );
 	} // pthread_rwlock_tryrdlock
 
 	int pthread_rwlock_wrlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_wrlock" );
+		abort( "pthread_rwlock_wrlock not implemented" );
 	} // pthread_rwlock_wrlock
 
 	int pthread_rwlock_trywrlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_trywrlock" );
+		abort( "pthread_rwlock_trywrlock not implemented" );
 	} // pthread_rwlock_trywrlock
 
 	int pthread_rwlock_unlock( pthread_rwlock_t * /* __rwlock */ ) __THROW {
-		abort( "pthread_rwlock_unlock" );
+		abort( "pthread_rwlock_unlock not implemented" );
 	} // pthread_rwlock_unlock
 
 	int pthread_rwlockattr_init( pthread_rwlockattr_t * /* __attr */ ) __THROW {
-		abort( "pthread_rwlockattr_init" );
+		abort( "pthread_rwlockattr_init not implemented" );
 	} // pthread_rwlockattr_init
 
 	int pthread_rwlockattr_destroy( pthread_rwlockattr_t * /*__attr */ ) __THROW {
-		abort( "pthread_rwlockattr_destroy" );
+		abort( "pthread_rwlockattr_destroy not implemented" );
 	} // pthread_rwlockattr_destroy
 
 	int pthread_rwlockattr_getpshared( __const pthread_rwlockattr_t * __restrict /* __attr */, int *__restrict /* __pshared */ ) __THROW {
-		abort( "pthread_rwlockattr_getpshared" );
+		abort( "pthread_rwlockattr_getpshared not implemented" );
 	} // pthread_rwlockattr_getpshared
 
 	int pthread_rwlockattr_setpshared( pthread_rwlockattr_t * /* __attr */, int /* __pshared */ ) __THROW {
-		abort( "pthread_rwlockattr_setpshared" );
+		abort( "pthread_rwlockattr_setpshared not implemented" );
 	} // pthread_rwlockattr_setpshared
 
 	int pthread_rwlockattr_getkind_np( __const pthread_rwlockattr_t * /* __attr */, int * /* __pref */ ) __THROW {
-		abort( "pthread_rwlockattr_getkind_np" );
+		abort( "pthread_rwlockattr_getkind_np not implemented" );
 	} // pthread_rwlockattr_getkind_np
 
 	int pthread_rwlockattr_setkind_np( pthread_rwlockattr_t * /* __attr */, int /* __pref */ ) __THROW {
-		abort( "pthread_rwlockattr_setkind_np" );
+		abort( "pthread_rwlockattr_setkind_np not implemented" );
 	} // pthread_rwlockattr_setkind_np
 
 // UNIX98 + XOPEN
 
 	int pthread_rwlock_timedrdlock( pthread_rwlock_t *__restrict  /* __rwlock */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
-		abort( "pthread_rwlock_timedrdlock" );
+		abort( "pthread_rwlock_timedrdlock not implemented" );
 	} // pthread_rwlock_timedrdlock
 
 	int pthread_rwlock_timedwrlock( pthread_rwlock_t *__restrict  /* __rwlock */, __const struct timespec *__restrict /* __abstime */ ) __THROW {
-		abort( "pthread_rwlock_timedwrlock" );
+		abort( "pthread_rwlock_timedwrlock not implemented" );
 	} // pthread_rwlock_timedwrlock
 
 // GNU
 
 	//######################### Parallelism #########################
 
-	int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
-		abort( "pthread_setaffinity_np" );
-	} // pthread_setaffinity_np
+	// Ok to call these assuming you know what you are doing.
 
-	int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
-		abort( "pthread_getaffinity_np" );
-	} // pthread_getaffinity_np
+	// int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
+	// } // pthread_setaffinity_np
 
-	int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
-		abort( "pthread_attr_setaffinity_np" );
-	} // pthread_attr_setaffinity_np
+	// int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
+	// } // pthread_getaffinity_np
 
-	int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
-		abort( "pthread_attr_getaffinity_np" );
-	} // pthread_attr_getaffinity_np
+	// int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
+	// } // pthread_attr_setaffinity_np
+
+	// int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
+	// } // pthread_attr_getaffinity_np
 
 	//######################### Cancellation #########################
 
-// pthread_cleanup_push_defer_np()  GNU extension
-// pthread_cleanup_pop_restore_np() GNU extension
+	// pthread_cleanup_push_defer_np()  GNU extension
+	// pthread_cleanup_pop_restore_np() GNU extension
 
 	void _pthread_cleanup_push_defer( struct _pthread_cleanup_buffer * /* __buffer */, void( * /* __routine */ )( void * ), void * /* __arg */ ) __THROW {
-		abort( "_pthread_cleanup_push_defer" );
+		abort( "_pthread_cleanup_push_defer not implemented" );
 	} // _pthread_cleanup_push_defer
 
 	void _pthread_cleanup_pop_restore( struct _pthread_cleanup_buffer * /* __buffer */, int /* __execute */ ) __THROW {
-		abort( "_pthread_cleanup_pop_restore" );
+		abort( "_pthread_cleanup_pop_restore not implemented" );
 	} // _pthread_cleanup_pop_restore
 } // extern "C"
 

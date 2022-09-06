@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:48:16 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 09:19:05 2021
-// Update Count     : 64
+// Last Modified On : Sat Aug 20 07:38:45 2022
+// Update Count     : 65
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,8 +41,6 @@ struct token_t {
 	token_t * left;										// start of base_specifier
 	token_t * right;									// end of base_specifier
 
-	void * operator new( size_t );
-	void operator delete( void * p );
 	void init() { symbol = nullptr; left = right = nullptr; }
 	token_t() { hash = nullptr; init(); }
 	token_t( int value, hash_t * hash ) : value( value ), hash( hash ) {	init(); }

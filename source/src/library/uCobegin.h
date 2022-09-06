@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 12:11:51 2022
-// Update Count     : 60
+// Last Modified On : Thu Sep  1 09:18:46 2022
+// Update Count     : 61
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -62,8 +62,8 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
 		Runner( Low low, High high, Func f ) : low( low ), high( high ), f( f ) {}
 	}; // Runner
 
-	static_assert(std::is_integral<Low>::value, "Integral required.");
-	static_assert(std::is_integral<High>::value, "Integral required.");
+	static_assert(std::is_integral<Low>::value, "Integral type required for COFOR initialization.");
+	static_assert(std::is_integral<High>::value, "Integral type required for COFOR comparison.");
 	assert( (High)low <= high );
 	const long int range = high - low;					 // number of iterations
   if ( range == 0 ) return;								 // no work ? skip otherwise zero divide

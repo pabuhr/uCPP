@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb  8 11:22:05 2022
-// Update Count     : 629
+// Last Modified On : Sun Aug 28 20:52:57 2022
+// Update Count     : 630
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,18 +45,18 @@ using namespace UPP;
 void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
 	uDEBUGPRT( uDebugPrt( "uCluster::wakeProcessor: waking processor %lu\n", (unsigned long)pid ); );
 
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::wake_processor, 1 );
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 
-#if defined( __U_MULTI__ )
+	#if defined( __U_MULTI__ )
 // freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
 // occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
 // pthread_kill.
 	RealRtn::pthread_kill( pid, SIGUSR1 );
-#else // UNIPROCESSOR
+	#else // UNIPROCESSOR
 	// Only one kernel thread so no need to send it a signal.
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 } // uCluster::wakeProcessor
 
 
@@ -99,9 +99,9 @@ void uCluster::processorPause() {
 
 			uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, before sigpause\n", this ); );
 
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 			uFetchAdd( UPP::Statistics::kernel_thread_pause, 1 );
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 
 			sigsuspend( &old_mask );					// install old signal mask over new one and wait for signal to arrive
 
@@ -170,7 +170,7 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 		uProcessor *p = &readyTask.bound_;				// optimization
 
 		p->external.addTail( &(readyTask.readyRef_) );	// add task to end of special ready queue
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 		if ( p->idle() ) {								// processor on idle queue ?
 			idleProcessors.remove( &(p->idleRef) );
 			idleProcessorsCnt -= 1;
@@ -180,14 +180,14 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 		} else {
 			readyIdleTaskLock.release();
 		} // if
-#else
+	#else
 		readyIdleTaskLock.release();
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 	} else {
 		uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) makes task %.256s (%p) ready\n",
 							  this, uThisTask().getName(), &uThisTask(), readyTask.getName(), &readyTask ); );
 		readyQueue->add( &(readyTask.readyRef_) );		// add task to end of cluster ready queue
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 		// Wake up an idle processor if the ready task is migrating to another cluster with idle processors or if the
 		// ready task is on the same cluster but the ready queue of that cluster is not empty. This check prevents a
 		// single task on a cluster, which does a yield, from unnecessarily waking up a processor that has no work to
@@ -201,9 +201,9 @@ void uCluster::makeTaskReady( uBaseTask &readyTask ) {
 		} else {
 			readyIdleTaskLock.release();
 		} // if
-#else
+	#else
 		readyIdleTaskLock.release();
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 	} // if
 } // uCluster::makeTaskReady
 
@@ -214,12 +214,12 @@ void uCluster::makeTaskReady( uBaseTaskSeq &newTasks, unsigned int n __attribute
 	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.makeTaskReady(2): task %.256s (%p) tasks ready\n",
 						  this, uThisTask().getName(), &uThisTask() ); );
 
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::ready_queue, n );
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 	readyQueue->transfer( newTasks );					// add task(s) to end of cluster ready queue
 
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 	// Wake up an idle processor if the ready task is migrating to another cluster with idle processors or if the ready
 	// task is on the same cluster but the ready queue of that cluster is not empty. This check prevents a single task
 	// on a cluster, which does a yield, from unnecessarily waking up a processor that has no work to do.
@@ -238,9 +238,9 @@ void uCluster::makeTaskReady( uBaseTaskSeq &newTasks, unsigned int n __attribute
 	} else {
 		readyIdleTaskLock.release();
 	} // if
-#else
+	#else
 	readyIdleTaskLock.release();
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 } // uCluster::makeTaskReady
 
 
@@ -324,15 +324,15 @@ void uCluster::processorPoke() {
 void uCluster::createCluster( unsigned int stackSize, const char *name ) {
 	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.createCluster\n", this ); );
 
-#ifdef __U_DEBUG__
-#if __U_LOCALDEBUGGER_H__
-#ifdef __U_MULTI__
+	#ifdef __U_DEBUG__
+	#if __U_LOCALDEBUGGER_H__
+	#ifdef __U_MULTI__
 	debugIgnore = false;
-#else
+	#else
 	debugIgnore = true;
-#endif // __U_MULTI__
-#endif // __U_LOCALDEBUGGER_H__
-#endif // __U_DEBUG__
+	#endif // __U_MULTI__
+	#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_DEBUG__
 
 	numProcessors = 0;
 	idleProcessorsCnt = 0;
@@ -340,17 +340,17 @@ void uCluster::createCluster( unsigned int stackSize, const char *name ) {
 	setName( name );
 	setStackSize( stackSize );
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->checkPoint();
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
 
 	uKernelModule::globalClusterLock->acquire();
 	uKernelModule::globalClusters->addTail( &globalRef );
 	uKernelModule::globalClusterLock->release();
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->createCluster( *this );
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
 
 	if ( readyQueue == nullptr ) {
 		readyQueue = new uDefaultScheduler;
@@ -359,15 +359,15 @@ void uCluster::createCluster( unsigned int stackSize, const char *name ) {
 		defaultReadyQueue = false;
 	} // if
 
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 	NBIO = new uNBIO;
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( uProfiler::uProfiler_registerCluster ) {
 		(*uProfiler::uProfiler_registerCluster)( uProfiler::profilerInstance, *this );
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 } // uCluster::createCluster
 
 
@@ -394,32 +394,32 @@ uCluster::uCluster( uBaseSchedule<uBaseTaskDL> &ReadyQueue, const char *name ) :
 uCluster::~uCluster() {
 	uDEBUGPRT( uDebugPrt( "(uCluster &)%p.~uCluster\n", this ); );
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	if ( uProfiler::uProfiler_deregisterCluster ) {
 		(*uProfiler::uProfiler_deregisterCluster)( uProfiler::profilerInstance, *this );
 	} // if
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 	delete NBIO;
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 
 	uProcessorDL *pr;
 	for ( uSeqIter<uProcessorDL> iter(processorsOnCluster); iter >> pr; ) {
 		if ( pr->processor().getDetach() ) {			// detached ?
 			delete &pr->processor();					// delete detached processor
-#ifdef __U_DEBUG__
+	#ifdef __U_DEBUG__
 		} else {
 			// Must check for processors before tasks because each processor has a processor task, and hence, there is
 			// always a task on the cluster.
 			abort( "Attempt to delete cluster %.256s (%p) with processor %p still on it.\n"
 				   "Possible cause is the processor has not been deleted.",
 				   getName(), this, &(pr->processor()) );
-#endif // __U_DEBUG__
+	#endif // __U_DEBUG__
 		} // if
 	} // for
 
-#ifdef __U_DEBUG__
+	#ifdef __U_DEBUG__
 	uBaseTaskDL *tr;
 	tr = tasksOnCluster.head();
 	if ( tr != nullptr ) {
@@ -427,15 +427,15 @@ uCluster::~uCluster() {
 			   "Possible cause is the task has not been deleted.",
 			   getName(), this, tr->task().getName(), &(tr->task()) );
 	} // if
-#endif // __U_DEBUG__
+	#endif // __U_DEBUG__
 
 	if ( defaultReadyQueue ) {							// delete if cluster allocated it
 		delete readyQueue;
 	} // if
 
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->destroyCluster( *this );
-#endif // __U_LOCALDEBUGGER_H__
+	#endif // __U_LOCALDEBUGGER_H__
 
 	uKernelModule::globalClusterLock->acquire();
 	uKernelModule::globalClusters->remove( &globalRef );

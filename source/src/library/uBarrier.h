@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:28:14 2022
-// Update Count     : 53
+// Last Modified On : Sun Sep  4 21:23:07 2022
+// Update Count     : 57
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,12 +29,12 @@
 
 
 _Mutex _Coroutine uBarrier {
-	uCondition Waiters;
-	unsigned int Total, Count;
+	uCondition waiters_;
+	unsigned int total_, count_;
 
 	void init( unsigned int total ) {
-		Count = 0;
-		Total = total;
+		count_ = 0;
+		total_ = total;
 	} // uBarrier::init
   protected:
 	void main() {
@@ -47,6 +47,8 @@ _Mutex _Coroutine uBarrier {
 		resume();
 	} // uBarrier::last
   public:
+	_Event BlockFailure {};								// raised if waiting tasks flushed
+
 	uBarrier() {										// for use with reset
 		init( 0 );
 	} // uBarrier::uBarrier
@@ -59,34 +61,41 @@ _Mutex _Coroutine uBarrier {
 	} // uBarrier::~uBarrier
 
 	_Nomutex unsigned int total() const {				// total participants in the barrier
-		return Total;
+		return total_;
 	} // uBarrier::total
 
 	_Nomutex unsigned int waiters() const {				// number of waiting tasks
-		return Count;
+		return count_;
 	} // uBarrier::waiters
 
+	void flush() {
+		if ( count_ != 0 ) {
+			for ( ; ! waiters_.empty(); ) {				// restart all waiting tasks
+				_Resume BlockFailure() _At *(uBaseCoroutine *)waiters_.front();
+				waiters_.signal();						// LIFO release, N - 1 cxt switches
+			} // for
+		} // if
+	} // uBarrier::flush
+
 	void reset( unsigned int total ) {
-#ifdef __U_DEBUG__
-		if ( Count != 0 ) {
+		if ( count_ != 0 ) {
 			abort( "(uBarrier &)%p.reset( %d ) : Attempt to reset barrier total while tasks blocked on barrier.", this, total );
 		} // if
-#endif // __U_DEBUG__
 		init( total );
 	} // uBarrier::reset
 
 	virtual void block() {
-		Count += 1;
-		if ( Count < Total ) {							// all tasks arrived ?
-			Waiters.wait();
+		count_ += 1;
+		if ( count_ < total_ ) {						// all tasks arrived ?
+			waiters_.wait( (uintptr_t)&uThisTask() );	// shadow info used by flush
 		} else {
 			last();										// call the last routine
-			for ( ; ! Waiters.empty(); ) {				// restart all waiting tasks
-				Waiters.signal();						// LIFO release, N-1 cxt switches
-//				Waiters.signalBlock();					// FIFO release, 2N cxt switches
+			for ( ; ! waiters_.empty(); ) {				// restart all waiting tasks
+				waiters_.signal();						// LIFO release, N - 1 cxt switches
+//				waiters_.signalBlock();					// FIFO release, 2N cxt switches
 			} // for
 		} // if
-		Count -= 1;
+		count_ -= 1;
 	} // uBarrier::block
 }; // uBarrier
 

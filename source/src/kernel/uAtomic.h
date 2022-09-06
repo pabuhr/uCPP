@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul  3 18:59:27 2022
-// Update Count     : 159
+// Last Modified On : Sun Aug 28 20:49:15 2022
+// Update Count     : 160
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +28,7 @@
 #pragma once
 
 #if defined( __i386__ ) || defined( __x86_64__ )
-static inline unsigned long long int uRdtsc() {
+static inline __attribute__((always_inline)) unsigned long long int uRdtsc() {
 	unsigned long long int result;
 #if defined( __x86_64__ )
 	asm volatile ( "rdtsc\n"
@@ -46,7 +46,7 @@ static inline unsigned long long int uRdtsc() {
 #endif
 
 
-static inline void uFence() {				// fence to prevent code movement
+static inline __attribute__((always_inline)) void uFence() { // fence to prevent code movement
 #if defined(__x86_64)
 	//#define Fence() __asm__ __volatile__ ( "mfence" )
 	#define Fence() __asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" )
@@ -60,7 +60,7 @@ static inline void uFence() {				// fence to prevent code movement
 } // uFence
 
 
-static inline void uPause() {				// pause to prevent excess processor bus usage
+static inline __attribute__((always_inline)) void uPause() { // pause to prevent excess processor bus usage
 #if defined( __i386 ) || defined( __x86_64 )
 	#define Pause() __asm__ __volatile__ ( "pause" ::: )
 #elif defined(__ARM_ARCH)
@@ -71,41 +71,41 @@ static inline void uPause() {				// pause to prevent excess processor bus usage
 } // uPause
 
 
-template< typename T > static inline bool uTestSet( volatile T & lock ) {
+template< typename T > static inline __attribute__((always_inline)) bool uTestSet( volatile T & lock ) {
 	//return __sync_lock_test_and_set( &lock, 1 );
 	return __atomic_test_and_set( &lock, __ATOMIC_ACQUIRE );
 } // uTestSet
 
-template< typename T > static inline void uTestReset( volatile T & lock ) {
+template< typename T > static inline __attribute__((always_inline)) void uTestReset( volatile T & lock ) {
 	//__sync_lock_release( &lock );
 	__atomic_clear( &lock, __ATOMIC_RELEASE );
 } // uTestReset
 
 
-template< typename T > static inline T uFetchAssign( volatile T & loc, T replacement ) {
+template< typename T > static inline __attribute__((always_inline)) T uFetchAssign( volatile T & loc, T replacement ) {
 	//return __sync_lock_test_and_set( &loc, replacement );
 	return __atomic_exchange_n( &loc, replacement, __ATOMIC_ACQUIRE );
 } // uFetchAssign
 
 
-template< typename T > static inline T uFetchAdd( volatile T & counter, int increment ) {
+template< typename T > static inline __attribute__((always_inline)) T uFetchAdd( volatile T & counter, int increment ) {
 	//return __sync_fetch_and_add( &counter, increment );
 	return __atomic_fetch_add( &counter, increment, __ATOMIC_SEQ_CST );
 } // uFetchAdd
 
-template< typename T > static inline T uFetchAdd( volatile T & counter, int increment, int order ) {
+template< typename T > static inline __attribute__((always_inline)) T uFetchAdd( volatile T & counter, int increment, int order ) {
 	//return __sync_fetch_and_add( &counter, increment );
 	return __atomic_fetch_add( &counter, increment, order );
 } // uFetchAdd
 
 
-template< typename T > static inline bool uCompareAssign( volatile T & loc, T comp, T replacement ) {
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssign( volatile T & loc, T comp, T replacement ) {
 	//return __sync_bool_compare_and_swap( &loc, comp, replacement );
 	return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssign
 
 
-template< typename T > static inline bool uCompareAssignValue( volatile T & loc, T & comp, T replacement ) {
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & loc, T & comp, T replacement ) {
 	return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
 

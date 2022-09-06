@@ -376,6 +376,8 @@
   \item finite-state machine, \hyperpage{12}, \hyperpage{27}
   \item fixed-point registers, \hyperpage{43}
   \item floating-point registers, \hyperpage{43}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}, 
+		\hyperpage{39}
   \item frame, \hyperpage{146}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{free}}}\endlgrinde\LGend{}, 
 		\hyperpage{127}, \hyperpage{159}
@@ -1143,6 +1145,8 @@
 		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}, 
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{last}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}, 
@@ -1480,6 +1484,8 @@
 		\hyperpage{145}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setPeriod}}}\endlgrinde\LGend{}, 
 		\hyperpage{145}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}, 
+		\hyperpage{162}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessor}}}\endlgrinde\LGend{}, 
 		\hyperpage{130}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getCluster}}}\endlgrinde\LGend{}, 

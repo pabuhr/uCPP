@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 18:10:31 2022
-// Update Count     : 3330
+// Last Modified On : Fri Aug 19 23:52:28 2022
+// Update Count     : 3335
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -231,7 +231,7 @@ char uKernelModule::bootTaskStorage[sizeof(uBootTask)] __attribute__(( aligned (
 std::filebuf *uKernelModule::cerrFilebuf = nullptr, *uKernelModule::clogFilebuf = nullptr, *uKernelModule::coutFilebuf = nullptr, *uKernelModule::cinFilebuf = nullptr;
 
 // Fake uKernelModule used before uKernelBoot::startup.
-volatile __U_THREAD__ uKernelModule::uKernelModuleData uKernelModule::uKernelModuleBoot;
+volatile __U_THREAD_LOCAL__ uKernelModule::uKernelModuleData uKernelModule::uKernelModuleBoot;
 
 uProcessorSeq *uKernelModule::globalProcessors = nullptr;
 uClusterSeq *uKernelModule::globalClusters = nullptr;
@@ -352,7 +352,7 @@ int uIOFailure::errNo() const {
 //######################### uSpinLock #########################
 
 
-void uBaseSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
+void uSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
 	// No race condition exists for accessing disableIntSpin in the multiprocessor case because this variable is private
 	// to each UNIX process. Also, the spin lock must be acquired after adjusting disableIntSpin because the time
 	// slicing must see the attempt to access the lock first to prevent live-lock on the same processor.  For example,
@@ -409,10 +409,10 @@ void uBaseSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
 #else
 	value = 1;											// lock
 #endif // __U_MULTI__
-} // uBaseSpinLock::acquire_
+} // uSpinLock::acquire_
 
 
-bool uBaseSpinLock::tryacquire() {
+bool uSpinLock::tryacquire() {
 #if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
 	if ( value != 0 ) {									// locked ?
 		abort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
@@ -432,7 +432,7 @@ bool uBaseSpinLock::tryacquire() {
 	value = 1;											// lock
 	return true;
 #endif // __U_MULTI__
-} // uBaseSpinLock::tryacquire
+} // uSpinLock::tryacquire
 
 
 //######################### uLock #########################
@@ -1124,8 +1124,6 @@ namespace UPP {
 	__typeof__( ::pthread_kill ) *RealRtn::pthread_kill;
 	__typeof__( ::pthread_join ) *RealRtn::pthread_join;
 	__typeof__( ::pthread_self ) *RealRtn::pthread_self;
-	__typeof__( ::pthread_setaffinity_np ) *RealRtn::pthread_setaffinity_np;
-	__typeof__( ::pthread_getaffinity_np ) *RealRtn::pthread_getaffinity_np;
 #endif // __U_MULTI__
 
 
@@ -1142,8 +1140,6 @@ namespace UPP {
 		INIT_REALRTN( pthread_self, version );
 		INIT_REALRTN( pthread_kill, version );
 		INIT_REALRTN( pthread_join, version );
-		INIT_REALRTN( pthread_setaffinity_np, version );
-		INIT_REALRTN( pthread_getaffinity_np, version );
 //	INIT_REALRTN( pthread_exit, version );
 #if defined( __i386__ )
 		version = "GLIBC_2.1";
@@ -2187,8 +2183,6 @@ void UPP::uKernelBoot::startup() {
 	// processor. Because the global pointers are initialized, all the references through them in the cluster and
 	// processor constructors work out. (HA!)
 
-//	uKernelModule::systemProcessor = (uProcessor *)&uKernelModule::systemProcessorStorage;
-//	uKernelModule::systemCluster = (uCluster *)&uKernelModule::systemClusterStorage;
 	uKernelModule::systemScheduler = new uDefaultScheduler;
 
 #if ! defined( __U_MULTI__ )
@@ -2400,8 +2394,8 @@ void UPP::uKernelBoot::finishup() {
 	delete uKernelModule::globalProcessorLock;
 	delete uKernelModule::globalAbortLock;
 
-	uHeapControl::finishup();
 	heapManagerDtor();
+	uHeapControl::finishup();
 } // uKernelBoot::finishup
 
 

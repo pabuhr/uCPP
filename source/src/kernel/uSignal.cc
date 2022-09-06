@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 07:53:51 2022
-// Update Count     : 1004
+// Last Modified On : Tue Aug  2 13:29:41 2022
+// Update Count     : 1005
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -114,7 +114,8 @@ namespace UPP {
 		uDEBUGPRT(
 			char buffer[512];
 			uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ),
+						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
 		);
 
 		#ifdef __U_STATISTICS__

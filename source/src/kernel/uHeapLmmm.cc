@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 15:14:59 2022
-// Update Count     : 2112
+// Last Modified On : Sat Sep  3 14:57:23 2022
+// Update Count     : 2127
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,7 +43,7 @@
 #include <sys/sysinfo.h>								// get_nprocs
 
 #define FASTLOOKUP										// use O(1) table lookup from allocation size to bucket size
-#define RETURNSPIN										// toggle spinlock / lockfree stack
+//#define RETURNSPIN										// toggle spinlock / lockfree stack
 #define OWNERSHIP										// return freed memory to owner thread
 
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -286,9 +286,9 @@ static_assert( Heap::NoBucketSizes == sizeof(HeapMaster::bucketSizes) / sizeof(H
 
 
 // Thread-local storage is allocated lazily when the storage is accessed.
-static thread_local size_t PAD1 CALIGN __attribute__(( unused )); // protect false sharing
-static thread_local Heap * heapManager CALIGN;
-static thread_local size_t PAD2 CALIGN __attribute__(( unused )); // protect further false sharing
+static __U_THREAD_LOCAL__ size_t PAD1 CALIGN __attribute__(( unused )); // protect false sharing
+static __U_THREAD_LOCAL__ Heap * heapManager CALIGN;
+static __U_THREAD_LOCAL__ size_t PAD2 CALIGN __attribute__(( unused )); // protect further false sharing
 
 
 // declare helper functions for HeapMaster
@@ -377,9 +377,9 @@ Heap * HeapMaster::getHeap() {
 		heap = heapMaster.heapManagersStorage;
 		heapMaster.heapManagersStorage = heapMaster.heapManagersStorage + 1; // bump next heap
 
-		#ifdef __U_STATISTICS__
+		#if defined( __U_STATISTICS__ ) || defined( __U_DEBUG__ )
 		heap->nextHeapManager = heapMaster.heapManagersList;
-		#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__ || __U_DEBUG__
 		heapMaster.heapManagersList = heap;
 
 		#ifdef __U_STATISTICS__
@@ -802,6 +802,8 @@ static void * manager_extend( size_t size ) {
 
 
 #define SCRUB_SIZE 1024lu
+// Do not use '\xfe' for scrubbing because dereferencing an address composed of it causes a SIGSEGV *without* a valid IP
+// pointer in the interrupt frame.
 #define SCRUB '\xff'
 
 __attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
@@ -809,7 +811,6 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	PROLOG( STAT_NAME );
 
 	assert( heapManager );
-	Heap * heap = heapManager;							// optimization
 	Heap::Storage * block;								// pointer to new block of storage
 
 	// Look up size in the size list.  Make sure the user request includes space for the header that must be allocated
@@ -817,9 +818,12 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	size_t tsize = size + sizeof(Heap::Storage);		// total size needed
 
 	#ifdef __U_STATISTICS__
+	Heap * heap = heapManager;							// optimization
 	heap->stats.counters[STAT_NAME].calls += 1;
 	heap->stats.counters[STAT_NAME].request += size;
 	#endif // __U_STATISTICS__
+
+	uDEBUG( heap->allocUnfreed += size; );
 
 	if ( LIKELY( tsize < heapMaster.mmapStart ) ) {		// small size => sbrk
 		Heap::FreeHeader * freeHead =
@@ -853,9 +857,13 @@ static void * doMalloc( size_t size STAT_PARM ) {
 
 			if ( LIKELY( block == nullptr ) ) {			// return list also empty?
 			#endif // OWNERSHIP
+				// Do not leave kernel thread as manager_extend accesses heapManager.
 				THREAD_GETMEM( This )->disableInterrupts();
 				block = (Heap::Storage *)manager_extend( tsize ); // mutual exclusion on call
 				THREAD_GETMEM( This )->enableInterruptsNoRF();
+
+				// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+				uDEBUG( heap = nullptr; );
 
 				// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first 1024 bytes.
 				uDEBUG( memset( block->data, SCRUB, std::min( SCRUB_SIZE, tsize - sizeof(Heap::Storage) ) ); );
@@ -864,6 +872,10 @@ static void * doMalloc( size_t size STAT_PARM ) {
 				#ifdef __U_STATISTICS__
 				heap->stats.return_pulls += 1;
 				#endif // __U_STATISTICS__
+
+				// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+				uDEBUG( heap = nullptr; );
+
 				freeHead->freeList = block->header.kind.real.next;
 			} // if
 			#endif // OWNERSHIP
@@ -886,6 +898,10 @@ static void * doMalloc( size_t size STAT_PARM ) {
 		THREAD_GETMEM( This )->disableInterrupts();
 		block = (Heap::Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
 		THREAD_GETMEM( This )->enableInterruptsNoRF();
+
+		// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+		uDEBUG( heap = nullptr; );
+
 		if ( UNLIKELY( block == MAP_FAILED ) ) {		// failed ?
 			if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, tsize ); // no memory
 			// Do not call strerror( errno ) as it may call malloc.
@@ -903,8 +919,6 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	assert( ((uintptr_t)addr & (uAlign() - 1)) == 0 );	// minimum alignment ?
 
 	#ifdef __U_DEBUG__
-	heap->allocUnfreed += size;
-
 	if ( UPP::uHeapControl::traceHeap() ) {
 		enum { BufferSize = 64 };
 		char helpText[BufferSize];
@@ -938,6 +952,13 @@ static void doFree( void * addr ) {
 	size_t rsize = header->kind.real.size;				// optimization
 	#endif // __U_STATISTICS__ || __U_DEBUG__
 
+	#ifdef __U_STATISTICS__
+	heap->stats.free_storage_request += rsize;
+	heap->stats.free_storage_alloc += size;
+	#endif // __U_STATISTICS__
+
+	uDEBUG( heap->allocUnfreed -= rsize; );
+
 	if ( UNLIKELY( mapped ) ) {							// mmapped ?
 		#ifdef __U_STATISTICS__
 		heap->stats.munmap_calls += 1;
@@ -945,9 +966,11 @@ static void doFree( void * addr ) {
 		heap->stats.munmap_storage_alloc += size;
 		#endif // __U_STATISTICS__
 
-		THREAD_GETMEM( This )->disableInterrupts();
+		// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+		uDEBUG( heap = nullptr; );
+
+		// Does not matter where this storage is freed.
 		int ret = munmap( header, size );
-		THREAD_GETMEM( This )->enableInterruptsNoRF();
 		if ( UNLIKELY( ret == -1 ) ) {
 			abort( "attempt to deallocate storage %p not allocated or with corrupt header.\n"
 				   "Possible cause is invalid pointer.",
@@ -955,16 +978,17 @@ static void doFree( void * addr ) {
 		} // if
 	} else {
 		#ifdef __U_DEBUG__
-		// Scrub old memory so subsequent usages might fail. Only scrub the first/last 1024 bytes.
+		THREAD_GETMEM( This )->disableInterrupts();
+		// Scrub old memory so subsequent usages might fail. Only scrub the first/last SCRUB_SIZE bytes.
 		char * data = ((Heap::Storage *)header)->data;	// data address
 		size_t dsize = size - sizeof(Heap::Storage);	// data size
-		if ( dsize <= SCRUB_SIZE ) {
+		if ( dsize <= SCRUB_SIZE * 2 ) {
 			memset( data, SCRUB, dsize );				// scrub all
 		} else {
 			memset( data, SCRUB, SCRUB_SIZE );			// scrub front
-			size_t ssize = std::min( SCRUB_SIZE, dsize - SCRUB_SIZE ); // scrub size
-			memset( data + dsize - ssize, SCRUB, ssize ); // scrub back
+			memset( data + dsize - SCRUB_SIZE, SCRUB, SCRUB_SIZE ); // scrub back
 		} // if
+		THREAD_GETMEM( This )->enableInterruptsNoRF();
 		#endif // __U_DEBUG__
 
 		if ( LIKELY( heap == freeHead->homeManager ) ) { // belongs to this thread
@@ -998,17 +1022,13 @@ static void doFree( void * addr ) {
 			heap->stats.return_storage_request += rsize;
 			heap->stats.return_storage_alloc += size;
 			#endif // __U_STATISTICS__
+
+			// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+			uDEBUG( heap = nullptr; );
 		} // if
 	} // if
 
-	#ifdef __U_STATISTICS__
-	heap->stats.free_storage_request += rsize;
-	heap->stats.free_storage_alloc += size;
-	#endif // __U_STATISTICS__
-
 	#ifdef __U_DEBUG__
-	heap->allocUnfreed -= rsize;
-
 	if ( UPP::uHeapControl::traceHeap() ) {
 		char helpText[64];
 		int len = snprintf( helpText, sizeof(helpText), "Free( %p ) size %zu allocated %zu\n", addr, rsize, size );

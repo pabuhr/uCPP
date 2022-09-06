@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jul 25 09:05:17 2022
-%% Update Count     : 8434
+%% Last Modified On : Mon Sep  5 14:44:41 2022
+%% Update Count     : 8441
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2564,14 +2564,15 @@ The type %(uBarrier%)\index{uBarrier@%(uBarrier%)} defines a barrier:
 %[
 _Mutex _Coroutine uBarrier {
   protected:
-	void main() {
-		for ( ;; ) { suspend(); }
-	}
+	void main() { for ( ;; ) { suspend(); } }
 	virtual void last() { resume(); }
   public:
+	_Event BlockFailure {};								// raised if waiting tasks flushed
+
 	uBarrier( unsigned int total );
 	_Nomutex unsigned int total() const;
 	_Nomutex unsigned int waiters() const;
+	void flush();
 	void reset( unsigned int total );
 	virtual void block();
 };
@@ -2581,6 +2582,7 @@ y = new uBarrier( 20 );
 \index{uBarrier@%(uBarrier%)!last@%(last%)}%
 \index{uBarrier@%(uBarrier%)!total@%(total%)}%
 \index{uBarrier@%(uBarrier%)!waiters@%(waiters%)}%
+\index{uBarrier@%(uBarrier%)!flush@%(flush%)}%
 \index{uBarrier@%(uBarrier%)!reset@%(reset%)}%
 \index{uBarrier@%(uBarrier%)!block@%(block%)}%
 The declarations create two barrier variables and initializes the first to work with 10 tasks and the second to work with 20 tasks.
@@ -2612,6 +2614,8 @@ A 0 initialization value implies the barrier does not cause any task to wait, bu
 \end{prefix}
 
 The member routines %(total%)\index{total@%(total%)} and %(waiters%)\index{waiters@%(waiters%)} return the total number of tasks participating in the synchronization and the total number of tasks currently waiting at the barrier, respectively.
+The member routine %(flush%)\index{flush@%(flush%)} raises the non-local exception %(BlockFailure%) at each waiting task in the barrier and unblocks it.
+These tasks unblock in member %(block%) and immediately raise exception %(BlockFailure%).
 The member routine %(reset%)\index{reset@%(reset%)} changes the total number of tasks participating in the synchronization;
 no tasks may be waiting in the barrier when the total is changed.
 %(block%)\index{block@%(block%)} is called to synchronize with %(total%) tasks;
@@ -5029,7 +5033,7 @@ The parameter for member routine %(status%) is explained in the UNIX manual entr
 (The first parameter to the UNIX %(stat%) routine is unnecessary, as it is provided implicitly by the %(uFile%) object.)
 Because a file object is still inaccessible after a connection is made, there are no member routines to access its contents.
 
-To use the interface, include the file:
+To use the file interface in a \uC program, include the file:
 %[
 #include <uFile.h>
 %]
@@ -5220,7 +5224,7 @@ The initial remembered (default) address can be set when the client socket-endpo
 A similar convenience feature exists for the server socket-endpoint, where the last client address it receives a message from is remembered and can be implicitly used to send a message directly back to that client.
 
 \begin{sloppypar}
-To use the interface in a \uC program, include the file:
+To use the socket interface in a \uC program, include the file:
 %[
 #include <uSocket.h>
 %]
@@ -6824,6 +6828,7 @@ uBaseEvent
 			uMutexFailure::EntryFailure
 			uMutexFailure::RendezvousFailure
 		uCondition::WaitingFailure
+		uBarrier::BlockFailure
 		uBaseCoroutine::Failure
 			uBaseCoroutine::UnhandledException
 		uPthreadable::Failure
@@ -10850,6 +10855,12 @@ int main() {
 \label{f:ConcurrentPRNG}
 \end{figure}
 \end{itemize}
+
+To use the PRNG in a \uC program, include the file:
+%[
+#include <uPRNG.h>
+%]
+\index{uPRNG.h@%(uPRNG.h%)}%
 
 
 \chapter{Data Structure Library (DSL)}
