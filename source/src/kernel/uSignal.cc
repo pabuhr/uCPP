@@ -37,6 +37,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <ucontext.h>
+#include <memory>
+#include <cstdlib>										// std::aligned_alloc
 
 
 namespace UPP {
@@ -278,11 +280,11 @@ namespace UPP {
 		// print a stack trace that uses substantial stack space.
 
 		#define MINSTKSZ SIGSTKSZ * 8
-		static char stack[MINSTKSZ] __attribute__(( aligned (16) ));
+		static std::unique_ptr<char[], decltype(std::free)*> stack { static_cast<char*>(std::aligned_alloc(16, MINSTKSZ)), std::free };
 		static stack_t ss;
-		uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack, SIGSTKSZ, stack + MINSTKSZ ); );
+		uDEBUGPRT( uDebugPrt( "uSigHandlerModule, stack:%p, size:%d, %p\n", stack.get(), SIGSTKSZ, stack.get() + MINSTKSZ ); );
 
-		ss.ss_sp = stack;
+		ss.ss_sp = stack.get();
 		ss.ss_size = MINSTKSZ;
 		ss.ss_flags = 0;
 		if ( sigaltstack( &ss, nullptr ) == -1 ) {
