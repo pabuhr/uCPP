@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  5 14:53:36 2022
-// Update Count     : 6219
+// Last Modified On : Fri Sep  9 15:00:52 2022
+// Update Count     : 6220
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -86,16 +86,16 @@
 // The GNU Libc defines C library functions with throw () when compiled under C++, to enable optimizations.  When uC++
 // overrides these functions, it must provide identical exception specifications.
 
+#if ! defined( __THROW )
+// Certain library functions have had __THROW removed from their prototypes to support the NPTL implementation of
+// pthread cancellation. To compile with a pre-NPTL version of the header files use
 #define __THROW throw ()
-	// Certain library functions have had __THROW removed from their prototypes to support the NPTL implementation of
-	// pthread cancellation. To compile with a pre-NPTL version of the header files use
-	//
-	//   #define __OLD_THROW throw ()
+#endif // ! __THROW
 #define __OLD_THROW
 
 #if ! defined( _LIBC_REENTRANT )
-#   define _LIBC_REENTRANT
-#endif
+#define _LIBC_REENTRANT
+#endif // ! _LIBC_REENTRANT
 #include <cerrno>
 
 #include <cstddef>										// ptrdiff_t

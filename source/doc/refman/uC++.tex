@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Sep  5 14:44:41 2022
-%% Update Count     : 8441
+%% Last Modified On : Wed Sep  7 13:35:28 2022
+%% Update Count     : 8442
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -10780,8 +10780,8 @@ The PRNG global routines and companion task members are for concurrent programmi
 \CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\L{\LB{\C{}\1\1\0FASTER,\0task\0members}}
 \CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\endlgrinde\LGend
 The only difference between the two sets of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}}}\endlgrinde\LGend{} routines is performance.
 

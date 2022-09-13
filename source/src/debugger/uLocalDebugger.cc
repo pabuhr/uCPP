@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  5 08:09:21 2022
-// Update Count     : 722
+// Last Modified On : Fri Sep  9 14:59:25 2022
+// Update Count     : 723
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -832,7 +832,9 @@ void uLocalDebugger::abortApplication() {
 	pdu.createNabortApplication( uThisProcessor().getPid() );
 	send( pdu );
 	while ( ! abort_confirmed ) {						// busy wait for a response
-		sigpause( 0 );
+		sigset_t mask;
+		sigemptyset( &mask );
+		sigsuspend( &mask );							// block processor and no signals are blocked
 	} // while
 
 	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.abortApplication, done\n", __LINE__, this ); );

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  2 13:29:41 2022
-// Update Count     : 1005
+// Last Modified On : Fri Sep  9 15:01:51 2022
+// Update Count     : 1006
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -271,6 +271,20 @@ namespace UPP {
 
 
 	uSigHandlerModule::uSigHandlerModule() {
+		// SKULLDUGGERY: In Ubuntu 22.04, someone augmented signal.h to allow SIGSTKSZ to be "sysconf(_SC_SIGSTKSZ)" in
+		// sigstksz.h, as well as 8192 in sigstack.h. HOWEVER, they forgot to provide a mechanism to tell signal.h to
+		// use sigstack.h rather than sigstksz.h. (I'm not happy.) By undefining _GNU_SOURCE before signal.h and
+		// redefining it afterwards, you can get 8192, but then nothing works correctly inside of signal.h without
+		// _GNU_SOURCE defined.  So what is needed is a way to get signal.h to use sigstack.h WITH _GNU_SOURCE defined.
+		// Basically something is wrong with features.h and its use in signal.h.
+
+		// Now don't even think about dynamically allocating the storage for this stack, because C++ has no orderings of
+		// ctor/dtor among translation units, so the dynamic allocation might occur AFTER an error occurs at boot time
+		// and attempt to deliver the signal on uninitialized signal stack. So currently, I'm hard-coding 8192 until
+		// whoever made this change fixes the problem.
+		#undef SIGSTKSZ
+		#define SIGSTKSZ 8192
+
 		// As a precaution (and necessity), errors that result in termination are delivered on a separate stack because
 		// task stacks might be very small (4K) and the signal delivery corrupts memory to the point that a clean
 		// shutdown is impossible. Also, when a stack overflow encounters the non-accessible sentinel page (debug only)

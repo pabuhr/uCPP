@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Sep  5 14:44:41 2022
-%% Update Count     : 8441
+%% Last Modified On : Wed Sep  7 13:35:28 2022
+%% Update Count     : 8442
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -10780,8 +10780,8 @@ uint32_t prng( uint32_t u );						// [0,u)
 uint32_t prng( uint32_t l, uint32_t u );			// [l,u]
 // FASTER, task members
 uint32_t \(\BF{\)uBaseTask::\(}\)prng();			// [0,UINT_MAX]
-uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t u ); // [0,u)
-uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t l, uint32_t u ); // [l,u]
+uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t u );\(}\Tab{52}{\)// [0,u)
+uint32_t \(\BF{\)uBaseTask::\(}\)prng( uint32_t l, uint32_t u );\(}\Tab{52}{\)// [l,u]
 %]
 The only difference between the two sets of %(prng%) routines is performance.
 
