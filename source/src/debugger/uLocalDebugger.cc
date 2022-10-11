@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep  9 14:59:25 2022
-// Update Count     : 723
+// Last Modified On : Sun Oct  2 20:52:38 2022
+// Update Count     : 725
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -60,8 +60,8 @@ bool uLocalDebugger::abort_confirmed = false;
 // KEEP CONSISTENT WITH THE CORRESPONDING FUNCTIONS IN uC++.h
 // REASON : ACHIEVE OPTIMIZATION WITHOUT TURNING ON THE COMPILER'S
 // OPTIMIZATION FLAG (-O) TO MAKE INLINE FUNCTIONS REALLY INLINE
-#define U_THIS_TASK		THREAD_GETMEM( activeTask)		// uThisTask()
-#define U_THIS_CLUSTER	THREAD_GETMEM( activeCluster)	// uThisCluster()
+#define U_THIS_TASK		uKernelModule::uKernelModuleBoot.activeTask	// uThisTask()
+#define U_THIS_CLUSTER	uKernelModule::uKernelModuleBoot.activeCluster // uThisCluster()
 
 // include now, so that everything is already declared
 #include <uLocalDebuggerHandler.h>

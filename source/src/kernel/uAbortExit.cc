@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct 26 11:54:31 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 25 07:17:16 2022
-// Update Count     : 670
+// Last Modified On : Fri Sep 30 16:02:30 2022
+// Update Count     : 671
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -199,7 +199,7 @@ void uAbort( uSigHandlerModule::SignalAbort signalAbort, const char fmt[], va_li
 	// In debugger mode, tell the global debugger to stop the application.
 
 #if __U_LOCALDEBUGGER_H__
-	if ( ! THREAD_GETMEM( disableInt ) && ! THREAD_GETMEM( disableIntSpin ) ) {
+	if ( ! uKernelModuleBoot::uKernelModuleData.disableInt && ! uKernelModuleBoot::uKernelModuleData.disableIntSpin ) {
 		if ( uLocalDebugger::uLocalDebuggerActive ) uLocalDebugger::uLocalDebuggerInstance->abortApplication();
 	} // if
 #endif // __U_LOCALDEBUGGER_H__

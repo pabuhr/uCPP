@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 28 20:52:57 2022
-// Update Count     : 630
+// Last Modified On : Sun Oct  2 19:10:07 2022
+// Update Count     : 633
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -61,7 +61,7 @@ void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
 
 
 void uCluster::processorPause() {
-	assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 
 	if ( uThisProcessor().getPreemption() != 0 ) {		// optimize out UNIX call if possible
 		uThisProcessor().setContextSwitchEvent( 0 );	// turn off preemption or it keeps waking the UNIX processor
@@ -85,14 +85,14 @@ void uCluster::processorPause() {
 			abort( "internal error, sigprocmask" );
 		} // if
 
-		if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
+		if ( ! uKernelModule::uKernelModuleBoot.RFinprogress && uKernelModule::uKernelModuleBoot.RFpending ) { // need to start roll forward ?
 			readyIdleTaskLock.release();
 
 			if ( sigprocmask( SIG_SETMASK, &old_mask, nullptr ) == -1 ) { // restored old signal mask over new one
 				abort( "internal error, sigprocmask" );
 			} // if
 			uDEBUGPRT( uDebugPrt( "(uCluster &)%p.processorPause, found roll forward %d %d %d\n",
-								  this, THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( disableIntSpin ) ); );
+								  this, uKernelModule::uKernelModuleBoot.RFinprogress, uKernelModule::uKernelModuleBoot.RFpending, uKernelModule::uKernelModuleBoot.disableIntSpin ); );
 		} else {
 			makeProcessorIdle( uThisProcessor() );
 			readyIdleTaskLock.release();
@@ -124,7 +124,7 @@ void uCluster::processorPause() {
 	// rollForward is called by uProcessorKernel::main explicitly during spinning or implicitly by enableInterrupts on
 	// the backside of the next scheduled task.
 
-	assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 } // uCluster::processorPause
 
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 10:11:14 2022
-// Update Count     : 1508
+// Last Modified On : Sun Oct  2 18:15:22 2022
+// Update Count     : 1510
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -242,7 +242,7 @@ namespace UPP {
 		uFetchAdd( Statistics::select_syscalls, 1 );
 		Statistics::select_pending = pending;
 #endif // __U_STATISTICS__
-		assert( THREAD_GETMEM( disableInt ) );
+		assert( uKernelModule::uKernelModuleBoot.disableInt );
 		// maxFD : most significant file descriptor in master mask
 		// mRFDs, mWFDs : read/write masks
 		// mEFDs : optional exception mask, i.e., do not pass through system call unless necessary (very rare)
@@ -275,7 +275,7 @@ namespace UPP {
 		// affect some kernel data structures.  Second, preemption is turned off because it is now controlled by the
 		// "select" timeout.
 
-		THREAD_GETMEM( This )->disableInterrupts();
+		uKernelModule::uKernelModuleData::disableInterrupts();
 
 		// disable context switch
 		if ( uThisProcessor().getPreemption() != 0 ) {	// optimize out UNIX call if possible
@@ -307,7 +307,7 @@ namespace UPP {
 			} // if
 
 			// check if any interrupt occured before interrupts disabled (i.e., interrupt won race)
-			if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
+			if ( ! uKernelModule::uKernelModuleBoot.RFinprogress && uKernelModule::uKernelModuleBoot.RFpending ) { // need to start roll forward ?
 				// interrupt slipped through, so release mutual exclusion, reset the signal mask, and allow tasks to
 				// execute after I/O polling.
 				uThisCluster().readyIdleTaskLock.release();
@@ -362,7 +362,7 @@ namespace UPP {
 
 		// rollForward is called before exit by enableInterrupts
 
-		THREAD_GETMEM( This )->enableInterrupts();		// does necessary roll forward
+		uKernelModule::uKernelModuleData::enableInterrupts(); // does necessary roll forward
 
 		return checkIOEnd( node, terrno );				// acquires mutual exclusion
 	} // uNBIO::pollIO

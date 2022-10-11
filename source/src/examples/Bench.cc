@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Feb 15 22:03:16 1990
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun May 23 15:09:43 2021
-// Update Count     : 494
+// Last Modified On : Fri Sep 30 15:35:18 2022
+// Update Count     : 495
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -641,7 +641,7 @@ int main() {
 
 	const int NoOfTimes =
 		#if defined( __U_DEBUG__ )						// takes longer so run fewer iterations
-		100000;
+		1000000;
 		#else
 		10000000;
 		#endif // __U_DEBUG__

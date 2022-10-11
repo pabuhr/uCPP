@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 28 13:31:12 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 19 23:55:50 2022
-// Update Count     : 147
+// Last Modified On : Sat Oct  1 12:22:42 2022
+// Update Count     : 148
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,7 @@ namespace UPP {
 	uBootTask::uBootTask() : uBaseTask( *uKernelModule::systemCluster ) {
 		// SKULLDUGGERY: Explicitly make this task look like the currently executing task.
 
-		THREAD_SETMEM( activeTask, this );
+		uKernelModule::uKernelModuleBoot.activeTask = this;
 
 		// SKULLDUGGERY: Remove "main" from the suspend stack so it is never executed. This trick makes this task into a
 		// pseudo-task to execute the global constructor and destructor lists.

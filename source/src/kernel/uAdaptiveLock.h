@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 19 23:55:34 2022
-// Update Count     : 48
+// Last Modified On : Sat Oct  1 12:24:43 2022
+// Update Count     : 50
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,7 +40,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	//     if tryacquireInternal returns true, "spin" is released
 	bool tryacquireInternal( uBaseTask &task, int spins __attribute__(( unused )) ) {
 #ifdef __U_DEBUG__
-		assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+		assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 #endif // __U_DEBUG__
 
 		if ( owner_ == &task ) {
@@ -197,7 +197,7 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 
 	void release() {
 #ifdef __U_DEBUG__
-		assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+		assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 		uBaseTask &task = uThisTask();
 		if ( owner_ != &uThisTask() ) {

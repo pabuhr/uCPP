@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 27 15:54:33 2021
-// Update Count     : 846
+// Last Modified On : Fri Sep 30 09:48:21 2022
+// Update Count     : 858
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -374,7 +374,7 @@ int uEHM::poll() {										// handle pending nonlocal exceptions
 	uBaseCoroutine & coroutine = uThisCoroutine();		// optimzation
   if ( coroutine.cancelInProgress() ) return 0;			// skip async handling if cancelling
 	if ( coroutine.getCancelState() != uBaseCoroutine::CancelDisabled && coroutine.cancelled() ) { // check for cancellation first, but only if it is enabled	
-		coroutine.unwindStack();			// not cancelling, so unwind stack
+		coroutine.unwindStack();						// not cancelling, so unwind stack
 		// CONTROL NEVER REACHES HERE!
 		assert( false );
 	} // if

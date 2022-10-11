@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr  2 08:19:37 2022
-// Update Count     : 5057
+// Last Modified On : Mon Oct  3 17:59:26 2022
+// Update Count     : 5069
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2027,7 +2027,8 @@ static bool try_statement( symbol_t * symbol, token_t * label[], int cnt ) {
 			// If resume clauses but no catch clause for a try block, remove the "try" keyword before the compound
 			// statement because a try block cannot exist without a catch clause.
 			if ( catch_clauses == 0 && ( resume_clauses > 0 || finally_clauses > 0 ) ) {
-				start->remove_token();
+				start->remove_token();					// remove "try"
+				start = start->aft;						// backup to the inserted '{' before "try"
 			} // if
 
 			prefix_labels( start, ahead, label, cnt, false );

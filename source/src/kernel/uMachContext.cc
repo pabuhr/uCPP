@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 19 18:13:10 2022
-// Update Count     : 968
+// Last Modified On : Sun Oct  2 18:14:50 2022
+// Update Count     : 970
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,14 +58,14 @@ namespace UPP {
 		// Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
 		This.setState( uBaseCoroutine::Active );		// set state of next coroutine to active
-		THREAD_GETMEM( This )->enableInterrupts();
+		uKernelModule::uKernelModuleData::enableInterrupts();
 
 		#ifdef __U_PROFILER__
 		if ( uThisTask().profileActive && uProfiler::uProfiler_postallocateMetricMemory ) {
 			(*uProfiler::uProfiler_postallocateMetricMemory)( uProfiler::profilerInstance, uThisTask() );
 		} // if
 		// also appears in uBaseCoroutine::corCxtSw
-		if ( ! THREAD_GETMEM( disableInt ) && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
+		if ( ! uKernelModule::uKernelModuleBoot.disableInt && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
 			(*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
 		} // if
 		#endif // __U_PROFILER__
@@ -108,7 +108,7 @@ namespace UPP {
 		// Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
 		#if defined(__U_MULTI__)
-		assert( THREAD_GETMEM( activeTask ) == &This );
+		assert( uKernelModule::uKernelModuleBoot.activeTask == &This );
 		#endif // __U_MULTI__
 
 		errno = 0;										// reset errno for each task
@@ -117,7 +117,7 @@ namespace UPP {
 
 		// At this point, execution is on the stack of the new coroutine or task that has just been switched to by the
 		// kernel.  Therefore, interrupts can legitimately occur now.
-		THREAD_GETMEM( This )->enableInterrupts();
+		uKernelModule::uKernelModuleData::enableInterrupts();
 
 //		uHeapControl::startTask();
 

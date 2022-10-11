@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 18 13:04:26 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 23 11:37:45 2022
-// Update Count     : 159
+// Last Modified On : Sun Oct  2 13:50:13 2022
+// Update Count     : 160
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ static char buffer[BufferSize];
 // SKULLDUGGERY: The debug spin lock has to be available at the same time as the heap routines to allow debugging
 // them. Since the initial value of a spin lock are zero and static storage is initialized to zero, this works out.
 
-uNoCtor<uSpinLock> uDebugLock;
+uNoCtor<uSpinLock, false> uDebugLock;
 
 #if defined( __U_MULTI__ )
 	// null if called early in boot sequence

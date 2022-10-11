@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 19 23:52:28 2022
-// Update Count     : 3335
+// Last Modified On : Thu Oct  6 21:46:49 2022
+// Update Count     : 3349
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -218,8 +218,8 @@ uSpinLock *uKernelModule::globalAbortLock = nullptr;
 uSpinLock *uKernelModule::globalProcessorLock = nullptr;
 uSpinLock *uKernelModule::globalClusterLock = nullptr;
 uDefaultScheduler *uKernelModule::systemScheduler = nullptr;
-uNoCtor<uProcessor> uKernelModule::systemProcessor;
-uNoCtor<uCluster> uKernelModule::systemCluster;
+uNoCtor<uProcessor, false> uKernelModule::systemProcessor;
+uNoCtor<uCluster, false> uKernelModule::systemCluster;
 UPP::uBootTask *uKernelModule::bootTask = (uBootTask *)&bootTaskStorage;
 uSystemTask *uKernelModule::systemTask = nullptr;
 uCluster *uKernelModule::userCluster = nullptr;
@@ -349,92 +349,6 @@ int uIOFailure::errNo() const {
 } // uIOFailure::errNo
 
 
-//######################### uSpinLock #########################
-
-
-void uSpinLock::acquire_( bool rollforward __attribute__(( unused )) ) {
-	// No race condition exists for accessing disableIntSpin in the multiprocessor case because this variable is private
-	// to each UNIX process. Also, the spin lock must be acquired after adjusting disableIntSpin because the time
-	// slicing must see the attempt to access the lock first to prevent live-lock on the same processor.  For example,
-	// one task acquires the ready queue lock, a time slice occurs, and it does not appear that the current task is in
-	// the kernel because disableIntSpin is not set so the signal handler tries to yield.  However, the ready queue lock
-	// is held so the yield live-locks. There is a similar situation on releasing the lock.
-
-	enum { SPIN_START = 4,
-#if defined( __i386__ ) || defined( __x86_64__ )
-		   SPIN_END = 4 * 1024,							// fewer iterations due to "pause" instruction throttling to memory speed
-#else
-		   SPIN_END = 64 * 1024,
-#endif
-	};
-
-#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
-	if ( value != 0 ) {									// locked ?
-		abort( "(uSpinLock &)%p.acquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
-	} // if
-#endif // __U_DEBUG__ && ! __U_MULTI__
-
-	THREAD_GETMEM( This )->disableIntSpinLock();
-
-#ifdef __U_MULTI__
-	int spin = SPIN_START;
-	for ( ;; ) {										// poll for lock
-	  if ( value == 0 && uTestSet( value ) == 0 ) break;
-		if ( rollforward ) {							// allow timeslicing during spinning
-			THREAD_GETMEM( This )->enableIntSpinLockNoRF();
-		} else {
-			THREAD_GETMEM( This )->enableIntSpinLock();
-		} // if
-
-		for ( int i = 0; i < spin; i += 1 ) {			// exponential spin
-#if defined( __i386__ ) || defined( __x86_64__ )
-			asm volatile( "pause" );
-#endif
-			if ( uKernelModule::globalSpinAbort ) _exit( EXIT_FAILURE ); // close down in progress, shutdown immediately!
-#ifdef __U_STATISTICS__
-			uFetchAdd( Statistics::spins, 1 );
-#endif // __U_STATISTICS__
-		} // for
-		spin += spin;									// powers of 2
-		if ( spin > SPIN_END ) {
-			spin = SPIN_START;							// prevent overflow
-//			sched_yield();								// release CPU so someone else can execute
-#ifdef __U_STATISTICS__
-			uFetchAdd( Statistics::spin_sched, 1 );
-#endif // __U_STATISTICS__
-		} // if
-		THREAD_GETMEM( This )->disableIntSpinLock();
-	} // for
-
-#else
-	value = 1;											// lock
-#endif // __U_MULTI__
-} // uSpinLock::acquire_
-
-
-bool uSpinLock::tryacquire() {
-#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
-	if ( value != 0 ) {									// locked ?
-		abort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
-	} // if
-#endif // __U_DEBUG__ && ! __U_MULTI__
-
-	THREAD_GETMEM( This )->disableIntSpinLock();
-
-#ifdef __U_MULTI__
-	if ( uTestSet( value ) == 0 ) {						// get the lock ?
-		return true;
-	} else {
-		THREAD_GETMEM( This )->enableIntSpinLock();
-		return false;
-	} // if
-#else
-	value = 1;											// lock
-	return true;
-#endif // __U_MULTI__
-} // uSpinLock::tryacquire
-
-
 //######################### uLock #########################
 
 
@@ -499,7 +413,7 @@ uDEBUG(
 
 
 void uMutexLock::acquire() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 	spinLock.acquire();
@@ -524,7 +438,7 @@ void uMutexLock::acquire() {
 
 
 bool uMutexLock::tryacquire() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	if ( count ) return false;							// don't own lock yet
 
@@ -543,7 +457,7 @@ bool uMutexLock::tryacquire() {
 
 
 void uMutexLock::release() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	spinLock.acquire();
 	uDEBUG(
@@ -608,7 +522,7 @@ uDEBUG(
 
 
 void uOwnerLock::acquire() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 	spinLock.acquire();
@@ -638,7 +552,7 @@ void uOwnerLock::acquire() {
 
 
 bool uOwnerLock::tryacquire() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 
@@ -664,7 +578,7 @@ bool uOwnerLock::tryacquire() {
 
 
 void uOwnerLock::release() {
-	assert( uKernelModule::initialized ? ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 : true );
+	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
 
 	spinLock.acquire();
 	uDEBUG(
@@ -1153,9 +1067,9 @@ namespace UPP {
 
 extern "C" int dl_iterate_phdr( int (*callback)( dl_phdr_info *, size_t, void * ), void *data ) {
 	assert( RealRtn::dl_iterate_phdr != nullptr );
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 	int ret = RealRtn::dl_iterate_phdr( callback, data );
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 	return ret;
 } // dl_iterate_phdr
 
@@ -1177,7 +1091,6 @@ void uKernelModule::startup() {
 
 
 void uKernelModule::uKernelModuleData::ctor() volatile {
-	This = this;
 	kernelModuleInitialized = true;
 
 	activeProcessor = &uKernelModule::systemProcessor;
@@ -1197,8 +1110,8 @@ void uKernelModule::uKernelModuleData::ctor() volatile {
 void uKernelModule::rollForward( bool inKernel ) {
 	uDEBUGPRT( char buffer[256];
 			   uDebugPrtBuf( buffer, "rollForward( %d ), disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d, RFpending:%d, RFinprogress:%d\n",
-							 inKernel, THREAD_GETMEM(disableInt), THREAD_GETMEM(disableIntCnt), THREAD_GETMEM(disableIntSpin), THREAD_GETMEM(disableIntSpinCnt),
-							 THREAD_GETMEM(RFpending), THREAD_GETMEM(RFinprogress) ); );
+							 inKernel, uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uKernelModule::uKernelModuleBoot.disableIntSpin, uKernelModule::uKernelModuleBoot.disableIntSpinCnt,
+							 uKernelModule::uKernelModuleBoot.RFpending, uKernelModule::uKernelModuleBoot.RFinprogress ); );
 
 #ifdef __U_STATISTICS__
 	uFetchAdd( UPP::Statistics::roll_forward, 1 );
@@ -1211,15 +1124,15 @@ void uKernelModule::rollForward( bool inKernel ) {
 		for ( uEventListPop iter( *uKernelModule::systemProcessor->events, inKernel ); iter >> event; );
 #if defined( __U_MULTI__ )
 	} else {											// other processors only deal with context-switch
-		THREAD_SETMEM( RFinprogress, false );
+		uKernelModule::uKernelModuleBoot.RFinprogress = false;
 		if ( ! inKernel ) {								// not in kernel ?
-			THREAD_SETMEM( RFpending, false );
+			uKernelModule::uKernelModuleBoot.RFpending = false;
 			uThisTask().uYieldInvoluntary();
 		} // if
 	} // if
 #endif // __U_MULTI__
 
-	uDEBUGPRT( uDebugPrtBuf( buffer, "rollForward, leaving, RFinprogress:%d\n", THREAD_GETMEM( RFinprogress ) ); );
+	uDEBUGPRT( uDebugPrtBuf( buffer, "rollForward, leaving, RFinprogress:%d\n", uKernelModule::uKernelModuleBoot.RFinprogress ); );
 } // uKernelModule::rollForward
 
 
@@ -2168,7 +2081,7 @@ void UPP::uKernelBoot::startup() {
 	uKernelModule::globalClusterLock = new uSpinLock;
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup1, disableInt:%d, disableIntCnt:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ) ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt ); );
 
 	// initialize kernel signal handlers
 
@@ -2201,7 +2114,7 @@ void UPP::uKernelBoot::startup() {
 	// create processor kernel
 
 	uProcessorKernel *pk = new uProcessorKernel;
-	THREAD_SETMEM( processorKernelStorage, pk );
+	activeProcessorKernel = pk;
 
 	// start boot task, which executes the global constructors and destructors
 
@@ -2271,7 +2184,7 @@ void UPP::uKernelBoot::startup() {
 	uDEBUG( uKernelModule::initialized = true; );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
 
 
 	uKernelModule::bootTask->migrate( *uKernelModule::userCluster );
@@ -2288,7 +2201,7 @@ void UPP::uKernelBoot::startup() {
 	std::cin.rdbuf( uKernelModule::cinFilebuf );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
 } // uKernelBoot::startup
 
 
@@ -2296,7 +2209,7 @@ extern void heapManagerDtor();
 
 void UPP::uKernelBoot::finishup() {
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
 
 	// Flush standard output streams as required by 27.4.2.1.6
 
@@ -2318,7 +2231,7 @@ void UPP::uKernelBoot::finishup() {
 	uKernelModule::bootTask->migrate( *uKernelModule::systemCluster );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
 
 	delete uKernelModule::userProcessors[0];
 	delete [] uKernelModule::userProcessors;
@@ -2330,12 +2243,12 @@ void UPP::uKernelBoot::finishup() {
 	// Turn off uOwnerLock checking.
 	uDEBUG( uKernelModule::initialized = false; );
 
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 	// Block all signals as system can no longer handle them, and there may be pending timer values.
 	if ( sigprocmask( SIG_BLOCK, &UPP::uSigHandlerModule::block_mask, nullptr ) == -1 ) {
 		abort( "internal error, sigprocmask" );
 	} // if
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 
 	// SKULLDUGGERY: The termination order for the boot task is different from the starting order. This results because
 	// the boot task must have a processor before it can start. However, the system processor must have the thread from
@@ -2351,8 +2264,8 @@ void UPP::uKernelBoot::finishup() {
 	uKernelModule::systemCluster->taskRemove( *(uBaseTask *)uKernelModule::bootTask );
 
 	// remove system processor, processor task and cluster
-	uKernelModule::systemProcessor->uProcessor::~uProcessor();
-	uKernelModule::systemCluster->uCluster::~uCluster();
+	uKernelModule::systemProcessor.dtor();
+	uKernelModule::systemCluster.dtor();
 
 #ifndef __U_MULTI__
 	delete uCluster::NBIO;
@@ -2363,7 +2276,7 @@ void UPP::uKernelBoot::finishup() {
 	delete uProcessor::events;
 
 	// remove processor kernal coroutine with execution still pending
-	delete THREAD_GETMEM( processorKernelStorage );
+	delete activeProcessorKernel;
 
 	// add the boot task back so it can remove itself from the list
 	uKernelModule::systemCluster->taskAdd( *(uBaseTask *)uKernelModule::bootTask );
@@ -2385,7 +2298,7 @@ void UPP::uKernelBoot::finishup() {
 	delete uKernelModule::systemScheduler;
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), uThisProcessor().getPreemption() ); );
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
 
 	delete uKernelModule::globalClusters;
 	delete uKernelModule::globalProcessors;

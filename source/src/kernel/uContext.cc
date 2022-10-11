@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 23 17:32:14 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:37:58 2022
-// Update Count     : 75
+// Last Modified On : Fri Sep 30 15:39:15 2022
+// Update Count     : 76
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,30 +46,30 @@ uContext::uContext( void *key ) : key( key ) {
 
 	// If no similar context is found, add this context to the list of contexts active for this state.
 
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 	coroutine.additionalContexts_.addTail( this );
 	coroutine.extras_.is.usercxts = 1;
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 } // uContext::uContext
 
 uContext::uContext() : key( this ) {
 	uBaseCoroutine &coroutine = uThisCoroutine();		// optimization
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 	coroutine.additionalContexts_.addTail( this );
 	coroutine.extras_.is.usercxts = 1;
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 } // uContext::uContext
 
 uContext::~uContext() {
 	uBaseCoroutine &coroutine = uThisCoroutine();		// optimization
 	// If the usercxts is present on a list of contexts, remove it.
 	if ( listed() ) {
-		THREAD_GETMEM( This )->disableInterrupts();
+		uKernelModule::uKernelModuleData::disableInterrupts();
 		coroutine.additionalContexts_.remove( this );
 		if ( coroutine.additionalContexts_.empty() ) {
 			coroutine.extras_.is.usercxts = 0;
 		} // if
-		THREAD_GETMEM( This )->enableInterrupts();
+		uKernelModule::uKernelModuleData::enableInterrupts();
 	} // if
 } // uContext::~uContext
 

@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  5 14:19:24 2022
-// Update Count     : 532
+// Last Modified On : Tue Oct  4 19:12:11 2022
+// Update Count     : 533
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,6 +49,7 @@ void * reallocarray( void * oaddr, size_t nalign, size_t dim, size_t elemSize ) 
 
 
 // Local Variables: //
+// mode: c++ //
 // tab-width: 4 //
 // compile-command: "make install" //
 // End: //

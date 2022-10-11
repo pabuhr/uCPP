@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep  9 15:01:51 2022
-// Update Count     : 1006
+// Last Modified On : Sun Oct  2 19:16:36 2022
+// Update Count     : 1008
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -114,8 +114,8 @@ namespace UPP {
 		uDEBUGPRT(
 			char buffer[512];
 			uDebugPrtBuf( buffer, "sigAlrmHandler, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ),
-						  THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), uKernelModule::uKernelModuleBoot.RFpending, uKernelModule::uKernelModuleBoot.RFinprogress,
+						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uKernelModule::uKernelModuleBoot.disableIntSpin, uKernelModule::uKernelModuleBoot.disableIntSpinCnt );
 		);
 
 		#ifdef __U_STATISTICS__
@@ -130,19 +130,19 @@ namespace UPP {
 
 		int terrno = errno;								// preserve errno at point of interrupt
 
-	  if ( THREAD_GETMEM( RFinprogress ) ||				// roll forward in progress ?
-			 THREAD_GETMEM( disableInt ) ||				// inside kernel ?
-			 THREAD_GETMEM( disableIntSpin ) ) {		// spinlock acquired ?
+	  if ( uKernelModule::uKernelModuleBoot.RFinprogress || // roll forward in progress ?
+			 uKernelModule::uKernelModuleBoot.disableInt ||	// inside kernel ?
+			 uKernelModule::uKernelModuleBoot.disableIntSpin ) { // spinlock acquired ?
 			uDEBUGPRT( uDebugPrtBuf( buffer, "sigAlrmHandler1, signal:%d\n", sig ); );
 			errno = terrno;								// reset errno and continue )
-			THREAD_SETMEM( RFpending, true );			// indicate roll forward is required
+			uKernelModule::uKernelModuleBoot.RFpending = true; // indicate roll forward is required
 			return;
 		} // if
 
 	  // PC executing in non-preemptable routines ?
 	  if ( &__start_text_nopreempt <= signalContextPC( cxt ) && signalContextPC( cxt ) <= &__stop_text_nopreempt ) {
 	  		errno = terrno;
-	  		THREAD_SETMEM( RFpending, true );
+	  		uKernelModule::uKernelModuleBoot.RFpending = true;
 	  		return;
 	  	} // if
 
@@ -161,7 +161,7 @@ namespace UPP {
 
 		#if defined( __U_MULTI__ )
 		if ( &uThisProcessor() != &uKernelModule::systemProcessor ) {
-			THREAD_SETMEM( RFinprogress, true );		// starting roll forward
+			uKernelModule::uKernelModuleBoot.RFinprogress = true; // starting roll forward
 		} // if
 		#endif // __U_MULTI__
 
@@ -205,7 +205,7 @@ namespace UPP {
 
 		uDEBUGPRT(
 			uDebugPrtBuf( buffer, "sigAlrmHandler3, signal:%d, errno:%d, cluster:%p (%s), processor:%p, task:%p (%s), stack:%p, program counter:%p, RFpending:%d, RFinprogress:%d, disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d\n",
-						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), THREAD_GETMEM( RFpending ), THREAD_GETMEM( RFinprogress ), THREAD_GETMEM( disableInt ), THREAD_GETMEM( disableIntCnt ), THREAD_GETMEM( disableIntSpin ), THREAD_GETMEM( disableIntSpinCnt ) );
+						  sig, errno, &uThisCluster(), uThisCluster().getName(), &uThisProcessor(), &uThisTask(), uThisTask().getName(), signalContextSP( cxt ), signalContextPC( cxt ), uKernelModule::uKernelModuleBoot.RFpending, uKernelModule::uKernelModuleBoot.RFinprogress, uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uKernelModule::uKernelModuleBoot.disableIntSpin, uKernelModule::uKernelModuleBoot.disableIntSpinCnt );
 		);
 
 		errno = terrno;									// reset errno and continue

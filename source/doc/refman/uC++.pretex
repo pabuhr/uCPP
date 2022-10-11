@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Sep  7 13:35:28 2022
-%% Update Count     : 8442
+%% Last Modified On : Tue Oct 11 09:11:35 2022
+%% Update Count     : 8481
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -10863,6 +10863,101 @@ To use the PRNG in a \uC program, include the file:
 \index{uPRNG.h@%(uPRNG.h%)}%
 
 
+\chapter{Object Stack Allocation}
+\label{s:ObjectStackAllocation}
+\index{object stack allocation}%
+
+\CC has no mechanism to created an array of objects where each object in the array is initialized via the object's constructor and each element has a different value.
+As result, it is necessary to use the heap.
+\begin{flushleft}
+\begin{tabular}{@{}l|l@{}}
+%[
+struct Obj {
+	const int id; ...
+	Obj( int id ) : id( id ) { ... }
+}
+cin >> size;
+
+Obj \(\BF{\)*\(}\) objs[size];
+for ( int id = 0; id < size; id += 1 )
+	objs[id] = \(\BF{\)new\(}\) Obj( id );
+...
+for ( int id = 0; id < size; id += 1 )
+	\(\BF{\)delete\(}\) objs[id];
+%]
+&
+\LGindent=0pt
+%[
+#include <memory>
+
+
+
+
+{
+	\(\BF{\)unique_ptr<Obj>\(}\) objs[size];
+	for ( int id = 0; id < size; id += 1 )
+		objs[id] = \(\BF{\)make_unique<Obj>\(}\)( id );
+	...
+
+} // automatically delete objs array elements
+%]
+\end{tabular}
+\end{flushleft}
+
+\uC provides template %(uNoCtor%)\index{uNoCtor@%(uNoCtor%)} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement %(new%) mechanism (like %(optional::emplace_back%)).
+%[
+template< typename T, bool runDtor = true > class uNoCtor {
+  public:
+	const T * operator&() const;
+	T * operator&();
+	const T & operator*() const;
+	T & operator*();
+	const T * operator->() const;
+	T * operator->();
+	void ctor();
+	template< typename... Args > void ctor( Args &&... args );
+	void dtor();
+	~uNoCtor();
+};
+%]
+The template parameters specify the type of object embedded in the %(uNoCtor%) and a boolean indicating if the %(uNoCtor%) destructor runs the embedded object's destructor (true) or relies on an explicit call to member %(dtor%) (false).
+In the latter case, if an object has no destructor, no call to %(dtor%) is required.
+
+The following example shows how to use use %(uNoCtor%) to create an array of objects on the stack and then initialize each array element to a different value using the object's constructor.
+%[
+{
+	\(\BF{\)uNoCtor<Obj>\(}\) objs[size]; // objs on stack and no default constructor calls
+	for ( int id = 0; id < size; id += 1 )
+		objs[id]\(\BF{\).ctor( id )\(}\); // placement allocation & call initialization constructor
+	...
+
+} // automatically delete objs array elements
+%]
+As for %(new%) and %(unique_ptr%), fields are accessed using %(->%)
+%[
+for ( int id = 0; id < size; id += 1 )
+	cout << objs[id]\(\BF{\)->\(}\)id << endl; \(\BF{\CMfont// MUST USE -\> NOT . FOR FIELD ACCESS}\)
+%]
+%(uNoCtor%) can be used with all new \uC types, e.g.:
+%[
+_Coroutine C {
+	const int id;
+	void main(){ }
+  public:
+	C( int i ) : id( id ) { cout << "ctor" << endl; }
+	~C() { cout << "dtor" << endl; }
+};
+int main() {
+	uNoCtor<C> c[10];
+	for ( int i = 0; i < 10; i += 1 ) {
+	 	c[i].ctor( i );
+	}
+} // automatically delete coroutine array elements calling destructors on each element
+%]
+Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
+For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
+
+
 \chapter{Data Structure Library (DSL)}
 \label{s:DataStructureLibrary}
 \index{data structure library}%
@@ -11295,6 +11390,7 @@ int main() {
 \chapter{GDB for $\mu$C++}
 \label{c:GDB}
 
+%#none
 The symbolic debugging\index{debugging!symbolic} tools (e.g., %(dbx%)\index{dbx@%(dbx%)}, %(gdb%)\index{gdb@%(gdb%)}) do not work well with \uC, because each coroutine and task has its own stack and the debugger does not know about these stacks.
 When a program terminates with an error, only the stack of the coroutine or task in execution at the time of the error is understood by the debugger.
 The following %(gdb%)\index{gdb@%(gdb%)} and Python macros allow %(gdb%) to understand the \uC runtime environment: tasks (see~\VRef{s:Task}), processors (see~\VRef{s:Processors}), and clusters (see~\VRef{s:Cluster}).
@@ -11349,27 +11445,30 @@ The brace trace shows where that task is executing, and by moving up and down th
 \end{tabular}
 \end{flushleft}
 
+Note, in \uC, the name of the program %(main%) is changed to %(uCpp_main%);
+hence, to set a break point at the start of the application %(main%), do the following:
+%[
+(gdb) break uCpp_main
+%]
+
 During execution, the debugger cannot step through a context switch for either a coroutine or task.
 Therefore, it is necessary to put break points after the suspend/resume or signal/wait to acquire control, and just continue execution through the context switch.
 Once the breakpoint is reached, it is possible to next/step through the lines of the coroutine/task until the next context switch.
 
 For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is also possible to examine the active task running on each kernel thread.
-%#none
 %[
 (gdb) info threads	# list all kernel threads
 (gdb) thread 2		# switch to kernel thread 2
 %]
-%#u++
 
 Finally, it is necessary to tell the debugger that \uC is handling UNIX signals %(SIGALRM%) and %(SIGUSR1%) to perform pre-emptive scheduling\index{pre-emptive!scheduling}.
 For gdb, the following debugger commands allows the application program to handle signal %(SIGALRM%) and %(SIGUSR1%):
-%#none
 %[
 (gdb) handle SIGALRM nostop noprint pass
 (gdb) handle SIGUSR1 nostop noprint pass
 %]
-%#u++
 This step is handled automatically in the specified %(.gdbinit%) file.
+%#u++
 
 
 \chapter{Example Programs}

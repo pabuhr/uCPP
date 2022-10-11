@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Sep  7 13:35:28 2022
-%% Update Count     : 8442
+%% Last Modified On : Tue Oct 11 09:11:35 2022
+%% Update Count     : 8481
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -10863,6 +10863,101 @@ To use the PRNG in a \uC program, include the file:
 \index{uPRNG.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}}%
 
 
+\chapter{Object Stack Allocation}
+\label{s:ObjectStackAllocation}
+\index{object stack allocation}%
+
+\CC has no mechanism to created an array of objects where each object in the array is initialized via the object's constructor and each element has a different value.
+As result, it is necessary to use the heap.
+\begin{flushleft}
+\begin{tabular}{@{}l|l@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{struct}\0\V{Obj}\0\{}}
+\L{\LB{}\Tab{4}{\K{const}\0\K{int}\0\V{id};\0.\,.\,.}}
+\L{\LB{}\Tab{4}{\V{Obj}(\0\K{int}\0\V{id}\0)\0:\0\V{id}(\0\V{id}\0)\0\{\0.\,.\,.\0\}}}
+\L{\LB{\}}}
+\L{\LB{\V{cin}\0\>\>\0\V{size};}}
+\L{\LB{}}
+\L{\LB{\V{Obj}\0\BF{\*}\0\V{objs}[\V{size}];}}
+\L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{4}{\V{objs}[\V{id}]\0=\0\BF{\K{new}}\0\V{Obj}(\0\V{id}\0);}}
+\L{\LB{.\,.\,.}}
+\L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{4}{\BF{\K{delete}}\0\V{objs}[\V{id}];}}
+\endlgrinde\LGend
+&
+\LGindent=0pt
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\#include}\0\<\V{memory}\>}}
+\L{\LB{}}
+\L{\LB{}}
+\L{\LB{}}
+\L{\LB{}}
+\L{\LB{\{}}
+\L{\LB{}\Tab{4}{\BF{\V{unique\_ptr}\<\V{Obj}\>}\0\V{objs}[\V{size}];}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{8}{\V{objs}[\V{id}]\0=\0\BF{\V{make\_unique}\<\V{Obj}\>}(\0\V{id}\0);}}
+\L{\LB{}\Tab{4}{.\,.\,.}}
+\L{\LB{}}
+\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs\0array\0elements}}
+\CE{}\endlgrinde\LGend
+\end{tabular}
+\end{flushleft}
+
+\uC provides template \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}\index{uNoCtor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} mechanism (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{optional}::\V{emplace\_back}}}\endlgrinde\LGend{}).
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{template}\<\0\K{typename}\0\V{T},\0\K{bool}\0\V{runDtor}\0=\0\K{true}\0\>\0\K{class}\0\V{uNoCtor}\0\{}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\K{const}\0\V{T}\0\*\0\K{operator}\&()\0\K{const};}}
+\L{\LB{}\Tab{4}{\V{T}\0\*\0\K{operator}\&();}}
+\L{\LB{}\Tab{4}{\K{const}\0\V{T}\0\&\0\K{operator}\*()\0\K{const};}}
+\L{\LB{}\Tab{4}{\V{T}\0\&\0\K{operator}\*();}}
+\L{\LB{}\Tab{4}{\K{const}\0\V{T}\0\*\0\K{operator}\-\>()\0\K{const};}}
+\L{\LB{}\Tab{4}{\V{T}\0\*\0\K{operator}\-\>();}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{ctor}();}}
+\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\K{void}\0\V{ctor}(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{dtor}();}}
+\L{\LB{}\Tab{4}{\~\V{uNoCtor}();}}
+\L{\LB{\};}}
+\endlgrinde\LGend
+The template parameters specify the type of object embedded in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} and a boolean indicating if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} destructor runs the embedded object's destructor (true) or relies on an explicit call to member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} (false).
+In the latter case, if an object has no destructor, no call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} is required.
+
+The following example shows how to use use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} to create an array of objects on the stack and then initialize each array element to a different value using the object's constructor.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\{}}
+\L{\LB{}\Tab{4}{\BF{\V{uNoCtor}\<\V{Obj}\>}\0\V{objs}[\V{size}];\0\C{}\1\1\0objs\0on\0stack\0and\0no\0default\0constructor\0calls}}
+\CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{8}{\V{objs}[\V{id}]\BF{.\V{ctor}(\0\V{id}\0)};\0\C{}\1\1\0placement\0allocation\0\&\0call\0initialization\0constructor}}
+\CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
+\L{\LB{}}
+\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs\0array\0elements}}
+\CE{}\endlgrinde\LGend
+As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, fields are accessed using \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\V{objs}[\V{id}]\BF{\-\>}\V{id}\0\<\<\0\V{endl};\0\BF{\CMfont// MUST USE -\> NOT . FOR FIELD ACCESS}}}
+\endlgrinde\LGend
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} can be used with all new \uC types, e.g.:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
+\L{\LB{}\Tab{4}{\K{const}\0\K{int}\0\V{id};}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\{\0\}}}
+\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{C}(\0\K{int}\0\V{i}\0)\0:\0\V{id}(\0\V{id}\0)\0\{\0\V{cout}\0\<\<\0\S{}\"ctor\"\SE{}\0\<\<\0\V{endl};\0\}}}
+\L{\LB{}\Tab{4}{\~\V{C}()\0\{\0\V{cout}\0\<\<\0\S{}\"dtor\"\SE{}\0\<\<\0\V{endl};\0\}}}
+\L{\LB{\};}}
+\L{\LB{\K{int}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{4}{\V{uNoCtor}\<\V{C}\>\0\V{c}[10];}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}].\V{ctor}(\0\V{i}\0);}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0coroutine\0array\0elements\0calling\0destructors\0on\0each\0element}}
+\CE{}\endlgrinde\LGend
+Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
+For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
+
+
 \chapter{Data Structure Library (DSL)}
 \label{s:DataStructureLibrary}
 \index{data structure library}%
@@ -11295,6 +11390,7 @@ otherwise the argument is set to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{nullptr}
 \chapter{GDB for $\mu$C++}
 \label{c:GDB}
 
+% switching to none
 The symbolic debugging\index{debugging!symbolic} tools (e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}\index{dbx@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dbx}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\index{gdb@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}}) do not work well with \uC, because each coroutine and task has its own stack and the debugger does not know about these stacks.
 When a program terminates with an error, only the stack of the coroutine or task in execution at the time of the error is understood by the debugger.
 The following \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}\index{gdb@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}} and Python macros allow \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{} to understand the \uC runtime environment: tasks (see~\VRef{s:Task}), processors (see~\VRef{s:Processors}), and clusters (see~\VRef{s:Cluster}).
@@ -11349,27 +11445,30 @@ The brace trace shows where that task is executing, and by moving up and down th
 \end{tabular}
 \end{flushleft}
 
+Note, in \uC, the name of the program \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{} is changed to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCpp\_main}}}\endlgrinde\LGend{};
+hence, to set a break point at the start of the application \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}, do the following:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{(\V{gdb})\0\V{break}\0\V{uCpp\_main}}}
+\endlgrinde\LGend
+
 During execution, the debugger cannot step through a context switch for either a coroutine or task.
 Therefore, it is necessary to put break points after the suspend/resume or signal/wait to acquire control, and just continue execution through the context switch.
 Once the breakpoint is reached, it is possible to next/step through the lines of the coroutine/task until the next context switch.
 
 For debuggers that handle multiple kernel threads (corresponding to \uC virtual processors), it is also possible to examine the active task running on each kernel thread.
-% switching to none
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{(\V{gdb})\0\V{info}\0\V{threads}}\Tab{20}{\V{\#}\0\V{list}\0\V{all}\0\V{kernel}\0\V{threads}}}
 \L{\LB{(\V{gdb})\0\V{thread}\02}\Tab{20}{\V{\#}\0\V{switch}\0\V{to}\0\V{kernel}\0\V{thread}\02}}
 \endlgrinde\LGend
-% switching to u++
 
 Finally, it is necessary to tell the debugger that \uC is handling UNIX signals \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{} to perform pre-emptive scheduling\index{pre-emptive!scheduling}.
 For gdb, the following debugger commands allows the application program to handle signal \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGALRM}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SIGUSR1}}}\endlgrinde\LGend{}:
-% switching to none
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{(\V{gdb})\0\V{handle}\0\V{SIGALRM}\0\V{nostop}\0\V{noprint}\0\V{pass}}}
 \L{\LB{(\V{gdb})\0\V{handle}\0\V{SIGUSR1}\0\V{nostop}\0\V{noprint}\0\V{pass}}}
 \endlgrinde\LGend
-% switching to u++
 This step is handled automatically in the specified \LGinlinetrue\LGbegin\lgrinde\L{\LB{.\V{gdbinit}}}\endlgrinde\LGend{} file.
+% switching to u++
 
 
 \chapter{Example Programs}

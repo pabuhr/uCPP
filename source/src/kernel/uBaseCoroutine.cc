@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 12 16:09:01 2022
-// Update Count     : 707
+// Last Modified On : Fri Sep 30 15:26:53 2022
+// Update Count     : 708
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -191,7 +191,7 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 	} // if
 	#endif // __U_PROFILER__
 
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 
 	coroutine.setState( Inactive );						// set state of current coroutine to inactive
 
@@ -210,7 +210,7 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 	coroutine.restore();								// restore user specified contexts
 	coroutine.setState( Active );						// set state of new coroutine to active
 
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 
 	#ifdef __U_PROFILER__
 	if ( uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {

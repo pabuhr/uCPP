@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 28 20:53:53 2022
-// Update Count     : 2197
+// Last Modified On : Sun Oct  2 16:05:31 2022
+// Update Count     : 2206
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,7 +72,7 @@ enum { MinPreemption = 1000 };							// 1 second (milliseconds)
 
 
 void uProcessorTask::main() {
-	assert( THREAD_GETMEM( disableInt) && THREAD_GETMEM( disableIntCnt) > 0 );
+	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 
 	// Not a race because both sides (parent/child) set the processor pid, i.e., it is set twice with the same value.
 
@@ -106,7 +106,7 @@ void uProcessorTask::main() {
 	#endif // __U_MULTI_H__
 
 	for ( ;; ) {
-		assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+		assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 		_Accept( ~uProcessorTask ) {
 			uDEBUGPRT( uDebugPrt( "(uProcessorTask &)%p.main, ~uProcessorTask\n", this ); );
 			break;
@@ -137,7 +137,7 @@ void uProcessorTask::main() {
 
 			prevCluster.processorRemove( processor );
 			processor.currCluster_ = cluster;
-			THREAD_SETMEM( activeCluster, cluster );
+			uKernelModule::uKernelModuleBoot.activeCluster = cluster;
 			cluster->processorAdd( processor );
 			currCluster_ = cluster;						// change task's notion of which cluster it is executing on
 
@@ -222,17 +222,17 @@ void * uKernelModule::startThread( void * p __attribute__(( unused )) ) {
 	uProcessor &processor = *(uProcessor *)p;
 	uProcessorKernel *pk = &processor.processorKer;
 
-	uKernelModuleBoot.processorKernelStorage = pk;
+	activeProcessorKernel = pk;
 
 	// initialize thread members
 
-	THREAD_SETMEM( activeProcessor, &processor );
-	uCluster *currCluster = THREAD_GETMEM( activeProcessor )->currCluster_;
-	THREAD_SETMEM( activeCluster, currCluster );
+	uKernelModule::uKernelModuleBoot.activeProcessor = &processor;
+	uCluster *currCluster = uKernelModule::uKernelModuleBoot.activeProcessor->currCluster_;
+	uKernelModule::uKernelModuleBoot.activeCluster = currCluster;
 	
-	assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 1 );
+	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 1 );
 
-	THREAD_GETMEM( This )->disableInterrupts();
+	uKernelModule::uKernelModuleData::disableInterrupts();
 
 	heapManagerCtor();									// initialize heap
 
@@ -257,7 +257,7 @@ inline void uProcessorKernel::taskIsBlocking() {
 
 void uProcessorKernel::scheduleInternal() {
 	assert( ! uThisTask().readyRef_.listed() );
-	assert( ! THREAD_GETMEM( disableIntSpin ) );
+	assert( ! uKernelModule::uKernelModuleBoot.disableIntSpin );
 
 	taskIsBlocking();
 
@@ -268,7 +268,7 @@ void uProcessorKernel::scheduleInternal() {
 
 void uProcessorKernel::scheduleInternal( uSpinLock *lock ) {
 	assert( ! uThisTask().readyRef_.listed() );
-	assert( THREAD_GETMEM( disableIntSpinCnt ) == 1 );
+	assert( uKernelModule::uKernelModuleBoot.disableIntSpinCnt == 1 );
 
 	taskIsBlocking();
 
@@ -281,7 +281,7 @@ void uProcessorKernel::scheduleInternal( uSpinLock *lock ) {
 void uProcessorKernel::scheduleInternal( uBaseTask *task ) {
 	// SKULLDUGGERY: uBootTask is on ready queue for first entry into the kernel.
 	assert( &uThisTask() != (uBaseTask *)uKernelModule::bootTask ? ! uThisTask().readyRef_.listed() : true );
-	assert( ! THREAD_GETMEM( disableIntSpin ) );
+	assert( ! uKernelModule::uKernelModuleBoot.disableIntSpin );
 
 	if ( task != &uThisTask() ) {
 		taskIsBlocking();
@@ -295,7 +295,7 @@ void uProcessorKernel::scheduleInternal( uBaseTask *task ) {
 
 void uProcessorKernel::scheduleInternal( uSpinLock *lock, uBaseTask *task ) {
 	assert( ! uThisTask().readyRef_.listed() );
-	assert( THREAD_GETMEM( disableIntSpinCnt ) == 1 );
+	assert( uKernelModule::uKernelModuleBoot.disableIntSpinCnt == 1 );
 
 	taskIsBlocking();
 
@@ -307,9 +307,9 @@ void uProcessorKernel::scheduleInternal( uSpinLock *lock, uBaseTask *task ) {
 
 
 #define SCHEDULE_BODY(parm...) \
-	THREAD_GETMEM( This )->disableInterrupts(); \
+	uKernelModule::uKernelModuleData::disableInterrupts(); \
 	activeProcessorKernel->scheduleInternal( parm ); \
-	THREAD_GETMEM( This )->enableInterrupts();
+	uKernelModule::uKernelModuleData::enableInterrupts();
 
 #ifdef __U_PROFILER__
 #define SCHEDULE_PROFILE() \
@@ -425,9 +425,9 @@ void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cyc
 		currProc = &(uKernelModule::systemProcessor->globalRef);
 	} // if
 
-	THREAD_SETMEM( activeProcessor, &(currProc->processor() ) );
-	uCluster *currCluster = THREAD_GETMEM( activeProcessor )->currCluster_;
-	THREAD_SETMEM( activeCluster, currCluster );
+	uKernelModule::uKernelModuleBoot.activeProcessor = &(currProc->processor());
+	uCluster * currCluster = uKernelModule::uKernelModuleBoot.activeProcessor->currCluster_;
+	uKernelModule::uKernelModuleBoot.activeCluster = currCluster;
 	uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.nextProcessor, to processor %p on cluster %.256s (%p) with time slice %d\n",
 						  this, &uThisProcessor(), uThisProcessor().currCluster->getName(), uThisProcessor().currCluster, uThisProcessor().getPreemption() ); );
 
@@ -477,7 +477,7 @@ void uProcessorKernel::main() {
 			// been seen.
 
 			readyTask = &processor->external.dropHead()->task();
-			THREAD_SETMEM( activeTask, readyTask );
+			uKernelModule::uKernelModuleBoot.activeTask = readyTask;
 			readyTask->currCoroutine_ = readyTask;		// manually reset current coroutine
 
 			#ifdef __U_DEBUG__
@@ -488,12 +488,12 @@ void uProcessorKernel::main() {
 						   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
 						   readyTask->limit, SP, readyTask->base,
 						   processor->currCluster->getName(), processor->currCluster, &processor,
-						   THREAD_GETMEM( disableInt ),
-						   THREAD_GETMEM( disableIntCnt ),
-						   THREAD_GETMEM( disableIntSpin ),
-						   THREAD_GETMEM( disableIntSpinCnt ),
-						   THREAD_GETMEM( RFpending ),
-						   THREAD_GETMEM( RFinprogress )
+						   uKernelModule::uKernelModuleBoot.disableInt,
+						   uKernelModule::uKernelModuleBoot.disableIntCnt,
+						   uKernelModule::uKernelModuleBoot.disableIntSpin,
+						   uKernelModule::uKernelModuleBoot.disableIntSpinCnt,
+						   uKernelModule::uKernelModuleBoot.RFpending,
+						   uKernelModule::uKernelModuleBoot.RFinprogress
 					);
 			);
 			assert( readyTask->limit_ < SP && SP < readyTask->base_ );
@@ -503,8 +503,8 @@ void uProcessorKernel::main() {
 			// leaves the processor task's execution in the kernel with regard to interrupts. This assumes the
 			// disableInt flag is set already.
 
-			assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
-			THREAD_GETMEM( This )->disableInterrupts();
+			assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
+			uKernelModule::uKernelModuleData::disableInterrupts();
 
 			#ifdef __U_STATISTICS__
 			uFetchAdd( UPP::Statistics::user_context_switches, 1 );
@@ -512,8 +512,8 @@ void uProcessorKernel::main() {
 
 			uSwitch( context_, readyTask->currCoroutine_->context_ );
 
-			THREAD_GETMEM( This )->enableInterrupts();
-			assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+			uKernelModule::uKernelModuleData::enableInterrupts();
+			assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 
 			readyTask->currCoroutine_ = this;			// manually reset current coroutine
 			assert( limit_ <= stackPointer() && stackPointer() <= base_ ); // checks uProcessorKernel
@@ -523,13 +523,13 @@ void uProcessorKernel::main() {
 						   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
 						   readyTask->limit, readyTask->stackPointer(), readyTask->base,
 						   processor->currCluster->getName(), processor->currCluster, &processor,
-						   THREAD_GETMEM( disableInt ),
-						   THREAD_GETMEM( disableIntCnt ),
-						   THREAD_GETMEM( disableIntSpin ),
-						   THREAD_GETMEM( disableIntSpinCnt ),
-						   THREAD_GETMEM( RFpending ),
-						   THREAD_GETMEM( RFinprogress )
-					);
+						   uKernelModule::uKernelModuleBoot.disableInt,
+						   uKernelModule::uKernelModuleBoot.disableIntCnt,
+						   uKernelModule::uKernelModuleBoot.disableIntSpin,
+						   uKernelModule::uKernelModuleBoot.disableIntSpinCnt,
+						   uKernelModule::uKernelModuleBoot.RFpending,
+						   uKernelModule::uKernelModuleBoot.RFinprogress
+				);
 			);
 
 			spin = 0;									// set number of spins back to zero
@@ -559,26 +559,26 @@ void uProcessorKernel::main() {
 		if ( readyTask != nullptr ) {					// ready queue not empty, schedule that task
 
 			assert( ! readyTask->readyRef_.listed() );
-			THREAD_SETMEM( activeTask, readyTask );
+			uKernelModule::uKernelModuleBoot.activeTask = readyTask;
 
 			#ifdef __U_DEBUG__
-			void *SP = ((uContext_t *)readyTask->currCoroutine_->context_)->SP;
+			void * SP = ((uContext_t *)readyTask->currCoroutine_->context_)->SP;
 			#endif // __U_DEBUG__
 			uDEBUGPRT(
 				uDebugPrt( "(uProcessorKernel &)%p.main, scheduling(2) bef: task %.256s (%p) (limit:%p,stack:%p,base:%p) from cluster:%.256s (%p) on processor:%p, %d,%d,%d,%d,%d,%d\n",
 						   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
 						   readyTask->currCoroutine->limit, SP, readyTask->currCoroutine->base,
 						   processor->currCluster->getName(), processor->currCluster, &processor,
-						   THREAD_GETMEM( disableInt ),
-						   THREAD_GETMEM( disableIntCnt ),
-						   THREAD_GETMEM( disableIntSpin ),
-						   THREAD_GETMEM( disableIntSpinCnt ),
-						   THREAD_GETMEM( RFpending ),
-						   THREAD_GETMEM( RFinprogress )
+						   uKernelModule::uKernelModuleBoot.disableInt,
+						   uKernelModule::uKernelModuleBoot.disableIntCnt,
+						   uKernelModule::uKernelModuleBoot.disableIntSpin,
+						   uKernelModule::uKernelModuleBoot.disableIntSpinCnt,
+						   uKernelModule::uKernelModuleBoot.RFpending,
+						   uKernelModule::uKernelModuleBoot.RFinprogress
 				);
 			);
 			assert( readyTask == (uBaseTask *)uKernelModule::bootTask ? true : readyTask->currCoroutine_->limit_ < SP && SP < readyTask->currCoroutine_->base_ );
-			assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+			assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 
 			#ifdef __U_STATISTICS__
 			uFetchAdd( UPP::Statistics::user_context_switches, 1 );
@@ -586,11 +586,11 @@ void uProcessorKernel::main() {
 
 			uSwitch( context_, readyTask->currCoroutine_->context_ );
 
-			assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 );
+			assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 			// activeTask is set to the uProcessorTask and MUST stay set until another task is selected to ensure that
 			// errno works correctly should a SIGALRM occurs while in the kernel.
 			processor = &uThisProcessor();				// processor may have migrated
-			THREAD_SETMEM( activeTask, processor->procTask );
+			uKernelModule::uKernelModuleBoot.activeTask = processor->procTask;
 			assert( limit_ <= stackPointer() && stackPointer() <= base_ ); // checks uProcessorKernel
 
 			uDEBUGPRT(
@@ -598,12 +598,12 @@ void uProcessorKernel::main() {
 						   this, readyTask->currCoroutine->name, readyTask->currCoroutine,
 						   readyTask->currCoroutine->limit, readyTask->currCoroutine->stackPointer(), readyTask->currCoroutine->base,
 						   processor->currCluster->getName(), processor->currCluster, &processor,
-						   THREAD_GETMEM( disableInt ),
-						   THREAD_GETMEM( disableIntCnt ),
-						   THREAD_GETMEM( disableIntSpin ),
-						   THREAD_GETMEM( disableIntSpinCnt ),
-						   THREAD_GETMEM( RFpending ),
-						   THREAD_GETMEM( RFinprogress )
+						   uKernelModule::uKernelModuleBoot.disableInt,
+						   uKernelModule::uKernelModuleBoot.disableIntCnt,
+						   uKernelModule::uKernelModuleBoot.disableIntSpin,
+						   uKernelModule::uKernelModuleBoot.disableIntSpinCnt,
+						   uKernelModule::uKernelModuleBoot.RFpending,
+						   uKernelModule::uKernelModuleBoot.RFinprogress
 				);
 			);
 
@@ -622,7 +622,7 @@ void uProcessorKernel::main() {
 		} // if
 
 		#ifdef __U_MULTI__
-		if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // run roll forward ?
+		if ( ! uKernelModule::uKernelModuleBoot.RFinprogress && uKernelModule::uKernelModuleBoot.RFpending ) { // run roll forward ?
 			uKernelModule::rollForward( true );
 		} // if
 
@@ -644,7 +644,7 @@ void uProcessorKernel::main() {
 			processor->currCluster_->processorPause();	// put processor to sleep
 
 			if ( processor != &uKernelModule::systemProcessor ) {
-				THREAD_SETMEM( RFpending, false );		// no pending roll forward
+				uKernelModule::uKernelModuleBoot.RFpending = false;	// no pending roll forward
 			} // if
 			spin = 0;									// set number of spins back to zero
 		} // if
@@ -691,7 +691,7 @@ void uProcessorKernel::main() {
 				okToSelect = true;			// tell poller it is ok to call UNIX select, reset in uPollIO
 			} else if ( processor->events->userEventPresent() ) { // tasks sleeping, except system task  ?
 				uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, sleeping with pending events\n", this ); );
-				if ( ! THREAD_GETMEM( RFinprogress ) && THREAD_GETMEM( RFpending ) ) { // need to start roll forward ?
+				if ( ! uKernelModule::uKernelModuleBoot.RFinprogress && uKernelModule::uKernelModuleBoot.RFpending ) { // need to start roll forward ?
 					uKernelModule::rollForward( true );
 				} else {
 					processor->currCluster_->processorPause(); // put processor to sleep
@@ -958,7 +958,7 @@ void uProcessor::fork( uProcessor *processor ) {
 
 
 void uProcessor::setContextSwitchEvent( uDuration duration ) {
-	assert( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 1 );
+	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 1 );
 	assert( duration >= 0 );
 
 	if ( ! contextEvent->listed() && duration != 0 ) {	// first context switch event ?
@@ -1026,37 +1026,37 @@ void uProcessor::setAffinity( const cpu_set_t &mask ) {
 	#endif // __U_MULTI__
 			abort( "(uProcessor &)%p.setAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
 		} // if
-	} // uProcessor::setAffinity
+} // uProcessor::setAffinity
 
-	void uProcessor::setAffinity( unsigned int cpu ) {
-		cpu_set_t mask;
-		CPU_ZERO( &mask );
-		CPU_SET( cpu, &mask );
-		setAffinity( mask );
-	} // uProcessor::setAffinity
+void uProcessor::setAffinity( unsigned int cpu ) {
+	cpu_set_t mask;
+	CPU_ZERO( &mask );
+	CPU_SET( cpu, &mask );
+	setAffinity( mask );
+} // uProcessor::setAffinity
 
 
-	void uProcessor::getAffinity( cpu_set_t &mask ) {
-		#if defined( __U_MULTI__ )
-		int rcode = pthread_getaffinity_np( pid, sizeof(cpu_set_t), &mask );
-		if ( rcode ) {
-			errno = rcode;
-		#else
-			if ( sched_getaffinity( pid, sizeof(cpu_set_t), &mask ) != 0 ) {
-		#endif // __U_MULTI__
-				abort( "(uProcessor &)%p.getAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
-			} // if
-	} // uProcessor::getAffinity
+void uProcessor::getAffinity( cpu_set_t &mask ) {
+	#if defined( __U_MULTI__ )
+	int rcode = pthread_getaffinity_np( pid, sizeof(cpu_set_t), &mask );
+	if ( rcode ) {
+		errno = rcode;
+	#else
+		if ( sched_getaffinity( pid, sizeof(cpu_set_t), &mask ) != 0 ) {
+	#endif // __U_MULTI__
+			abort( "(uProcessor &)%p.getAffinity() : internal error, could not set processor affinity, error(%d) %s.", this, errno, strerror( errno ) );
+		} // if
+} // uProcessor::getAffinity
 
-	int uProcessor::getAffinity() {
-		cpu_set_t mask;
-		getAffinity( mask );
-		// There should only be one bit set as this routine matches with setting a single CPU.
-		for ( unsigned int i = 0;; i += 1 ) {
-			if ( i >= CPU_SETSIZE ) return -1;
-			if ( CPU_ISSET( i, &mask ) ) return i;
-		} // for
-	} // uProcessor::getAffinity
+int uProcessor::getAffinity() {
+	cpu_set_t mask;
+	getAffinity( mask );
+	// There should only be one bit set as this routine matches with setting a single CPU.
+	for ( unsigned int i = 0;; i += 1 ) {
+		if ( i >= CPU_SETSIZE ) return -1;
+		if ( CPU_ISSET( i, &mask ) ) return i;
+	} // for
+} // uProcessor::getAffinity
 #endif // __U_AFFINITY__
 
 

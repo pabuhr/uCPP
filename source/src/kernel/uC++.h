@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep  9 15:00:52 2022
-// Update Count     : 6220
+// Last Modified On : Tue Oct 11 09:28:10 2022
+// Update Count     : 6266
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -117,7 +117,7 @@
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 
-template< typename T > class uNoCtor {
+template< typename T, bool runDtor = true > class uNoCtor {
 	char storage[sizeof(T)] __attribute__(( aligned(alignof(T)) ));
   public:
 	inline __attribute__((always_inline)) const T * operator&() const { return (T *)(&storage); }
@@ -127,7 +127,9 @@ template< typename T > class uNoCtor {
 	inline __attribute__((always_inline)) const T * operator->() const { return (T *)(&storage); }
 	inline __attribute__((always_inline)) T * operator->() { return (T *)(&storage); }
 	void ctor() { new( &storage ) T; }
-	template< typename... Args > void ctor( Args &&... args) { new( &storage ) T( std::forward<Args>(args)... ); }
+	template< typename... Args > void ctor( Args &&... args ) { new( &storage ) T( std::forward<Args>(args)... ); }
+	void dtor() { ((T *)&storage)->~T(); }
+	~uNoCtor() { if ( runDtor ) dtor(); } 
 };
 
 
@@ -167,15 +169,13 @@ namespace UPP {
 #include <uBitSet.h>
 #include <uDefault.h>
 
-#include "uKernelThreads.h"
 #include "uAtomic.h"
-
 #include "uHeapLmmm.h"
 
 #if defined( __U_MULTI__ )
-	typedef pthread_t uPid_t;
+typedef pthread_t uPid_t;
 #else
-	typedef pid_t uPid_t;
+typedef pid_t uPid_t;
 #endif // __U_MULTI__
 
 // supported mallopt options
@@ -244,7 +244,7 @@ namespace UPP {
 _Task uSystemTask;										// forward declaration
 class uBaseCoroutine;									// forward declaration
 class __attribute__(( may_alias )) uBaseTask;			// forward declaration
-class uSpinLock;									// forward declaration
+class uSpinLock;										// forward declaration
 class __attribute__(( may_alias )) uSpinLock;			// forward declaration
 class uLock;											// forward declaration
 class __attribute__(( may_alias )) uOwnerLock;			// forward declaration
@@ -320,9 +320,9 @@ namespace UPP {
 	class uSigHandlerModule {
 		friend class uKernelBoot;						// access: uSigHandlerModule
 		friend _Task ::uLocalDebugger;					// access: signal
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		friend _Task ::uProfiler;						// access: signal, signalContextPC
-#endif // __U_PROFILER__
+		#endif // __U_PROFILER__
 
 		static sigset_t block_mask;						// block all signals
 
@@ -479,7 +479,7 @@ class uKernelModule {
 	friend _Task uLocalDebugger;						// access: uKernelModuleBoot, bootTask, globalClusters, systemProcessor, systemCluster
 	friend class uLocalDebuggerHandler;					// access: uKernelModuleBoot
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 
 	friend class UPP::PthreadLock;						// access: initialized
@@ -492,17 +492,14 @@ class uKernelModule {
 	friend class HWCounters;							// access: uKernelModuleBoot
 	friend class CGMonitor;								// access: uKernelModuleBoot
 	template<typename Elem, unsigned int BlockSize, typename Admin> friend struct uFixedListArray; // access: uKernelModuleBoot
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	friend class uKernelSampler;						// access: globalClusters
 	friend class uClusterSampler;						// access: globalClusters
 	friend __typeof__( ::dl_iterate_phdr ) dl_iterate_phdr; // access: disableInterrupts, enableInterrupts
 
 	struct uKernelModuleData {
-		volatile uKernelModuleData * This;
-
-#		define __U_MAX_PAGE_SIZE__ (16 * 1024)
-#		define activeProcessorKernel (THREAD_GETMEM( processorKernelStorage ))
+		#define activeProcessorKernel (uKernelModule::uKernelModuleBoot.processorKernelStorage)
 		uProcessor * activeProcessor;					// current active processor
 		// The next two private variables shadow the corresponding fields in the processor data structure. They are an
 		// optimization so that routines uThisCluster and uThisTask do not have to be atomic routines, and as a
@@ -526,75 +523,69 @@ class uKernelModule {
 
 		UPP::uProcessorKernel * processorKernelStorage;	// system-cluster processor kernel
 
-		// The thread pointer value needs to be accessible so that it can be properly restored on context switches.  On
-		// a non-tls system the thread pointer points directly at the kernel module, i.e. tp == This.  On a tls system
-		// the system places the kernel module, so tp != This.
-
-		// unsigned long threadPointer;
-
-		inline __attribute__((always_inline)) void disableInterrupts() volatile {
-			THREAD_SETMEM( disableInt, true );
-			THREAD_SETMEM( disableIntCnt, THREAD_GETMEM( disableIntCnt ) + 1 );
+		static inline __attribute__((always_inline)) void disableInterrupts() {
+			uKernelModuleBoot.disableInt = true;
+			uKernelModuleBoot.disableIntCnt += 1;
 		} // uKernelModule::uKernelModuleData::disableInterrupts
 
-		inline __attribute__((always_inline)) void enableInterrupts() volatile {
-			uDEBUG( assert( disableInt && disableIntCnt > 0 ); );
+		static inline __attribute__((always_inline)) void enableInterrupts() {
+			uDEBUG( assert( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ); );
 
-			disableIntCnt -= 1;							// decrement number of disablings
-			if ( LIKELY( disableIntCnt == 0 ) ) {
-				disableInt = false;						// enable interrupts
-				if ( UNLIKELY( THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( RFinprogress ) ) ) { // rollForward callable ?
+			uKernelModuleBoot.disableIntCnt -= 1;		// decrement number of disablings
+			if ( LIKELY( uKernelModuleBoot.disableIntCnt == 0 ) ) {
+				uKernelModuleBoot.disableInt = false;	// enable interrupts
+				if ( UNLIKELY( uKernelModuleBoot.RFpending && ! uKernelModuleBoot.RFinprogress && ! uKernelModuleBoot.disableIntSpin ) ) { // rollForward callable ?
 					rollForward();
 				} // if
 			} // if
-
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); );
+			uDEBUG( assert( ( ! uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt == 0 ) || ( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ) ); );
 		} // KernelModule::uKernelModuleData::enableInterrupts
 
-		inline __attribute__((always_inline)) void enableInterruptsNoRF() volatile {
-			uDEBUG( assert( disableInt && disableIntCnt > 0 ); )
+		static inline __attribute__((always_inline)) void enableInterruptsNoRF() {
+			uDEBUG( assert( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ); );
 
-			disableIntCnt -= 1;							// decrement number of disablings
-			if ( LIKELY( disableIntCnt == 0 ) ) {
-				disableInt = false;						// enable interrupts
+			uKernelModuleBoot.disableIntCnt -= 1;		// decrement number of disablings
+			if ( LIKELY( uKernelModuleBoot.disableIntCnt == 0 ) ) {
+				uKernelModuleBoot.disableInt = false;	// enable interrupts
 				// NO roll forward
 			} // if
 
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) == 0 ) || ( THREAD_GETMEM( disableInt ) && THREAD_GETMEM( disableIntCnt ) > 0 ) ); )
+			uDEBUG( assert( ( ! uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt == 0 ) || ( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ) ); );
 		} // KernelModule::uKernelModuleData::enableInterruptsNoRF
 
-		inline __attribute__((always_inline)) void disableIntSpinLock() volatile {
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
+		static inline __attribute__((always_inline)) void disableIntSpinLock() {
+			uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
 
-			THREAD_SETMEM( disableIntSpin, true );
-			THREAD_SETMEM( disableIntSpinCnt, THREAD_GETMEM( disableIntSpinCnt ) + 1 );
+			uKernelModuleBoot.disableIntSpin = true;
+			uKernelModuleBoot.disableIntSpinCnt += 1;
 
-			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
+			uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
 		} // uKernelModule::uKernelModuleData::disableIntSpinLock
 
-		inline __attribute__((always_inline)) void enableIntSpinLock() volatile {
-			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
+		static inline __attribute__((always_inline)) void enableIntSpinLock() {
+			uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
 
-			disableIntSpinCnt -= 1;						// decrement number of disablings
-			if ( LIKELY( disableIntSpinCnt == 0 ) ) {
-				disableIntSpin = false;					// enable interrupts
-				if ( UNLIKELY( THREAD_GETMEM( RFpending ) && ! THREAD_GETMEM( RFinprogress ) && ! THREAD_GETMEM( disableInt ) ) ) {	// rollForward callable ?
+			uKernelModuleBoot.disableIntSpinCnt -= 1;	// decrement number of disablings
+			if ( LIKELY( uKernelModuleBoot.disableIntSpinCnt == 0 ) ) {
+				uKernelModuleBoot.disableIntSpin = false; // enable interrupts
+
+				if ( UNLIKELY( uKernelModuleBoot.RFpending && ! uKernelModuleBoot.RFinprogress && ! uKernelModuleBoot.disableInt ) ) { // rollForward callable ?
 					rollForward();
 				} // if
 			} // if
 
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
+			uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
 		} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
-		inline __attribute__((always_inline)) void enableIntSpinLockNoRF() volatile {
-			uDEBUG( assert( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ); )
+		static inline __attribute__((always_inline)) void enableIntSpinLockNoRF() {
+			uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
 
-			disableIntSpinCnt -= 1;						// decrement number of disablings
-			if ( LIKELY( disableIntSpinCnt == 0 ) ) {
-				disableIntSpin = false;					// enable interrupts
+			uKernelModuleBoot.disableIntSpinCnt -= 1;	// decrement number of disablings
+			if ( LIKELY( uKernelModuleBoot.disableIntSpinCnt == 0 ) ) {
+				uKernelModuleBoot.disableIntSpin = false; // enable interrupts
 			} // if
 
-			uDEBUG( assert( ( ! THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) == 0 ) || ( THREAD_GETMEM( disableIntSpin ) && THREAD_GETMEM( disableIntSpinCnt ) > 0 ) ); )
+			uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
 		} // uKernelModule::uKernelModuleData::enableIntSpinLock
 
 		void ctor() volatile;							// POD constructor
@@ -606,12 +597,12 @@ class uKernelModule {
 	static bool kernelModuleInitialized;
 	static volatile __U_THREAD_LOCAL__ uKernelModuleData uKernelModuleBoot;
 	uDEBUG( static bool initialized; )					// initialization/finalization incomplete
-#if __U_LOCALDEBUGGER_H__
+	#if __U_LOCALDEBUGGER_H__
 	static unsigned int attaching;						// flag to signal the local kernel to start attaching.
-#endif // __U_LOCALDEBUGGER_H__
-#ifndef __U_MULTI__
+	#endif // __U_LOCALDEBUGGER_H__
+	#ifndef __U_MULTI__
 	static bool deadlock;								// deadlock detected in kernel
-#endif // ! __U_MULTI__
+	#endif // ! __U_MULTI__
 	static bool globalAbort;							// indicate aborting processor
 	static bool globalSpinAbort;						// indicate aborting processor to spin locks
 	static uSpinLock * globalAbortLock;					// only one aborting processors
@@ -623,8 +614,8 @@ class uKernelModule {
 	static UPP::uBootTask * bootTask;					// pointer to boot task for global constructors/destructors
 	static uProcessor ** userProcessors;				// pointer to user processors
 	static unsigned int numUserProcessors;				// number of user processors
-	static uNoCtor<uProcessor> systemProcessor;
-	static uNoCtor<uCluster> systemCluster;
+	static uNoCtor<uProcessor, false> systemProcessor;
+	static uNoCtor<uCluster, false> systemCluster;
 	static uCluster * userCluster;						// pointer to user cluster
 	static char bootTaskStorage[];
 
@@ -643,17 +634,17 @@ class uKernelModule {
 
 
 inline __attribute__((always_inline)) uProcessor & uThisProcessor() {
-	return *THREAD_GETMEM( activeProcessor );
+	return *uKernelModule::uKernelModuleBoot.activeProcessor;
 } // uThisProcessor
 
 
 inline __attribute__((always_inline)) uCluster & uThisCluster() {
-	return *THREAD_GETMEM( activeCluster );
+	return *uKernelModule::uKernelModuleBoot.activeCluster;
 } // uThisCluster
 
 
 inline __attribute__((always_inline)) uBaseTask & uThisTask() {
-	return *THREAD_GETMEM( activeTask );
+	return *uKernelModule::uKernelModuleBoot.activeTask;
 } // uThisTask
 
 
@@ -667,15 +658,72 @@ class uSpinLock {										// non-yielding spinlock
 
 	unsigned int value;
 
-	void acquire_( bool rollforward );
+	void inline __attribute__((always_inline)) acquire_( bool rollforward __attribute__(( unused )) ) {
+		// No race condition exists for accessing disableIntSpin in the multiprocessor case because this variable is
+		// private to each UNIX process. Also, the spin lock must be acquired after adjusting disableIntSpin because the
+		// time slicing must see the attempt to access the lock first to prevent live-lock on the same processor.  For
+		// example, one task acquires the ready queue lock, a time slice occurs, and it does not appear that the current
+		// task is in the kernel because disableIntSpin is not set so the signal handler tries to yield.  However, the
+		// ready queue lock is held so the yield live-locks. There is a similar situation on releasing the lock.
 
-	void release_( bool rollforward ) {
+		enum { SPIN_START = 4,
+			   #if defined( __i386__ ) || defined( __x86_64__ )
+			   SPIN_END = 4 * 1024,						// fewer iterations due to "pause" instruction throttling to memory speed
+			   #else
+			   SPIN_END = 64 * 1024,
+			   #endif
+		};
+
+		#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
+		if ( value != 0 ) {								// locked ?
+			abort( "(uSpinLock &)%p.acquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
+		} // if
+		#endif // __U_DEBUG__ && ! __U_MULTI__
+
+		uKernelModule::uKernelModuleData::disableIntSpinLock();
+
+		#ifdef __U_MULTI__
+		int spin = SPIN_START;
+		for ( ;; ) {									// poll for lock
+		  if ( value == 0 && uTestSet( value ) == 0 ) break;
+
+			if ( rollforward ) {						// allow timeslicing during spinning
+				uKernelModule::uKernelModuleData::enableIntSpinLockNoRF();
+			} else {
+				uKernelModule::uKernelModuleData::enableIntSpinLock();
+			} // if
+
+			for ( int i = 0; i < spin; i += 1 ) {		// exponential spin
+				#if defined( __i386__ ) || defined( __x86_64__ )
+				asm volatile( "pause" );
+				#endif
+				if ( uKernelModule::globalSpinAbort ) _Exit( EXIT_FAILURE ); // close down in progress, shutdown immediately!
+				#ifdef __U_STATISTICS__
+				uFetchAdd( UPP::Statistics::spins, 1 );
+				#endif // __U_STATISTICS__
+			} // for
+			spin += spin;								// powers of 2
+			if ( spin > SPIN_END ) {
+				spin = SPIN_START;						// prevent overflow
+				// sched_yield();							// release CPU so someone else can execute
+				#ifdef __U_STATISTICS__
+				uFetchAdd( UPP::Statistics::spin_sched, 1 );
+				#endif // __U_STATISTICS__
+			} // if
+			uKernelModule::uKernelModuleData::disableIntSpinLock();
+		} // for
+		#else
+		value = 1;										// lock
+		#endif // __U_MULTI__
+	} // uSpinLock::acquire_
+
+	void inline __attribute__((always_inline)) release_( bool rollforward ) {
 		assert( value != 0 );
 		uTestReset( value );
 		if ( rollforward ) {							// allow timeslicing during spinning
-			THREAD_GETMEM( This )->enableIntSpinLockNoRF();
+			uKernelModule::uKernelModuleData::enableIntSpinLockNoRF();
 		} else {
-			THREAD_GETMEM( This )->enableIntSpinLock();
+			uKernelModule::uKernelModuleData::enableIntSpinLock();
 		} // if
 	} // uSpinLock::release_
   public:
@@ -685,20 +733,40 @@ class uSpinLock {										// non-yielding spinlock
 	uSpinLock & operator=( uSpinLock && ) = delete;
 
 	uSpinLock() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uSpinLocks, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		value = 0;										// unlock
 	} // uSpinLock::uSpinLock
 
-	void acquire() {
+	void inline __attribute__((always_inline)) acquire() {
 		acquire_( false );
 		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::acquire
 
-	bool tryacquire();
+	bool tryacquire() {
+		#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
+		if ( value != 0 ) {								// locked ?
+			abort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
+		} // if
+		#endif // __U_DEBUG__ && ! __U_MULTI__
 
-	void release() {
+		uKernelModule::uKernelModuleData::disableIntSpinLock();
+
+		#ifdef __U_MULTI__
+		if ( uTestSet( value ) == 0 ) {						// get the lock ?
+			return true;
+		} else {
+			uKernelModule::uKernelModuleData::enableIntSpinLock();
+			return false;
+		} // if
+		#else
+		value = 1;											// lock
+		return true;
+		#endif // __U_MULTI__
+	} // uSpinLock::tryacquire
+
+	void inline __attribute__((always_inline)) release() {
 		asm( "" : : : "memory" );						// prevent code movement across barrier
 		release_( false );
 	} // uSpinLock::release
@@ -743,9 +811,9 @@ class uLock {											// yielding spinlock
 	} // uLock::uLock
 
 	uLock( unsigned int val ) {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uLocks, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		uDEBUG(
 			if ( val > 1 ) {
 				abort( "Attempt to initialize uLock %p to %d that exceeds range 0-1.", this, val );
@@ -845,10 +913,10 @@ class uCxtSwtchHndlr : public uSignalHandler {
 	friend class uProcessor;							// access: constructor
 	friend class uEventListPop;							// access: processor
 
-#if defined( __U_MULTI__ )
+	#if defined( __U_MULTI__ )
 	uProcessor & processor;
 	uCxtSwtchHndlr( uProcessor & processor ) : processor( processor ) {}
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 	void handler();
 }; // uCxtSwtchHndlr
 
@@ -865,7 +933,7 @@ class uMutexLock {
 	// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 	// pthread_mutex_t, if sizeof(pthread_mutex_t) >= sizeof(uMutexLock).
 
-	uSpinLock spinLock;								// must be first field for alignment
+	uSpinLock spinLock;									// must be first field for alignment
 	unsigned int count;									// number of recursive entries; no overflow checking
 	uSequence<uBaseTaskDL> waiting;						// sequence versus queue to reduce size to 24 bytes => more expensive
 
@@ -878,9 +946,9 @@ class uMutexLock {
 	uMutexLock & operator=( uMutexLock && ) = delete;
 
 	uMutexLock() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uMutexLocks, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		count = false;									// no one has acquired the lock
 	} // uMutexLock::uMutexLock
 
@@ -912,9 +980,9 @@ class uOwnerLock : public uMutexLock {
 	uOwnerLock & operator=( uOwnerLock && ) = delete;
 
 	uOwnerLock() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uOwnerLocks, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		owner_ = nullptr;								// no one owns the lock
 		count = 0;										// so count is zero
 	} // uOwnerLock::uOwnerLock
@@ -951,7 +1019,7 @@ class uCondLock {
 	// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 	// pthread_cond_t, if sizeof(pthread_cond_t) >= sizeof(uCondLock).
 
-	uSpinLock spinLock;								// must be first field for alignment
+	uSpinLock spinLock;									// must be first field for alignment
 	uSequence<uBaseTaskDL> waiting;						// queue of blocked tasks
 	void waitTimeout( TimedWaitHandler & h );			// timeout
   public:
@@ -961,9 +1029,9 @@ class uCondLock {
 	uCondLock & operator=( uCondLock && ) = delete;
 
 	uCondLock() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::uCondLocks, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 	} // uCondLock::uCondLock
 
 	uDEBUG( ~uCondLock(); )
@@ -1007,7 +1075,7 @@ namespace UPP {
 		// These data fields must be initialized to zero. Therefore, this lock can be used in the same storage area as a
 		// sem_t, if sizeof(sem_t) >= sizeof(uSemaphore).
 
-		uSpinLock spinLock;							// must be first field for alignment
+		uSpinLock spinLock;								// must be first field for alignment
 		int count;
 		uQueue<uBaseTaskDL> waiting;
 
@@ -1019,9 +1087,9 @@ namespace UPP {
 		uSemaphore & operator=( uSemaphore && ) = delete;
 
 		uSemaphore( int count = 1 ) : count( count ) {
-#ifdef __U_STATISTICS__
+			#ifdef __U_STATISTICS__
 			uFetchAdd( UPP::Statistics::uSemaphores, 1 );
-#endif // __U_STATISTICS__
+			#endif // __U_STATISTICS__
 			uDEBUG(
 				if ( count < 0 ) {
 					abort( "Attempt to initialize uSemaphore %p to %d that must be >= 0.", this, count );
@@ -1140,10 +1208,10 @@ namespace UPP {
 		};
 
 		static size_t pageSize;							// architecture pagesize
-#if defined( __i386__ ) || defined( __x86_64__ )
+		#if defined( __i386__ ) || defined( __x86_64__ )
 		static uint16_t fncw;							// floating/MMX control registers
 		static uint32_t mxcsr;
-#endif // __i386__ || __x86_64__
+		#endif // __i386__ || __x86_64__
 
 		void * storage_;								// stack pointer
 		void * limit_;									// stack grows towards stack limit
@@ -1207,7 +1275,7 @@ namespace UPP {
 		} // uMachContext::uMachContext
 
 		virtual ~uMachContext() noexcept(false) {		// noexcept(false) inherited by subclass destructors
-			if ( ! ((uintptr_t)storage_ & 1) ) {			// check user stack storage mark
+			if ( ! ((uintptr_t)storage_ & 1) ) {		// check user stack storage mark
 				uDEBUG(
 					if ( ::mprotect( storage_, pageSize, PROT_READ | PROT_WRITE ) == -1 ) {
 						abort( "(uMachContext &)%p.~uMachContext() : internal error, mprotect failure, error(%d) %s.", this, errno, strerror( errno ) );
@@ -1267,12 +1335,12 @@ class uBaseCoroutine : public UPP::uMachContext {
 	friend std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) throw(); // access: unexpectedRtn
 	friend void uEHM::unexpected();						// access: unexpected
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 
 	friend class uProfilerBoot;							// access: serial
 	friend class uProfileTaskSampler;					// access: profileTaskSamplerInstance
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
   public:
 	enum State { Start, Inactive, Active, Halt };
 	enum CancellationState { CancelEnabled = PTHREAD_CANCEL_ENABLE, CancelDisabled = PTHREAD_CANCEL_DISABLE };
@@ -1419,20 +1487,20 @@ class uBaseCoroutine : public UPP::uMachContext {
 	} __attribute__(( unused )); // uCoroutineConstructor
 
 	class uCoroutineDestructor {						// placed in the destructor of a coroutine
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		UPP::uAction f;
 		uBaseCoroutine & coroutine;
-#endif // __U_PROFILER__
+		#endif // __U_PROFILER__
 	  public:
 		uCoroutineDestructor(
-#ifdef __U_PROFILER__
+			#ifdef __U_PROFILER__
 			UPP::uAction f,
-#endif // __U_PROFILER__
+			#endif // __U_PROFILER__
 			uBaseCoroutine & coroutine
 		);
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		~uCoroutineDestructor();
-#endif // __U_PROFILER__
+		#endif // __U_PROFILER__
 	}; // uCoroutineDestructor
   public:
 	uBaseCoroutine( const uBaseCoroutine & ) = delete;	// no copy
@@ -1559,24 +1627,24 @@ class uBasePrioritySeq : public uBaseScheduleFriend {
 	} // uBasePrioritySeq::head
 
 	virtual int add( uBaseTaskDL * node, uBaseTask * /* uOwner */ ) {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		list.addTail( node );
 		return 0;
 	} // uBasePrioritySeq::add
 
 	virtual uBaseTaskDL * drop() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		return list.dropHead();
 	} // uBasePrioritySeq::drop
 
 	virtual void remove( uBaseTaskDL * node ) {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		list.remove( node );
 	} // uBasePrioritySeq::remove
 
@@ -1605,25 +1673,25 @@ class uBasePriorityQueue : public uBasePrioritySeq {
 	} // uBasePriorityQueue::head
 
 	virtual int add( uBaseTaskDL * node, uBaseTask * /* uOwner */ ) {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, 1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		list.add( node );
 		return 0;										// dummy value
 	} // uBasePriorityQueue::add
 
 	virtual uBaseTaskDL * drop() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		return list.drop();
 	} // uBasePriorityQueue::drop
 
 	virtual void remove( uBaseTaskDL * /* node */ ) {
 		// Only used with default FIFO case, so node to remove is at the front of the list.
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::mutex_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		list.drop();
 	} // uBasePriorityQueue::remove
 
@@ -1651,27 +1719,27 @@ class uDefaultScheduler : public uBaseSchedule<uBaseTaskDL> {
 	uBaseTaskSeq list;									// list of tasks awaiting execution
   public:
 	bool empty() const { return list.empty(); }
-#ifdef KNOT
+	#ifdef KNOT
 	void add( uBaseTaskDL * taskNode );
-#else
+	#else
 	void add( uBaseTaskDL * taskNode ) { list.addTail( taskNode );
-#ifdef __U_STATISTICS__
+	#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, 1 );
-#endif // __U_STATISTICS__
+	#endif // __U_STATISTICS__
 	}
-#endif // KNOT
+	#endif // KNOT
 
 	uBaseTaskDL * drop() {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		return list.dropHead();
 	} // uDefaultScheduler::drop
 
 	void remove( uBaseTaskDL * node ) {
-#ifdef __U_STATISTICS__
+		#ifdef __U_STATISTICS__
 		uFetchAdd( UPP::Statistics::ready_queue, -1 );
-#endif // __U_STATISTICS__
+		#endif // __U_STATISTICS__
 		list.remove( node );
 	} // uDefaultScheduler::remove
 
@@ -1754,11 +1822,11 @@ class uBaseTask : public uBaseCoroutine {
 	friend void set_seed( uint32_t );					// access: thread_seed
 	friend uint32_t get_seed();							// access: thread_seed
 	friend uint32_t prng();								// access: random_state
-#ifdef KNOT
+	#ifdef KNOT
 	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
 	friend int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
 	friend int pthread_mutex_unlock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
-#endif // KNOT
+	#endif // KNOT
 
 	// exception handling
 
@@ -1772,7 +1840,7 @@ class uBaseTask : public uBaseCoroutine {
 	friend _Task uLocalDebugger;						// access: bound_, taskDebugMask, debugPCandSRR
 	friend class UPP::uSigHandlerModule;				// access: debugPCandSRR
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 
 	friend _Task uProfiler;								// access: currCoroutine_
@@ -1780,7 +1848,7 @@ class uBaseTask : public uBaseCoroutine {
 	friend void __cyg_profile_func_exit( void * pcCurrentFunction, void * pcCallingFunction );
 	friend class uExecutionMonitor;						// access: profileActive
 	friend void UPP::umainProfile();					// access: profileActive
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
   public:
 	enum State { Start, Ready, Running, Blocked, Terminate };
   private:
@@ -1817,9 +1885,9 @@ class uBaseTask : public uBaseCoroutine {
 	// profiling : necessary for compatibility between non-profiling and profiling
 
 	bool profileActive;									// indicates if this context is supposed to be profiled
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	void profileActivate( uBaseTask & task );
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	// exception handling
 
@@ -2018,13 +2086,13 @@ class uBaseTask : public uBaseCoroutine {
 	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
 	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 
 	void profileActivate();
 	void profileInactivate();
 	void printCallStack() const;
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	// These members should be private but cannot be because they are referenced from user code.
 
@@ -2070,11 +2138,11 @@ namespace UPP {
 		friend class ::uBaseScheduleFriend;				// access: checkHookConditions
 		friend class ::uTimeoutHndlr;					// access: enterTimeout
 
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		// profiling
 
 		friend class ::uProfileTaskSampler;				// access: profileTaskSamplerInstance
-#endif // __U_PROFILER__
+		#endif // __U_PROFILER__
 
 		// must be first field for alignment
 		uSpinLock spinLock;								// provide mutual exclusion while examining serial state
@@ -2278,9 +2346,9 @@ namespace UPP {
 		UPP::uSerial & serial;
 	  public:
 		uSerialConstructor( uAction f, uSerial & serial );
-#ifdef __U_PROFILER__
+		#ifdef __U_PROFILER__
 		uSerialConstructor( uAction f, uSerial & serial, const char * n );
-#endif // __U_PROFILER__
+		#endif // __U_PROFILER__
 		~uSerialConstructor();
 	}; // uSerialConstructor
 
@@ -2403,11 +2471,11 @@ class uCondition {
 
 
 namespace UPP {
-#ifdef KNOT
+	#ifdef KNOT
 	_Mutex<uCeilingQ,uCeilingQ> class uNBIO {
-#else
+	#else
 	class uNBIO {										// monitor (private mutex member)
-#endif
+	#endif
 		friend class ::uCluster;						// access: NBIO
 		friend _Coroutine uProcessorKernel;				// access: okToSelect, IOPoller
 		friend class uSelectTimeoutHndlr;				// access: NBIOnode
@@ -2462,9 +2530,9 @@ namespace UPP {
 		uPid_t IOPollerPid;								// processor where IOPoller select blocks
 		bool selectBlock;								// true => select blocks rather than poll
 		bool timeoutOccurred;							// set when a waiting task times out
-#if ! defined( __U_MULTI__ )
+		#if ! defined( __U_MULTI__ )
 		bool okToSelect;								// uniprocessor flag indicating blocking select
-#endif // ! __U_MULTI__
+		#endif // ! __U_MULTI__
 
 		_Mutex void checkIOStart();
 		bool pollIO( NBIOnode & node );
@@ -2529,9 +2597,9 @@ namespace UPP {
 		void onBehalfOfUser();
 		void setTimer( uDuration time );
 		void setTimer( uTime time );
-#ifndef __U_MULTI__
+		#ifndef __U_MULTI__
 		void nextProcessor( uProcessorDL *& currProc, uProcessorDL * cycleStart );
-#endif // __U_MULTI__
+		#endif // __U_MULTI__
 		void main();
 
 		uProcessorKernel();
@@ -2545,7 +2613,7 @@ namespace UPP {
 
 
 inline __attribute__((always_inline)) void uBaseTask::uYieldNoPoll() {
-	uDEBUG( assert( ! THREAD_GETMEM( disableIntSpin ) ); )
+	uDEBUG( assert( ! uKernelModule::uKernelModuleBoot.disableIntSpin ); )
 	UPP::uProcessorKernel::schedule( this );			// find someone else to execute; wake on kernel stack
 } // uBaseTask::uYieldNoPoll
 
@@ -2577,33 +2645,33 @@ class uProcessor {
 
 	bool debugIgnore;									// ignore processor migration
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 	
 	friend class uProfileProcessorSampler;				// access: profileProcessorSamplerInstance
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	static uEventList * events;							// single list of events for all processors
-#if ! defined( __U_MULTI__ )
+	#if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
-#endif // ! __U_MULTI__
+	#endif // ! __U_MULTI__
 	uEventNode * contextEvent;							// context-switch node for event list
-#if ! defined( __U_MULTI__ )
+	#if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
-#endif // ! __U_MULTI__
+	#endif // ! __U_MULTI__
 	uCxtSwtchHndlr * contextSwitchHandler;				// special time slice handler
 
-#ifdef __U_MULTI__
+	#ifdef __U_MULTI__
 	UPP::uProcessorKernel processorKer;					// need a uProcessorKernel
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 
 	// profiling : necessary for compatibility between non-profiling and profiling
 
-#ifndef __U_MULTI__
+	#ifndef __U_MULTI__
 	static
-#else
+	#else
 	mutable
-#endif // ! __U_MULTI__
+	#endif // ! __U_MULTI__
 	uProfileProcessorSampler * profileProcessorSamplerInstance; // pointer to related profiling object
   protected:
 	uPid_t pid;
@@ -2671,12 +2739,12 @@ class uProcessor {
 		return spin;
 	} // uProcessor::getSpin
 
-#if defined( __U_AFFINITY__ )
+	#if defined( __U_AFFINITY__ )
 	void setAffinity( const cpu_set_t & mask );
 	void setAffinity( unsigned int cpu );
 	void getAffinity( cpu_set_t & mask);
 	int getAffinity();
-#endif // __U_AFFINITY__
+	#endif // __U_AFFINITY__
 
 	bool idle() const {
 		return idleRef.listed();
@@ -2740,11 +2808,11 @@ class uCluster {
 
 	bool debugIgnore;									// ignore cluster migration
 
-#ifdef __U_PROFILER__
+	#ifdef __U_PROFILER__
 	// profiling
 
 	friend class uProfileClusterSampler;				// access: profileClusterSamplerInstance
-#endif // __U_PROFILER__
+	#endif // __U_PROFILER__
 
 	// real-time
 
@@ -2766,9 +2834,9 @@ class uCluster {
 	uClusterDL wakeupList;								// double link field: list of clusters with wakeups
 
 	// Make a pointer to allow static declaration for uniprocessor.
-#if ! defined( __U_MULTI__ )
+	#if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
-#endif // ! __U_MULTI__
+	#endif // ! __U_MULTI__
 	UPP::uNBIO * NBIO;									// non-blocking I/O facilities
 
 	// profiling : necessary for compatibility between non-profiling and profiling
@@ -2794,9 +2862,9 @@ class uCluster {
 	void taskReschedule( uBaseTask & task );
 	virtual void processorAdd( uProcessor & processor );
 	void processorRemove( uProcessor & processor );
-#if defined( __U_MULTI__ )
+	#if defined( __U_MULTI__ )
 	void processorPoke();
-#endif // __U_MULTI__
+	#endif // __U_MULTI__
 	void createCluster( unsigned int stackSize, const char * name );
 
 	int select( uIOClosure & closure, int rwe, timeval * timeout = nullptr ) {

@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar 26 16:17:36 2022
-// Update Count     : 320
+// Last Modified On : Fri Sep 30 16:09:43 2022
+// Update Count     : 323
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -197,7 +197,7 @@ void uEventList::setTimer( uTime time ) {				// time parameter is real-time (not
 		uDEBUGPRT( uDebugPrtBuf( buffer, "uEventList::setTimer, kill time:%lld currtime:%lld dur:%lld\n",
 								 time.nanoseconds(), currtime.nanoseconds(), dur.nanoseconds() ); );
 		//kill( getpid(), SIGALRM );						// send SIGALRM immediately, works uni and multi processor
-		THREAD_SETMEM( RFpending, true );				// force rollForward to be called
+		uKernelModule::uKernelModuleBoot.RFpending = true; // force rollForward to be called
 	} else {
 		setTimer( dur );
 	} // if
@@ -212,9 +212,9 @@ void uEventListPop::over( uEventList &events, bool inKernel ) {
 	currTime = uClock::currTime();
 	cxtSwHandler = nullptr;
 	uEventListPop::inKernel = inKernel;
-	assert( ! THREAD_GETMEM( RFinprogress ) );			// should not be on
-	THREAD_SETMEM( RFinprogress, true );				// starting roll forward
-	THREAD_SETMEM( RFpending, false );					// no pending roll forward
+	assert( ! uKernelModule::uKernelModuleBoot.RFinprogress ); // should not be on
+	uKernelModule::uKernelModuleBoot.RFinprogress = true; // starting roll forward
+	uKernelModule::uKernelModuleBoot.RFpending = false;	// no pending roll forward
 } // uEventListPop::over
 
 
@@ -237,10 +237,10 @@ uEventListPop::~uEventListPop() {
 
 	events->eventLock.acquire_( true );
 	uEventNode *head = events->eventlist.head();		// optimization
-	if ( head != nullptr && ! THREAD_GETMEM( RFpending ) ) { // reset timer to next available event
+	if ( head != nullptr && ! uKernelModule::uKernelModuleBoot.RFpending ) { // reset timer to next available event
 		events->setTimer( head->alarm );
 	} // if
-	THREAD_SETMEM( RFinprogress, false );
+	uKernelModule::uKernelModuleBoot.RFinprogress = false;
 	events->eventLock.release();						// triggers new rollForward if RFpending
 
 #if defined( __U_MULTI__ )
