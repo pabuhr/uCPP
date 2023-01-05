@@ -1,14 +1,14 @@
 //                              -*- Mode: C++ -*- 
 // 
-// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2014
+// uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2023
 // 
-// std_mutex.h -- 
+// unique_lock.h -- 
 // 
 // Author           : Peter A. Buhr
-// Created On       : Fri May 13 12:39:12 2016
+// Created On       : Wed Jan  4 11:37:42 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 10 20:46:50 2016
-// Update Count     : 3
+// Last Modified On : Wed Jan  4 15:58:32 2023
+// Update Count     : 2
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,9 +27,17 @@
 // This include file uses the uC++ keyword _Mutex as a template parameter name.
 // The name is changed only for the include file.
 
-#define _Mutex Mutex_
-#include_next <std_mutex>
-#undef Mutex_
+#if ! defined( _Mutex )									// nesting ?
+#define _Mutex Mutex_									// make keyword an identifier
+#define __U_UNIQUE_LOCK_H__
+#endif
+
+#include_next <bits/unique_lock.h>
+
+#if defined( _Mutex ) && defined( __U_UNIQUE_LOCK_H__ )	// reset only if set
+#undef __U_UNIQUE_LOCK_H__
+#undef _Mutex
+#endif
 
 // Local Variables: //
 // compile-command: "make install" //

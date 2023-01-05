@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Oct  6 21:46:49 2022
-// Update Count     : 3349
+// Last Modified On : Mon Dec 26 10:57:45 2022
+// Update Count     : 3365
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2046,7 +2046,7 @@ void UPP::uKernelBoot::startup() {
 
 	tzset();											// initialize time global variables
 	#ifdef __U_STATISTICS__
-	char * lang = getenv("LANG");
+	char * lang = getenv( "LANG" );
 	if ( lang ) setlocale( LC_NUMERIC, lang );			// set lang for commas in statistics
 	#endif // __U_STATISTICS__
 

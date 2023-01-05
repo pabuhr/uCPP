@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 17:48:48 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 17 09:27:42 2022
-// Update Count     : 33
+// Last Modified On : Mon Jan  2 16:51:08 2023
+// Update Count     : 43
 // 
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
@@ -34,7 +34,7 @@
 //
 // Declaration :
 //   PRNG sprng( 1009 ) - set starting seed versus random seed
-//   
+//
 // Interface :
 //   sprng.set_seed( 1009 ) - set starting seed for ALL kernel threads versus random seed
 //   sprng.get_seed() - read seed
@@ -49,20 +49,41 @@
 //   sprng( 5, 21 );
 //   sprng.calls();
 
-class PRNG {
+class PRNG32 {
 	uint32_t callcnt = 0;
 	uint32_t seed;										// local seed
-	uint32_t state;										// random state
+	PRNG_STATE_32_T state;								// random state
   public:
-	PRNG() { set_seed( uRdtsc() ); }					// random seed
-	PRNG( uint32_t seed ) { set_seed( seed ); }			// fixed seed
-	void set_seed( uint32_t seed_ ) { state = seed = seed_; LCG( state ); } // set seed
+	PRNG32() { set_seed( uRdtsc() ); }					// random seed
+	PRNG32( uint32_t seed ) { set_seed( seed ); }		// fixed seed
+	void set_seed( uint32_t seed_ ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); } // set seed
 	uint32_t get_seed() const __attribute__(( warn_unused_result )) { return seed; } // get local seed
-	uint32_t operator()() __attribute__(( warn_unused_result )) { callcnt += 1; return LCG( state ); } // [0,UINT_MAX]
+	uint32_t operator()() __attribute__(( warn_unused_result )) { callcnt += 1; return PRNG_NAME_32( state ); } // [0,UINT_MAX]
 	uint32_t operator()( uint32_t u ) __attribute__(( warn_unused_result )) { return operator()() % u; } // [0,u)
 	uint32_t operator()( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return operator()( u - l + 1 ) + l; } // [l,u]
 	uint32_t calls() const __attribute__(( warn_unused_result )) { return callcnt; }
-}; // PRNG
+}; // PRNG32
+
+class PRNG64 {
+	uint64_t callcnt = 0;
+	uint64_t seed;										// local seed
+	PRNG_STATE_64_T state;								// random state
+  public:
+	PRNG64() { set_seed( uRdtsc() ); }					// random seed
+	PRNG64( uint64_t seed ) { set_seed( seed ); }		// fixed seed
+	void set_seed( uint64_t seed_ ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); } // set seed
+	uint64_t get_seed() const __attribute__(( warn_unused_result )) { return seed; } // get local seed
+	uint64_t operator()() __attribute__(( warn_unused_result )) { callcnt += 1; return PRNG_NAME_64( state ); } // [0,UINT_MAX]
+	uint64_t operator()( uint64_t u ) __attribute__(( warn_unused_result )) { return operator()() % u; } // [0,u)
+	uint64_t operator()( uint64_t l, uint64_t u ) __attribute__(( warn_unused_result )) { return operator()( u - l + 1 ) + l; } // [l,u]
+	uint64_t calls() const __attribute__(( warn_unused_result )) { return callcnt; }
+}; // PRNG64
+
+#ifdef __x86_64__										// 64-bit architecture
+typedef PRNG64 PRNG;
+#else													// 32-bit architecture
+typedef PRNG32 PRNG;
+#endif // __x86_64__
 
 
 // Concurrent Pseudo Random-Number Generator : generate repeatable sequence of values that appear random.
@@ -79,14 +100,14 @@ class PRNG {
 //   prng( 16 + 1 ) + 5;
 //   prng( 5, 21 );
 
-// set_seed and prng are also members of uBaseTask to eliminate expensive call to uThisTask.
-void set_seed( uint32_t seed );							// set global seed
-uint32_t get_seed() __attribute__(( warn_unused_result )); // get global seed, not inline because static/friend problem
-uint32_t prng() __attribute__(( warn_unused_result ));	// [0,UINT_MAX]
-static inline uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result ));
-static inline uint32_t prng( uint32_t u ) { return prng() % u; } // [0,u)
-static inline uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result ));
-static inline uint32_t prng( uint32_t l, uint32_t u ) { return prng( u - l + 1 ) + l; } // [l,u]
+// Harmonize with uC++.h.
+void set_seed( size_t seed_ );							// set global seed
+size_t get_seed() __attribute__(( warn_unused_result )); // get global seed
+size_t prng() __attribute__(( warn_unused_result ));	// [0,UINT_MAX]
+static inline size_t prng( size_t u ) __attribute__(( warn_unused_result ));
+static inline size_t prng( size_t u ) { return prng() % u; } // [0,u)
+static inline size_t prng( size_t l, size_t u ) __attribute__(( warn_unused_result ));
+static inline size_t prng( size_t l, size_t u ) { return prng( u - l + 1 ) + l; } // [l,u]
 
 // Local Variables: //
 // compile-command: "make install" //

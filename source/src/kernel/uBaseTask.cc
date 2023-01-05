@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct  3 19:00:12 2022
-// Update Count     : 453
+// Last Modified On : Tue Jan  3 16:15:23 2023
+// Update Count     : 457
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,9 +42,9 @@ using namespace UPP;
 //######################### uBaseTask #########################
 
 
-uint32_t uBaseTask::thread_random_seed = uRdtsc();
-uint32_t uBaseTask::thread_random_prime = 4'294'967'291u;
-uint32_t uBaseTask::thread_random_mask = false;
+size_t uBaseTask::thread_random_seed = uRdtsc();
+size_t uBaseTask::thread_random_prime = 4'294'967'291u;
+bool uBaseTask::thread_random_mask = false;
 
 
 void uBaseTask::createTask( uCluster & cluster ) {
@@ -61,7 +61,7 @@ void uBaseTask::createTask( uCluster & cluster ) {
 	inheritTask = this;
 
 	// SKULLDUGGERY: increment thread_random_prime when set_seed is called to get more random behaviour.
-	random_state = thread_random_mask ? thread_random_prime++ : thread_random_prime ^ uRdtsc();
+	PRNG_SET_SEED( random_state, thread_random_mask ? thread_random_prime : thread_random_prime ^ uRdtsc() );
 
 	// exception handling
 
@@ -278,7 +278,7 @@ uCluster & uBaseTask::migrate( uCluster & cluster ) {
 	uDEBUGPRT( uDebugPrt( "(uBaseTask &)%p.migrate, from cluster:%p to cluster:%p\n", &uThisTask(), &uThisCluster(), &cluster ); );
 
 	uBaseTask & task = uThisTask();						// optimization
-	assert( (uProcessor *)(&task.bound_) == nullptr );
+	assert( std::addressof(task.bound_) == nullptr );
 
 	// A simple optimization: migrating to the same cluster that the task is currently executing on simply returns the
 	// value of the current cluster.  Therefore, migrate does not always produce a context switch.

@@ -19,6 +19,10 @@ else
     CXXFLAGS += -O2 #
 endif
 
+ifeq (${TCPU},i386)
+    CXXFLAGS += -m32
+endif
+
 ifdef ALLOCATOR
     ALLOCFLAGS += -DALLOCATOR=${ALLOCATOR}
     CXXFLAGS += -uAlloc${ALLOCATOR}
@@ -26,7 +30,7 @@ endif
 
 .SILENT : all abortexit bench allocation features future actor pthread EHM realtime multiprocessor
 
-all : bench allocation features collection future actor cobegin timeout pthread EHM realtime multiprocessor
+all : bench allocation features collection cobegin actor future prng timeout pthread EHM realtime multiprocessor
 
 errors : ownership abortexit
 
@@ -143,33 +147,7 @@ features :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 PRNG ; do \
-		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
-			./a.out ; \
-		done ; \
-	done ; \
-	rm -f ./a.out ;
-
-future :
-	set -x ; \
-	if [ ${MULTI} = TRUE ] ; then \
-		multi=${MULTI} ; \
-	fi ; \
-	for filename in Futures Executor Matrix ; do \
-		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
-			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
-			./a.out ; \
-		done ; \
-	done ; \
-	rm -f ./a.out ;
-
-actor :
-	set -x ; \
-	if [ ${MULTI} = TRUE ] ; then \
-		multi=${MULTI} ; \
-	fi ; \
-	for filename in ActorHello ActorFib1 ActorFib2 ActorFib3 ActorPhoneNo ActorDeviceDriver ActorFork ActorFork2 ActorChameneos ActorInherit ActorPromise ActorTrace ActorPingPong ActorRestart ActorRing ActorSieve ActorMatrixSum ActorProdCons ; do \
+	for filename in FloatTest CorFullProdCons CorFullProdConsStack BinaryInsertionSort Merger Locks LocksFinally RWLock Accept MonAcceptBB MonConditionBB SemaphoreBB TaskAcceptBB TaskConditionBB DeleteProcessor Sleep Atomic Migrate Migrate2 ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \
@@ -189,6 +167,45 @@ cobegin :
 		done ; \
 	done ; \
 	rm -f ./a.out $${tmpname} ;
+
+actor :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in ActorHello ActorFib1 ActorFib2 ActorFib3 ActorPhoneNo ActorDeviceDriver ActorFork ActorFork2 ActorChameneos ActorInherit ActorPromise ActorTrace ActorPingPong ActorRestart ActorRing ActorSieve ActorMatrixSum ActorProdCons ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+future :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in Futures Futures2 Executor Matrix ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
+
+prng :
+	set -x ; \
+	if [ ${MULTI} = TRUE ] ; then \
+		multi=${MULTI} ; \
+	fi ; \
+	for filename in PRNG ; do \
+		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
+			./a.out ; \
+		done ; \
+	done ; \
+	rm -f ./a.out ;
 
 timeout :
 	set -x ; \

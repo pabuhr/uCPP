@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  2 08:34:15 2022
-// Update Count     : 1091
+// Last Modified On : Sun Jan  1 10:31:26 2023
+// Update Count     : 1126
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,18 +46,18 @@
 namespace UPP {
 	struct Pthread_values : public uSeqable {			// thread specific data
 		bool in_use;
-		void *value;
+		void * value;
 	}; // Pthread_values
 
 	struct Pthread_keys {								// all of these fields are initialized with zero
 		bool in_use;
-		void (*destructor)( void * );
+		void (* destructor)( void * );
 		uSequence<Pthread_values> threads;
 	}; // Pthread_keys
 
 	// Create storage separately to ensure no constructors are called.
 	char u_pthread_keys_storage[sizeof(Pthread_keys) * PTHREAD_KEYS_MAX] __attribute__((aligned (16))) = {0};
-#   define u_pthread_keys ((Pthread_keys *)u_pthread_keys_storage)
+	#define u_pthread_keys ((Pthread_keys *)u_pthread_keys_storage)
 
 	static pthread_mutex_t u_pthread_keys_lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_mutex_t u_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -84,10 +84,10 @@ namespace UPP {
 			// empty implementation -- one of the specializations is always used
 		}; // Impl
 	  public:
-		static int create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg );
+		static int create( pthread_t * new_thread_id, const pthread_attr_t * attr, void * (* start_func)( void * ), void * arg );
 		static void join( pthread_t threadID );
-		static ::uPthreadable *lookup( pthread_t threadID );
-		static pthread_t rev_lookup( ::uPthreadable *addr );
+		static ::uPthreadable * lookup( pthread_t threadID );
+		static pthread_t rev_lookup( ::uPthreadable * addr );
 		static void destroy();
 	}; // PthreadPid
 
@@ -98,7 +98,7 @@ namespace UPP {
 		friend class PthreadPid;
 		friend _Task ::uPthreadable;
 
-		static pthread_t create( ::uPthreadable *p ) {
+		static pthread_t create( ::uPthreadable * p ) {
 			return (pthread_t)p;
 		} // PthreadPid::Impl::create
 
@@ -106,11 +106,11 @@ namespace UPP {
 			// nothing to do
 		} // PthreadPid::Impl::recycle
 
-		static ::uPthreadable *lookup( pthread_t threadID ) {
+		static ::uPthreadable * lookup( pthread_t threadID ) {
 			return (::uPthreadable *)threadID;
 		} // PthreadPid::lookup
 
-		static pthread_t rev_lookup( ::uPthreadable *addr ) {
+		static pthread_t rev_lookup( ::uPthreadable * addr ) {
 			return (pthread_t)(long)addr;
 		} // PthreadPid::rev_lookup
 
@@ -124,11 +124,11 @@ namespace UPP {
 	class PthreadPid::Impl<false> {
 		// fall-back implementation when pthread_t is too small
 
-#	define U_POWER( n ) (1 << (n))
-#	define U_PID_DIRECTORY_SIZE 8						// bits
-#	define U_PID_NODE_SIZE 8							// bits (must be > 1)
-#	define U_PID_MAX U_POWER(U_PID_DIRECTORY_SIZE + U_PID_NODE_SIZE)
-#	define U_PID_NODE_NUMBER (U_POWER(U_PID_NODE_SIZE) - 2) // leave room for malloc header
+		#define U_POWER( n ) (1 << (n))
+		#define U_PID_DIRECTORY_SIZE 8					// bits
+		#define U_PID_NODE_SIZE 8						// bits (must be > 1)
+		#define U_PID_MAX U_POWER(U_PID_DIRECTORY_SIZE + U_PID_NODE_SIZE)
+		#define U_PID_NODE_NUMBER (U_POWER(U_PID_NODE_SIZE) - 2) // leave room for malloc header
 
 		friend class PthreadPid;
 		friend _Task ::uPthreadable;
@@ -136,13 +136,13 @@ namespace UPP {
 		static_assert( U_PID_DIRECTORY_SIZE + U_PID_NODE_SIZE < sizeof(unsigned int) * 8, "" );
 
 		static pthread_mutex_t create_lock;
-		static ::uPthreadable **directory[U_POWER(U_PID_DIRECTORY_SIZE)];
+		static ::uPthreadable ** directory[U_POWER(U_PID_DIRECTORY_SIZE)];
 		static unsigned int free_elem;
 		static bool first;
 		static unsigned int size;
 
 		static void init_block( unsigned int dir ) {
-			::uPthreadable **block = directory[ dir ];
+			::uPthreadable ** block = directory[ dir ];
 			int i;
 
 			dir <<= U_PID_NODE_SIZE;
@@ -153,7 +153,7 @@ namespace UPP {
 			block[ i ] = (::uPthreadable *)(long)(U_POWER(U_PID_DIRECTORY_SIZE + U_PID_NODE_SIZE) | dir);
 		} // PthreadPid::Impl::init_block
 
-		static unsigned int alloc( ::uPthreadable *tid ) {
+		static unsigned int alloc( ::uPthreadable * tid ) {
 			unsigned int block = free_elem & (U_POWER(U_PID_NODE_SIZE) - 1),
 				dir = free_elem >> U_PID_NODE_SIZE;
 
@@ -187,7 +187,7 @@ namespace UPP {
 			free_elem = pid;
 		} // PthreadPid::Impl::free
 
-		static pthread_t create( ::uPthreadable *p ) {
+		static pthread_t create( ::uPthreadable * p ) {
 			pthread_mutex_lock( &create_lock );
 			if ( size == U_PID_MAX ) {
 				pthread_mutex_unlock( &create_lock );
@@ -207,11 +207,11 @@ namespace UPP {
 			pthread_mutex_unlock( &create_lock );
 		} // PthreadPid::Impl::recycle
 
-		static ::uPthreadable *lookup( pthread_t pid ) {
+		static ::uPthreadable * lookup( pthread_t pid ) {
 			return directory[ (uintptr_t)pid >> U_PID_DIRECTORY_SIZE ][ (uintptr_t)pid & (U_POWER(U_PID_NODE_SIZE) - 1) ];
 		} // PthreadPid::lookup
 
-		static pthread_t rev_lookup( ::uPthreadable *addr ) {
+		static pthread_t rev_lookup( ::uPthreadable * addr ) {
 			return addr->pthreadId();
 		} // PthreadPid::rev_lookup
 
@@ -224,7 +224,7 @@ namespace UPP {
 
 
 	pthread_mutex_t PthreadPid::Impl<false>::create_lock = PTHREAD_MUTEX_INITIALIZER;
-	::uPthreadable **PthreadPid::Impl<false>::directory[U_POWER(U_PID_DIRECTORY_SIZE)];
+	::uPthreadable ** PthreadPid::Impl<false>::directory[U_POWER(U_PID_DIRECTORY_SIZE)];
 	unsigned int PthreadPid::Impl<false>::free_elem = U_POWER(U_PID_DIRECTORY_SIZE + U_PID_NODE_SIZE);
 	bool PthreadPid::Impl<false>::first = true;
 	unsigned int PthreadPid::Impl<false>::size = 0;
@@ -239,13 +239,13 @@ namespace UPP {
 			joinval = (*start_func)( arg );
 		} // uPthread::main
 
-		void *(*start_func)( void * );					// thread starting routine
-		void *arg;										// thread parameter
+		void * (* start_func)( void * );				// thread starting routine
+		void * arg;										// thread parameter
 
 		static unsigned int pthreadCount;
 		static uOwnerLock pthreadCountLock;
 	  public:
-		uPthread( pthread_t *threadId, void * (*start_func)( void * ), const pthread_attr_t *attr, void *arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
+		uPthread( pthread_t * threadId, void * (* start_func)( void * ), const pthread_attr_t * attr, void * arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
 			pthreadCountLock.acquire();
 			pthreadCount += 1;
 			pthreadCountLock.release();
@@ -285,7 +285,7 @@ namespace UPP {
 	//######################### PthreadPid (cont.) ##################
  
 
-	inline int PthreadPid::create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg ) {
+	inline int PthreadPid::create( pthread_t * new_thread_id, const pthread_attr_t * attr, void * (* start_func)( void * ), void * arg ) {
 		try {
 			new uPthread( new_thread_id, start_func, attr, arg );
 		} catch ( ::uPthreadable::CreationFailure & ) {
@@ -299,11 +299,11 @@ namespace UPP {
 		delete dynamic_cast< uPthread *>( lookup( threadID ) ); // delete Pthreads but not uPthreadables
 	} // PthreadPid::join
 
-	inline ::uPthreadable *PthreadPid::lookup( pthread_t threadID ) {
+	inline ::uPthreadable * PthreadPid::lookup( pthread_t threadID ) {
 		return Impl< sizeof(pthread_t) >= sizeof(::uPthreadable *) >::lookup( threadID );
 	} // PthreadPid::lookup
 
-	inline pthread_t PthreadPid::rev_lookup( ::uPthreadable *addr ) {
+	inline pthread_t PthreadPid::rev_lookup( ::uPthreadable * addr ) {
 		return Impl< sizeof(pthread_t) >= sizeof(::uPthreadable *) >::rev_lookup( addr );
 	} // PthreadPid::rev_lookup
 
@@ -322,17 +322,17 @@ namespace UPP {
 		}; // Impl
 	  public:
 		template<typename Lock, typename PublicLock>
-		static void init( PublicLock *lock ) {
+		static void init( PublicLock * lock ) {
 			Impl< Lock, sizeof( PublicLock ) >= sizeof( Lock ) >::init( lock );
 		} // PthreadLock::init
 
 		template<typename Lock, typename PublicLock>
-		static void destroy( PublicLock *lock ) {
+		static void destroy( PublicLock * lock ) {
 			Impl< Lock, sizeof( PublicLock ) >= sizeof( Lock ) >::destroy( lock );
 		} // PthreadLock::destroy
 
 		template<typename Lock, typename PublicLock>
-		static Lock *get( PublicLock *lock ) {
+		static Lock * get( PublicLock * lock ) {
 			return Impl< Lock, sizeof( PublicLock ) >= sizeof( Lock ) >::get( lock );
 		} // PthreadLock::get
 	}; // PthreadLock
@@ -344,17 +344,17 @@ namespace UPP {
 		friend class PthreadLock;
 
 		template< typename PublicLock >
-		static void init( PublicLock *lock ) {
+		static void init( PublicLock * lock ) {
 			new( lock ) Lock;							// run constructor on supplied storage
 		} // PthreadLock::Impl::init
 
 		template< typename PublicLock >
-		static void destroy( PublicLock *lock ) {
+		static void destroy( PublicLock * lock ) {
 			((Lock *)lock)->~Lock();					// run destructor on supplied storage
 		} // PthreadLock::Impl::destroy
 
 		template< typename PublicLock >
-		static Lock *get( PublicLock *lock ) {
+		static Lock * get( PublicLock * lock ) {
 			return (Lock*)lock;
 		} // PthreadLock::Impl::get
 	}; // PthreadLock::Impl
@@ -366,16 +366,16 @@ namespace UPP {
 		friend class PthreadLock;
 
 		struct storage {
-			Lock *lock;
+			Lock * lock;
 		}; // storage
 
 		enum { MaxLockStorage = 256 };
 		static char lockStorage[MaxLockStorage] __attribute__(( aligned (16) ));
-		static char *next;
+		static char * next;
 		static bool first;
 
 		template< typename PublicLock >
-		static void init( PublicLock *lock ) {
+		static void init( PublicLock * lock ) {
 			if ( uHeapControl::initialized() ) {		// normal execution
 				((storage *)lock)->lock = new Lock;
 			} else {
@@ -398,18 +398,18 @@ namespace UPP {
 		} // PthreadLock::Impl::init
 
 		template< typename PublicLock >
-		static void destroy( PublicLock *lock ) {
+		static void destroy( PublicLock * lock ) {
 			if ( (char *)lock >= &lockStorage[MaxLockStorage] ) { // normal execution, assume heap after stack
 				delete ((storage *)lock)->lock;
 			} // if
 		} // PthreadLock::Impl::destroy
 
 		template< typename PublicLock >
-		static Lock *get( PublicLock *lock ) {
+		static Lock * get( PublicLock * lock ) {
 			static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
 			// Use double check to improve performance. Check is safe on x86; volatile prevents compiler reordering
-			volatile PublicLock *const lock_ = lock;
-			Lock *l = ((storage *)lock_)->lock;
+			volatile PublicLock * const lock_ = lock;
+			Lock * l = ((storage *)lock_)->lock;
 			// check is necessary because storage can be statically initialized
 			if ( l == nullptr ) {
 				((uOwnerLock *)&magic_check)->acquire(); // race
@@ -426,7 +426,7 @@ namespace UPP {
 	}; // PthreadLock::Impl
 
 	template<typename T> char PthreadLock::Impl<T,false>::lockStorage[MaxLockStorage];
-	template<typename T> char *PthreadLock::Impl<T,false>::next = PthreadLock::Impl<T,false>::lockStorage;
+	template<typename T> char * PthreadLock::Impl<T,false>::next = PthreadLock::Impl<T,false>::lockStorage;
 	template<typename T> bool PthreadLock::Impl<T,false>::first = true;
 } // UPP
 
@@ -447,7 +447,7 @@ const uPthreadable::Pthread_attr_t uPthreadable::u_pthread_attr_defaults = {
 	{ 0 }
 };
 
-void uPthreadable::createPthreadable( const pthread_attr_t *attr_ ) {
+void uPthreadable::createPthreadable( const pthread_attr_t * attr_ ) {
 	uexc.exception_class = 0;							// any class will work
 	uexc.exception_cleanup = restart_unwinding;			// makes sure cancellation cannot be stopped
 	stop_unwinding = false;
@@ -464,10 +464,10 @@ uPthreadable::~uPthreadable() {
 // unwinder_cleaner gets called after each unwinding step Assumptions: memory/call stack grows DOWN !
 
 _Unwind_Reason_Code uPthreadable::unwinder_cleaner( int /* version */, _Unwind_Action /* actions */,_Unwind_Exception_Class /* exc_class */,
-													_Unwind_Exception * /* exc_obj */, _Unwind_Context *context, void *arg ) {
-	uPthreadable *p = (uPthreadable *)arg;
-	void *cfa = (void *)_Unwind_GetCFA(context);		// identify the current stack frame
-	uBaseCoroutine::PthreadCleanup *cst = p->cleanupStackTop(); // find the address of the top cleanup information
+													_Unwind_Exception * /* exc_obj */, _Unwind_Context * context, void * arg ) {
+	uPthreadable * p = (uPthreadable *)arg;
+	void * cfa = (void *)_Unwind_GetCFA(context);		// identify the current stack frame
+	uBaseCoroutine::PthreadCleanup * cst = p->cleanupStackTop(); // find the address of the top cleanup information
 
 	while ( cst != nullptr && cst <= cfa ) {			// as long as there are cleanup handlers
 		p->cleanup_pop(1);								// keep popping off cleanups and execute them
@@ -479,7 +479,7 @@ _Unwind_Reason_Code uPthreadable::unwinder_cleaner( int /* version */, _Unwind_A
 } // uPthreadable::unwinder_cleaner
 
 void uPthreadable::restart_unwinding( _Unwind_Reason_Code /* urc */, _Unwind_Exception * /* e */ ) {
-	uPthreadable *p = dynamic_cast< uPthreadable *>(&uThisTask());
+	uPthreadable * p = dynamic_cast< uPthreadable *>(&uThisTask());
 	if ( ! p->stop_unwinding ) {
 		p->do_unwind();									// unless turned off in uMachContext, continue unwinding after this exception has been caught
 	} // if
@@ -490,8 +490,8 @@ void uPthreadable::do_unwind() {
 	_Unwind_ForcedUnwind( &uexc, unwinder_cleaner, this );
 } // uPthreadable::do_unwind
 
-void uPthreadable::cleanup_push( void (*routine)(void *), void *args, void *stackaddress ) {
-	uBaseCoroutine::PthreadCleanup *buf = new(stackaddress) uBaseCoroutine::PthreadCleanup; // use the buffer data structure (on the stack) to store information
+void uPthreadable::cleanup_push( void (* routine)(void *), void * args, void * stackaddress ) {
+	uBaseCoroutine::PthreadCleanup * buf = new(stackaddress) uBaseCoroutine::PthreadCleanup; // use the buffer data structure (on the stack) to store information
 	buf->routine = routine;
 	buf->args = args;
 	cleanup_handlers.add( buf );
@@ -500,7 +500,7 @@ void uPthreadable::cleanup_push( void (*routine)(void *), void *args, void *stac
 } // uPthreadable::cleanup_push
 
 void uPthreadable::cleanup_pop( int ex ) {
-	uBaseCoroutine::PthreadCleanup *buf;
+	uBaseCoroutine::PthreadCleanup * buf;
 	assert( ! cleanup_handlers.empty() );
 	buf = cleanup_handlers.drop();
 	if ( ex ) {
@@ -510,7 +510,7 @@ void uPthreadable::cleanup_pop( int ex ) {
 
 
 // must be called only from within uMain or a Pthread
-uBaseCoroutine::PthreadCleanup *uPthreadable::cleanupStackTop() {
+uBaseCoroutine::PthreadCleanup * uPthreadable::cleanupStackTop() {
 	return cleanup_handlers.head();
 } // uPthreadable::cleanupStackTop
 
@@ -531,11 +531,11 @@ extern "C" {
 	} // pthread_pid_destroy_
 
 
-	int pthread_create( pthread_t *new_thread_id, const pthread_attr_t *attr, void * (*start_func)( void * ), void *arg ) __THROW {
+	int pthread_create( pthread_t * new_thread_id, const pthread_attr_t * attr, void * (* start_func)( void * ), void * arg ) __THROW {
 		return PthreadPid::create( new_thread_id, attr, start_func, arg );
 	} // pthread_create
 
-	int pthread_attr_init( pthread_attr_t *attr ) __THROW {
+	int pthread_attr_init( pthread_attr_t * attr ) __THROW {
 		// storage for pthread_attr_t must be >= void *
 		static_assert( sizeof(pthread_attr_t) >= sizeof(void *), "sizeof(pthread_attr_t) < sizeof(void *)" );
 		uPthreadable::get( attr ) = new uPthreadable::Pthread_attr_t;
@@ -543,37 +543,37 @@ extern "C" {
 		return 0;
 	} //  pthread_attr_init
 
-	int pthread_attr_destroy( pthread_attr_t *attr ) __THROW {
+	int pthread_attr_destroy( pthread_attr_t * attr ) __THROW {
 		delete uPthreadable::get( attr );
 		return 0;
 	} // pthread_attr_destroy
 
-	int pthread_attr_setscope( pthread_attr_t *attr, int contentionscope ) __THROW {
+	int pthread_attr_setscope( pthread_attr_t * attr, int contentionscope ) __THROW {
 		uPthreadable::get( attr )->contentionscope = contentionscope;
 		return 0;
 	} // pthread_attr_setscope
 
-	int pthread_attr_getscope( const pthread_attr_t *attr, int *contentionscope ) __THROW {
+	int pthread_attr_getscope( const pthread_attr_t * attr, int * contentionscope ) __THROW {
 		*contentionscope = uPthreadable::get( attr )->contentionscope;
 		return 0;
 	} // pthread_attr_getscope
 
-	int pthread_attr_setdetachstate( pthread_attr_t *attr, int detachstate ) __THROW {
+	int pthread_attr_setdetachstate( pthread_attr_t * attr, int detachstate ) __THROW {
 		uPthreadable::get( attr )->detachstate = detachstate;
 		return 0;
 	} // pthread_attr_setdetachstate
 
-	int pthread_attr_getdetachstate( const pthread_attr_t *attr, int *detachstate ) __THROW {
+	int pthread_attr_getdetachstate( const pthread_attr_t * attr, int * detachstate ) __THROW {
 		*detachstate = uPthreadable::get( attr )->detachstate;
 		return 0;
 	} // pthread_attr_getdetachstate
 
-	int pthread_attr_setstacksize( pthread_attr_t *attr, size_t stacksize ) __THROW {
+	int pthread_attr_setstacksize( pthread_attr_t * attr, size_t stacksize ) __THROW {
 		uPthreadable::get( attr )->stacksize = stacksize;
 		return 0;
 	} // pthread_attr_setstacksize
 
-	int pthread_attr_getstacksize( const pthread_attr_t *attr, size_t *stacksize ) __THROW {
+	int pthread_attr_getstacksize( const pthread_attr_t * attr, size_t * stacksize ) __THROW {
 		*stacksize = uPthreadable::get( attr )->stacksize;
 		return 0;
 	} // pthread_attr_getstacksize
@@ -586,23 +586,23 @@ extern "C" {
 		return 0;
 	} // pthread_attr_setguardsize
 
-	int pthread_attr_setstackaddr( pthread_attr_t *attr, void *stackaddr ) __THROW {
+	int pthread_attr_setstackaddr( pthread_attr_t * attr, void * stackaddr ) __THROW {
 		uPthreadable::get( attr )->stackaddr = stackaddr;
 		return 0;
 	} // pthread_attr_setstackaddr
 
-	int pthread_attr_getstackaddr( const pthread_attr_t *attr, void **stackaddr ) __THROW {
+	int pthread_attr_getstackaddr( const pthread_attr_t * attr, void ** stackaddr ) __THROW {
 		*stackaddr = uPthreadable::get( attr )->stackaddr;
 		return 0;
 	} // pthread_attr_getstackaddr
 
-	int pthread_attr_setstack( pthread_attr_t *attr, void *stackaddr, size_t stacksize ) __THROW {
+	int pthread_attr_setstack( pthread_attr_t * attr, void * stackaddr, size_t stacksize ) __THROW {
 		uPthreadable::get( attr )->stackaddr = stackaddr;
 		uPthreadable::get( attr )->stacksize = stacksize;
 		return 0;
 	} // pthread_attr_setstack
 
-	int pthread_attr_getstack( const pthread_attr_t *attr, void **stackaddr, size_t *stacksize ) __THROW {
+	int pthread_attr_getstack( const pthread_attr_t * attr, void ** stackaddr, size_t * stacksize ) __THROW {
 		*stackaddr = uPthreadable::get( attr )->stackaddr;
 		*stacksize = uPthreadable::get( attr )->stacksize;
 		return 0;
@@ -610,7 +610,7 @@ extern "C" {
 
 	// Initialize thread attribute *attr with attributes corresponding to the already running thread threadID. It shall
 	// be called on unitialized attr and destroyed with pthread_attr_destroy when no longer needed.
-	int pthread_getattr_np( pthread_t threadID, pthread_attr_t *attr ) __THROW { // GNU extension
+	int pthread_getattr_np( pthread_t threadID, pthread_attr_t * attr ) __THROW { // GNU extension
 		assert( threadID != NOT_A_PTHREAD );
 		// race condition during copy
 		pthread_attr_init( attr );
@@ -618,34 +618,34 @@ extern "C" {
 		return 0;
 	} // pthread_getattr_np
 
-	int pthread_attr_setschedpolicy( pthread_attr_t *attr, int policy ) __THROW {
+	int pthread_attr_setschedpolicy( pthread_attr_t * attr, int policy ) __THROW {
 		uPthreadable::get( attr )->policy = policy;
 		return ENOSYS;					// unsupported
 	} // pthread_attr_setschedpolicy
 
-	int pthread_attr_getschedpolicy( const pthread_attr_t *attr, int *policy ) __THROW {
+	int pthread_attr_getschedpolicy( const pthread_attr_t * attr, int * policy ) __THROW {
 		*policy = uPthreadable::get( attr )->policy;
-		return ENOSYS;
+		return 0;
 	} // pthread_attr_getschedpolicy
 
-	int pthread_attr_setinheritsched( pthread_attr_t *attr, int inheritsched ) __THROW {
+	int pthread_attr_setinheritsched( pthread_attr_t * attr, int inheritsched ) __THROW {
 		uPthreadable::get( attr )->inheritsched = inheritsched;
 		return ENOSYS;
 	} // pthread_attr_setinheritsched
 
-	int pthread_attr_getinheritsched( const pthread_attr_t *attr, int *inheritsched ) __THROW {
+	int pthread_attr_getinheritsched( const pthread_attr_t * attr, int * inheritsched ) __THROW {
 		*inheritsched = uPthreadable::get( attr )->inheritsched;
-		return ENOSYS;
+		return 0;
 	} // pthread_attr_getinheritsched
 
-	int pthread_attr_setschedparam( pthread_attr_t *attr, const struct sched_param *param ) __THROW {
+	int pthread_attr_setschedparam( pthread_attr_t * attr, const struct sched_param * param ) __THROW {
 		uPthreadable::get( attr )->param = *param;
 		return ENOSYS;
 	} // pthread_attr_setschedparam
 
-	int pthread_attr_getschedparam( const pthread_attr_t *attr, struct sched_param *param ) __THROW {
+	int pthread_attr_getschedparam( const pthread_attr_t * attr, struct sched_param * param ) __THROW {
 		*param = uPthreadable::get( attr )->param;
-		return ENOSYS;
+		return 0;
 	} // pthread_attr_getschedparam
 
 	int pthread_yield( void ) __THROW {					// GNU extension
@@ -658,8 +658,8 @@ extern "C" {
 	//######################### Exit #########################
 
 
-	void pthread_exit( void *status ) {
-		uPthreadable *p = dynamic_cast<uPthreadable *>(&uThisCoroutine());
+	void pthread_exit( void * status ) {
+		uPthreadable * p = dynamic_cast<uPthreadable *>(&uThisCoroutine());
 #ifdef __U_DEBUG__
 		if ( p == nullptr ) abort( "pthread_exit performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
@@ -669,10 +669,10 @@ extern "C" {
 		abort( "pthread_exit( %p ) : internal error, attempt to return.", status );
 	} // pthread_exit
 
-	int pthread_join( pthread_t threadID, void **status ) {
+	int pthread_join( pthread_t threadID, void ** status ) {
 		assert( threadID != NOT_A_PTHREAD );
 		pthread_testcancel();							// pthread_join is a cancellation point
-		uPthreadable *p = PthreadPid::lookup( threadID );
+		uPthreadable * p = PthreadPid::lookup( threadID );
 	  if ( p->attr.detachstate != PTHREAD_CREATE_JOINABLE ) return EINVAL;
 	  if ( pthread_self() == threadID ) return EDEADLK;
 		// join() is only necessary for status; otherwise synchronization occurs at delete.
@@ -681,8 +681,8 @@ extern "C" {
 		return 0;
 	} // pthread_join
 
-	int pthread_tryjoin_np( pthread_t threadID, void **status ) __THROW { // GNU extension
-		uPthreadable *p = PthreadPid::lookup( threadID );
+	int pthread_tryjoin_np( pthread_t threadID, void ** status ) __THROW { // GNU extension
+		uPthreadable * p = PthreadPid::lookup( threadID );
 	  if ( p->attr.detachstate != PTHREAD_CREATE_JOINABLE ) return EINVAL;
 	  if ( pthread_self() == threadID ) return EDEADLK;
 	  	// race condition during check
@@ -709,7 +709,7 @@ extern "C" {
 
 
 	void pthread_delete_kernel_threads_() __THROW {		// see uMain::~uMain
-		Pthread_kernel_threads *p;
+		Pthread_kernel_threads * p;
 		for ( uStackIter<Pthread_kernel_threads> iter( u_pthreads_kernel_threads ); iter >> p; ) {
 			delete p;
 		} // for
@@ -731,7 +731,7 @@ extern "C" {
 			u_pthreads_kernel_threads.push( new Pthread_kernel_threads );
 		} // for
 		for ( ; new_level < u_pthreads_no_kernel_threads; u_pthreads_no_kernel_threads -= 1 ) { // remove processors ?
-			Pthread_kernel_threads *p = u_pthreads_kernel_threads.pop();
+			Pthread_kernel_threads * p = u_pthreads_kernel_threads.pop();
 			delete p;
 		} // for
 		pthread_mutex_unlock( &u_pthread_concurrency_lock );
@@ -742,9 +742,9 @@ extern "C" {
 	//######################### Thread Specific Data #########################
 
 
-	void pthread_deletespecific_( void *pthreadData ) __THROW { // see uMachContext::invokeTask
+	void pthread_deletespecific_( void * pthreadData ) __THROW { // see uMachContext::invokeTask
 		pthread_mutex_lock( &u_pthread_keys_lock );
-		Pthread_values *values = (Pthread_values *)pthreadData;
+		Pthread_values * values = (Pthread_values *)pthreadData;
 
 		// If, after all the destructors have been called for all non-null values with associated destructors, there are
 		// still some non-null values with associated destructors, then the process is repeated. If, after at least
@@ -768,7 +768,7 @@ extern "C" {
 					entry.in_use = false;
 					u_pthread_keys[i].threads.remove( &entry );
 					if ( u_pthread_keys[i].destructor != nullptr && entry.value != nullptr ) {
-						void *data = entry.value;
+						void * data = entry.value;
 						entry.value = nullptr;
 						uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p begin\n",
 											  &uThisTask(), u_pthread_keys[i].destructor, data ); );
@@ -787,7 +787,7 @@ extern "C" {
 	} // pthread_deletespecific_
 
 
-	int pthread_key_create( pthread_key_t *key, void (*destructor)( void * ) ) __THROW {
+	int pthread_key_create( pthread_key_t * key, void (* destructor)( void * ) ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%p, destructor:%p) enter task:%p\n", key, destructor, &uThisTask() ); );
 		pthread_mutex_lock( &u_pthread_keys_lock );
 		for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) {
@@ -817,7 +817,7 @@ extern "C" {
 
 		// Remove key from all threads with a value.
 
-		Pthread_values *p;
+		Pthread_values * p;
 		uSequence<Pthread_values> &head = u_pthread_keys[key].threads;
 		for ( uSeqIter<Pthread_values> iter( head ); iter >> p; ) {
 			p->in_use = false;
@@ -829,11 +829,11 @@ extern "C" {
 		return 0;
 	} // pthread_key_delete
 
-	int pthread_setspecific( pthread_key_t key, const void *value ) __THROW {
+	int pthread_setspecific( pthread_key_t key, const void * value ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_setspecific(key:0x%x, value:%p) enter task:%p\n", key, value, &uThisTask() ); );
 		uBaseTask &t = uThisTask();
 
-		Pthread_values *values;
+		Pthread_values * values;
 		if ( t.pthreadData == nullptr ) {
 			values = new Pthread_values[PTHREAD_KEYS_MAX];
 			t.pthreadData = values;
@@ -861,7 +861,7 @@ extern "C" {
 		return 0;
 	} // pthread_setspecific
 
-	void *pthread_getspecific( pthread_key_t key ) __THROW {
+	void * pthread_getspecific( pthread_key_t key ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_getspecific(key:0x%x) enter task:%p\n", key, &uThisTask() ); );
 	  if ( key >= PTHREAD_KEYS_MAX ) return nullptr;
 
@@ -874,7 +874,7 @@ extern "C" {
 			pthread_mutex_unlock( &u_pthread_keys_lock );
 			return nullptr;
 		} // if
-		void *value = entry.value;
+		void * value = entry.value;
 		pthread_mutex_unlock( &u_pthread_keys_lock );
 		uDEBUGPRT( uDebugPrt( "%p = pthread_getspecific(key:0x%x) exit task:%p\n", value, key, &uThisTask() ); );
 		return value;
@@ -905,19 +905,19 @@ extern "C" {
 
 	pthread_t pthread_self( void ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_self enter task:%p\n", &uThisTask() ); );
-#ifdef __U_DEBUG__
-		uPthreadable *p = dynamic_cast<uPthreadable *>(&uThisTask());
+		#ifdef __U_DEBUG__
+		uPthreadable * p = dynamic_cast<uPthreadable *>(&uThisTask());
 		if ( p == nullptr ) {
 			return NOT_A_PTHREAD;
 		} // if
 		return p->pthreadId();
-#else
+		#else
 		return ((uPthreadable *)&uThisTask())->pthreadId();
-#endif // __U_DEBUG__
+		#endif // __U_DEBUG__
 	} // pthread_self
 
 
-	int pthread_once( pthread_once_t *once_control, void (*init_routine)( void ) ) __OLD_THROW {
+	int pthread_once( pthread_once_t * once_control, void (* init_routine)( void ) ) __OLD_THROW {
 		uDEBUGPRT(
 			//uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) enter task:%p\n", once_control, init_routine, &uThisTask() );
 		);
@@ -954,16 +954,16 @@ extern "C" {
 
 	int pthread_cancel( pthread_t threadID ) __OLD_THROW {
 		assert( threadID != NOT_A_PTHREAD );
-		uPthreadable *p = PthreadPid::lookup( threadID );
+		uPthreadable * p = PthreadPid::lookup( threadID );
 		p->cancel();
 		return 0;
 	} // pthread_cancel
 
-	int pthread_setcancelstate( int state, int *oldstate ) __OLD_THROW {
+	int pthread_setcancelstate( int state, int * oldstate ) __OLD_THROW {
 	  if ( state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE ) return EINVAL;
-	    uBaseCoroutine *c = &uThisCoroutine();
+	    uBaseCoroutine * c = &uThisCoroutine();
 #ifdef __U_DEBUG__
-		uPthreadable *p = dynamic_cast<uPthreadable *>(c);
+		uPthreadable * p = dynamic_cast<uPthreadable *>(c);
 		if ( p == nullptr ) abort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
 		if ( oldstate != nullptr ) *oldstate = c->getCancelState();
@@ -971,22 +971,22 @@ extern "C" {
 		return 0;
 	} // pthread_setcancelstate
 
-	int pthread_setcanceltype( int type, int *oldtype ) __OLD_THROW {
+	int pthread_setcanceltype( int type, int * oldtype ) __OLD_THROW {
 		// currently do not support asynchronous cancellation
 	  if ( type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS ) return EINVAL;
-		uBaseCoroutine *c = &uThisCoroutine();
+		uBaseCoroutine * c = &uThisCoroutine();
 #ifdef __U_DEBUG__
-		uPthreadable *p = dynamic_cast<uPthreadable *>(c);
+		uPthreadable * p = dynamic_cast<uPthreadable *>(c);
 		if ( p == nullptr ) abort( "pthread_setcancelstate performed on non-pthread task or while executing a uC++ coroutine" );
 #endif // __U_DEBUG__
-		if ( oldtype != nullptr ) *oldtype = c->getCancelType();
+		if ( oldtype != nullptr ) * oldtype = c->getCancelType();
 		c->setCancelType( (uBaseCoroutine::CancellationType)type );
 		return 0;
 	} // pthread_setcanceltype
 
 	void pthread_testcancel( void ) __OLD_THROW {
-		uBaseCoroutine *c = &uThisCoroutine();
-		uPthreadable *p = dynamic_cast<uPthreadable *>(c);
+		uBaseCoroutine * c = &uThisCoroutine();
+		uPthreadable * p = dynamic_cast<uPthreadable *>(c);
 	  if ( p == nullptr ) return;
 	  if ( c->getCancelState() == (uBaseCoroutine::CancellationState)PTHREAD_CANCEL_DISABLE || ! c->cancelled() ) return;
 #if defined( __U_BROKEN_CANCEL__ )
@@ -999,8 +999,8 @@ extern "C" {
 	} // pthread_testcancel
 
 
-	void _pthread_cleanup_push( struct _pthread_cleanup_buffer *buffer, void (*routine) (void *), void *args ) __THROW {
-		uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
+	void _pthread_cleanup_push( struct _pthread_cleanup_buffer * buffer, void (* routine) (void *), void * args ) __THROW {
+		uPthreadable * p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
 		if ( p == nullptr ) abort( "pthread_cleanup_push performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
@@ -1008,7 +1008,7 @@ extern "C" {
 	} // pthread_cleanup_push
 
 	void _pthread_cleanup_pop ( struct _pthread_cleanup_buffer * /* buffer */, int ex ) __THROW {
-		uPthreadable *p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
+		uPthreadable * p = dynamic_cast< uPthreadable * > ( &uThisCoroutine() );
 #ifdef __U_DEBUG__
 		if ( p == nullptr ) abort( "pthread_cleanup_pop performed on something other than a pthread task" );	    
 #endif // __U_DEBUG__
@@ -1018,11 +1018,11 @@ extern "C" {
 
 	//######################### Mutex #########################
 
-	static inline void mutex_check( pthread_mutex_t *mutex ) {
+	static inline void mutex_check( pthread_mutex_t * mutex ) {
 		// Cannot use a pthread_mutex_lock due to recursion on initialization.
 		static char magic_check[sizeof(uOwnerLock)] __attribute__(( aligned (16) )); // set to zero
 		// Use double check to improve performance. Check is safe on x86; volatile prevents compiler reordering
-		volatile pthread_mutex_t *const mutex_ = mutex;
+		volatile pthread_mutex_t * const mutex_ = mutex;
 		// SKULLDUGGERY: not a portable way to access the kind field, /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
 		int kind = ((pthread_mutex_t *)mutex_)->__data.__kind;
 		// kind is a small pthread enumerated type. If it greater than 32, it is a value in an uOwnerlock field.
@@ -1036,18 +1036,18 @@ extern "C" {
 		} // if
 	} // mutex_check
 
-	int pthread_mutex_init( pthread_mutex_t *mutex, const pthread_mutexattr_t * /* attr */ ) __THROW {
+	int pthread_mutex_init( pthread_mutex_t * mutex, const pthread_mutexattr_t * /* attr */ ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_mutex_init(mutex:%p, attr:%p) enter task:%p\n", mutex, attr, &uThisTask() ); );
 		PthreadLock::init< uOwnerLock >( mutex );
 		return 0;
 	} // pthread_mutex_init
 
-	int pthread_mutex_destroy( pthread_mutex_t *mutex ) __THROW {
+	int pthread_mutex_destroy( pthread_mutex_t * mutex ) __THROW {
 		PthreadLock::destroy< uOwnerLock >( mutex );
 		return 0;
 	} // pthread_mutex_destroy
 
-	int pthread_mutex_lock( pthread_mutex_t *mutex ) __THROW {
+	int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW {
 		if ( ! uKernelModule::kernelModuleInitialized ) {
 			uKernelModule::startup();
 		} // if
@@ -1058,13 +1058,13 @@ extern "C" {
 		return 0;
 	} // pthread_mutex_lock
 
-	int pthread_mutex_trylock( pthread_mutex_t *mutex ) __THROW {
+	int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW {
 		uDEBUGPRT(uDebugPrt( "pthread_mutex_trylock(mutex:%p) enter task:%p\n", mutex, &uThisTask() ); );
 		mutex_check( mutex );
 		return PthreadLock::get< uOwnerLock >( mutex )->tryacquire() ? 0 : EBUSY;
 	} // pthread_mutex_trylock
 
-	int pthread_mutex_unlock( pthread_mutex_t *mutex ) __THROW {
+	int pthread_mutex_unlock( pthread_mutex_t * mutex ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_mutex_unlock(mutex:%p) enter task:%p\n", mutex, &uThisTask() ); );
 		PthreadLock::get< uOwnerLock >( mutex )->release();
 		return 0;
@@ -1123,37 +1123,37 @@ extern "C" {
 	//######################### Condition #########################
 
 
-	int pthread_cond_init( pthread_cond_t *cond, const pthread_condattr_t * /* attr */ ) __THROW {
+	int pthread_cond_init( pthread_cond_t * cond, const pthread_condattr_t * /* attr */ ) __THROW {
 		PthreadLock::init< uCondLock >( cond );
 		return 0;
 	} // pthread_cond_init
 
-	int pthread_cond_destroy( pthread_cond_t *cond ) __THROW {
+	int pthread_cond_destroy( pthread_cond_t * cond ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_cond_destroy(cond:%p) task:%p\n", cond, &uThisTask() ); );
 		PthreadLock::destroy< uCondLock >( cond );
 		return 0;
 	} // pthread_cond_destroy
 
-	int pthread_cond_wait( pthread_cond_t *cond, pthread_mutex_t *mutex ) {
+	int pthread_cond_wait( pthread_cond_t * cond, pthread_mutex_t * mutex ) {
 		uDEBUGPRT( uDebugPrt( "pthread_cond_wait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); );
 		pthread_testcancel();							// pthread_cond_wait is a cancellation point
 		PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ) );
 		return 0;
 	} // pthread_cond_wait
 
-	int pthread_cond_timedwait( pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime ) {
+	int pthread_cond_timedwait( pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * abstime ) {
 		uDEBUGPRT( uDebugPrt( "pthread_cond_timedwait(cond:%p) mutex:%p enter task:%p\n", cond, mutex, &uThisTask() ); );
 		pthread_testcancel();							// pthread_cond_timedwait is a cancellation point
 		return PthreadLock::get< uCondLock >( cond )->wait( *PthreadLock::get< uOwnerLock >( mutex ), uTime( *abstime ) ) ? 0 : ETIMEDOUT;
 	} // pthread_cond_timedwait
 
-	int pthread_cond_signal( pthread_cond_t *cond ) __THROW {
+	int pthread_cond_signal( pthread_cond_t * cond ) __THROW {
 		uDEBUGPRT(	uDebugPrt( "pthread_cond_signal(cond:%p) enter task:%p\n", cond, &uThisTask() ); );
 		PthreadLock::get< uCondLock >( cond )->signal();
 		return 0;
 	} // pthread_cond_signal
 
-	int pthread_cond_broadcast( pthread_cond_t *cond ) __THROW {
+	int pthread_cond_broadcast( pthread_cond_t * cond ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_cond_broadcast(cond:%p) task:%p\n", cond, &uThisTask() ); );
 		PthreadLock::get< uCondLock >( cond )->broadcast();
 		return 0;
@@ -1169,12 +1169,12 @@ extern "C" {
 		return 0;
 	} // pthread_condattr_destroy
 
-	int pthread_condattr_setpshared( pthread_condattr_t *attr, int pshared ) __THROW {
+	int pthread_condattr_setpshared( pthread_condattr_t * attr, int pshared ) __THROW {
 		*((int *)attr) = pshared;
 		return 0;
 	} // pthread_condattr_setpshared
 
-	int pthread_condattr_getpshared( const pthread_condattr_t *attr, int *pshared ) __THROW {
+	int pthread_condattr_getpshared( const pthread_condattr_t * attr, int * pshared ) __THROW {
 		*pshared = *((int *)attr);
 		return 0;
 	} // pthread_condattr_getpshared

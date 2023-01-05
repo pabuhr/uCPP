@@ -22,6 +22,10 @@ else
     CXXFLAGS += -O2 #
 endif
 
+ifeq (${TCPU},i386)
+    CXXFLAGS += -m32
+endif
+
 ifdef ALLOCATOR
     CXXFLAGS += -uAlloc${ALLOCATOR}
 endif

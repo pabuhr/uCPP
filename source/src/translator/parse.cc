@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct  3 17:59:26 2022
-// Update Count     : 5069
+// Last Modified On : Tue Jan  3 16:24:02 2023
+// Update Count     : 5071
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -4993,6 +4993,8 @@ static bool object_declaration() {
 	token_t * back = ahead;
 	attribute_t attribute;
 
+	while ( type_qualifier( attribute ) );			// scan off initial type qualifiers
+
 	if ( using_definition() ) return true;
 	if ( using_directive() ) return true;
 	if ( using_alias( attribute ) ) return true;
@@ -5093,7 +5095,7 @@ static bool namespace_definition() {
 			while ( declaration() );
 			if ( token != nullptr ) pop_table();
 			if ( match( RC ) ) {
-				if ( symbol->data->attribute.dclqual.qual.INLINE ) {
+				if ( token != nullptr && symbol->data->attribute.dclqual.qual.INLINE ) {
 					local_t * use = new local_t;
 					use->useing = true;
 					use->tblsym = true;

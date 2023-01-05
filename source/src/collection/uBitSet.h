@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Dec 15 14:05:51 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov 16 15:11:55 2021
-// Update Count     : 280
+// Last Modified On : Tue Dec 27 08:31:16 2022
+// Update Count     : 282
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -67,7 +67,7 @@ namespace UPP {
 		BaseType bits[ nbase ];
 	  public:
 		void set( unsigned int idx ) {
-			assert( idx >= 0 && idx < nbits );
+			assert( idx < nbits );
 			bits[ idx >> idxshift ] |= (BaseType)1 << ( idx & idxmask );
 		} // uBitSetImpl::set
 

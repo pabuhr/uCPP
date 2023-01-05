@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul 23 18:51:49 2022
-// Update Count     : 1222
+// Last Modified On : Tue Dec 20 13:24:40 2022
+// Update Count     : 1228
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -398,6 +398,15 @@ class uActor {
 		to = from;										// can always overwrite Nodelete
 	} // uActor::setAllocation
 	void promise_allocation( Allocation alloc ) { setAllocation( promise_allocation_, alloc ); } // setter
+
+	static inline uActor * sender() {
+		// SKULLDUGGERY: For a call actor.tell(...) in a "receive" member, the "this" in "tell" is the actor receiving
+		// the message not the actor sending the message. For "tell" to obtain the sender actor performing the call,
+		// requires looking inside the executor thread currently processing the last actor taken from its mailbox.
+		uExecutor::Worker * thread = dynamic_cast<uExecutor::Worker *>( &uThisTask() );
+		if ( thread == nullptr ) return nullptr;		// program main ?
+		return &((uExecutor::VRequest<Deliver_> *)(thread->uThisRequest()))->action.actor;
+	} // uActor::sender
   protected:
 	template< typename Func > void send_( Func action ) { executor_->send( action, ticket ); }
 	virtual void preStart() { /* default empty */ };	// user supplied actor initialization
@@ -438,14 +447,6 @@ class uActor {
 	} // uActor::~uActor
 
 	// Communication
-
-	static inline uActor * sender() {
-		// Obtain sender from the executor thread processing the actor performing the send because the "this" variable
-		// for this call is the receiver.
-		uExecutor::Worker * thread = dynamic_cast<uExecutor::Worker *>( &uThisTask() );
-		if ( thread == nullptr ) return nullptr;
-		return &((uExecutor::VRequest<Deliver_> *)(thread->uThisRequest()))->action.actor;
-	} // uActor::sender
 
 	uActor & tell( Message & msg ) {					// async call, no return value
 		uDEBUG( if ( ticket == ULONG_MAX ) abort( "sending message to terminated actor." ); );

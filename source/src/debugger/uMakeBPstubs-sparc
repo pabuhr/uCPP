@@ -43,7 +43,7 @@ while [ $i -lt $NUMBER ]; do
 	echo '    if ( ! U_THIS_TASK->processBP ) {'
 	echo '        U_THIS_TASK->processBP = true;'
 	echo '        if ( U_THIS_TASK->taskDebugMask['$i' / NBBY] & ( 1 << ('$i' % NBBY) ) ) {'
-	echo '            if ( ! THREAD_GETMEM( disableInt) && ! THREAD_GETMEM( disableIntSpin) ) {'
+	echo '            if ( ! uKernelModule::uKernelModuleBoot.disableInt && ! uKernelModule::uKernelModuleBoot.disableIntSpin ) {'
 	echo '                if ( uLocalDebugger::uLocalDebuggerInstance->breakpointHandler( '$i' ) ) {'
 	echo '                    asm("add %i7,-8,%i7");'
 	echo '                    asm("wr %g0,%l7,%y");'

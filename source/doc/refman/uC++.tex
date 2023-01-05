@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -*- Mode: Latex -*- %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -*- Mode: Latex -*- %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 
 %% uC++ Version 7.0.0, Copyright (C) Peter A. Buhr
 %% 
@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Tue Oct 11 09:11:35 2022
-%% Update Count     : 8481
+%% Last Modified On : Mon Jan  2 16:55:59 2023
+%% Update Count     : 8527
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -1950,7 +1950,7 @@ where the interface for the base class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \L{\LB{}\Tab{4}{\V{uBaseTask}(\0\V{uCluster}\0\&\0\V{cluster},\0\K{unsigned}\0\K{int}\0\V{stackSize}\0);}}
 \L{\LB{}\Tab{4}{\V{uBaseTask}(\0\V{uCluster}\0\&\0\V{cluster},\0\K{void}\0\*\0\V{storage},\0\K{unsigned}\0\K{int}\0\V{storageSize}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{yield}(\0\K{unsigned}\0\K{int}\0\V{times}\0=\01\0);}}
+\L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{yield}(\0\V{size\_t}\0\V{times}\0=\01\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{sleep}(\0\V{uDuration}\0\V{duration}\0);}}
 \L{\LB{}\Tab{4}{\K{static}\0\K{void}\0\V{sleep}(\0\V{uTime}\0\V{time}\0);}}
@@ -3085,11 +3085,6 @@ Note, the call can complete because a result is available, because the server ha
 The client blocks if the future result is currently unavailable.
 If an exception is returned by the server, that exception is thrown.
 A future result (or exception) can be retrieved multiple times by any task until the future is reset or destroyed.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}\0\V{T}}}\endlgrinde\LGend{}]
--- (conversion to type T) returns a copy of the future result.
-\Emph{This kind of access must be performed only after a blocking access, or after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}.}
-This operation is a low-cost way of accessing a future result \emph{after} the result is known to have been delivered.
-As with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()}}\endlgrinde\LGend{}, if the server returns an exception, that exception is thrown.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}]
 -- returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the future is cancelled and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}]
@@ -3108,23 +3103,26 @@ If the computation cannot be interrupted, the call may block until the computati
 The future operations available to a server are:
 \begin{prefix}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{T}\0\V{result}\0)}}\endlgrinde\LGend{}]
--- copy the server-generated result into the future, unblocking any clients that are waiting for the result.
+-- copy the server-generated result into the future, unblocking all clients waiting for the result.
 This result is the value returned to the client.
 If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the result.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}]
--- mark the future as empty so it can be reused, after which the current future value is no longer available.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exception}(\0\V{uBaseEvent}\0\*\0\V{cause}\0)}}\endlgrinde\LGend{}]
--- copy a server-generated exception into the future.
-All clients waiting for the result are unblocked, and the exception \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cause}}}\endlgrinde\LGend{} is thrown at any client attempting to access the result.
+
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{cause}\0)}}\endlgrinde\LGend{}]
+-- copy a server-generated exception into the future, unblocking all clients waiting for the result.
+This exception is thrown at any client instead of the future result.
 If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the exception.
+
+For the future to manage the exception lifetime, the exception must be dynamically allocated:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
 \L{\LB{\V{Future\_ISM}\<\K{int}\>\0\V{result};}}
-\L{\LB{\V{result}.\V{exception}(\0\K{new}\0\V{E}\0);}\Tab{28}{\C{}\1\1\0exception\0deleted\0by\0future}}
+\L{\LB{\V{result}.\V{delivery}(\0\BF{\K{new}\0\V{E}}\0);}\Tab{36}{\C{}\1\1\0exception\0deleted\0by\0future}}
 \CE{}\endlgrinde\LGend
-exception deleted by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{} or when future deleted
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{cause}\0)}}\endlgrinde\LGend{}]
--- same as member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exception}}}\endlgrinde\LGend{}.
+The exception is implicitly deleted when the future is deleted or by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}.
+
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}]
+-- mark the future as empty so it can be reused, after which the current future value is no longer available.
+It is an error to reset a future with waiting tasks.
 \end{prefix}
 
 A server may require storage to buffer call arguments and other data needed for delivery or cancellation of futures.
@@ -3157,12 +3155,9 @@ The explicit storage-management (ESM) future (see \VRef[Figure]{f:FutureExplicit
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{template}\<\K{typename}\0\V{T},\0\K{typename}\0\V{ServerData}\>\0\K{\_Monitor}\0\V{Future\_ESM}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{Future\_ESM}();}}
-\L{\LB{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0client}}
 \CE{}\L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{bool}\0\V{available}();}\Tab{44}{\C{}\1\1\0future\0result\0available\0?}}
 \CE{}\L{\LB{}\Tab{4}{\V{T}\0\K{operator}()();}\Tab{44}{\C{}\1\1\0access\0result,\0possibly\0having\0to\0wait}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{operator}\0\V{T}();}\Tab{44}{\C{}\1\1\0cheap\0access\0of\0result\0after\0waiting}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{bool}\0\V{cancelled}();}\Tab{44}{\C{}\1\1\0future\0result\0cancelled\0?}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{cancel}();}\Tab{44}{\C{}\1\1\0cancel\0future\0result}}
@@ -3171,13 +3166,12 @@ The explicit storage-management (ESM) future (see \VRef[Figure]{f:FutureExplicit
 \CE{}\L{\LB{}\Tab{4}{\V{ServerData}\0\V{serverData};}\Tab{44}{\C{}\1\1\0information\0needed\0by\0server}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{exception}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!available@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{}}%
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!operator()()@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()()}}\endlgrinde\LGend{}}%
-\index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!operator T()@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}\0\V{T}()}}\endlgrinde\LGend{}}%
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!cancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}}%
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!cancel@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}}%
 \index{Future_ESM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}!delivery@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}}}\endlgrinde\LGend{}}%
@@ -3199,34 +3193,6 @@ It is the client's responsibility to ensure a future continues to exist after a 
 It is safe to delete the future after \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()}}\endlgrinde\LGend{} returns, when \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}, or after \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{} returns.
 Note that because of this guarantee provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}, it may be the case that \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{} blocks until the server task acknowledges the cancellation.
 
-
-\subsection{Example}
-
-This example illustrates how a client uses a number of futures to communicate asynchronously with a server (see \VRef{s:streamIO} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}):
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{Server}\0\V{server};}\Tab{44}{\C{}\1\1\0server\0thread\0to\0process\0async\0call}}
-\CE{}\L{\LB{\V{Future\_ESM}\<\K{int},\0\V{Server}::\V{IMsg}\>\0\V{f}[10];}\Tab{44}{\C{}\1\1\0created\0on\0the\0stack}}
-\CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0start\0a\0number\0of\0calls}}
-\CE{}\L{\LB{}\Tab{4}{\V{server}.\V{mem}(\0\V{f}[\V{i}],\0\V{i},\0\S{}\'c\'\SE{}\0);}\Tab{44}{\C{}\1\1\0async\0call}}
-\CE{}\L{\LB{\}}}
-\L{\LB{\C{}\1\1\0work\0asynchronously\0while\0server\0processes\0requests}}
-\CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0retrieve\0async\0results}}
-\CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{v}\0=\0\V{f}[\V{i}]()\0+\07;}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
-\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{f}[\V{i}]\0\<\<\0\V{endl};\0\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
-\CE{}\L{\LB{\}}}
-\endlgrinde\LGend
-The client creates an array of $N$ futures for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} values.
-In general, these futures can appear in any context requiring an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} value and are used to make $N$ asynchronous calls to the server.
-For each call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{server}.\V{mem}}}\endlgrinde\LGend{}, a future is passed, in which the server returns a result, along with appropriate arguments, which are used by the server to perform the computation.
-The client then proceeds asynchronously with the server to perform other work, possibly in parallel with the server (if running multiprocessor).
-Finally, the client retrieves the results from the server by first performing a blocking access to each future.
-After that future is retrieved, it can be retrieved again using the cheap nonblocking-form (or the expensive blocking-form, but there is no point in synchronizing more than once for each asynchronous call.)
-Warning, combining blocking and non-blocking future access in an expression is dangerous:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{f}[\V{i}]\0\<\<\0\V{endl};}}
-\endlgrinde\LGend
-because the order of expression evaluation is not left to right, so the non-blocking access may be executed first.
-
 The key point for explicit futures is that the client preallocates the future storage so the server does not perform any dynamic memory-allocation for the futures, which can provided a substantial performance benefit.
 In the example, the client is able to use low-cost stack storage for the futures needed to interact with the server.
 
@@ -3246,7 +3212,6 @@ The implicit storage-management (ISM) future (see \VRef[Figure]{f:FutureImplicit
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0client}}
 \CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{available}();}\Tab{44}{\C{}\1\1\0future\0result\0available\0?}}
 \CE{}\L{\LB{}\Tab{4}{\V{T}\0\K{operator}()();}\Tab{44}{\C{}\1\1\0access\0result,\0possibly\0having\0to\0wait}}
-\CE{}\L{\LB{}\Tab{4}{\K{operator}\0\V{T}();}\Tab{44}{\C{}\1\1\0cheap\0access\0of\0result\0after\0waiting}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{cancelled}();}\Tab{44}{\C{}\1\1\0future\0result\0cancelled\0?}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{cancel}();}\Tab{44}{\C{}\1\1\0cancel\0future\0result}}
@@ -3256,12 +3221,11 @@ The implicit storage-management (ISM) future (see \VRef[Figure]{f:FutureImplicit
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0server}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{exception}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!available@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{}}%
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!operator()()@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()()}}\endlgrinde\LGend{}}%
-\index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!operator T()@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}\0\V{T}()}}\endlgrinde\LGend{}}%
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!cancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrinde\LGend{}}%
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!cancel@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}}%
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!equals@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{equals}}}\endlgrinde\LGend{}}%
@@ -3286,26 +3250,41 @@ For this reason, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrind
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{equals}}}\endlgrinde\LGend{}\index{equals@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{equals}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the argument future refers to the same asynchronous call as this future and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise.
 
 
-\subsection{Example}
+\section{Example}
 
-This example uses ISM futures in the same way the previous example used ESM futures:
+This example illustrates how a client uses a number of futures (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ESM}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ISM}}}\endlgrinde\LGend{}) to communicate asynchronously with a server (see \VRef{s:streamIO} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{osacquire}}}\endlgrinde\LGend{}):
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{Server}\0\V{server};}\Tab{44}{\C{}\1\1\0server\0thread\0to\0process\0async\0call}}
-\CE{}\L{\LB{\V{Future\_ISM}\<\K{int}\>\0\V{f}[10];}\Tab{44}{\C{}\1\1\0created\0on\0the\0stack,\0but\0also\0uses\0heap}}
+\CE{}\L{\LB{\V{Future\_ESM}\<\K{int},\0\V{Server}::\V{IMsg}\>\0\V{fe}[10];}\Tab{44}{\C{}\1\1\0created\0on\0the\0stack}}
+\CE{}\L{\LB{\V{Future\_ISM}\<\K{int}\>\0\V{fi}[10];}\Tab{44}{\C{}\1\1\0created\0on\0the\0stack,\0but\0also\0uses\0heap}}
 \CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0start\0a\0number\0of\0calls}}
-\CE{}\L{\LB{}\Tab{4}{\V{f}[\V{i}]\0=\0\V{server}.\V{mem}(\0\V{i},\0\S{}\'c\'\SE{}\0);}\Tab{44}{\C{}\1\1\0async\0call}}
+\CE{}\L{\LB{}\Tab{4}{\V{server}.\V{perform}(\0\V{fe}[\V{i}],\0\V{i},\0\S{}\'c\'\SE{}\0);}\Tab{44}{\C{}\1\1\0async\0call}}
+\CE{}\L{\LB{}\Tab{4}{\V{fi}[\V{i}]\0=\0\V{server}.\V{perform}(\0\V{i},\0\S{}\'c\'\SE{}\0);}\Tab{44}{\C{}\1\1\0async\0call}}
 \CE{}\L{\LB{\}}}
 \L{\LB{\C{}\1\1\0work\0asynchronously\0while\0server\0processes\0requests}}
 \CE{}\L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}\Tab{44}{\C{}\1\1\0retrieve\0async\0results}}
-\CE{}\L{\LB{}\Tab{4}{\K{int}\0\V{v}\0=\0\V{f}[\V{i}]()\0+\07;}\Tab{44}{\C{}\1\1\0may\0block\0on\0first\0attempt\0to\0retrieve\0value}}
-\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{f}[\V{i}]\0\<\<\0\S{}\"\0\"\SE{}\0\<\<}\Tab{40}{\V{f}[\V{i}]\0\<\<\0\V{endl};\0\C{}\1\1\0use\0value\0again\0(cheap\0access)}}
-\CE{}\L{\LB{\}}}
+\CE{}\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{fe}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{fe}[\V{i}]()\0+\01\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{fi}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{fi}[\V{i}]()\0+\01\0\<\<\0\V{endl};}}
+\L{\LB{\}}}
 \endlgrinde\LGend
-Note that the asynchronous call to the server has the future as its return value, resembling a traditional return call, unlike the ESM future.
-Also, an ISM future allows the internal server-management data to be hidden from the client.
+The client creates an array of $N$ futures for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} values.
+In general, these futures can appear in any context requiring an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} value and are used to make $N$ asynchronous calls to the server.
+For each call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{server}.\V{perform}}}\endlgrinde\LGend{}, the necessary arguments are passed to the server so it can perform a computation on behalf of the client, and a future is returned containing the (empty) server result.
+The client then proceeds asynchronously with the server to perform other work, possibly in parallel with the server (if running multiprocessor).
+Finally, the client retrieves the results from the server by first performing a blocking access to each future.
+After the future result is retrieved, it can be retrieved again cheaply (no blocking).
+Note that the asynchronous call to the server has the future as its return value, resembling a traditional routine call, unlike the ESM future.
+Also, an ISM future has the internal server-management data hidden from the client.
+
+\BF{Warning}: combining a blocking future with other locks in an expression is potentially dangerous.
+For example, if the future blocks while holding the lock on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{}, other threads cannot print.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{osacquire}(\0\V{cout}\0)\0\<\<\0\V{fe}[\V{i}]()\0\<\<\0\S{}\"\0\"\SE{}\0\<\<\0\V{fe}[\V{i}]()\0+\01\0\<\<\0\V{endl};}}
+\endlgrinde\LGend
+Deadlock cannot occur in this case because the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cout}}}\endlgrinde\LGend{} lock is always acquired before accessing the future (ordered resource policy).
 
 
-\section{Future Access}
+\section{Complex Future Access}
 
 After a client has created a future, passed it to a server, and then continued asynchronously, it normally accesses the future to retrieve its value.
 The simplest way to access a future is to call its \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{operator}()}}\endlgrinde\LGend{} member.
@@ -3355,7 +3334,8 @@ More interesting is when multiple futures appear in a compound selector-expressi
 \endlgrinde\LGend
 Normal operator precedence applies so the expression is implicitly parenthesized as: \LGinlinetrue\LGbegin\lgrinde\L{\LB{(\0\V{f1}\0\|\,\|\0(\0\V{f2}\0\&\&\0\V{f3}\0)\0)}}\endlgrinde\LGend{}.
 Execution waits until either future \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} is available or both futures \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f3}}}\endlgrinde\LGend{} are available.
-Hence, for any selector-expression containing an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\|\,\|}}\endlgrinde\LGend{} operator, some futures in the expression may be unavailable after the selector-expression is satisfied.
+Unlike C, the selector-expression is evaulated from left to right, even for operators of equal priority, so when multiple subexpressions are true, the left-most subexpression satisfies the select statement.
+As well, for any selector-expression containing an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\|\,\|}}\endlgrinde\LGend{} operator, some futures in the expression may be unavailable after the selector-expression is satisfied.
 For example, in the above selection expression, if future \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} becomes available, neither, one or both of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f3}}}\endlgrinde\LGend{} may be available.
 
 A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Select}}}\endlgrinde\LGend{} clause may be guarded with a logical expression, e.g.:
@@ -3399,17 +3379,34 @@ For example, if \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} 
 When either \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f3}}}\endlgrinde\LGend{} become available, statement-1 or 3 is executed, and the selector-expression associated with the entire statement is satisfied so control continues.
 For this example, within the action statement, it is possible to access the future using the non-blocking access-operator since the future is known to be available.
 
-An action statement is triggered only once for its selector-expression, even if the selector-expression is compound.
-For example, in:
+For the complex form of the select statment, if a guard is false, execution continues without waiting for that future to become available.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Select}(\0\V{f1}\0\|\,\|\0\V{f2}\0)}}
+\L{\LB{\K{\_When}(\0\K{true}\0)\0\K{\_Select}(\0\V{f1}\0)\0\{.\,.\,.\}}\Tab{48}{\K{\_When}(\0\K{true}\0)\0\K{\_Select}(\0\V{f1}\0)\0\{.\,.\,.\}}}
+\L{\LB{\K{or}}\Tab{48}{\K{or}}}
+\L{\LB{}\Tab{4}{\K{\_When}(\0\BF{\K{false}}\0)\0\K{\_Select}(\0\V{f2}\0)\0\{.\,.\,.\}}\Tab{40}{$\equiv$}}
+\L{\LB{}\Tab{4}{\K{and}}}
+\L{\LB{}\Tab{4}{\K{\_When}(\0\K{true}\0)\0\K{\_Select}(\0\V{f3}\0)\0\{.\,.\,.\}}\Tab{52}{\K{\_When}(\0\K{true}\0)\0\K{\_Select}(\0\V{f3}\0)\0\{.\,.\,.\}}}
+\endlgrinde\LGend
+Assume only \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f3}}}\endlgrinde\LGend{} becomes available, execution continues.
+
+An action statement is triggered only once for its selector-expression, even if the selector-expression is compound.
+For example, for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\&\&}}\endlgrinde\LGend{}:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Select}(\0\V{f1}\0)}}
 \L{\LB{}\Tab{4}{\nterminal{statement-1}}}
-\L{\LB{\K{and}\0\K{\_Select}(\0\V{f3}\0)}}
+\L{\LB{\K{or}\0\K{\_Select}(\0\BF{\V{f2}\0\&\&\0\V{f3}}\0)}}
+\L{\LB{}\Tab{4}{\nterminal{statement-2}}\Tab{28}{\C{}\1\1\0triggered\0once\0after\0both\0available}}
+\CE{}\endlgrinde\LGend
+statement-2 is only executed when both futures \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f3}}}\endlgrinde\LGend{} are available (non-blocking access for both).
+However, for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\|\,\|}}\endlgrinde\LGend{}:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Select}(\0\BF{\V{f1}\0\|\,\|\0\V{f2}}\0)}}
+\L{\LB{}\Tab{4}{\nterminal{statement-1}}\Tab{28}{\C{}\1\1\0triggered\0once\0after\0one\0available}}
+\CE{}\L{\LB{\K{and}\0\K{\_Select}(\0\V{f3}\0)}}
 \L{\LB{}\Tab{4}{\nterminal{statement-2}}}
 \endlgrinde\LGend
 statement-1 is only executed once even though both futures \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} may become available while waiting for the selector-expression associated with the entire statement to become satisfied.
-Also, in statement-1, it is unknown which of futures \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} satisfied the sub-selector-expression and caused the action to be triggered;
-hence, it is necessary to check which of the two futures is available.
+Hence, in statement-1, it is unknown which of futures \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f1}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f2}}}\endlgrinde\LGend{} satisfied the sub-selector-expression and caused the action to be triggered;
 
 Note, a complex select-statement with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_When}}}\endlgrinde\LGend{} guards is not the same as a group of connected \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{if}}}\endlgrinde\LGend{} statements, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
@@ -4036,7 +4033,7 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Return}}}\endlgrinde\LGend{} moves the cursor back (towards tail) one hop and sends the message to the cursor actor.
 Return \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if cursor is tail and no send occurs, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{retSender}}}\endlgrinde\LGend{} moves the cursor to tail and sends the message to the cursor actor.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the cursor is not at head, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{returned}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the cursor is not at the head, otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{}.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{} moves the cursor to head and sends the message to the cursor actor.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{print}}}\endlgrinde\LGend{} prints the address of the trace message, trace head, cursor, and actors at each hop from cursor to tail, which is useful for debugging.
 
@@ -4124,8 +4121,9 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \CE{}\L{\LB{}\Tab{4}{\V{Allocation}\0\V{allocation}();}\Tab{56}{\C{}\1\1\0getter}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{allocation}(\0\V{Allocation}\0\V{alloc}\0);}\Tab{56}{\C{}\1\1\0setter}}
 \CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};\0\C{}\1\1\0allocation\0status}}
-\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Allocation\0States}}
+\CE{}\L{\LB{}\Tab{4}{\K{enum}\0\V{Allocation}\0\{\0\V{Nodelete},\0\V{Delete},\0\V{Destroy},\0\V{Finished}\0\};}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0Message\0Types}}
 \CE{}\L{\LB{}\Tab{4}{\K{class}\0\V{Message}\0\{\0.\,.\,.\0\};}}
 \L{\LB{}\Tab{4}{\K{class}\0\V{SenderMsg}\0:\0\K{public}\0\V{Message}\0\{\0.\,.\,.\0\}}}
 \L{\LB{}\Tab{4}{\K{class}\0\V{TraceMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{\0.\,.\,.\0\};}}
@@ -4134,7 +4132,6 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \L{\LB{}\Tab{4}{\C{}\1\1\0Storage\0management}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0);}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
-\CE{}\L{\LB{}\Tab{4}{\K{static}\0\K{inline}\0\V{uActor}\0\*\0\V{sender}();}\Tab{56}{\C{}\1\1\0current\0executing\0actor}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
@@ -4168,7 +4165,6 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!Handler@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Handler}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!become@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!allocation@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{allocation}}}\endlgrinde\LGend{}}%
-\index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!sender@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sender}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!tell@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tell}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!forward@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{forward}}}\endlgrinde\LGend{}}%
 \index{uActor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uActor}}}\endlgrinde\LGend{}!ask@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ask}}}\endlgrinde\LGend{}}%
@@ -9420,7 +9416,7 @@ The simulation routines correctly interact with the \uC runtime system, while st
 As a result, a \uC program is portable among POSIX-compliant systems and provides access to most legacy pthreads code.
 
 
-\begin{comment}
+%\begin{comment}
 \chapter{OpenMP}
 \label{c:OpenMP}
 
@@ -9458,7 +9454,7 @@ For some programs it may be desirable to control the level of parallelism from o
 For this reason, the environment variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UOMP\_NUM\_PROCESSORS}}}\endlgrinde\LGend{} specifies a number of virtual processors to be created at program startup\footnote{A \uC program only respects \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UOMP\_NUM\_PROCESSORS}}}\endlgrinde\LGend{} if it is linked with the appropriate OpenMP-enabling command-line argument (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{openmp}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{}).}.
 These virtual processors are outside the direct control of the program, and so there is no way to delete one of these processors or otherwise reduce the number of virtual processors during execution.
 Note that to realize hardware parallelism, it is necessary to use the \uC multikernel, i.e., compile and link with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{}\index{-multi@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{} option}\index{compilation option!-multi@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{multi}}}\endlgrinde\LGend{}} (see Section \ref{s:CompilinguCProgram}).
-\end{comment}
+%\end{comment}
 
 
 \chapter{Real-Time}
@@ -10705,24 +10701,39 @@ Often the seed is set to another random value like a program's process identifie
 hence, one random value bootstraps another.
 Finally, a PRNG usually generates a range of large values, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{[0,\0\V{UINT\_MAX}]}}\endlgrinde\LGend{}, which are scaled using the modulus operator, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}()\0\%\05}}\endlgrinde\LGend{} produces random values in the range 0--4.
 
-\uC provides a sequential PRNG class only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
+\uC provides 32/64-bit sequential PRNG classes only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
 \begin{itemize}
 \item
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} class is for sequential programs, like coroutining:
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} classes for sequential programs, like coroutining are:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{class}\0\V{PRNG}\0\{}}
+\L{\LB{\K{class}\0\V{PRNG32}\0\{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type}}
 \CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\V{PRNG}();}\Tab{52}{\C{}\1\1\0random\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\V{PRNG}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
+\L{\LB{}\Tab{4}{\V{PRNG32}();}\Tab{52}{\C{}\1\1\0random\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{PRNG32}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{calls}()\0\K{const};}\Tab{52}{\C{}\1\1\0number\0of\0calls}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{class}\0\V{PRNG64}\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type}}
+\CE{}\L{\LB{\0\0\K{public}:}}
+\L{\LB{}\Tab{4}{\V{PRNG64}();}\Tab{52}{\C{}\1\1\0random\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{PRNG64}(\0\V{uint64\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint64\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng},\0\V{uint64\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng},\0\V{uint64\_t}\0\V{l},\0\V{uint64\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{calls}()\0\K{const};}\Tab{52}{\C{}\1\1\0number\0of\0calls}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} is aliased to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG64}}}\endlgrinde\LGend{} on 64-bit architectures and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG32}}}\endlgrinde\LGend{} on 32-bit architectures.
 A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} object is used to randomize behaviour or values during execution, e.g., in games, a character makes a random move or an object takes on a random value.
 In this scenario, it is useful to have multiple \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} objects, e.g., one per player or object.
 However, sequential execution is still repeatable given the same starting seeds for all \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s. 
@@ -10730,7 +10741,7 @@ However, sequential execution is still repeatable given the same starting seeds 
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{PRNG}\0\V{sprng1},\0\V{sprng2};}}
+\L{\LB{\V{PRNG64}\0\V{sprng1},\0\V{sprng2};}}
 \L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0)};\0\0\0\BF{\V{sprng2}.\V{set\_seed}(\01009\0);}}}
 \L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Do\0not\0cascade\0prng\0calls\0because\0side\-effect\0functions\0called\0in\0arbitrary\0order.}}
@@ -10772,16 +10783,16 @@ However, sequential execution is still repeatable given the same starting seeds 
 \item
 The PRNG global routines and companion task members are for concurrent programming, such as randomizing execution in short-running programs, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{yield}(\0\V{prng}()\0\%\05\0)}}\endlgrinde\LGend{}.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0global\0seed}}
-\CE{}\L{\LB{\V{uint32\_t}\0\V{get\_seed}();}\Tab{52}{\C{}\1\1\0get\0global\0seed}}
+\L{\LB{\K{void}\0\V{set\_seed}(\0\V{size\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0global\0seed}}
+\CE{}\L{\LB{\V{size\_t}\0\V{get\_seed}();}\Tab{52}{\C{}\1\1\0get\0global\0seed}}
 \CE{}\L{\LB{\C{}\1\1\0SLOWER,\0global\0routines}}
-\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{\V{uint32\_t}\0\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{\V{size\_t}\0\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{\V{size\_t}\0\V{prng}(\0\V{size\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{\V{size\_t}\0\V{prng}(\0\V{size\_t}\0\V{l},\0\V{size\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\L{\LB{\C{}\1\1\0FASTER,\0task\0members}}
-\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{\V{uint32\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{\V{size\_t}\0\BF{\V{uBaseTask}::}\V{prng}();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{\V{size\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{size\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{\V{size\_t}\0\BF{\V{uBaseTask}::}\V{prng}(\0\V{size\_t}\0\V{l},\0\V{size\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\endlgrinde\LGend
 The only difference between the two sets of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}}}\endlgrinde\LGend{} routines is performance.
 

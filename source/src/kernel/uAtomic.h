@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 28 20:49:15 2022
-// Update Count     : 160
+// Last Modified On : Sat Dec 24 18:54:48 2022
+// Update Count     : 162
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,11 +49,11 @@ static inline __attribute__((always_inline)) unsigned long long int uRdtsc() {
 static inline __attribute__((always_inline)) void uFence() { // fence to prevent code movement
 #if defined(__x86_64)
 	//#define Fence() __asm__ __volatile__ ( "mfence" )
-	#define Fence() __asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" )
+	__asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" );
 #elif defined(__i386)
-	#define Fence() __asm__ __volatile__ ( "lock; addl $0,(%%esp);" ::: "cc" )
+	__asm__ __volatile__ ( "lock; addl $0,(%%esp);" ::: "cc" );
 #elif defined(__ARM_ARCH)
-	#define Fence() __asm__ __volatile__ ( "DMB ISH" ::: )
+	__asm__ __volatile__ ( "DMB ISH" ::: )
 #else
 	#error unsupported architecture
 #endif
@@ -62,9 +62,9 @@ static inline __attribute__((always_inline)) void uFence() { // fence to prevent
 
 static inline __attribute__((always_inline)) void uPause() { // pause to prevent excess processor bus usage
 #if defined( __i386 ) || defined( __x86_64 )
-	#define Pause() __asm__ __volatile__ ( "pause" ::: )
+	__asm__ __volatile__ ( "pause" ::: );
 #elif defined(__ARM_ARCH)
-	#define Pause() __asm__ __volatile__ ( "YIELD" ::: )
+	__asm__ __volatile__ ( "YIELD" ::: );
 #else
 	#error unsupported architecture
 #endif

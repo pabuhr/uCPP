@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 14 11:40:01 2022
-// Update Count     : 460
+// Last Modified On : Thu Dec 22 21:01:21 2022
+// Update Count     : 462
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -100,7 +100,7 @@ namespace UPP {
 	struct Condition {									// represent And and Or condition
 		enum Type { And, Or };
 
-		static State sat( State &left, State &right, Type type ) {
+		static State sat( State & left, State & right, Type type ) {
 			if ( left == GuardFalse && right == GuardFalse ) { // branch disabled ?
 				//cerr << "sat left/right GuardFalse" << endl;
 				left = right = Avail;
@@ -135,26 +135,26 @@ namespace UPP {
 	template <typename Future>
 	class UnarySelector {
 		int myAction;									// action #
-		Future &future;									// future
+		Future & future;								// future
 		UPP::SelectorDL bench;							// bench it registers with
 		const bool WhenCondition;						// _When clause present
 		bool remove;									// need to remove bench from future
 	  public:
-		UnarySelector( Future &future ) : myAction( 0 ), future( future ), WhenCondition( true ), remove( false ) {};
-		UnarySelector( Future &future, int action ) : myAction( action ), future( future ), WhenCondition( true ), remove( false ) {};
-		UnarySelector( bool guard, Future &future, int action ) : myAction( action ), future( future ), WhenCondition( guard ), remove( false ) {};
+		UnarySelector( Future & future ) : myAction( 0 ), future( future ), WhenCondition( true ), remove( false ) {};
+		UnarySelector( Future & future, int action ) : myAction( action ), future( future ), WhenCondition( true ), remove( false ) {};
+		UnarySelector( bool guard, Future & future, int action ) : myAction( action ), future( future ), WhenCondition( guard ), remove( false ) {};
 
 		~UnarySelector() {
 			assert( ! remove );							// should have been removed when select available
 			assert( ! bench.listed() );
 		} // UnarySelector::~UnarySelector
 
-		void registerSelf( UPP::SelectorClient *selectState ) {	// register with future
+		void registerSelf( UPP::SelectorClient * selectState ) { // register with future
 			bench.client = selectState;
 			remove = ! future.addSelect( &bench );		// not added if future available => do not remove
 		} // UnarySelector::registerSelf
 
-		State nextAction( int &action ) {				// give out action
+		State nextAction( int & action ) {				// give out action
 			//osacquire( cerr ) << "nextAction uni" << " future " << &future << " action " << action << " myAction " << myAction << endl;
 		  if ( ! WhenCondition ) return GuardFalse;	// _Select clause cancelled
 
@@ -201,18 +201,18 @@ namespace UPP {
 		Condition::Type type;							// And or Or condition
 		const bool WhenCondition;						// _When clause present
 	  public:
-		BinarySelector( const Left &left, const Right &right, Condition::Type type )
+		BinarySelector( const Left & left, const Right & right, Condition::Type type )
 			: left( left ), right( right ), leftStatus( NonAvail ), rightStatus( NonAvail ), type( type ), WhenCondition( true ) {}
 
-		BinarySelector( bool guard, const Left &left, const Right &right, Condition::Type type )
+		BinarySelector( bool guard, const Left & left, const Right & right, Condition::Type type )
 			: left( left ), right( right ), leftStatus( NonAvail ), rightStatus( NonAvail ), type( type ), WhenCondition( guard ) {}
 
-		void registerSelf( UPP::SelectorClient *selectState ) {
+		void registerSelf( UPP::SelectorClient * selectState ) {
 			left.registerSelf( selectState );
 			right.registerSelf( selectState );
 		} // BinarySelector::registerSelf
 
-		State nextAction( int &action ) {
+		State nextAction( int & action ) {
 			//osacquire( cerr ) << "nextAction bin left " << &left << " right " << &right << " type " << TypeName[type] << " action " << action << endl;
 			if ( ! WhenCondition ) return GuardFalse;	// _Select clause cancelled
 
@@ -254,19 +254,19 @@ namespace UPP {
 		BinarySelector< Left, Right > binary;
 		const bool WhenCondition;						// _When clause present
 	  public:
-		UnarySelector( const BinarySelector<Left, Right> &binary, int action ) : binary( binary ), WhenCondition( true ) {
+		UnarySelector( const BinarySelector<Left, Right> & binary, int action ) : binary( binary ), WhenCondition( true ) {
 			UnarySelector::binary.setAction( action );	// recursively send action to all child expressions
 		} // UnarySelector::UnarySelector
 
-		UnarySelector( bool guard, const BinarySelector<Left, Right> &binary, int action ) : binary( binary ), WhenCondition( guard ) {
+		UnarySelector( bool guard, const BinarySelector<Left, Right> & binary, int action ) : binary( binary ), WhenCondition( guard ) {
 			UnarySelector::binary.setAction( action );	// recursively send action to all child expressions
 		} // UnarySelector::UnarySelector
 
-		void registerSelf( UPP::SelectorClient *selectState ) {
+		void registerSelf( UPP::SelectorClient * selectState ) {
 			binary.registerSelf( selectState );
 		} // UnarySelector::registerSelf
 
-		State nextAction( int &action ) {
+		State nextAction( int & action ) {
 			//osacquire( cerr ) << "nextAction uni<>" << " binary " << &binary << " action " << action << endl;
 			if ( ! WhenCondition ) return GuardFalse;	// _Select clause cancelled
 
@@ -289,42 +289,42 @@ namespace UPP {
 	// Executor holds tree root, and evaluates tree and gets next action.
 	template<typename Root>
 	class Executor {
-		Root &root;
+		Root & root;
 		uTime timeout;
 		bool hasTimeout, hasElse;
 		State isFinish;
 		UPP::SelectorClient selectState;
 	  public:
-		Executor( Root &root ) : root( root ), hasTimeout( false ), hasElse( false ), isFinish( NonAvail ) {
+		Executor( Root & root ) : root( root ), hasTimeout( false ), hasElse( false ), isFinish( NonAvail ) {
+			root.registerSelf( & selectState );
+		} // Executor::Executor
+
+		Executor( Root & root, bool elseGuard ) : root( root ), hasTimeout( false ), hasElse( elseGuard ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, bool elseGuard ) : root( root ), hasTimeout( false ), hasElse( elseGuard ), isFinish( NonAvail ) {
+		Executor( Root & root, uTime timeout ) : root( root ), timeout( timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, uTime timeout ) : root( root ), timeout( timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
+		Executor( Root & root, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( true ), hasElse( false ), isFinish( NonAvail ) {
+		Executor( Root & root, bool timeoutGuard, uTime timeout ) : root( root ), timeout( timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, bool timeoutGuard, uTime timeout ) : root( root ), timeout( timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
+		Executor( Root & root, bool timeoutGuard, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, bool timeoutGuard, uDuration timeout ) : root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( false ), isFinish( NonAvail ) {
-			root.registerSelf( &selectState );
-		} // Executor::Executor
-
-		Executor( Root &root, bool timeoutGuard, uTime timeout, bool elseGuard )
+		Executor( Root & root, bool timeoutGuard, uTime timeout, bool elseGuard )
 			: root( root ), timeout( timeout ), hasTimeout( timeoutGuard ), hasElse( elseGuard ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor
 
-		Executor( Root &root, bool timeoutGuard, uDuration timeout, bool elseGuard )
+		Executor( Root & root, bool timeoutGuard, uDuration timeout, bool elseGuard )
 			: root( root ), timeout( uClock::currTime() + timeout ), hasTimeout( timeoutGuard ), hasElse( elseGuard ), isFinish( NonAvail ) {
 			root.registerSelf( &selectState );
 		} // Executor::Executor

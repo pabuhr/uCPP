@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  2 16:05:31 2022
-// Update Count     : 2206
+// Last Modified On : Sat Dec 24 09:33:07 2022
+// Update Count     : 2207
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -634,9 +634,7 @@ void uProcessorKernel::main() {
 				  10000;
 				  #endif // __i386__ || __x86_64__
 				  d += 1 ) {
-				#if defined( __i386__ ) || defined( __x86_64__ )
-				asm volatile( "pause" );
-				#endif // __i386__ || __x86_64__
+				uPause();
 			} // for
 		} // if
 

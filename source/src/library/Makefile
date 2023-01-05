@@ -41,7 +41,7 @@ endif
 
 ## Define the header files
 
-HEADERS = ostream fstream mutex std_mutex bits/std_mutex.h ${shell ls *.h}
+HEADERS = ostream fstream mutex shared_mutex type_traits bits/std_mutex.h bits/unique_lock.h ${shell ls *.h}
 
 ## Define which libraries should be built.
 

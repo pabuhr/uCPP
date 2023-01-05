@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct 11 09:28:10 2022
-// Update Count     : 6266
+// Last Modified On : Wed Jan  4 16:20:23 2023
+// Update Count     : 6336
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -40,17 +40,21 @@
 // #pragma clang diagnostic push
 // #pragma clang diagnostic ignored "-Wnull-dereference"
 
-#if __GNUC__ >= 7										// valid GNU compiler diagnostic ?
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// mute g++-7
-#endif // __GNUC__ >= 7
 #pragma GCC diagnostic error   "-Wreturn-type"			// always wrong so make an error
 #pragma GCC diagnostic error   "-Wreorder"				// always wrong so make an error
 #pragma GCC diagnostic error   "-Wparentheses"			// usually wrong so make an error
+#if __GNUC__ >= 7										// valid GNU compiler diagnostic ?
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"	// always mute warning
+#endif // __GNUC__ >= 7
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wredundant-decls"
 #pragma GCC diagnostic ignored "-Wnull-dereference"
+#if __GNUC__ >= 12										// valid GNU compiler diagnostic ?
+// For backwards compatibility, keep testing dynamic-exception-specifiers until they are no longer supported.
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // g++12 deprecates unexpected_handler
+#endif // __GNUC__ >= 12
 
 
 #if __cplusplus >= 201703L								// c++17 ?
@@ -168,6 +172,7 @@ namespace UPP {
 #include <uSequence.h>
 #include <uBitSet.h>
 #include <uDefault.h>
+#include <uRandom.h>
 
 #include "uAtomic.h"
 #include "uHeapLmmm.h"
@@ -593,7 +598,6 @@ class uKernelModule {
 
 
 	// shared, initialized in uC++.cc
-
 	static bool kernelModuleInitialized;
 	static volatile __U_THREAD_LOCAL__ uKernelModuleData uKernelModuleBoot;
 	uDEBUG( static bool initialized; )					// initialization/finalization incomplete
@@ -656,8 +660,10 @@ class uSpinLock {										// non-yielding spinlock
 	friend class uEventListPop;							// access: acquire_, release_
 	friend class uCluster;								// access: value
 
-	unsigned int value;
-
+	volatile uint32_t value;							// keep 32-bit to fit into pthread_mutex_lock
+  public:
+	// These two members should be private but cannot be because they are referenced in the heap, where domalloc/dofree
+	// have varying signatures depending on macros.
 	void inline __attribute__((always_inline)) acquire_( bool rollforward __attribute__(( unused )) ) {
 		// No race condition exists for accessing disableIntSpin in the multiprocessor case because this variable is
 		// private to each UNIX process. Also, the spin lock must be acquired after adjusting disableIntSpin because the
@@ -666,13 +672,7 @@ class uSpinLock {										// non-yielding spinlock
 		// task is in the kernel because disableIntSpin is not set so the signal handler tries to yield.  However, the
 		// ready queue lock is held so the yield live-locks. There is a similar situation on releasing the lock.
 
-		enum { SPIN_START = 4,
-			   #if defined( __i386__ ) || defined( __x86_64__ )
-			   SPIN_END = 4 * 1024,						// fewer iterations due to "pause" instruction throttling to memory speed
-			   #else
-			   SPIN_END = 64 * 1024,
-			   #endif
-		};
+		enum { SPIN_START = 4, SPIN_END = 4 * 1024, };
 
 		#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
 		if ( value != 0 ) {								// locked ?
@@ -680,12 +680,12 @@ class uSpinLock {										// non-yielding spinlock
 		} // if
 		#endif // __U_DEBUG__ && ! __U_MULTI__
 
-		uKernelModule::uKernelModuleData::disableIntSpinLock();
-
 		#ifdef __U_MULTI__
-		int spin = SPIN_START;
+		unsigned int spin = SPIN_START;
+
 		for ( ;; ) {									// poll for lock
-		  if ( value == 0 && uTestSet( value ) == 0 ) break;
+			uKernelModule::uKernelModuleData::disableIntSpinLock();
+		  if ( value == 0 && uTestSet( value ) == 0 ) break; // Fence
 
 			if ( rollforward ) {						// allow timeslicing during spinning
 				uKernelModule::uKernelModuleData::enableIntSpinLockNoRF();
@@ -693,15 +693,14 @@ class uSpinLock {										// non-yielding spinlock
 				uKernelModule::uKernelModuleData::enableIntSpinLock();
 			} // if
 
-			for ( int i = 0; i < spin; i += 1 ) {		// exponential spin
-				#if defined( __i386__ ) || defined( __x86_64__ )
-				asm volatile( "pause" );
-				#endif
+			for ( volatile uintptr_t s = 0; s < spin; s += 1 ) { // exponential spin
+				uPause();
 				if ( uKernelModule::globalSpinAbort ) _Exit( EXIT_FAILURE ); // close down in progress, shutdown immediately!
 				#ifdef __U_STATISTICS__
 				uFetchAdd( UPP::Statistics::spins, 1 );
 				#endif // __U_STATISTICS__
 			} // for
+
 			spin += spin;								// powers of 2
 			if ( spin > SPIN_END ) {
 				spin = SPIN_START;						// prevent overflow
@@ -710,9 +709,9 @@ class uSpinLock {										// non-yielding spinlock
 				uFetchAdd( UPP::Statistics::spin_sched, 1 );
 				#endif // __U_STATISTICS__
 			} // if
-			uKernelModule::uKernelModuleData::disableIntSpinLock();
 		} // for
 		#else
+		uKernelModule::uKernelModuleData::disableIntSpinLock();
 		value = 1;										// lock
 		#endif // __U_MULTI__
 	} // uSpinLock::acquire_
@@ -1772,26 +1771,13 @@ class uBasePIQ {
 #endif // KNOT
 
 
-//######################### LCG (random number genrator) #########################
-
-
-// Pipelined to allow OoO overlap with reduced dependencies. Critically, return the current value, and compute and store
-// the next value.
-
-static inline uint32_t LCG( uint32_t & state ) {		// linear congruential generator
-	uint32_t ret = state;
-	state = 36969 * (state & 65535) + (state >> 16);	// Yes, 36969 is NOT prime! No not change it!
-	return ret;
-} // LCG
-
-
 //######################### uBaseTask (cont) #########################
 
 
 class uBaseTask : public uBaseCoroutine {
-	static uint32_t thread_random_seed;
-	static uint32_t thread_random_prime;
-	static uint32_t thread_random_mask;
+	static size_t thread_random_seed;
+	static size_t thread_random_prime;
+	static bool thread_random_mask;
 
 	friend class UPP::uSerial;							// access: everything
 	friend class UPP::uSerialConstructor;				// access: profileActive, setSerial
@@ -1819,9 +1805,9 @@ class uBaseTask : public uBaseCoroutine {
 	friend class uEventList;							// access: profileActive
 	friend class UPP::uHeapControl;						// access: heapData
 	friend class uEventListPop;							// access: currCluster
-	friend void set_seed( uint32_t );					// access: thread_seed
-	friend uint32_t get_seed();							// access: thread_seed
-	friend uint32_t prng();								// access: random_state
+	friend void set_seed( size_t );						// access: thread_seed
+	friend size_t get_seed();							// access: thread_seed
+	friend size_t prng();								// access: random_state
 	#ifdef KNOT
 	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
 	friend int pthread_mutex_trylock( pthread_mutex_t * mutex ) __THROW; // access: setActivePriority
@@ -1868,7 +1854,7 @@ class uBaseTask : public uBaseCoroutine {
 	State state_;										// current state of task
 	unsigned int recursion_;							// allow recursive entry of main member
 	unsigned int mutexRecursion_;						// number of recursive calls while holding mutex
-	uint32_t random_state;								// fast random numbers
+	PRNG_STATE_T random_state;							// fast random numbers
 
 	uCluster * currCluster_;							// cluster task is executing on
 	uBaseCoroutine * currCoroutine_;					// coroutine being executed by tasks thread
@@ -2027,7 +2013,7 @@ class uBaseTask : public uBaseCoroutine {
 		uEHM::poll();
 	} // uBaseTask::yield
 
-	static void yield( unsigned int times ) {
+	static void yield( size_t times ) {
 		for ( ; times > 0 ; times -= 1 ) {
 			yield();
 		} // for
@@ -2075,16 +2061,17 @@ class uBaseTask : public uBaseCoroutine {
 		return * currSerial;
 	} // uBaseTask::getSerial
 
-	void set_seed( uint32_t seed ) {
-		random_state = thread_random_seed = seed;
-		LCG( random_state );
-		thread_random_prime = random_state;
+	void set_seed( size_t seed ) {
+		PRNG_STATE_T & state = random_state;
+		PRNG_SET_SEED( state, seed );
+		thread_random_seed = seed;
+		thread_random_prime = seed;
 		thread_random_mask = true;
 	} // uBaseTask::set_seed
-	uint32_t get_seed() { return thread_random_seed; }
-	uint32_t prng() __attribute__(( warn_unused_result )) { return LCG( random_state ); } // [0,UINT_MAX]
-	uint32_t prng( uint32_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
-	uint32_t prng( uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
+	size_t get_seed() { return thread_random_seed; }
+	size_t prng() __attribute__(( warn_unused_result )) { return PRNG_NAME( random_state ); } // [0,UINT_MAX]
+	size_t prng( size_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
+	size_t prng( size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
 
 	#ifdef __U_PROFILER__
 	// profiling
@@ -3175,11 +3162,12 @@ namespace UPP {
 
 namespace UPP {
 	class uKernelBoot {
+	  public:
 		static int count;
 
 		static void startup();
 		static void finishup();
-	  public:
+
 		uKernelBoot() {
 			count += 1;
 			if ( count == 1 ) {

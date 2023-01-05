@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep 30 09:48:21 2022
-// Update Count     : 858
+// Last Modified On : Tue Jan  3 16:19:04 2023
+// Update Count     : 859
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,6 +24,11 @@
 // along  with this library.
 // 
 
+#pragma GCC diagnostic push
+#if __GNUC__ >= 12										// valid GNU compiler diagnostic ?
+// For backwards compatibility, keep testing dynamic-exception-specifiers until they are no longer supported.
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // g++12 deprecates unexpected_handler
+#endif // __GNUC__ >= 12
 
 #define __U_KERNEL__
 #include <uC++.h>
@@ -552,6 +557,8 @@ void uEHM::resumeWorkHorse( const uBaseEvent & event, bool conseq ) {
 	// default routine for event may change the event, so remove const used to allow both const and non-const events
 	const_cast<uBaseEvent &>(event).defaultResume();	// default handler can change the exception
 } // uEHM::resumeWorkHorse
+
+#pragma GCC diagnostic pop
 
 // Local Variables: //
 // compile-command: "make install" //

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 20:47:53 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  5 20:55:56 2022
-// Update Count     : 268
+// Last Modified On : Tue Dec 13 23:08:27 2022
+// Update Count     : 273
 // 
 
 #include <iostream>
@@ -16,6 +16,15 @@
 #include <cmath>
 #include <uPRNG.h>
 using namespace std;
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+#ifdef __x86_64__										// 64-bit architecture
+#define PRNG PRNG64
+#else													// 32-bit architecture
+#define PRNG PRNG32
+#endif // __x86_64__
 
 #define TIME
 
@@ -50,7 +59,7 @@ static void avgstd( unsigned int buckets[] ) {
 					  << " avg " << avg << " std " << std << " rstd " << (avg == 0 ? 0.0 : std / avg * 100) << "%" << endl;
 } // avgstd
 
-uint32_t seed = 1009;
+size_t seed = 1009;
 
 
 _Task T1 {
@@ -70,7 +79,7 @@ _Task T2 {
 		if ( seed != 0 ) prng.set_seed( seed );
 		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
 		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
-			buckets[prng() % BUCKETS] += 1;			// concurrent
+			buckets[prng() % BUCKETS] += 1;				// concurrent
 		} // for
 		avgstd( buckets );
 		free( buckets );
@@ -117,6 +126,9 @@ int main() {
 	locale loc( getenv("LANG") );
 	cout.imbue( loc );
 
+	cout << xstr(PRNG_NAME_64) << endl << endl;
+	cout << LONG_MAX-1 << ' ' << LONG_MAX-1-25ull << ' ' << 256-5 << endl;
+
 	enum { TASKS = 4 };
 	uTime start;
 #ifdef TIME												// too slow for test and generates non-repeatable results
@@ -126,11 +138,11 @@ int main() {
 	else rseed = uRdtsc();
 	srand( rseed );
 
-	cout << setw(13) << "rand()" << setw(10) << "rand(5)" << setw(13) << "rand(0,5)" << endl;
+	cout << setw(26) << "rand()" << setw(12) << "rand(5)" << setw(12) << "rand(0,5)" << endl;
 	for ( unsigned int i = 0; i < 20; i += 1 ) {
-		cout << setw(13) << rand();
-		cout << setw(10) << rand() % 5;
-		cout << setw(13) << rand() % (5 - 0 + 1) + 0 << endl;
+		cout << setw(26) << rand();
+		cout << setw(12) << rand() % 5;
+		cout << setw(12) << rand() % (5 - 0 + 1) + 0 << endl;
 	} // for
 	cout << "seed " << rseed << endl;
 
@@ -163,11 +175,11 @@ int main() {
 	PRNG sprng;
 	if ( seed != 0 ) sprng.set_seed( seed );
 
-	cout << endl << setw(13) << "PRNG()" << setw(10) << "PRNG(5)" << setw(13) << "PRNG(0,5)" << endl;
+	cout << endl << setw(26) << "PRNG()" << setw(12) << "PRNG(5)" << setw(12) << "PRNG(0,5)" << endl;
 	for ( unsigned int i = 0; i < 20; i += 1 ) {
-		cout << setw(13) << sprng();					// cascading => side-effect functions called in arbitary order
-		cout << setw(10) << sprng( 5 );
-		cout << setw(13) << sprng( 0, 5 ) << endl;
+		cout << setw(26) << sprng();					// cascading => side-effect functions called in arbitary order
+		cout << setw(12) << sprng( 5 );
+		cout << setw(12) << sprng( 0, 5 ) << endl;
 	} // for
 	cout << "seed " << sprng.get_seed() << endl;
 		
@@ -198,11 +210,11 @@ int main() {
 #if 1
 	if ( seed != 0 ) set_seed( seed );
 
-	cout << endl << setw(13) << "prng()" << setw(10) << "prng(5)" << setw(13) << "prng(0,5)" << endl;
+	cout << endl << setw(26) << "prng()" << setw(12) << "prng(5)" << setw(12) << "prng(0,5)" << endl;
 	for ( unsigned int i = 0; i < 20; i += 1 ) {
-		cout << setw(13) << prng();						// cascading => side-effect functions called in arbitary order
-		cout << setw(10) << prng( 5 );
-		cout << setw(13) << prng( 0, 5 ) << endl;
+		cout << setw(26) << prng();						// cascading => side-effect functions called in arbitary order
+		cout << setw(12) << prng( 5 );
+		cout << setw(12) << prng( 0, 5 ) << endl;
 	} // for
 	cout << "seed " << get_seed() << endl;
 		
@@ -234,11 +246,11 @@ int main() {
 	if ( seed != 0 ) set_seed( seed );
 	uBaseTask & th = uThisTask();
 
-	cout << endl << setw(13) << "prng(t)" << setw(10) << "prng(t,5)" << setw(13) << "prng(t,0,5)" << endl;
+	cout << endl << setw(26) << "prng(t)" << setw(12) << "prng(t,5)" << setw(12) << "prng(t,0,5)" << endl;
 	for ( unsigned int i = 0; i < 20; i += 1 ) {
-		cout << setw(13) << th.prng();					// cascading => side-effect functions called in arbitary order
-		cout << setw(10) << th.prng( 5 );
-		cout << setw(13) << th.prng( 0, 5 ) << endl;
+		cout << setw(26) << th.prng();					// cascading => side-effect functions called in arbitary order
+		cout << setw(12) << th.prng( 5 );
+		cout << setw(12) << th.prng( 0, 5 ) << endl;
 	} // for
 	cout << "seed " << get_seed() << endl;
 

@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep  1 09:18:46 2022
-// Update Count     : 61
+// Last Modified On : Thu Dec 29 14:16:24 2022
+// Update Count     : 63
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -64,12 +64,11 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
 
 	static_assert(std::is_integral<Low>::value, "Integral type required for COFOR initialization.");
 	static_assert(std::is_integral<High>::value, "Integral type required for COFOR comparison.");
-	assert( (High)low <= high );
 	const long int range = high - low;					 // number of iterations
-  if ( range == 0 ) return;								 // no work ? skip otherwise zero divide
+  if ( range <= 0 ) return;								 // no work ? skip otherwise zero divide
 	const unsigned int nprocs = uThisCluster().getProcessors();	// parallelism
   if ( nprocs == 0 ) return;							// no processors ? skip otherwise zero divide
-	const unsigned int threads = range < nprocs ? range : nprocs; // (min) may not need all processors
+	const unsigned int threads = (decltype(nprocs))range < nprocs ? range : nprocs; // (min) may not need all processors
 	Runner ** runners = new Runner *[threads];			// do not use up task stack
 	// distribute extras among threads by increasing stride by 1
 	unsigned int stride = range / threads + 1, extras = range % threads;

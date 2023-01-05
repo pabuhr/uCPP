@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 28 21:42:22 2022
-// Update Count     : 1027
+// Last Modified On : Sat Dec  3 09:12:10 2022
+// Update Count     : 1029
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -293,7 +293,7 @@ int main( int argc, char * argv[] ) {
 				libs[nlibs++] = argv[i];
 			} else if ( arg == "-fopenmp" ) {
 				openmp = true;							// openmp mode
-				args[nargs++] = argv[i];				// pass argument along
+//				args[nargs++] = argv[i];				// pass argument along
 			} else {
 				// concatenate any other arguments
 				args[nargs++] = argv[i];
@@ -523,6 +523,10 @@ int main( int argc, char * argv[] ) {
 		} // if
 		if ( tcpu == "x86_64" ) {
 			libs[nlibs++] = "-latomic";					// allow double-wide CAS
+		} // if
+
+		if ( openmp ) {
+			libs[nlibs++] = "-fopenmp";
 		} // if
 	} // if
 

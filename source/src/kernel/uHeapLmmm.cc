@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -8,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 10 22:17:39 2022
-// Update Count     : 2237
+// Last Modified On : Fri Dec 30 08:37:55 2022
+// Update Count     : 2341
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,9 +30,8 @@
 //#define __U_DEBUG_H__									// turn off debug prints
 #include <uDebug.h>										// access: uDebugWrite
 
-#include <cstring>										// strlen, memset, memcpy
+#include <cstring>										// memset, memcpy
 #include <climits>										// ULONG_MAX
-#include <cstdarg>										// va_start, va_end
 #include <cerrno>										// errno, ENOMEM, EINVAL
 #include <cassert>
 #include <cstdint>										// uintptr_t, uint64_t, uint32_t
@@ -41,9 +39,17 @@
 #include <sys/mman.h>									// mmap, munmap
 #include <sys/sysinfo.h>								// get_nprocs
 
+
+// uSpinLock is used for mutual exclusion but the acquire/release must not rollforward because most of the critical
+// sections are not interruptible. Hence, members acquire_/release_ are used.
+
+
 #define FASTLOOKUP										// use O(1) table lookup from allocation size to bucket size
-#define RETURNSPIN										// toggle spinlock / lockfree stack
 #define OWNERSHIP										// return freed memory to owner thread
+#define RETURNSPIN										// toggle spinlock / lockfree queue
+#if ! defined( OWNERSHIP ) && defined( RETURNSPIN )
+#warning "RETURNSPIN is ignored without OWNERSHIP; suggest commenting out RETURNSPIN"
+#endif // ! OWNERSHIP && RETURNSPIN
 
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -73,6 +79,28 @@ enum {
 	// the malloc/free counter to adjust for storage the program does not free.
 	__DEFAULT_HEAP_UNFREED__ = 0
 }; // enum
+
+
+//######################### Helpers #########################
+
+
+// std::min and std::lower_bound do not always inline, so substitute hand-coded versions.
+
+#define Min( x, y ) (x < y ? x : y)
+
+inline __attribute__((always_inline))
+static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
+	size_t l = 0, m, h = dim;
+	while ( l < h ) {
+		m = (l + h) / 2;
+		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
+			l = m + 1;
+		} else {
+			h = m;
+		} // if
+	} // while
+	return l;
+} // Bsearchl
 
 
 //####################### Heap Statistics ####################
@@ -174,13 +202,14 @@ struct Heap {
 
 	static_assert( uAlign() >= sizeof( Storage ), "minimum alignment < sizeof( Storage )" );
 
-	struct __attribute__(( aligned (8) )) FreeHeader {
+	struct CALIGN FreeHeader {
 		#ifdef OWNERSHIP
 		#ifdef RETURNSPIN
 		uNoCtor<uSpinLock, false> returnLock;
 		#endif // RETURNSPIN
 		Storage * returnList;							// other thread return list
 		#endif // OWNERSHIP
+
 		Storage * freeList;								// thread free list
 		Heap * homeManager;								// heap owner (free storage to bucket, from bucket to heap)
 		size_t blockSize;								// size of allocations on this list
@@ -199,7 +228,7 @@ struct Heap {
 	#endif // __U_STATISTICS__ || __U_DEBUG__
 	Heap * nextFreeHeapManager;							// intrusive link of free heaps from terminated threads; reused by new threads
 
-	uDEBUG(	int64_t allocUnfreed; );					// running total of allocations minus frees; can be negative
+	uDEBUG(	ptrdiff_t allocUnfreed; );					// running total of allocations minus frees; can be negative
 
 	#ifdef __U_STATISTICS__
 	HeapStatistics stats;								// local statistic table for this heap
@@ -278,25 +307,6 @@ static const unsigned int bucketSizes[] = {				// different bucket sizes
 static_assert( Heap::NoBucketSizes == sizeof(bucketSizes) / sizeof(bucketSizes[0] ), "size of bucket array wrong" );
 
 
-// std::min and std::lower_bound do not always inline, so substitute hand-coded versions.
-
-#define Min( x, y ) (x < y ? x : y)
-
-inline __attribute__((always_inline))
-static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim ) {
-	size_t l = 0, m, h = dim;
-	while ( l < h ) {
-		m = (l + h) / 2;
-		if ( (unsigned int &)(vals[m]) < key ) {		// cast away const
-			l = m + 1;
-		} else {
-			h = m;
-		} // if
-	} // while
-	return l;
-} // Bsearchl
-
-
 // Thread-local storage is allocated lazily when the storage is accessed.
 static __U_THREAD_LOCAL__ size_t PAD1 CALIGN __attribute__(( unused )); // protect false sharing
 static __U_THREAD_LOCAL__ Heap * heapManager CALIGN;
@@ -373,7 +383,7 @@ Heap * HeapMaster::getHeap() {
 		// Heap size is about 12K, FreeHeader (128 bytes because of cache alignment) * NoBucketSizes (91) => 128 heaps *
 		// 12K ~= 120K byte superblock.  Where 128-heap superblock handles a medium sized multi-processor server.
 		size_t remaining = heapMaster.heapManagersStorageEnd - heapMaster.heapManagersStorage; // remaining free heaps in superblock
-		if ( ! heapMaster.heapManagersStorage || remaining != 0 ) {
+		if ( ! heapMaster.heapManagersStorage || remaining == 0 ) {
 			// Each block of heaps is a multiple of the number of cores on the computer.
 			int HeapDim = get_nprocs();					// get_nprocs_conf does not work
 			size_t size = HeapDim * sizeof( Heap );
@@ -403,9 +413,10 @@ Heap * HeapMaster::getHeap() {
 			#ifdef OWNERSHIP
 			#ifdef RETURNSPIN
 			heap->freeLists[j].returnLock.ctor();
-			#endif // RETURNSPIN
 			heap->freeLists[j].returnList = nullptr;
+			#endif // RETURNSPIN
 			#endif // OWNERSHIP
+
 			heap->freeLists[j].freeList = nullptr;
 			heap->freeLists[j].homeManager = heap;
 			heap->freeLists[j].blockSize = bucketSizes[j];
@@ -416,6 +427,7 @@ Heap * HeapMaster::getHeap() {
 		heap->nextFreeHeapManager = nullptr;
 		uDEBUG( heap->allocUnfreed = 0; );
 	} // if
+
 	return heap;
 } // HeapMaster::getHeap
 
@@ -424,7 +436,7 @@ __attribute__(( visibility ("hidden") ))
 void heapManagerCtor() {
 	if ( UNLIKELY( ! heapMasterBootFlag ) ) HeapMaster::heapMasterCtor();
 
-	heapMaster.mgrLock->acquire();						// protect heapMaster counters
+	heapMaster.mgrLock->acquire_( true );				// protect heapMaster counters
 
 	// get storage for heap manager
 
@@ -435,13 +447,13 @@ void heapManagerCtor() {
 	heapMaster.threads_started += 1;
 	#endif // __U_STATISTICS__
 
-	heapMaster.mgrLock->release();
+	heapMaster.mgrLock->release_( true );
 } // heapManagerCtor
 
 
 __attribute__(( visibility ("hidden") ))
 void heapManagerDtor() {
-	heapMaster.mgrLock->acquire();
+	heapMaster.mgrLock->acquire_( true );				// protect heapMaster counters
 
 	// place heap on list of free heaps for reusability
 	heapManager->nextFreeHeapManager = heapMaster.freeHeapManagersList;
@@ -453,7 +465,7 @@ void heapManagerDtor() {
 
 	// Do not set heapManager to NULL because it is used after uC++ is shutdown but before the program shuts down.
 
-	heapMaster.mgrLock->release();
+	heapMaster.mgrLock->release_( true );
 } // heapManagerDtor
 
 
@@ -477,18 +489,18 @@ void UPP::uHeapControl::finishup() {					// singleton => called once at end of p
 	#ifdef __U_DEBUG__
 	// allocUnfreed is set to 0 when a heap is created and it accumulates any unfreed storage during its multiple thread
 	// usages.  At the end, add up each heap allocUnfreed value across all heaps to get the total unfreed storage.
-	long long int allocUnfreed = 0;
+	ptrdiff_t allocUnfreed = 0;
 	for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
 		uDEBUGPRT( uDebugPrt( "finishup1 %p %jd\n", heap, heap->allocUnfreed ); );
 		allocUnfreed += heap->allocUnfreed;
 	} // for
 
 	allocUnfreed -= malloc_unfreed();					// subtract any user specified unfreed storage
-	uDEBUGPRT( uDebugPrt( "finishup2 %lld %zd\n", allocUnfreed, malloc_unfreed() ); );
+	uDEBUGPRT( uDebugPrt( "finishup2 %td %zd\n", allocUnfreed, malloc_unfreed() ); );
 	if ( allocUnfreed > 0 ) {
 		// DO NOT USE STREAMS AS THEY MAY BE UNAVAILABLE AT THIS POINT.
 		char helpText[512];
-		int len = snprintf( helpText, sizeof(helpText), "**** Warning **** (UNIX pid:%ld) : program terminating with %llu(0x%llx) bytes of storage allocated but not freed.\n"
+		int len = snprintf( helpText, sizeof(helpText), "**** Warning **** (UNIX pid:%ld) : program terminating with %td(%#tx) bytes of storage allocated but not freed.\n"
 							"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
 							(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
 		if ( write( STDERR_FILENO, helpText, len ) == -1 ) abort( "write error in shutdown" );
@@ -585,7 +597,7 @@ static int printStatsXML( HeapStatistics & stats, FILE * stream ) {	// see mallo
 		);
 } // printStatsXML
 
-static inline HeapStatistics & collectStats( HeapStatistics & stats ) {
+static HeapStatistics & collectStats( HeapStatistics & stats ) {
 	heapMaster.mgrLock->acquire();
 
 	stats += heapMaster.stats;
@@ -723,18 +735,19 @@ static bool headers( const char name[] __attribute__(( unused )), void * addr, H
 } // headers
 
 
-static inline void * master_extend( size_t size ) {
-	heapMaster.extLock->acquire();
+static void * master_extend( size_t size ) {
+	heapMaster.extLock->acquire_( true );
 
 	ptrdiff_t rem = heapMaster.heapRemaining - size;
-	if ( UNLIKELY( rem < 0 ) ) {
+	if ( UNLIKELY( rem < 0 ) ) {						// negative ?
 		// If the size requested is bigger than the current remaining storage, increase the size of the heap.
 
 		size_t increase = uCeiling( size > heapMaster.heapExpand ? size : heapMaster.heapExpand, uAlign() );
 		if ( UNLIKELY( sbrk( increase ) == (void *)-1 ) ) {	// failed, no memory ?
-			heapMaster.extLock->release();
+			heapMaster.extLock->release_( true );
 			abort( NO_MEMORY_MSG, size );				// give up
 		} // if
+
 		rem = heapMaster.heapRemaining + increase - size;
 
 		#ifdef __U_STATISTICS__
@@ -747,7 +760,7 @@ static inline void * master_extend( size_t size ) {
 	heapMaster.heapRemaining = rem;
 	heapMaster.heapEnd = (char *)heapMaster.heapEnd + size;
 
-	heapMaster.extLock->release();
+	heapMaster.extLock->release_( true );
 	return block;
 } // master_extend
 
@@ -756,20 +769,20 @@ __attribute__(( noinline ))
 static void * manager_extend( size_t size ) {
 	ptrdiff_t rem = heapManager->heapReserve - size;
 
-	if ( UNLIKELY( rem < 0 ) ) {						// negative
+	if ( UNLIKELY( rem < 0 ) ) {						// negative ?
 		// If the size requested is bigger than the current remaining reserve, use the current reserve to populate
 		// smaller freeLists, and increase the reserve.
 
 		rem = heapManager->heapReserve;					// positive
 
-		if ( rem >= bucketSizes[0] ) {					// minimal size ? otherwise ignore
+		if ( (decltype(bucketSizes[0]))rem >= bucketSizes[0] ) { // minimal size ? otherwise ignore
 			Heap::FreeHeader * freeHead =
 			#ifdef FASTLOOKUP
 				rem < LookupSizes ? &(heapManager->freeLists[lookup[rem]]) :
 			#endif // FASTLOOKUP
 				&(heapManager->freeLists[Bsearchl( rem, bucketSizes, heapMaster.maxBucketsUsed )]); // binary search
 
-			// The remaining storage many not be bucket size, whereas all other allocations are. Round down to previous
+			// The remaining storage may not be bucket size, whereas all other allocations are. Round down to previous
 			// bucket size in this case.
 			if ( UNLIKELY( freeHead->blockSize > (size_t)rem ) ) freeHead -= 1;
 			Heap::Storage * block = (Heap::Storage *)heapManager->heapBuffer;
@@ -858,44 +871,43 @@ static void * doMalloc( size_t size STAT_PARM ) {
 		heap->stats.counters[STAT_NAME].alloc += tsize;
 		#endif // __U_STATISTICS__
 
-		// Spin until the lock is acquired for this particular size of block.
-
 		block = freeHead->freeList;						// remove node from stack
 		if ( UNLIKELY( block == nullptr ) ) {			// no free block ?
+			// Freelist for this size is empty, so check return list (OWNERSHIP), or carve it out of the heap if there
+			// is enough left, or get some more heap storage and carve it off.
 			#ifdef OWNERSHIP
-			// Freelist for that size is empty, so carve it out of the heap, if there is enough left, or get some more
-			// and then carve it off.
-			#ifdef RETURNSPIN
-			freeHead->returnLock->acquire();
-			block = freeHead->returnList;
-			freeHead->returnList = nullptr;
-			freeHead->returnLock->release();
-			#else
-			block = __atomic_exchange_n( &freeHead->returnList, nullptr, __ATOMIC_SEQ_CST );
-			#endif // RETURNSPIN
+			if ( UNLIKELY( freeHead->returnList ) ) {	// race, get next time if lose race
+				#ifdef RETURNSPIN
+				freeHead->returnLock->acquire_(true);
+				block = freeHead->returnList;
+				freeHead->returnList = nullptr;
+				freeHead->returnLock->release_(true);
+				#else
+				block = __atomic_exchange_n( &freeHead->returnList, nullptr, __ATOMIC_SEQ_CST );
+				#endif // RETURNSPIN
 
-			if ( LIKELY( block == nullptr ) ) {			// return list also empty?
+				assert( block );
+				#ifdef __U_STATISTICS__
+				heap->stats.return_pulls += 1;
+				#endif // __U_STATISTICS__
+
+				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+				uDEBUG( heap = nullptr; );
+
+				freeHead->freeList = block->header.kind.real.next; // merge returnList into freeHead
+			} else {
 			#endif // OWNERSHIP
 				// Do not leave kernel thread as manager_extend accesses heapManager.
 				uKernelModule::uKernelModuleData::disableInterrupts();
 				block = (Heap::Storage *)manager_extend( tsize ); // mutual exclusion on call
 				uKernelModule::uKernelModuleData::enableInterruptsNoRF();
 
-				// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+				// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 				uDEBUG( heap = nullptr; );
 
 				// Scrub new memory so subsequent uninitialized usages might fail. Only scrub the first SCRUB_SIZE bytes.
 				uDEBUG( memset( block->data, SCRUB, Min( SCRUB_SIZE, tsize - sizeof(Heap::Storage) ) ); );
 			#ifdef OWNERSHIP
-			} else {									// merge returnList into freeHead
-				#ifdef __U_STATISTICS__
-				heap->stats.return_pulls += 1;
-				#endif // __U_STATISTICS__
-
-				// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
-				uDEBUG( heap = nullptr; );
-
-				freeHead->freeList = block->header.kind.real.next;
 			} // if
 			#endif // OWNERSHIP
 		} else {
@@ -907,6 +919,7 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	} else {											// large size => mmap
   if ( UNLIKELY( size > ULONG_MAX - heapMaster.pageSize ) ) return nullptr; // error check
 		tsize = uCeiling( tsize, heapMaster.pageSize );	// must be multiple of page size
+
 		#ifdef __U_STATISTICS__
 		heap->stats.counters[STAT_NAME].alloc += tsize;
 		heap->stats.mmap_calls += 1;
@@ -918,13 +931,14 @@ static void * doMalloc( size_t size STAT_PARM ) {
 		block = (Heap::Storage *)::mmap( 0, tsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
 		uKernelModule::uKernelModuleData::enableInterruptsNoRF();
 
-		// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 		uDEBUG( heap = nullptr; );
 
 		if ( UNLIKELY( block == MAP_FAILED ) ) {		// failed ?
 			if ( errno == ENOMEM ) abort( NO_MEMORY_MSG, tsize ); // no memory
 			// Do not call strerror( errno ) as it may call malloc.
-			abort( "attempt to allocate large object (> %zu) of size %zu bytes and mmap failed with errno %d.", size, heapMaster.mmapStart, errno );
+			abort( "attempt to allocate large object (> %zu) of size %zu bytes and mmap failed with errno %d.",
+				   size, heapMaster.mmapStart, errno );
 		} // if
 		block->header.kind.real.blockSize = MarkMmappedBit( tsize ); // storage size for munmap
 
@@ -946,12 +960,12 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	} // if
 	#endif // __U_DEBUG__
 
-	uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
-					( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
-	if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
-	 	uKernelModule::uKernelModuleBoot.RFpending = false;
-	 	uThisTask().uYieldInvoluntary();
-	} // if
+	// uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
+	// 				( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
+	// if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
+	//  	uKernelModule::uKernelModuleBoot.RFpending = false;
+	//  	uThisTask().uYieldInvoluntary();
+	// } // if
 
 	return addr;
 } // doMalloc
@@ -987,7 +1001,7 @@ static void doFree( void * addr ) {
 		heap->stats.munmap_storage_alloc += size;
 		#endif // __U_STATISTICS__
 
-		// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
 		uDEBUG( heap = nullptr; );
 
 		// Does not matter where this storage is freed.
@@ -1013,41 +1027,42 @@ static void doFree( void * addr ) {
 		uKernelModule::uKernelModuleData::enableInterruptsNoRF();
 		#endif // __U_DEBUG__
 
+		#ifdef OWNERSHIP
 		if ( LIKELY( heap == freeHead->homeManager ) ) { // belongs to this thread
 			header->kind.real.next = freeHead->freeList; // push on stack
 			freeHead->freeList = (Heap::Storage *)header;
 		} else {										// return to thread owner
 			assert( heap );
 
-			#ifdef OWNERSHIP
 			#ifdef RETURNSPIN
-			freeHead->returnLock->acquire();
+			freeHead->returnLock->acquire_(true);
 			header->kind.real.next = freeHead->returnList; // push to bucket return list
 			freeHead->returnList = (Heap::Storage *)header;
-			freeHead->returnLock->release();
+			freeHead->returnLock->release_(true);
 			#else										// lock free
 			header->kind.real.next = freeHead->returnList; // link new node to top node
 			// CAS resets header->kind.real.next = freeHead->returnList on failure
 			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, header,
 												   false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) );
-			#endif // RETURNSPIN
-
-			#else										// no OWNERSHIP
-
-			freeHead = &heap->freeLists[ClearStickyBits( header->kind.real.home ) - &freeHead->homeManager->freeLists[0]];
-			header->kind.real.next = freeHead->freeList; // push on stack
-			freeHead->freeList = (Heap::Storage *)header;
-			#endif // ! OWNERSHIP
 
 			#ifdef __U_STATISTICS__
 			heap->stats.return_pushes += 1;
 			heap->stats.return_storage_request += rsize;
 			heap->stats.return_storage_alloc += size;
 			#endif // __U_STATISTICS__
-
-			// OK TO BE PREEMPTED HERE AS heap IS NO LONGER ACCESSED.
-			uDEBUG( heap = nullptr; );
+			#endif // RETURNSPIN
 		} // if
+
+		#else											// no OWNERSHIP
+
+		// kind.real.home is address in owner thread's freeLists, so compute the equivalent position in this thread's freeList.
+		freeHead = &heap->freeLists[ClearStickyBits( header->kind.real.home ) - &freeHead->homeManager->freeLists[0]];
+		header->kind.real.next = freeHead->freeList;	// push on stack
+		freeHead->freeList = (Heap::Storage *)header;
+		#endif // ! OWNERSHIP
+
+		// OK TO BE PREEMPTED HERE AS heapManager IS NO LONGER ACCESSED.
+		uDEBUG( heap = nullptr; );
 	} // if
 
 	#ifdef __U_DEBUG__
@@ -1058,36 +1073,36 @@ static void doFree( void * addr ) {
 	} // if
 	#endif // __U_DEBUG__
 
-	uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
-					( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
-	if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
-	 	uKernelModule::uKernelModuleBoot.RFpending = false;
-	 	uThisTask().uYieldInvoluntary();
-	} // if
+	// uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
+	// 				( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
+	// if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
+	//  	uKernelModule::uKernelModuleBoot.RFpending = false;
+	//  	uThisTask().uYieldInvoluntary();
+	// } // if
 } // doFree
 
 
 #ifdef __U_STATISTICS__
 __attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
-static void incCalls( long int statName ) {
+static void incCalls( size_t statName ) {
 	heapManager->stats.counters[statName].calls += 1;
 } // incCalls
 
 __attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
-static void incZeroCalls( long int statName ) {
+static void incZeroCalls( size_t statName ) {
 	heapManager->stats.counters[statName].calls_0 += 1;
 } // incZeroCalls
 #endif // __U_STATISTICS__
 
 #ifdef __U_DEBUG__
 __attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
-static void incUnfreed( size_t offset ) {
+static void incUnfreed( ptrdiff_t offset ) {
 	heapManager->allocUnfreed += offset;
 } // incUnfreed
 #endif // __U_DEBUG__
 
 
-static inline void * memalignNoStats( size_t alignment, size_t size STAT_PARM ) {
+static void * memalignNoStats( size_t alignment, size_t size STAT_PARM ) {
 	checkAlign( alignment );							// check alignment
 
 	// if alignment <= default alignment or size == 0, do normal malloc as two headers are unnecessary
@@ -1347,8 +1362,6 @@ extern "C" {
 	// or realloc().  Otherwise, or if free(ptr) has already been called before, undefined behaviour occurs. If ptr is
 	// nullptr, no operation is performed.
 	void free( void * addr ) __THROW {
-		assert( heapManager );
-
 	  if ( UNLIKELY( addr == nullptr ) ) {				// special case
 			#ifdef __U_STATISTICS__
 			incZeroCalls( HeapStatistics::FREE );

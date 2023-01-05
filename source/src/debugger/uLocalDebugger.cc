@@ -7,8 +7,8 @@
 // Author           : Martin Karsten
 // Created On       : Thu Apr 20 21:34:48 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  2 20:52:38 2022
-// Update Count     : 725
+// Last Modified On : Tue Jan  3 15:52:53 2023
+// Update Count     : 726
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -375,7 +375,7 @@ void uLocalDebugger::uCreateLocalDebugger( int port, const char *machine, const 
 			// ignore  boot, system, local debugger, dispatcher and processor tasks
 
 			if ( &task != uKernelModule::bootTask && &task != uKernelModule::systemTask &&
-				 &task != uLocalDebuggerInstance && &task != dispatcher && &(task.bound_) == (uProcessor *)0 ) {
+				 &task != uLocalDebuggerInstance && &task != dispatcher && std::addressof(task.bound_) == nullptr ) {
 				// retrieve some important registers
 				MinimalRegisterSet regs;
 				int *registers = (int *)task.taskDebugMask;
@@ -652,7 +652,7 @@ void uLocalDebugger::attachULThread( uBaseTask *this_task, uCluster *this_cluste
 void uLocalDebugger::checkPoint() {
 	uDEBUGPRT( uDebugPrt( "%d (uLocalDebugger &)%p.checkPoint, task %s (%p) / cluster %p\n", __LINE__, this, U_THIS_TASK->getName(), U_THIS_TASK, U_THIS_CLUSTER ); );
 
-  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || (uProcessor *)(&U_THIS_TASK->bound_) != nullptr ) return;
+  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || std::addressof(U_THIS_TASK->bound_) != nullptr ) return;
 	checkPointMX();
 } // uLocalDebugger::checkPoint
 
@@ -668,7 +668,7 @@ void uLocalDebugger::createULThread() {
 	MinimalRegisterSet regs;
 	CREATE_MINIMAL_REGISTER_SET( regs );				// save caller information
 
-  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || (uProcessor *)(&U_THIS_TASK->bound_) != nullptr ) {
+  if ( U_THIS_TASK == uLocalDebuggerInstance || U_THIS_TASK == dispatcher || std::addressof(U_THIS_TASK->bound_) != nullptr ) {
 		// save the regs here for attaching later on
 		int *registers = (int *)U_THIS_TASK->taskDebugMask;
 		registers[0] = regs.fp;

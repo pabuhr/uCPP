@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 20 23:10:14 2022
-// Update Count     : 87
+// Last Modified On : Tue Jan  3 16:14:04 2023
+// Update Count     : 89
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,6 +23,11 @@
 // You should  have received a  copy of the  GNU Lesser General  Public License
 // along  with this library.
 // 
+
+#if __GNUC__ >= 12										// valid GNU compiler diagnostic ?
+// For backwards compatibility, keep testing dynamic-exception-specifiers until they are no longer supported.
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // g++12 deprecates unexpected_handler
+#endif // __GNUC__ >= 12
 
 #include <iostream>
 using std::cout;

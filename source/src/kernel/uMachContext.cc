@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  2 18:14:50 2022
-// Update Count     : 970
+// Last Modified On : Tue Dec 27 09:38:57 2022
+// Update Count     : 971
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -223,14 +223,14 @@ namespace UPP {
 			void *padding[3];							// padding to force 16-byte alignment, as "base" is 16-byte aligned
 		}; // FakeStack
 
-		((uContext_t *)context)->SP = (char *)base - sizeof( FakeStack );
-		((uContext_t *)context)->FP = nullptr;			// terminate stack with null fp
+		((uContext_t *)context_)->SP = (char *)base_ - sizeof( FakeStack );
+		((uContext_t *)context_)->FP = nullptr;			// terminate stack with null fp
 
-		((FakeStack *)(((uContext_t *)context)->SP))->dummyReturn = nullptr;
-		((FakeStack *)(((uContext_t *)context)->SP))->argument = this; // argument to uInvoke
-		((FakeStack *)(((uContext_t *)context)->SP))->rturn = rtnAdr( (void (*)())uInvoke );
-		((FakeStack *)(((uContext_t *)context)->SP))->fpucsr = fncw;
-		((FakeStack *)(((uContext_t *)context)->SP))->mxcsr = mxcsr; // see note above
+		((FakeStack *)(((uContext_t *)context_)->SP))->dummyReturn = nullptr;
+		((FakeStack *)(((uContext_t *)context_)->SP))->argument = this; // argument to uInvoke
+		((FakeStack *)(((uContext_t *)context_)->SP))->rturn = rtnAdr( (void (*)())uInvoke );
+		((FakeStack *)(((uContext_t *)context_)->SP))->fpucsr = fncw;
+		((FakeStack *)(((uContext_t *)context_)->SP))->mxcsr = mxcsr; // see note above
 
 		#elif defined( __x86_64__ )
 
