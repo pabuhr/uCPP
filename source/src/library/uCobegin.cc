@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct 11 15:53:22 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 16:39:30 2022
-// Update Count     : 3
+// Last Modified On : Tue Jan 17 09:29:33 2023
+// Update Count     : 4
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,10 +41,9 @@ void uCobegin( std::initializer_list< std::function< void ( unsigned int ) >> fu
 	}; // Runner
 
 	const unsigned int size = funcs.size();
-	Runner ** runners = new Runner *[size];				// do not use up task stack
+	uNoCtor< Runner > * runners = new uNoCtor< Runner >[size]; // do not use up task stack
 
-	for ( auto f : funcs ) { runners[uLid] = new Runner( uLid, f ); uLid += 1; }
-	for ( uLid = 0; uLid < size; uLid += 1 ) delete runners[uLid];
+	for ( auto f : funcs ) { runners[uLid].ctor( uLid, f ); uLid += 1; }
 	delete [] runners;
 } // uCobegin
 

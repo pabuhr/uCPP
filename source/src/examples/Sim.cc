@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 16 13:51:34 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 20 21:39:19 2021
-// Update Count     : 144
+// Last Modified On : Tue Jan 17 09:39:20 2023
+// Update Count     : 146
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,8 +27,7 @@
 
 #include "uCalibrate.h"
 #include <iostream>
-using std::cout;
-using std::endl;
+using namespace std;
 
 unsigned int uDefaultPreemption() {
 	return 1;
@@ -88,22 +87,14 @@ int main( int argc, char *argv[] ) {
 		abort( "Usage: no.-processors  no.-worker-tasks  amount-of-task-work" );
 	} // if
 
-	NoProcessors = atoi( argv[1] );
-	NoWorkers = atoi( argv[2] );
-	work = atoi( argv[3] );
+	NoProcessors = stoi( argv[1] );
+	NoWorkers = stoi( argv[2] );
+	work = stoi( argv[3] );
 
-	uProcessor **processor = new uProcessor *[NoProcessors - 1];
-	for ( unsigned int i = 0; i < NoProcessors - 1; i += 1 ) {
-		processor[ i ] = new uProcessor;
-	} // for
+	uProcessor processor[NoProcessors - 1];
 	{
 		Worker worker( NoWorkers, work / NoWorkers, work % NoWorkers );
 	}
-	for ( unsigned int i = 0; i < NoProcessors - 1; i += 1 ) {
-		delete processor[ i ];
-	} // for
-	delete [] processor;
-
 	cout << "successful completion" << endl;
 } // uMain
 

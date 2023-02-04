@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 20 13:24:40 2022
-// Update Count     : 1228
+// Last Modified On : Mon Jan 30 19:07:16 2023
+// Update Count     : 1231
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,14 +72,14 @@ class uActor {
 	static uExecutor * executor_;						// executor for all actors
 	static bool executorp;								// executor passed to start member
 	static uSemaphore wait_;							// wait for all actors to delete
-	static unsigned long int actors_;					// number of actor objects in system
+	static size_t actors_;								// number of actor objects in system
   public:
 	enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
   protected:
-	unsigned long int ticket;							// executor-queue handle to provide FIFO message execution
+	size_t ticket;										// executor-queue handle to provide FIFO message execution
 	Allocation allocation_ = Nodelete;					// allocation action
 	Allocation promise_allocation_ = Nodelete;			// allocation action from fast path callback
-	uDEBUG( unsigned int pendingCallbacks = 0; )
+	uDEBUG( size_t pendingCallbacks = 0; )
   public:
 	class Message {
 	  public:
@@ -169,7 +169,7 @@ class uActor {
 			std::function< Allocation ( Result ) > callback; // functor type
 			uActor * maybeActor;
 			volatile Status lock = EMPTY;
-			volatile unsigned int refCnt = 1;			// number of references to promise
+			volatile size_t refCnt = 1;					// number of references to promise
 			Result result_;								// promise result
 		  public:
 			void incRef() {
@@ -192,7 +192,7 @@ class uActor {
 					uDEBUG( if ( maybeActor ) maybeActor->pendingCallbacks += 1; );
 					return false;
 				} // if
-				if ( comp == CHAINED ) abort( "chained" ); // _Throw DupCallback(); // duplicate chaining
+				if ( comp == CHAINED ) abort( "duplicate callback for promise" ); // _Throw DupCallback(); // duplicate chaining
 				assert( comp == FULFILLED && lock == FULFILLED );
 				return true;
 			} // Impl::maybe
@@ -211,8 +211,11 @@ class uActor {
 				// Race on assignment, but only one thread sets the callback. Multiple assignments from the same or
 				// different threads is detected by the lock.
 				result_ = res;							// store result
-				Status prev = uFetchAssign( lock, FULFILLED ); // mark delivered
-				if ( prev == FULFILLED ) abort( "Duplicate delivery to promise; must reset promise" ); //_Throw DupDelivery();
+				Status prev;
+				if ( lock != FULFILLED ) {
+					prev = uFetchAssign( lock, FULFILLED ); // mark delivered
+					if ( prev == FULFILLED ) abort( "Duplicate delivery to promise; must reset promise" ); //_Throw DupDelivery();
+				} else prev = FULFILLED;
 
 				// if maybeActor is null then the program main called maybe so use a default ticket of 0
 				if ( prev == CHAINED ) {
@@ -324,10 +327,10 @@ class uActor {
 			switch ( actor.allocation_ ) {				// analyze actor allocation status
 			  case Delete: delete &actor; break;
               case Destroy:
-				uDEBUG( actor.ticket = ULONG_MAX; );	// mark as terminated
+				uDEBUG( actor.ticket = SIZE_MAX; );		// mark as terminated
 				actor.~uActor(); break;
               case Finished:
-				uDEBUG( actor.ticket = ULONG_MAX; );	// mark as terminated
+				uDEBUG( actor.ticket = SIZE_MAX; );		// mark as terminated
 				break;
 			  default: ;								// stop warning
 			} // switch
@@ -449,7 +452,7 @@ class uActor {
 	// Communication
 
 	uActor & tell( Message & msg ) {					// async call, no return value
-		uDEBUG( if ( ticket == ULONG_MAX ) abort( "sending message to terminated actor." ); );
+		uDEBUG( if ( ticket == SIZE_MAX ) abort( "sending message to terminated actor." ); );
 		executor_->send( Deliver_( *this, msg ), ticket ); // copy functor
 		return *this;
 	} // uActor::tell

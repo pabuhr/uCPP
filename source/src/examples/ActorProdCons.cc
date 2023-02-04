@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 28 20:46:34 2022
-// Update Count     : 427
+// Last Modified On : Sun Jan 29 21:19:55 2023
+// Update Count     : 428
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,9 +36,9 @@ using namespace std;
 #endif // NOOUTPUT
 
 enum { N = 2 };
-unsigned int uDefaultExecutorProcessors() { return N; }
-unsigned int uDefaultExecutorWorkers() { return N; }
-unsigned int uDefaultExecutorRQueues() { return N; }
+size_t uDefaultExecutorProcessors() { return N; }
+size_t uDefaultExecutorWorkers() { return N; }
+size_t uDefaultExecutorRQueues() { return N; }
 bool uDefaultExecutorSepClus() { return true; }
 int uDefaultExecutorAffinity() { return 0; }
 

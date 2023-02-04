@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jan  2 16:55:59 2023
-%% Update Count     : 8527
+%% Last Modified On : Mon Jan 30 20:41:24 2023
+%% Update Count     : 8533
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3751,11 +3751,11 @@ No work sharing or stealing is performed among the request queues.
 class uExecutor {
   public:
 	uExecutor();
-	uExecutor( unsigned int nprocessors, unsigned int nthreads, unsigned int nrqueues,
+	uExecutor( size_t nprocessors, size_t nthreads, size_t nrqueues,
 		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
-	uExecutor( unsigned int nprocessors, unsigned int nthreads,
+	uExecutor( size_t nprocessors, size_t nthreads,
 		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
-	uExecutor( unsigned int nprocessors,
+	uExecutor( size_t nprocessors,
 		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
 
 	template< typename Func > void send( Func action );
@@ -3769,12 +3769,12 @@ The constructor routines have the following form:
 \begin{sloppypar}
 \item[%(uExecutor()%)]
 -- creates an executor with processors, threads, request queues, current or separate cluster, and processor affinity all set to the default values from the default routines.
-\item[%(uExecutor( unsigned int nprocessors, unsigned int nthreads, unsigned int nrqueues, bool sepClus,%)]
+\item[%(uExecutor( size_t nprocessors, size_t nthreads, size_t nrqueues, bool sepClus,%)]
 %(int affAffinity )%)
 -- creates an executor containing %(nprocessors%) processors (with default affinity), %(nthreads%) worker threads, and %(nrqueues%) request queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nprocessors, unsigned int nthreads, bool sepClus, int affAffinity)%)]
+\item[%(uExecutor( size_t nprocessors, size_t nthreads, bool sepClus, int affAffinity)%)]
 -- creates an executor containing %(nprocessors%) processors (with default affinity), and %(nthreads%) worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[%(uExecutor( unsigned int nprocessors, bool sepClus, int affAffinity)%)]
+\item[%(uExecutor( size_t nprocessors, bool sepClus, int affAffinity)%)]
 -- creates an executor containing %(nprocessors%) processors (with default affinity), worker threads, and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \end{sloppypar}
 \end{prefix}
@@ -3847,11 +3847,11 @@ int main() {
 
 Finally, the following routines control the default executor parameters.
 %[
-extern unsigned int uDefaultExecutorProcessors();	// kernel threads (processors) servicing worker threads
-extern unsigned int uDefaultExecutorWorkers();		// worker threads servicing work requests
-extern unsigned int uDefaultExecutorRQueues();		// executor request queues divided among workers
-extern bool uDefaultExecutorSepClus();				// create processors on separate cluster
-extern int uDefaultExecutorAffinity();				// affinity and offset (-1 => no affinity, default)
+extern size_t uDefaultExecutorProcessors();				// kernel threads (processors) servicing worker threads
+extern size_t uDefaultExecutorWorkers();				// worker threads servicing work requests
+extern size_t uDefaultExecutorRQueues();				// executor request queues divided among workers
+extern bool uDefaultExecutorSepClus();					// create processors on separate cluster
+extern int uDefaultExecutorAffinity();					// affinity and offset (-1 => no affinity, default)
 %]
 \index{uDefaultExecutorProcessors@%(uDefaultExecutorProcessors%)}%
 \index{uDefaultExecutorWorkers@%(uDefaultExecutorWorkers%)}%
@@ -4130,7 +4130,7 @@ class uActor {
 	template<typename T> class Promise { ... };
 	template<typename Result> struct PromiseMsg : public SenderMsg { ... }
 	// Storage management
-	uActor( Allocation allocation = Nodelete );
+	uActor();											// default allocation Nodelete
 	// Communication
 	uActor & tell( Message & msg );						// async call, no return value
 	uActor & tell( SenderMsg & msg );					// async call, no return value
@@ -4700,11 +4700,11 @@ _Actor Client {
 	#define SCB [this, li = i]( string ) { *this | strmsg[li]; return Nodelete; }
 
 	Allocation receive( uActor::Message & msg ) {		// receive callback messages
-		for ( unsigned int i = 0; i < Messages; i += 1 ) { // send out work
+		for ( size_t i = 0; i < Messages; i += 1 ) {	// send out work
 			pi[i] = server || intmsg[i];
 			ps[i] = server || strmsg[i];
 		}
-		for ( unsigned int i = 0; i < Messages; i += 1 ) { // any promise fulfilled ?
+		for ( size_t i = 0; i < Messages; i += 1 ) {	// any promise fulfilled ?
 			if ( pi[i].maybe( ICB ) ) { pi[i](); results += 1; }
 			if ( ps[i].maybe( SCB ) ) { ps[i](); results += 1; }
 		}
@@ -10967,6 +10967,12 @@ int main() {
 %]
 Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
+%[
+	uNoCtor<C> * c = new uNoCtor<C>[10000];
+	for ( int i = 0; i < 10; i += 1 ) {
+	 	c[i].ctor( i );
+	}
+%]
 
 
 \chapter{Data Structure Library (DSL)}

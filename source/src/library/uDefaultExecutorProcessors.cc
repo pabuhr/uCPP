@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan  2 20:55:44 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:27:08 2022
-// Update Count     : 2
+// Last Modified On : Sun Jan 29 21:02:08 2023
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,7 +32,7 @@
 // this routine from the uC++ standard library.
 
 
-unsigned int uDefaultExecutorProcessors() {
+size_t uDefaultExecutorProcessors() {
 	if ( uDefaultExecutorSepClus() ) return __U_DEFAULT_EXECUTOR_PROCESSORS__;
 	else return __U_DEFAULT_EXECUTOR_PROCESSORS__ - 1;	// assume an existing processor so N+1
 } // uDefaultExecutorProcessors

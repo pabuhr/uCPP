@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan  2 20:51:39 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:27:00 2022
-// Update Count     : 3
+// Last Modified On : Sun Jan 29 21:02:18 2023
+// Update Count     : 4
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,7 +32,7 @@
 // this routine from the uC++ standard library.
 
 
-unsigned int uDefaultExecutorRQueues() {
+size_t uDefaultExecutorRQueues() {
 	return __U_DEFAULT_EXECUTOR_RQUEUES__;		// number of executor request queues
 } // uDefaultExecutorRQueues
 

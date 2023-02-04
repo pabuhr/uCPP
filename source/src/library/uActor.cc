@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:41:44 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 11 05:55:18 2022
-// Update Count     : 114
+// Last Modified On : Sun Jan 29 20:42:40 2023
+// Update Count     : 115
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,7 +46,7 @@ void uActor::TraceMsg::print() {
 		 << " source:" << hops.head()
 		 << " cursor (node:" << cursor << ", actor:" << (cursor ? cursor->actor : nullptr) << ')'
 		 << endl << "  trace ";
-	unsigned int cnt = 0;
+	size_t cnt = 0;
 	for ( uQueueIter<TraceMsg::Hop> iter(cursor); iter >> route; cnt += 1 ) { // print route
 		if ( cnt != 0 && cnt % PerLine == 0 ) cout << endl << "\t";
 		cout << route->actor;

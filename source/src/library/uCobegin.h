@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 29 14:16:24 2022
-// Update Count     : 63
+// Last Modified On : Tue Jan 17 09:33:53 2023
+// Update Count     : 66
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -64,12 +64,13 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
 
 	static_assert(std::is_integral<Low>::value, "Integral type required for COFOR initialization.");
 	static_assert(std::is_integral<High>::value, "Integral type required for COFOR comparison.");
-	const long int range = high - low;					 // number of iterations
-  if ( range <= 0 ) return;								 // no work ? skip otherwise zero divide
+
+	const long int range = high - low;					// number of iterations
+  if ( range <= 0 ) return;								// no work ? skip otherwise zero divide
 	const unsigned int nprocs = uThisCluster().getProcessors();	// parallelism
   if ( nprocs == 0 ) return;							// no processors ? skip otherwise zero divide
 	const unsigned int threads = (decltype(nprocs))range < nprocs ? range : nprocs; // (min) may not need all processors
-	Runner ** runners = new Runner *[threads];			// do not use up task stack
+	uNoCtor< Runner > * runners = new uNoCtor< Runner >[threads];			// do not use up task stack
 	// distribute extras among threads by increasing stride by 1
 	unsigned int stride = range / threads + 1, extras = range % threads;
 	// chunk the iterations across the user-threads
@@ -78,13 +79,12 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
 	unsigned int i = 0;
 	High s = low;
 	for ( i = 0; i < extras; i += 1, s += stride ) {	// create threads with subranges
-		runners[i] = new Runner( s, s + stride, f );
+		runners[i].ctor( s, s + stride, f );
 	} // for
 	stride -= 1;										// remove extras from stride
 	for ( ; i < threads; i += 1, s += stride ) {		// create threads with subranges
-		runners[i] = new Runner( s, s + stride, f );
+		runners[i].ctor( s, s + stride, f );
 	} // for
-	for ( i = 0; i < threads; i += 1 ) delete runners[i];
 	delete [] runners;
 } // uCofor
 

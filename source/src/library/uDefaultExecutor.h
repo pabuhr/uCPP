@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan  2 20:45:32 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 20 16:53:43 2020
-// Update Count     : 8
+// Last Modified On : Sun Jan 29 21:10:28 2023
+// Update Count     : 10
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <cstddef>										// size_t
 
 // Define the default number of processors created in the executor. Must be greater than 0.
 
@@ -50,9 +51,8 @@
 #define __U_DEFAULT_EXECUTOR_AFFINITY__ -1
 
 
-extern unsigned int uDefaultExecutorProcessors();	// kernel threads (processors) servicing executor thread-pool
-extern unsigned int uDefaultExecutorWorkers();		// worker threads servicing executor thread-pool
-extern unsigned int uDefaultExecutorRQueues();		// executor request queues
-extern bool uDefaultExecutorSepClus();			// create processors on separate cluster
-extern int uDefaultExecutorAffinity();			// affinity and offset (-1 => no affinity, default)
-
+extern size_t uDefaultExecutorProcessors();				// kernel threads (processors) servicing executor thread-pool
+extern size_t uDefaultExecutorWorkers();				// worker threads servicing executor thread-pool
+extern size_t uDefaultExecutorRQueues();				// executor request queues
+extern bool uDefaultExecutorSepClus();					// create processors on separate cluster
+extern int uDefaultExecutorAffinity();					// affinity and offset (-1 => no affinity, default)

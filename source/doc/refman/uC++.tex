@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jan  2 16:55:59 2023
-%% Update Count     : 8527
+%% Last Modified On : Mon Jan 30 20:41:24 2023
+%% Update Count     : 8533
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -3751,11 +3751,11 @@ No work sharing or stealing is performed among the request queues.
 \L{\LB{\K{class}\0\V{uExecutor}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{uExecutor}();}}
-\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{unsigned}\0\K{int}\0\V{nrqueues},}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},\0\V{size\_t}\0\V{nthreads},\0\V{size\_t}\0\V{nrqueues},}}
 \L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
-\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},\0\V{size\_t}\0\V{nthreads},}}
 \L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
-\L{\LB{}\Tab{4}{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},}}
+\L{\LB{}\Tab{4}{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},}}
 \L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{void}\0\V{send}(\0\V{Func}\0\V{action}\0);}}
@@ -3769,12 +3769,12 @@ The constructor routines have the following form:
 \begin{sloppypar}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}()}}\endlgrinde\LGend{}]
 -- creates an executor with processors, threads, request queues, current or separate cluster, and processor affinity all set to the default values from the default routines.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{unsigned}\0\K{int}\0\V{nrqueues},\0\K{bool}\0\V{sepClus},}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},\0\V{size\_t}\0\V{nthreads},\0\V{size\_t}\0\V{nrqueues},\0\K{bool}\0\V{sepClus},}}\endlgrinde\LGend{}]
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}\0\V{affAffinity}\0)}}\endlgrinde\LGend{}
 -- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nthreads}}}\endlgrinde\LGend{} worker threads, and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nrqueues}}}\endlgrinde\LGend{} request queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{unsigned}\0\K{int}\0\V{nthreads},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},\0\V{size\_t}\0\V{nthreads},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
 -- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nthreads}}}\endlgrinde\LGend{} worker threads and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\K{unsigned}\0\K{int}\0\V{nprocessors},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}(\0\V{size\_t}\0\V{nprocessors},\0\K{bool}\0\V{sepClus},\0\K{int}\0\V{affAffinity})}}\endlgrinde\LGend{}]
 -- creates an executor containing \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{nprocessors}}}\endlgrinde\LGend{} processors (with default affinity), worker threads, and queues, which are created on the current or separate cluster with the cluster's default stack\index{stack!default size} size.
 \end{sloppypar}
 \end{prefix}
@@ -3847,11 +3847,11 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde
 
 Finally, the following routines control the default executor parameters.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorProcessors}();}\Tab{52}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0worker\0threads}}
-\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorWorkers}();}\Tab{52}{\C{}\1\1\0worker\0threads\0servicing\0work\0requests}}
-\CE{}\L{\LB{\K{extern}\0\K{unsigned}\0\K{int}\0\V{uDefaultExecutorRQueues}();}\Tab{52}{\C{}\1\1\0executor\0request\0queues\0divided\0among\0workers}}
-\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultExecutorSepClus}();}\Tab{52}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
-\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultExecutorAffinity}();}\Tab{52}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
+\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorProcessors}();}\Tab{56}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0worker\0threads}}
+\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorWorkers}();}\Tab{56}{\C{}\1\1\0worker\0threads\0servicing\0work\0requests}}
+\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorRQueues}();}\Tab{56}{\C{}\1\1\0executor\0request\0queues\0divided\0among\0workers}}
+\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultExecutorSepClus}();}\Tab{56}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
+\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultExecutorAffinity}();}\Tab{56}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
 \CE{}\endlgrinde\LGend
 \index{uDefaultExecutorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorProcessors}}}\endlgrinde\LGend{}}%
 \index{uDefaultExecutorWorkers@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorWorkers}}}\endlgrinde\LGend{}}%
@@ -4130,8 +4130,8 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{T}\>\0\K{class}\0\V{Promise}\0\{\0.\,.\,.\0\};}}
 \L{\LB{}\Tab{4}{\K{template}\<\K{typename}\0\V{Result}\>\0\K{struct}\0\V{PromiseMsg}\0:\0\K{public}\0\V{SenderMsg}\0\{\0.\,.\,.\0\}}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Storage\0management}}
-\CE{}\L{\LB{}\Tab{4}{\V{uActor}(\0\V{Allocation}\0\V{allocation}\0=\0\V{Nodelete}\0);}}
-\L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
+\CE{}\L{\LB{}\Tab{4}{\V{uActor}();}\Tab{56}{\C{}\1\1\0default\0allocation\0Nodelete}}
+\CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0Communication}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{Message}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
 \CE{}\L{\LB{}\Tab{4}{\V{uActor}\0\&\0\V{tell}(\0\V{SenderMsg}\0\&\0\V{msg},\0\V{uActor}\0\*\0\V{sender}\0);}\Tab{56}{\C{}\1\1\0async\0call,\0no\0return\0value}}
@@ -4700,11 +4700,11 @@ Once all the promise messages are fulfilled, the client stops the server and fin
 \L{\LB{}\Tab{4}{\K{\#define}\0\V{SCB}\0[\K{this},\0\V{li}\0=\0\V{i}](\0\V{string}\0)\0\{\0\*\K{this}\0\|\0\V{strmsg}[\V{li}];\0\K{return}\0\V{Nodelete};\0\}}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\V{Allocation}\0\V{receive}(\0\V{uActor}::\V{Message}\0\&\0\V{msg}\0)\0\{}\Tab{56}{\C{}\1\1\0receive\0callback\0messages}}
-\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Messages};\0\V{i}\0+=\01\0)\0\{\0\C{}\1\1\0send\0out\0work}}
+\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\V{size\_t}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Messages};\0\V{i}\0+=\01\0)\0\{}\Tab{56}{\C{}\1\1\0send\0out\0work}}
 \CE{}\L{\LB{}\Tab{12}{\V{pi}[\V{i}]\0=\0\V{server}\0\|\,\|\0\V{intmsg}[\V{i}];}}
 \L{\LB{}\Tab{12}{\V{ps}[\V{i}]\0=\0\V{server}\0\|\,\|\0\V{strmsg}[\V{i}];}}
 \L{\LB{}\Tab{8}{\}}}
-\L{\LB{}\Tab{8}{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Messages};\0\V{i}\0+=\01\0)\0\{\0\C{}\1\1\0any\0promise\0fulfilled\0?}}
+\L{\LB{}\Tab{8}{\K{for}\0(\0\V{size\_t}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{Messages};\0\V{i}\0+=\01\0)\0\{}\Tab{56}{\C{}\1\1\0any\0promise\0fulfilled\0?}}
 \CE{}\L{\LB{}\Tab{12}{\K{if}\0(\0\V{pi}[\V{i}].\V{maybe}(\0\V{ICB}\0)\0)\0\{\0\V{pi}[\V{i}]();\0\V{results}\0+=\01;\0\}}}
 \L{\LB{}\Tab{12}{\K{if}\0(\0\V{ps}[\V{i}].\V{maybe}(\0\V{SCB}\0)\0)\0\{\0\V{ps}[\V{i}]();\0\V{results}\0+=\01;\0\}}}
 \L{\LB{}\Tab{8}{\}}}
@@ -10967,6 +10967,12 @@ As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGi
 \CE{}\endlgrinde\LGend
 Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{}\Tab{4}{\V{uNoCtor}\<\V{C}\>\0\*\0\V{c}\0=\0\K{new}\0\V{uNoCtor}\<\V{C}\>[10000];}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}].\V{ctor}(\0\V{i}\0);}}
+\L{\LB{}\Tab{4}{\}}}
+\endlgrinde\LGend
 
 
 \chapter{Data Structure Library (DSL)}

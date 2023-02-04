@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 14 18:07:39 2022
-// Update Count     : 1244
+// Last Modified On : Sun Jan 29 20:48:30 2023
+// Update Count     : 1248
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -175,7 +175,7 @@ template<typename T, typename ServerData> _Monitor Future_ESM : public UPP::uBas
 	_Nomutex void cancel() {							// cancel future result
 		// To prevent deadlock, call the server without holding future mutex, because server may attempt to deliver a
 		// future value. (awkward code)
-		unsigned int rc = checkCancel();
+		size_t rc = checkCancel();
 		if ( rc == 0 ) return;							// need to contact server ?
 		if ( rc == 1 ) {								// need to contact server ?
 			compNotCancelled();							// server computation not cancelled yet, wait for cancellation
@@ -285,7 +285,7 @@ template<typename T> class Future_ISM {
 		using UPP::uBaseFuture<T>::addSelect;
 		using UPP::uBaseFuture<T>::removeSelect;
 
-		unsigned int refCnt;							// number of references to future
+		size_t refCnt;									// number of references to future
 		ServerData * serverData;
 	  public:
 		using UPP::uBaseFuture<T>::available;
@@ -446,7 +446,7 @@ class uWaitQueue_ISM {
 
 	struct DropClient {
 		UPP::uSemaphore sem;							// selection client waits if no future available
-		unsigned int tst;								// test-and-set for server race
+		size_t tst;										// test-and-set for server race
 		DL * winner;									// indicate winner of race
 
 		DropClient() : sem( 0 ), tst( 0 ) {};
@@ -753,13 +753,13 @@ class uExecutor {
 		Buffer< WRequest > * requests;
 		uQueue< WRequest > output;
 		WRequest * request;
-		unsigned int start, range;
-		// unsigned int doits = 0, spins = 0;
+		size_t start, range;
+		// size_t doits = 0, spins = 0;
 
 		void main() {
 			setName( "Executor Worker" );
 		  Exit:
-			for ( unsigned int i = 0;; i = (i + 1) % range ) { // cycle through set of request buffers
+			for ( size_t i = 0;; i = (i + 1) % range ) { // cycle through set of request buffers
                 requests[i + start].transfer( &output );
                 while ( ! output.empty() ) {
                     request = output.dropHead();
@@ -783,63 +783,63 @@ class uExecutor {
             } // for
 		} // Worker::main
 	  public:
-		Worker( uCluster & wc, Buffer< WRequest > * requests, unsigned int start, unsigned int range ) :
+		Worker( uCluster & wc, Buffer< WRequest > * requests, size_t start, size_t range ) :
 			uBaseTask( wc ), requests( requests ), request( nullptr ), start( start ), range( range ) {}
 
 		WRequest * uThisRequest() { return request; }
 	}; // Worker
 
 	uCluster * cluster;									// if workers execute on separate cluster
-	uProcessor ** processors;							// array of virtual processors adding parallelism for workers
+	uNoCtor< uProcessor > * processors;					// array of virtual processors adding parallelism for workers
 	Buffer< WRequest > * requests;						// list of work requests
-	Worker ** workers;									// array of workers executing work requests
-	const unsigned int nprocessors, nworkers, nrqueues;	// number of processors/threads/request queues
+	uNoCtor< Worker >* workers;							// array of workers executing work requests
+	const size_t nprocessors, nworkers, nrqueues;		// number of processors/threads/request queues
 	const bool sepClus;									// use same or separate cluster for executor
-	static unsigned int next;							// demultiplex across worker buffers
+	static size_t next;									// demultiplex across worker buffers
 
-	unsigned int tickets() {
+	size_t tickets() {
 		return uFetchAdd( next, 1 ) % nrqueues;
 		// return next++ % nrqueues;						// no locking, interference randomizes
 	} // uExecutor::tickets
 
-	template< typename Func > void send( Func action, unsigned int ticket ) { // asynchronous call, no return value
+	template< typename Func > void send( Func action, size_t ticket ) { // asynchronous call, no return value
 		VRequest< Func > * node = new VRequest< Func >( action );
 		requests[ticket].insert( node );
 	} // uExecutor::send
 
-	template< typename Func > auto sendrecv( Func action, unsigned int ticket ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
+	template< typename Func > auto sendrecv( Func action, size_t ticket ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
 		FRequest< decltype(action()), Func > * node = new FRequest< decltype(action()), Func >( action );
 		Future_ISM< decltype(action()) > result = node->result;	// race, copy before insert
 		requests[ticket].insert( node );
 		return result;
 	} // uExecutor::sendrecv
   public:
-	uExecutor( unsigned int nprocessors, unsigned int nworkers, unsigned int nrqueues, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) :
+	uExecutor( size_t nprocessors, size_t nworkers, size_t nrqueues, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) :
 			nprocessors( nprocessors ), nworkers( nworkers ), nrqueues( nrqueues ), sepClus( sepClus ) {
 		if ( nrqueues < nworkers ) abort( "nrqueues >= nworkers\n" );
 		cluster = sepClus ? new uCluster( "uExecutor" ) : &uThisCluster();
-		processors = new uProcessor *[ nprocessors ];
+		processors = new uNoCtor< uProcessor >[ nprocessors ];
 		requests = new Buffer< WRequest >[ nrqueues ];
-		workers = new Worker *[ nworkers ];
+		workers = new uNoCtor< Worker >[ nworkers ];
 
 		//uDEBUGPRT( uDebugPrt( "uExecutor::uExecutor nprocessors %u nworkers %u nrqueues %u sepClus %d affAffinity %d\n", nprocessors, nworkers, nrqueues, sepClus, affAffinity ); )
 		//printf( "uExecutor::uExecutor nprocessors %u nworkers %u nrqueues %u sepClus %d affAffinity %d\n", nprocessors, nworkers, nrqueues, sepClus, affAffinity );
-		for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
-			processors[ i ] = new uProcessor( *cluster );
+		for ( size_t i = 0; i < nprocessors; i += 1 ) {
+			processors[ i ].ctor( *cluster );
 			if ( affAffinity != -1 ) {
 				processors[i]->setAffinity( i + affAffinity );
 			} // if
 		} // for
 
-		unsigned int reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
-		for ( unsigned int i = 0, start = 0, range; i < nworkers; i += 1, start += range ) {
+		size_t reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
+		for ( size_t i = 0, start = 0, range; i < nworkers; i += 1, start += range ) {
 			range = reqPerWorker + ( i < extras ? 1 : 0 );
-			workers[i] = new Worker( *cluster, requests, start, range );
+			workers[i].ctor( *cluster, requests, start, range );
 		} // for
 	} // uExecutor::uExecutor
 
-	uExecutor( unsigned int nprocessors, unsigned int nworkers, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nworkers, nworkers, sepClus, affAffinity ) {}
-	uExecutor( unsigned int nprocessors, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nprocessors, nprocessors, sepClus, affAffinity ) {}
+	uExecutor( size_t nprocessors, size_t nworkers, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nworkers, nworkers, sepClus, affAffinity ) {}
+	uExecutor( size_t nprocessors, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) : uExecutor( nprocessors, nprocessors, nprocessors, sepClus, affAffinity ) {}
 	uExecutor() : uExecutor( uDefaultExecutorProcessors(), uDefaultExecutorWorkers(), uDefaultExecutorRQueues(), uDefaultExecutorSepClus(), uDefaultExecutorAffinity() ) {}
 
 	~uExecutor() {
@@ -847,15 +847,9 @@ class uExecutor {
 		// two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1
 		// may take the single sentinel while waiting for worker 0 to end.
 		WRequest sentinel[nworkers];
-		unsigned int reqPerWorker = nrqueues / nworkers;
-		for ( unsigned int i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
+		size_t reqPerWorker = nrqueues / nworkers;
+		for ( size_t i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
 			requests[step].insert( &sentinel[i] );		// force eventually termination
-		} // for
-		for ( unsigned int i = 0; i < nworkers; i += 1 ) {
-			delete workers[ i ];
-		} // for
-		for ( unsigned int i = 0; i < nprocessors; i += 1 ) {
-			delete processors[ i ];
 		} // for
 
 		delete [] workers;
