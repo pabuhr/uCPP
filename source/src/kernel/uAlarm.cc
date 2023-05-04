@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep 30 16:09:43 2022
-// Update Count     : 323
+// Last Modified On : Tue Apr 25 15:12:08 2023
+// Update Count     : 324
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,6 +41,9 @@
 // that signal is generated for the process, it is unspecified whether the signal is discarded immediately upon
 // generation or remains pending.
 
+
+// Events are only processed in uKernelModule::rollForward and rollForward is only called when preemption is turned off,
+// so safe to make direct accesses through TLS pointer.
 
 #define __U_KERNEL__
 #include <uC++.h>

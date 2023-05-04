@@ -144,6 +144,14 @@ Nicholas Carriero and David Gelernter.
 \newblock Linda in Context.
 \newblock {\em Communications of the ACM}, 32(4):444--458, April 1989.
 
+\bibitem[CHS14]{CAF}
+Dominik Charousset, Raphael Hiesgen, and Thomas~C. Schmidt.
+\newblock {CAF} - the {C}++ Actor Framework for Scalable and Resource-Efficient
+  Applications.
+\newblock AGERE'14, pages 15--28, New York, NY, USA, 2014. Proceedings of the
+  4th International Workshop on Programming Based on Actors Agents \&
+  Decentralized Control, ACM.
+
 \bibitem[CKL{\etalchar{+}}88]{LOGLAN88}
 Boleslaw Ciesielski, Antoni Kreczmar, Marek Lao, Andrzej Litwiniuk, Teresa
   Przytycka, Andrzej Salwicki, Jolanta Warpechowska, Marek Warpechowski,
@@ -165,12 +173,6 @@ Edsger~W. Dijkstra.
 \newblock Cooperating Sequential Processes.
 \newblock Technical report, Technological University, Eindhoven, Neth., 1965.
 \newblock Reprinted in \cite{Genuys68} pp. 43--112.
-
-\bibitem[Erl16]{Erlang}
-Erlang AB.
-\newblock {\em Erlang/OTP System Documentation 8.1}, September 2016.
-\newblock
-  \href{http://erlang.org/doc/pdf/otp-system-documentation.pdf}{http://\-erlang.org/\-doc/\-pdf/\-otp-system-documentation.pdf}.
 
 \bibitem[Geh92]{ExceptionalC}
 N.~H. Gehani.
@@ -221,9 +223,9 @@ Robert~H. Halstead, Jr.
 \bibitem[HBS73]{Hewitt73}
 Carl Hewitt, Peter Bishop, and Richard Steiger.
 \newblock A Universal Modular {ACTOR} Formalism for Artificial Intelligence.
-\newblock In {\em Proceedings of the 3rd International Joint Conference on
-  Artificial Intelligence}, pages 235--245, Standford, California, U.S.A.,
-  August 1973.
+\newblock IJCAI'73, pages 235--245, Standford, California, U.S.A., August 1973.
+  Proceedings of the 3rd International Joint Conference on Artificial
+  Intelligence.
 
 \bibitem[HM92]{Halang92a}
 W.A. Halang and K.~Mangold.
@@ -269,6 +271,12 @@ Pierre Labr{\`{e}}che.
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}.
 \newblock {\em SIGPLAN Not.}, 25(4):20--32, April 1990.
 
+\bibitem[Lig16]{Akka}
+Lightbend Inc.
+\newblock {\em {A}kka {S}cala Documentation, Release 2.4.11}, September 2016.
+\newblock
+  \href{http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf}{http://\-doc.akka.io/\-docs/\-akka/\-2.4/\-AkkaScala.pdf}.
+
 \bibitem[LN88]{Lin88}
 K.J. Lin and S.~Natarajan.
 \newblock Expressing and Maintaining Timing Constratins in {FLEX}.
@@ -312,6 +320,11 @@ James~G. Mitchell, William Maybury, and Richard Sweet.
 \newblock Technical Report CSL--79--3, Xerox Palo Alto Research Center, Palo
   Alto, California, U.S.A., April 1979.
 
+\bibitem[Ope15]{OpenMP}
+{\em OpenMP Application Program Interface, Version 4.5}, November 2015.
+\newblock
+  \href{https://www.openmp.org/wp-content/uploads/openmp-4.5.pdf}{https://\-www.openmp.org/\-wp-content/\-uploads/\-openmp-4.5.pdf}.
+
 \bibitem[POS08]{POSIX08}
 IEEE and The Open Group.
 \newblock {\em 1003.1 Standard for Information Technology -- Portable Operating
@@ -352,12 +365,6 @@ Robert~E. Strom, David~F. Bacon, Arthur~P. Goldberg, Andy Lowry, Daniel~M.
 \newblock Hermes: A Language for Distributed Computing.
 \newblock Technical report, IBM T. J. Watson Research Center, Yorktown Heights,
   New York, U.S.A., 10598, October 1990.
-
-\bibitem[Sca16]{Scala}
-{\em {S}cala Language Specification, Version 2.11}.
-\newblock \'{E}cole Polytechnique F\'{e}d\'{e}rale de Lausanne, 2016.
-\newblock
-  \href{http://www.scala-lang.org/files/archive/spec/2.11}{http://\-www.scala-lang.org/\-files/\-archive/\-spec/\-2.11}.
 
 \bibitem[SD92]{Sahraoui92}
 A.E.K. Sahraoui and D.~Delfieu.

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  2 19:16:36 2022
-// Update Count     : 1008
+// Last Modified On : Tue Apr 25 15:28:53 2023
+// Update Count     : 1009
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -82,6 +82,8 @@ namespace UPP {
 		return (void *)(cxt->uc_mcontext.gregs[REG_EIP]);
 		#elif defined( __x86_64__ )
 		return (void *)(cxt->uc_mcontext.gregs[REG_RIP]);
+		#elif defined( __arm_64__ )
+		return (void *)(cxt->uc_mcontext.pc);
 		#else
 			#error uC++ : internal error, unsupported architecture
 		#endif // architecture
@@ -89,13 +91,15 @@ namespace UPP {
 
 
 	static inline void * signalContextSP( __U_SIGCXT__ cxt ) {
-		return (void *)cxt->uc_mcontext.gregs[
-			#if __U_WORDSIZE__ == 32
-			REG_ESP
-			#else
-			REG_RSP
-			#endif // __U_WORDSIZE__ == 32
-			];
+		#if defined( __i386__ )
+		return (void *)(cxt->uc_mcontext.gregs[REG_ESP]);
+		#elif defined( __x86_64__ )
+		return (void *)(cxt->uc_mcontext.gregs[REG_RSP]);
+		#elif defined( __arm_64__ )
+		return (void *)(cxt->uc_mcontext.sp);
+		#else
+			#error uC++ : internal error, unsupported architecture
+		#endif // architecture
 	} // signalContextSP
 
 
@@ -105,6 +109,7 @@ namespace UPP {
 		extern void * __stop_text_nopreempt;
 	}
 
+	// Safe to make direct accesses through TLS pointer because interrupts are masked during execution of the handler.
 	void uSigHandlerModule::sigAlrmHandler( __U_SIGPARMS__ ) {
 		// This routine handles a SIGALRM/SIGUSR1 signal.  This signal is delivered as the result of time slicing being
 		// enabled, a processor is being woken up after being idle for some time, or some intervention being delivered

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Dec 10 20:40:07 2009
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:31:22 2022
-// Update Count     : 53
+// Last Modified On : Tue Apr 25 13:57:39 2023
+// Update Count     : 54
 // 
 
 // This include file is not idempotent, so there is no guard.
@@ -23,8 +23,9 @@ extern "C" void __assert( const char *__assertion, const char *__file, int __lin
 #ifdef NDEBUG
 	#define assert( expr ) ((void)0)
 #else
-	#include <stdlib.h>					// abort
-	#include <unistd.h>					// write
+	#include <stdlib.h>									// abort
+	#include <unistd.h>									// STDERR_FILENO
+	#include <uDebug.h>
 
 	#define __STRINGIFY__(str) #str
 	#define __VSTRINGIFY__(str) __STRINGIFY__(str)
@@ -32,7 +33,7 @@ extern "C" void __assert( const char *__assertion, const char *__file, int __lin
 	#define assert( expr ) \
 	if ( ! ( expr ) ) { \
 		int retcode __attribute__(( unused )); \
-		retcode = ::write( STDERR_FILENO, __FILE__ ":" __VSTRINGIFY__(__LINE__) ": Assertion \"" __VSTRINGIFY__(expr) "\" failed.\n", \
+		uDebugWrite( STDERR_FILENO, __FILE__ ":" __VSTRINGIFY__(__LINE__) ": Assertion \"" __VSTRINGIFY__(expr) "\" failed.\n", \
 			sizeof( __FILE__ ":" __VSTRINGIFY__(__LINE__) ": Assertion \"" __VSTRINGIFY__(expr) "\" failed.\n" ) - 1 );	\
 		abort(); \
 	}

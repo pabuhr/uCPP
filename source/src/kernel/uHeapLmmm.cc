@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 30 08:37:55 2022
-// Update Count     : 2341
+// Last Modified On : Tue Apr 25 15:23:52 2023
+// Update Count     : 2342
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -503,7 +503,7 @@ void UPP::uHeapControl::finishup() {					// singleton => called once at end of p
 		int len = snprintf( helpText, sizeof(helpText), "**** Warning **** (UNIX pid:%ld) : program terminating with %td(%#tx) bytes of storage allocated but not freed.\n"
 							"Possible cause is unfreed storage allocated by the program or system/library routines called from the program.\n",
 							(long int)getpid(), allocUnfreed, allocUnfreed ); // always print the UNIX pid
-		if ( write( STDERR_FILENO, helpText, len ) == -1 ) abort( "write error in shutdown" );
+		uDebugWrite( STDERR_FILENO, helpText, len );
 	} // if
 	#endif // __U_DEBUG__
 } // uHeapControl::finishup
@@ -533,25 +533,25 @@ void UPP::uHeapControl::prepareTask( uBaseTask * /* task */ ) {
 	"  heaps     new %'lu; reused %'lu\n"
 
 // Use "write" because streams may be shutdown when calls are made.
-static int printStats( HeapStatistics & stats ) {		// see malloc_stats
+static void printStats( HeapStatistics & stats ) {		// see malloc_stats
 	char helpText[sizeof(prtFmt) + 1024];				// space for message and values
-	return uDebugPrtBuf2( heapMaster.stats_fd, helpText, sizeof(helpText), prtFmt,
-			stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
-			stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
-			stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
-			stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
-			stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
-			stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
-			stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
-			stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
-			stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
-			stats.return_pulls, stats.return_pushes, stats.return_storage_request, stats.return_storage_alloc,
-			heapMaster.sbrk_calls, heapMaster.sbrk_storage,
-			stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
-			stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc,
-			heapMaster.threads_started, heapMaster.threads_exited,
-			heapMaster.new_heap, heapMaster.reused_heap
-		);
+	uDebugPrtBuf2( heapMaster.stats_fd, helpText, sizeof(helpText), prtFmt,
+		stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
+		stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
+		stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
+		stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
+		stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
+		stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
+		stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
+		stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
+		stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+		stats.return_pulls, stats.return_pushes, stats.return_storage_request, stats.return_storage_alloc,
+		heapMaster.sbrk_calls, heapMaster.sbrk_storage,
+		stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
+		stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc,
+		heapMaster.threads_started, heapMaster.threads_exited,
+		heapMaster.new_heap, heapMaster.reused_heap
+	);
 } // printStats
 
 #define prtFmtXML \
@@ -576,25 +576,25 @@ static int printStats( HeapStatistics & stats ) {		// see malloc_stats
 	"<total type=\"heaps\" new=\"%'lu;\" reused=\"%'lu\"/>\n" \
 	"</malloc>"
 
-static int printStatsXML( HeapStatistics & stats, FILE * stream ) {	// see malloc_info
+static void printStatsXML( HeapStatistics & stats, FILE * stream ) { // see malloc_info
 	char helpText[sizeof(prtFmtXML) + 1024];			// space for message and values
-	return uDebugPrtBuf2( fileno( stream ), helpText, sizeof(helpText), prtFmtXML,
-			stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
-			stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
-			stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
-			stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
-			stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
-			stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
-			stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
-			stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
-			stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
-			stats.return_pulls, stats.return_pushes, stats.return_storage_request, stats.return_storage_alloc,
-			heapMaster.sbrk_calls, heapMaster.sbrk_storage,
-			stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
-			stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc,
-			heapMaster.threads_started, heapMaster.threads_exited,
-			heapMaster.new_heap, heapMaster.reused_heap
-		);
+	uDebugPrtBuf2( fileno( stream ), helpText, sizeof(helpText), prtFmtXML,
+		stats.malloc_calls, stats.malloc_0_calls, stats.malloc_storage_request, stats.malloc_storage_alloc,
+		stats.aalloc_calls, stats.aalloc_0_calls, stats.aalloc_storage_request, stats.aalloc_storage_alloc,
+		stats.calloc_calls, stats.calloc_0_calls, stats.calloc_storage_request, stats.calloc_storage_alloc,
+		stats.memalign_calls, stats.memalign_0_calls, stats.memalign_storage_request, stats.memalign_storage_alloc,
+		stats.amemalign_calls, stats.amemalign_0_calls, stats.amemalign_storage_request, stats.amemalign_storage_alloc,
+		stats.cmemalign_calls, stats.cmemalign_0_calls, stats.cmemalign_storage_request, stats.cmemalign_storage_alloc,
+		stats.resize_calls, stats.resize_0_calls, stats.resize_storage_request, stats.resize_storage_alloc,
+		stats.realloc_calls, stats.realloc_0_calls, stats.realloc_storage_request, stats.realloc_storage_alloc,
+		stats.free_calls, stats.free_null_calls, stats.free_storage_request, stats.free_storage_alloc,
+		stats.return_pulls, stats.return_pushes, stats.return_storage_request, stats.return_storage_alloc,
+		heapMaster.sbrk_calls, heapMaster.sbrk_storage,
+		stats.mmap_calls, stats.mmap_storage_request, stats.mmap_storage_alloc,
+		stats.munmap_calls, stats.munmap_storage_request, stats.munmap_storage_alloc,
+		heapMaster.threads_started, heapMaster.threads_exited,
+		heapMaster.new_heap, heapMaster.reused_heap
+	);
 } // printStatsXML
 
 static HeapStatistics & collectStats( HeapStatistics & stats ) {
@@ -960,6 +960,7 @@ static void * doMalloc( size_t size STAT_PARM ) {
 	} // if
 	#endif // __U_DEBUG__
 
+	// Safe to make direct accesses through TLS pointer because this routine is in the nopreempt segment.
 	// uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
 	// 				( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
 	// if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
@@ -1073,6 +1074,7 @@ static void doFree( void * addr ) {
 	} // if
 	#endif // __U_DEBUG__
 
+	// Safe to make direct accesses through TLS pointer because this routine is in the nopreempt segment.
 	// uDEBUG( assert( ( ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 ) ||
 	// 				( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 ) ); );
 	// if ( UNLIKELY( uKernelModule::uKernelModuleBoot.RFpending && ! uKernelModule::uKernelModuleBoot.RFinprogress ) ) { // rollForward callable ?
@@ -1429,13 +1431,11 @@ extern "C" {
 		#ifdef __U_STATISTICS__
 		HeapStatistics stats;
 		HeapStatisticsCtor( stats );
-		if ( printStats( collectStats( stats ) ) == -1 ) {
+		printStats( collectStats( stats ) );			// write failure handled internally
 		#else
 		#define MALLOC_STATS_MSG "malloc_stats statistics disabled.\n"
-		if ( write( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ ) == -1 ) {
+		uDebugWrite( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ );
 		#endif // __U_STATISTICS__
-			abort( "write failed in malloc_stats" );
-		} // if
 	} // malloc_stats
 
 
@@ -1459,9 +1459,11 @@ extern "C" {
 		#ifdef __U_STATISTICS__
 		HeapStatistics stats;
 		HeapStatisticsCtor( stats );
-		return printStatsXML( collectStats( stats ), stream ); // returns bytes written or -1
+		printStatsXML( collectStats( stats ), stream ); // write failure handled internally
+		return 0;										// success
 		#else
-		return 0;										// unsupported
+		errno = ENOSYS;									// unimplemented
+		return -1;										// fail
 		#endif // __U_STATISTICS__
 	} // malloc_info
 

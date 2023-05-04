@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan  3 16:15:23 2023
-// Update Count     : 457
+// Last Modified On : Tue Apr 25 15:13:43 2023
+// Update Count     : 458
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -332,7 +332,7 @@ void uBaseTask::uYieldYield( unsigned int times ) {		// inserted by translator f
 	// resulting in an attempt to context switch while holding a spin lock. To ensure assert checking in normal usages
 	// of yield, this check cannot be inserted in yield.
 
-	if ( ! uKernelModule::uKernelModuleBoot.disableIntSpin ) {
+	if ( ! TLS_GET( disableIntSpin ) ) {
 		for ( ; times > 0 ; times -= 1 ) {
 			uYieldNoPoll();
 		} // for
@@ -341,7 +341,7 @@ void uBaseTask::uYieldYield( unsigned int times ) {		// inserted by translator f
 
 
 void uBaseTask::uYieldInvoluntary() {
-	assert( ! uKernelModule::uKernelModuleBoot.disableIntSpin );
+	assert( ! TLS_GET( disableIntSpin ) );
 
 	#ifdef __U_PROFILER__
 	// Are the uC++ kernel memory allocation hooks active?

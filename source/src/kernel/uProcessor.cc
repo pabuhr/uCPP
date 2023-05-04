@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 24 09:33:07 2022
-// Update Count     : 2207
+// Last Modified On : Wed May  3 18:51:46 2023
+// Update Count     : 2209
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@
 using namespace UPP;
 
 
-uEventList *uProcessor::events = nullptr;
+uNoCtor<uEventList, false> uProcessor::events;
 
 #if ! defined( __U_MULTI__ )
 uEventNode *uProcessor::contextEvent = nullptr;
@@ -71,6 +71,8 @@ enum { MinPreemption = 1000 };							// 1 second (milliseconds)
 //######################### uProcessorTask #########################
 
 
+// Safe to make direct accesses through TLS pointer because interrupts disabled in uProcessorKernel::main before
+// scheduling uProcessorTask.
 void uProcessorTask::main() {
 	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 
@@ -210,9 +212,9 @@ uProcessorTask::~uProcessorTask() {
 extern void heapManagerCtor();
 extern void heapManagerDtor();
 
+// Safe to make direct accesses through TLS pointer because Kernel thread just started so no concurrency.
 void * uKernelModule::startThread( void * p __attribute__(( unused )) ) {
 	#if defined(__U_MULTI__)
-	// Kernel thread just started so no concurrency, so safe to make direct call through TLS pointer.
 	uKernelModuleBoot.ctor();
 
 	// NO DEBUG PRINTS BEFORE THE THREAD REFERENCE IS SET IN CTOR.
@@ -247,6 +249,7 @@ void * uKernelModule::startThread( void * p __attribute__(( unused )) ) {
 } // uKernelModule::startThread
 
 
+// Safe to make direct accesses through TLS pointer because SCHEDULE_BODY disabled interrupts.
 inline void uProcessorKernel::taskIsBlocking() {
 	uBaseTask &task = uThisTask();						// optimization
 	if ( task.getState() != uBaseTask::Terminate ) {
@@ -406,6 +409,8 @@ void uProcessorKernel::setTimer( uTime time ) {
 
 
 #if ! defined( __U_MULTI__ )
+// Safe to call setContextSwitchEvent, which makes direct accesses through TLS pointer, because only called from
+// preemption-safe locations: uProcessorKernel::main
 void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cycleStart ) {
 	// Get next processor to execute.
 
@@ -440,6 +445,7 @@ void uProcessorKernel::nextProcessor( uProcessorDL *&currProc, uProcessorDL *cyc
 #endif // ! __U_MULTI__
 
 
+// Safe to make direct accesses through TLS pointer because SCHEDULE_BODY disabled interrupts.
 void uProcessorKernel::main() {
 	uDEBUGPRT( uDebugPrt( "(uProcessorKernel &)%p.main, child is born\n", this ); );
 
@@ -886,8 +892,7 @@ uProcessor::~uProcessor() {
 	delete contextEvent;
 	delete contextSwitchHandler;
 	if ( uKernelModule::systemTask == nullptr ) {
-		delete events;
-		events = nullptr;
+		events.dtor();
 	} // if
 	#endif // __U_MULTI__
 } // uProcessor::~uProcessor
@@ -955,6 +960,8 @@ void uProcessor::fork( uProcessor *processor ) {
 } // uProcessor::fork
 
 
+// Safe to make direct accesses through TLS pointer because only called from preemption-safe locations:
+// uCluster::processorPause, uNBIO::pollIO, uProcessorTask::main, 
 void uProcessor::setContextSwitchEvent( uDuration duration ) {
 	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 1 );
 	assert( duration >= 0 );

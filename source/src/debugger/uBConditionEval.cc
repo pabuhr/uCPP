@@ -7,8 +7,8 @@
 // Author           : Jun Shih
 // Created On       : Sat Nov 11 14:44:08 EST 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  5 08:04:12 2022
-// Update Count     : 52
+// Last Modified On : Tue Apr 25 13:50:53 2023
+// Update Count     : 53
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -65,8 +65,10 @@ CodeAddress uBConditionEval::eval_address_local( int which ) {
 	prev_2fp = *(unsigned long*) ( *(unsigned int*) ((int) bp_cond.fp ));
 #elif defined( __x86_64__ )
 	prev_2fp = 0;
+#elif defined( __arm_64__ )
+	abort();
 #else
-#error uC++ internal error : unsupported architecture
+	#error uC++ internal error : unsupported architecture
 #endif
 
 	// local address is the real fp + offset (usually negative)
@@ -128,8 +130,10 @@ CodeAddress uBConditionEval::eval_address_register( int which ) {
 		);
 #elif defined( __x86_64__ )
 	address = 0;
+#elif defined( __arm_64__ )
+	abort();
 #else
-#error uC++ internal error : unsupported architecture
+	#error uC++ internal error : unsupported architecture
 #endif
 
 	if ( bp_cond.var[which].field_off ) {

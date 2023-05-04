@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  8 11:19:32 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 26 15:02:59 2022
-// Update Count     : 2
+// Last Modified On : Sat Feb 18 08:27:11 2023
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -55,7 +55,7 @@ int main() {
 	Adder * adders[rows];
 	for ( int r = 0; r < rows; r += 1 ) {				// send off work for executor
 		adders[r] = new Adder( matrix[r], cols );
-		subtotals[r] = executor.sendrecv( *adders[r] );
+		executor.sendrecv( *adders[r], subtotals[r] );
 	} // for
 	for ( int r = 0; r < rows; r += 1 ) {				// wait for results
 		total += subtotals[r]();

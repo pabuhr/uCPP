@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan  3 16:17:31 2023
-// Update Count     : 634
+// Last Modified On : Tue Apr 25 15:20:24 2023
+// Update Count     : 635
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,9 +50,6 @@ void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
 	#endif // __U_STATISTICS__
 
 	#if defined( __U_MULTI__ )
-// freebsd has hidden locks in pthread routines. To prevent deadlock, disable interrupts so a context switch cannot
-// occur to another user thread that makes the same call. As well, freebsd returns and undocumented EINTR from
-// pthread_kill.
 	RealRtn::pthread_kill( pid, SIGUSR1 );
 	#else // UNIPROCESSOR
 	// Only one kernel thread so no need to send it a signal.
@@ -60,6 +57,8 @@ void uCluster::wakeProcessor( uPid_t pid __attribute__(( unused )) ) {
 } // uCluster::wakeProcessor
 
 
+// Safe to make direct accesses through TLS pointer because only called from preemption-safe locations:
+// uProcessorKernel::main
 void uCluster::processorPause() {
 	assert( uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt > 0 );
 

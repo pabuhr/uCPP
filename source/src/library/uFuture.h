@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 29 20:48:30 2023
-// Update Count     : 1248
+// Last Modified On : Thu Mar  2 11:55:41 2023
+// Update Count     : 1252
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -699,11 +699,12 @@ class uExecutor {
 			mutex.release();
 		} // Buffer::insert
 
-        void transfer( uQueue< ELEMTYPE > * transferTo ) {
-            mutex.acquire();
-            transferTo->transfer( input );              // transfer input to output
-            mutex.release();
-        } // Buffer::transfer
+		void transfer( uQueue< ELEMTYPE > * transferTo ) {
+		  if ( input.empty() ) return;					// optimize race: if missed this round get it next round
+			mutex.acquire();
+			transferTo->transfer( input );				// transfer input to output
+			mutex.release();
+		} // Buffer::transfer
 	}; // Buffer
 #endif // 0
 
@@ -741,12 +742,6 @@ class uExecutor {
 		VRequest( F action ) : action( action ) {}
 	}; // VRequest
 
-	template< typename R, typename F > struct FRequest : public VRequest< F > { // client request, return
-		Future_ISM< R > result;
-		void doit() { result.delivery( VRequest<F>::action() ); }
-		FRequest( F action ) : VRequest< F >( action ) {}
-	}; // FRequest
-
 	// Each worker has its own set (when requests buffers > workers) of work buffers to reduce contention between client
 	// and server, where work requests arrive and are distributed into buffers in a roughly round-robin order.
 	_Task Worker {
@@ -760,27 +755,27 @@ class uExecutor {
 			setName( "Executor Worker" );
 		  Exit:
 			for ( size_t i = 0;; i = (i + 1) % range ) { // cycle through set of request buffers
-                requests[i + start].transfer( &output );
-                while ( ! output.empty() ) {
-                    request = output.dropHead();
-                    if ( ! request ) {
-                        #if ! defined( __U_MULTI__ )
-                        uThisTask().uYieldNoPoll();
-                        #endif // ! __U_MULTI__
-                        // spins += 1;
-                        continue;
-                    } // if
-              if ( request->stop() )  {
-                        //printf( "worker %p requests %d spins %d\n", this, doits, spins );
-                        break Exit;
-                    } // exit
+				requests[i + start].transfer( &output );
+				while ( ! output.empty() ) {
+					request = output.dropHead();
+					if ( ! request ) {
+						#if ! defined( __U_MULTI__ )
+						uThisTask().uYieldNoPoll();
+						#endif // ! __U_MULTI__
+						// spins += 1;
+						continue;
+					} // if
+			  if ( request->stop() )  {
+						//printf( "worker %p requests %d spins %d\n", this, doits, spins );
+						break Exit;
+					} // exit
 
 					//doits += 1;
-                    request->doit();
-                    //printf( "worker start %p %d %d\n", this, start, range );
-                    delete request;
-                } // while
-            } // for
+					request->doit();
+					//printf( "worker start %p %d %d\n", this, start, range );
+					delete request;
+				} // while
+			} // for
 		} // Worker::main
 	  public:
 		Worker( uCluster & wc, Buffer< WRequest > * requests, size_t start, size_t range ) :
@@ -806,13 +801,6 @@ class uExecutor {
 		VRequest< Func > * node = new VRequest< Func >( action );
 		requests[ticket].insert( node );
 	} // uExecutor::send
-
-	template< typename Func > auto sendrecv( Func action, size_t ticket ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
-		FRequest< decltype(action()), Func > * node = new FRequest< decltype(action()), Func >( action );
-		Future_ISM< decltype(action()) > result = node->result;	// race, copy before insert
-		requests[ticket].insert( node );
-		return result;
-	} // uExecutor::sendrecv
   public:
 	uExecutor( size_t nprocessors, size_t nworkers, size_t nrqueues, bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() ) :
 			nprocessors( nprocessors ), nworkers( nworkers ), nrqueues( nrqueues ), sepClus( sepClus ) {
@@ -843,13 +831,13 @@ class uExecutor {
 	uExecutor() : uExecutor( uDefaultExecutorProcessors(), uDefaultExecutorWorkers(), uDefaultExecutorRQueues(), uDefaultExecutorSepClus(), uDefaultExecutorAffinity() ) {}
 
 	~uExecutor() {
-		// Add one sentinel per worker to stop them. Since in destructor, no new external work should be queued.  Cannot combine next
-		// two loops and only have a single sentinel because workers arrive in arbitrary order, so worker1
-		// may take the single sentinel while waiting for worker 0 to end.
+		// Add one sentinel per worker to stop them. Since in destructor, no new external work should be queued after
+		// sentinel.
 		WRequest sentinel[nworkers];
-		size_t reqPerWorker = nrqueues / nworkers;
-		for ( size_t i = 0, step = 0; i < nworkers; i += 1, step += reqPerWorker ) {
-			requests[step].insert( &sentinel[i] );		// force eventually termination
+		size_t reqPerWorker = nrqueues / nworkers, extras = nrqueues % nworkers;
+		for ( size_t i = 0, start = 0, range; i < nworkers; i += 1, start += range ) {
+			range = reqPerWorker + ( i < extras ? 1 : 0 );
+			requests[start].insert( &sentinel[i] );		// force eventually termination
 		} // for
 
 		delete [] workers;
@@ -862,10 +850,13 @@ class uExecutor {
 		send( action, tickets() );
 	} // uExecutor::send
 
-	// Future type is the return type of the action routine, so action is pseudo called to obtain its type in decltype.
-	template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) > { // asynchronous call, return value (future)
-		return sendrecv( action, tickets() );
-	} // uExecutor::sendrecv
+	template< typename Func, typename R > void sendrecv( Func & action, Future_ISM<R> & future ) { // asynchronous call, output return value
+		send( [&future, &action]() { future.delivery( action() ); }, tickets() );
+	} // uExecutor::send
+
+	template< typename Func, typename R > void sendrecv( Func && action, Future_ISM<R> & future ) { // asynchronous call, output return value
+		send( [&future, &action]() { future.delivery( action() ); }, tickets() );
+	} // uExecutor::send
 }; // uExecutor
 
 

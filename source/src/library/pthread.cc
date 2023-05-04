@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan  1 10:31:26 2023
-// Update Count     : 1126
+// Last Modified On : Thu Mar  2 10:54:44 2023
+// Update Count     : 1134
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -906,7 +906,8 @@ extern "C" {
 	pthread_t pthread_self( void ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_self enter task:%p\n", &uThisTask() ); );
 		#ifdef __U_DEBUG__
-		uPthreadable * p = dynamic_cast<uPthreadable *>(&uThisTask());
+//		uPthreadable * p = dynamic_cast<uPthreadable *>(&uThisTask());
+		uPthreadable * p = (uPthreadable *)&uThisTask();
 		if ( p == nullptr ) {
 			return NOT_A_PTHREAD;
 		} // if
@@ -1331,18 +1332,22 @@ extern "C" {
 
 	//######################### Parallelism #########################
 
-	// Ok to call these assuming you know what you are doing.
+	// Use the pthread versions.
 
 	// int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
+	// 	return 0;
 	// } // pthread_setaffinity_np
 
 	// int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
+	// 	return 0;
 	// } // pthread_getaffinity_np
 
 	// int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
+	// 	return 0;
 	// } // pthread_attr_setaffinity_np
 
 	// int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
+	// 	return 0;
 	// } // pthread_attr_getaffinity_np
 
 	//######################### Cancellation #########################

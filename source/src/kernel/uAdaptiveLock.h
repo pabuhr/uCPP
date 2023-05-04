@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Sat Jan 26 11:05:42 2008
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  1 12:24:43 2022
-// Update Count     : 50
+// Last Modified On : Tue Apr 25 15:11:21 2023
+// Update Count     : 51
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,10 +39,6 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 	// NB: if tryacquireInternal returns false, "spin" is held
 	//     if tryacquireInternal returns true, "spin" is released
 	bool tryacquireInternal( uBaseTask &task, int spins __attribute__(( unused )) ) {
-#ifdef __U_DEBUG__
-		assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
-#endif // __U_DEBUG__
-
 		if ( owner_ == &task ) {
 			count += 1;
 			return true;
@@ -197,8 +193,6 @@ template< int acquireSpins = 0, int trySpins = 0, int releaseSpins = 0 > class u
 
 	void release() {
 #ifdef __U_DEBUG__
-		assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
-
 		uBaseTask &task = uThisTask();
 		if ( owner_ != &uThisTask() ) {
 			// there is no way to safely mention the actual owner in this error message

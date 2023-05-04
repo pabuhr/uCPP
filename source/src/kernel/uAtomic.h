@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec 24 18:54:48 2022
-// Update Count     : 162
+// Last Modified On : Wed May  3 18:05:39 2023
+// Update Count     : 164
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,6 @@
 
 #pragma once
 
-#if defined( __i386__ ) || defined( __x86_64__ )
 static inline __attribute__((always_inline)) unsigned long long int uRdtsc() {
 	unsigned long long int result;
 #if defined( __x86_64__ )
@@ -38,12 +37,15 @@ static inline __attribute__((always_inline)) unsigned long long int uRdtsc() {
 	);
 #elif defined( __i386__ )
 	asm volatile ( "rdtsc" : "=A" (result) );
+#elif defined( __ARM_ARCH )
+	// https://github.com/google/benchmark/blob/v1.1.0/src/cycleclock.h#L116
+	asm volatile ( "mrs %0, cntvct_el0" : "=r" (result) );
+	return result;
 #else
 	#error unsupported architecture
 #endif
 	return result;
 } // uRdtsc
-#endif
 
 
 static inline __attribute__((always_inline)) void uFence() { // fence to prevent code movement
@@ -52,8 +54,8 @@ static inline __attribute__((always_inline)) void uFence() { // fence to prevent
 	__asm__ __volatile__ ( "lock; addq $0,(%%rsp);" ::: "cc" );
 #elif defined(__i386)
 	__asm__ __volatile__ ( "lock; addl $0,(%%esp);" ::: "cc" );
-#elif defined(__ARM_ARCH)
-	__asm__ __volatile__ ( "DMB ISH" ::: )
+#elif defined( __ARM_ARCH )
+	__asm__ __volatile__ ( "DMB ISH" ::: );
 #else
 	#error unsupported architecture
 #endif
@@ -63,7 +65,7 @@ static inline __attribute__((always_inline)) void uFence() { // fence to prevent
 static inline __attribute__((always_inline)) void uPause() { // pause to prevent excess processor bus usage
 #if defined( __i386 ) || defined( __x86_64 )
 	__asm__ __volatile__ ( "pause" ::: );
-#elif defined(__ARM_ARCH)
+#elif defined( __ARM_ARCH )
 	__asm__ __volatile__ ( "YIELD" ::: );
 #else
 	#error unsupported architecture

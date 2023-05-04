@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 27 09:38:57 2022
-// Update Count     : 971
+// Last Modified On : Tue Apr 25 15:25:26 2023
+// Update Count     : 972
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,9 +39,8 @@
 #include <cerrno>
 #include <unistd.h>										// write
 
-#if defined( __x86_64__ )
+
 extern "C" void uInvokeStub( UPP::uMachContext * );
-#endif
 
 
 using namespace UPP;
@@ -65,7 +64,7 @@ namespace UPP {
 			(*uProfiler::uProfiler_postallocateMetricMemory)( uProfiler::profilerInstance, uThisTask() );
 		} // if
 		// also appears in uBaseCoroutine::corCxtSw
-		if ( ! uKernelModule::uKernelModuleBoot.disableInt && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
+		if ( ! TLS_GET( disableInt ) && uThisTask().profileActive && uProfiler::uProfiler_registerCoroutineUnblock ) {
 			(*uProfiler::uProfiler_registerCoroutineUnblock)( uProfiler::profilerInstance, uThisTask() );
 		} // if
 		#endif // __U_PROFILER__
@@ -108,7 +107,7 @@ namespace UPP {
 		// Called from the kernel when starting a coroutine or task so must switch back to user mode.
 
 		#if defined(__U_MULTI__)
-		assert( uKernelModule::uKernelModuleBoot.activeTask == &This );
+		assert( TLS_GET( activeTask ) == &This );
 		#endif // __U_MULTI__
 
 		errno = 0;										// reset errno for each task
@@ -252,6 +251,22 @@ namespace UPP {
 		((FakeStack *)(((uContext_t *)context_)->SP))->fpucsr = fncw;
 		((FakeStack *)(((uContext_t *)context_)->SP))->mxcsr = mxcsr; // see note above
 
+		#elif defined( __arm_64__ )
+
+		struct FakeStack {
+			void * intRegs[12];							// x19-x30 integer registers
+			double fpRegs[8];							// v8-v15 floating point
+		};
+
+		((uContext_t *)context_)->SP = (char *)base_ - sizeof( struct FakeStack );
+		((uContext_t *)context_)->FP = nullptr;
+
+		FakeStack * fs = (FakeStack *)(((uContext_t *)context_)->SP);
+
+		fs->intRegs[0] = this;							// argument to invoke x19 => x0
+		fs->intRegs[2] = rtnAdr( (void (*)())uInvoke );
+		fs->intRegs[11] = rtnAdr( (void (*)())uInvokeStub ); // link register x30 => ret moves to pc
+
 		#else
 			#error uC++ : internal error, unsupported architecture
 		#endif
@@ -333,6 +348,8 @@ namespace UPP {
 			asm( "movl %%esp,%0" : "=m" (sp) : );
 			#elif defined( __x86_64__ )
 			asm( "movq %%rsp,%0" : "=m" (sp) : );
+			#elif defined( __arm_64__ )
+			asm( "mov x9, sp; str x9,%0" : "=m" (sp) : : "x9" );
 			#else
 				#error uC++ : internal error, unsupported architecture
 			#endif

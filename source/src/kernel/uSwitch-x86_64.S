@@ -6,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Feb 28 13:36:42 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  6 18:13:41 2020
-// Update Count     : 27
+// Last Modified On : Thu Mar 30 22:51:50 2023
+// Update Count     : 29
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,8 +47,8 @@ uSwitch:
 	// Save volatile registers on the stack.
 
 	subq $8,%rsp
-	stmxcsr 0(%rsp)		// 4 bytes
-	fnstcw 4(%rsp)		// 2 bytes
+	stmxcsr 0(%rsp)					// 4 bytes
+	fnstcw 4(%rsp)					// 2 bytes
 	pushq %r15
 	pushq %r14
 	pushq %r13
@@ -89,10 +89,11 @@ uSwitch:
 	.global uInvokeStub
 	.type uInvokeStub, @function
 uInvokeStub:
-	movq %rbx, %rdi		// move this to first argument
-	jmp *%r12		// jmp to invoke
+	movq %rbx, %rdi					// move this to first argument
+	jmp *%r12					// jmp to invoke
 
 // Local Variables: //
 // mode: asm //
+// comment-column: 56 //
 // compile-command: "make install" //
 // End: //

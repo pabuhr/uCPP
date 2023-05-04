@@ -9,7 +9,9 @@ CC = ${PACKAGE}/src/translator/bin-${OS}-${CPU}/${UPP}
 
 CCFLAGS = -std=c++17 -B${PACKAGE}/src/translator/lib-${OS}-${CPU} -I. -I${PACKAGE}/src/collection -I${PACKAGE}/src/kernel -I${PACKAGE}/src/scheduler -I${PACKAGE}/src/library -I${PACKAGE}/src/debugger -I${PACKAGE}/src/profiler -DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\" -DTMPDIR=\"${TMPDIR}\" -no-u++-include
 
-CCFLAGS += -m${WORDSIZE}
+ifeq (${TCPU} ${TCPU}, i386 x86_64)
+    CCFLAGS += -m${WORDSIZE}
+endif
 
 #CCFLAGS += -D__U_PROFILER__
 #CCFLAGS += -profile -D__U_PROFILEABLE_ONLY__

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan  7 18:54:43 2023
-// Update Count     : 3380
+// Last Modified On : Wed May  3 18:08:33 2023
+// Update Count     : 3391
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -212,10 +212,10 @@ bool uKernelModule::deadlock = false;
 #endif // ! __U_MULTI__
 bool uKernelModule::globalAbort = false;
 bool uKernelModule::globalSpinAbort = false;
-uSpinLock * uKernelModule::globalAbortLock = nullptr;
-uSpinLock * uKernelModule::globalProcessorLock = nullptr;
-uSpinLock * uKernelModule::globalClusterLock = nullptr;
-uDefaultScheduler * uKernelModule::systemScheduler = nullptr;
+uNoCtor<uSpinLock, false> uKernelModule::globalAbortLock;
+uNoCtor<uSpinLock, false> uKernelModule::globalProcessorLock;
+uNoCtor<uSpinLock, false> uKernelModule::globalClusterLock;
+uNoCtor<uDefaultScheduler, false> uKernelModule::systemScheduler;
 uNoCtor<uProcessor, false> uKernelModule::systemProcessor;
 uNoCtor<uCluster, false> uKernelModule::systemCluster;
 UPP::uBootTask * uKernelModule::bootTask = (uBootTask *)&bootTaskStorage;
@@ -231,8 +231,8 @@ std::filebuf * uKernelModule::cerrFilebuf = nullptr, * uKernelModule::clogFilebu
 // Fake uKernelModule used before uKernelBoot::startup.
 volatile __U_THREAD_LOCAL__ uKernelModule::uKernelModuleData uKernelModule::uKernelModuleBoot;
 
-uProcessorSeq * uKernelModule::globalProcessors = nullptr;
-uClusterSeq * uKernelModule::globalClusters = nullptr;
+uNoCtor<uProcessorSeq, false> uKernelModule::globalProcessors;
+uNoCtor<uClusterSeq, false> uKernelModule::globalClusters;
 
 bool uKernelModule::afterMain = false;
 
@@ -411,7 +411,7 @@ uDEBUG(
 
 
 void uMutexLock::acquire() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 	spinLock.acquire();
@@ -436,7 +436,7 @@ void uMutexLock::acquire() {
 
 
 bool uMutexLock::tryacquire() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	if ( count ) return false;							// don't own lock yet
 
@@ -455,7 +455,7 @@ bool uMutexLock::tryacquire() {
 
 
 void uMutexLock::release() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	spinLock.acquire();
 	uDEBUG(
@@ -520,7 +520,7 @@ uDEBUG(
 
 
 void uOwnerLock::acquire() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 	spinLock.acquire();
@@ -550,7 +550,7 @@ void uOwnerLock::acquire() {
 
 
 bool uOwnerLock::tryacquire() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	uBaseTask &task = uThisTask();						// optimization
 
@@ -576,7 +576,7 @@ bool uOwnerLock::tryacquire() {
 
 
 void uOwnerLock::release() {
-	assert( uKernelModule::initialized ? ! uKernelModule::uKernelModuleBoot.disableInt && uKernelModule::uKernelModuleBoot.disableIntCnt == 0 : true );
+	assert( uKernelModule::initialized ? ! TLS_GET( disableInt ) && TLS_GET( disableIntCnt ) == 0 : true );
 
 	spinLock.acquire();
 	uDEBUG(
@@ -992,31 +992,32 @@ int uRepositionEntry::uReposition( bool relCallingLock ) {
 #define INIT_REALRTN( x, ver ) x = (__typeof__(x))interposeSymbol( #x, ver )
 
 namespace UPP {
-	void * RealRtn::interposeSymbol( const char * symbolName, const char * version ) {
-		static void * library;
-		const char * error;
+	void * RealRtn::interposeSymbol( const char * symbol, const char * version ) {
+		void * library;
 		void * originalFunc;
 
-		if ( library == nullptr ) {
-			#if defined( RTLD_NEXT )
-			library = RTLD_NEXT;
-			#else
-			// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
-			library = dlopen( "libstdc++.so", RTLD_LAZY );
-			error = dlerror();
-			if ( error != nullptr ) {
-				::abort( "RealRtn::interposeSymbol : internal error, %s\n", error );
-			} // if
-			#endif // RTLD_NEXT
+		#if defined( RTLD_NEXT )
+		library = RTLD_NEXT;
+		#else
+		// missing RTLD_NEXT => must hard-code library name, assuming libstdc++
+		library = dlopen( "libstdc++.so", RTLD_LAZY );
+		if ( ! library ) {								// == nullptr
+			::abort( "RealRtn::interposeSymbol : internal error, %s\n", dlerror() );
 		} // if
-		if ( version == nullptr ) {
-			originalFunc = dlsym( library, symbolName );
+		#endif // RTLD_NEXT
+
+		#if defined( _GNU_SOURCE )
+		if ( version ) {
+			originalFunc = dlvsym( library, symbol, version );
 		} else {
-			originalFunc = dlvsym( library, symbolName, version );
+			originalFunc = dlsym( library, symbol );
 		} // if
-		error = dlerror();
-		if ( error != nullptr ) {
-			::abort( "RealRtn::interposeSymbol : internal error, %s\n", error );
+		#else
+		originalFunc = dlsym( library, symbol );
+		#endif // _GNU_SOURCE
+
+		if ( ! originalFunc ) {							// == nullptr
+			::abort( "RealRtn::interposeSymbol : internal error, %s\n", dlerror() );
 		} // if
 		return originalFunc;
 	} // RealRtn::interposeSymbol
@@ -1089,6 +1090,94 @@ void uKernelModule::startup() {
 } // uKernelModule::startup
 
 
+// Safe to make direct accesses through TLS pointer because these routines are in the nopreempt segment.
+#if defined( __arm_64__ )
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+uintptr_t uKernelModule::uKernelModuleData::TLS_Get( size_t offset ) {
+	return *(uintptr_t *)((uintptr_t)((char *)&uKernelModule::uKernelModuleBoot + offset));
+} // uKernelModule::uKernelModuleData::TLS_Get
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::TLS_Set( size_t offset, uintptr_t value ) {
+	*(uintptr_t *)((uintptr_t)((char *)&uKernelModule::uKernelModuleBoot + offset)) = value;
+} // uKernelModule::uKernelModuleData::TLS_Set
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::disableInterrupts() {
+	uKernelModuleBoot.disableInt = true;
+	uKernelModuleBoot.disableIntCnt += 1;
+} // uKernelModule::uKernelModuleData::disableInterrupts
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::enableInterrupts() {
+	uDEBUG( assert( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ); );
+
+	bool roll = false;
+	uKernelModuleBoot.disableIntCnt -= 1;		// decrement number of disablings
+	if ( LIKELY( uKernelModuleBoot.disableIntCnt == 0 ) ) {
+		uKernelModuleBoot.disableInt = false;	// enable interrupts
+		if ( UNLIKELY( uKernelModuleBoot.RFpending && ! uKernelModuleBoot.RFinprogress && ! uKernelModuleBoot.disableIntSpin ) ) { // rollForward callable ?
+			roll = true;
+		} // if
+	} // if
+	uDEBUG( assert( ( ! uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt == 0 ) || ( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ) ); );
+	if ( roll ) rollForward();
+} // KernelModule::uKernelModuleData::enableInterrupts
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::enableInterruptsNoRF() {
+	uDEBUG( assert( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ); );
+
+	uKernelModuleBoot.disableIntCnt -= 1;		// decrement number of disablings
+	if ( LIKELY( uKernelModuleBoot.disableIntCnt == 0 ) ) {
+		uKernelModuleBoot.disableInt = false;	// enable interrupts
+		// NO roll forward
+	} // if
+
+	uDEBUG( assert( ( ! uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt == 0 ) || ( uKernelModuleBoot.disableInt && uKernelModuleBoot.disableIntCnt > 0 ) ); );
+} // KernelModule::uKernelModuleData::enableInterruptsNoRF
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::disableIntSpinLock() {
+	uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
+
+	uKernelModuleBoot.disableIntSpin = true;
+	uKernelModuleBoot.disableIntSpinCnt += 1;
+
+	uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
+} // uKernelModule::uKernelModuleData::disableIntSpinLock
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::enableIntSpinLock() {
+	uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
+
+	bool roll = false;
+	uKernelModuleBoot.disableIntSpinCnt -= 1;	// decrement number of disablings
+	if ( LIKELY( uKernelModuleBoot.disableIntSpinCnt == 0 ) ) {
+		uKernelModuleBoot.disableIntSpin = false; // enable interrupts
+
+		if ( UNLIKELY( uKernelModuleBoot.RFpending && ! uKernelModuleBoot.RFinprogress && ! uKernelModuleBoot.disableInt ) ) { // rollForward callable ?
+			roll = true;
+		} // if
+	} // if
+	uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
+	if ( roll ) rollForward();
+} // uKernelModule::uKernelModuleData::enableIntSpinLock
+
+__attribute__(( noinline, noclone, section( "text_nopreempt" ) ))
+void uKernelModule::uKernelModuleData::enableIntSpinLockNoRF() {
+	uDEBUG( assert( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ); );
+
+	uKernelModuleBoot.disableIntSpinCnt -= 1;	// decrement number of disablings
+	if ( LIKELY( uKernelModuleBoot.disableIntSpinCnt == 0 ) ) {
+		uKernelModuleBoot.disableIntSpin = false; // enable interrupts
+	} // if
+
+	uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
+} // uKernelModule::uKernelModuleData::enableIntSpinLock
+#endif
+
+
 void uKernelModule::uKernelModuleData::ctor() volatile {
 	kernelModuleInitialized = true;
 
@@ -1103,9 +1192,11 @@ void uKernelModule::uKernelModuleData::ctor() volatile {
 	disableIntSpinCnt = 0;
 
 	RFpending = RFinprogress = false;
-} // uKernelModule::ctor
+} // uKernelModule::uKernelModuleData::ctor
 
 
+// Safe to make direct accesses through TLS pointer because only called from preemption-safe locations:
+// enableInterrupts, enableIntSpinLock, uProcessorKernel::main
 void uKernelModule::rollForward( bool inKernel ) {
 	uDEBUGPRT( char buffer[256];
 			   uDebugPrtBuf( buffer, "rollForward( %d ), disableInt:%d, disableIntCnt:%d, disableIntSpin:%d, disableIntSpinCnt:%d, RFpending:%d, RFinprogress:%d\n",
@@ -2075,12 +2166,12 @@ void UPP::uKernelBoot::startup() {
 
 	// create kernel locks
 
-	uKernelModule::globalAbortLock = new uSpinLock;
-	uKernelModule::globalProcessorLock = new uSpinLock;
-	uKernelModule::globalClusterLock = new uSpinLock;
+	uKernelModule::globalAbortLock.ctor();
+	uKernelModule::globalProcessorLock.ctor();
+	uKernelModule::globalClusterLock.ctor();
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup1, disableInt:%d, disableIntCnt:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ) ); );
 
 	// initialize kernel signal handlers
 
@@ -2088,14 +2179,14 @@ void UPP::uKernelBoot::startup() {
 
 	// create global lists
 
-	uKernelModule::globalProcessors = new uProcessorSeq;
-	uKernelModule::globalClusters = new uClusterSeq;
+	uKernelModule::globalProcessors.ctor();
+	uKernelModule::globalClusters.ctor();
 
 	// SKULLDUGGERY: Initialize the global pointers with the appropriate memory locations and then "new" the cluster and
 	// processor. Because the global pointers are initialized, all the references through them in the cluster and
 	// processor constructors work out. (HA!)
 
-	uKernelModule::systemScheduler = new uDefaultScheduler;
+	uKernelModule::systemScheduler.ctor();
 
 	#ifndef __U_MULTI__
 	uProcessor::contextSwitchHandler = new uCxtSwtchHndlr;
@@ -2103,7 +2194,7 @@ void UPP::uKernelBoot::startup() {
 	uCluster::NBIO = new uNBIO;
 	#endif // ! __U_MULTI__
 
-	uProcessor::events = new uEventList;
+	uProcessor::events.ctor();
 
 	// create system cluster: it is at a fixed address so storing the result is unnecessary.
 
@@ -2183,7 +2274,7 @@ void UPP::uKernelBoot::startup() {
 	uDEBUG( uKernelModule::initialized = true; );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 
 	uKernelModule::bootTask->migrate( *uKernelModule::userCluster );
@@ -2200,7 +2291,7 @@ void UPP::uKernelBoot::startup() {
 	std::cin.rdbuf( uKernelModule::cinFilebuf );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 } // uKernelBoot::startup
 
 
@@ -2208,7 +2299,7 @@ extern void heapManagerDtor();
 
 void UPP::uKernelBoot::finishup() {
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 	// Flush standard output streams as required by 27.4.2.1.6
 
@@ -2230,7 +2321,7 @@ void UPP::uKernelBoot::finishup() {
 	uKernelModule::bootTask->migrate( *uKernelModule::systemCluster );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 	delete uKernelModule::userProcessors[0];
 	delete [] uKernelModule::userProcessors;
@@ -2272,7 +2363,7 @@ void UPP::uKernelBoot::finishup() {
 	delete uProcessor::contextSwitchHandler;
 	#endif // ! __U_MULTI__
 
-	delete uProcessor::events;
+	uProcessor::events.dtor();
 
 	// remove processor kernal coroutine with execution still pending
 	delete activeProcessorKernel;
@@ -2294,17 +2385,13 @@ void UPP::uKernelBoot::finishup() {
 	pthread_pid_destroy_();
 
 	// no tasks on the ready queue so it can be deleted
-	delete uKernelModule::systemScheduler;
+	uKernelModule::systemScheduler.dtor();
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
-						  uKernelModule::uKernelModuleBoot.disableInt, uKernelModule::uKernelModuleBoot.disableIntCnt, uThisProcessor().getPreemption() ); );
+						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
-	delete uKernelModule::globalClusters;
-	delete uKernelModule::globalProcessors;
-
-	delete uKernelModule::globalClusterLock;
-	delete uKernelModule::globalProcessorLock;
-	delete uKernelModule::globalAbortLock;
+	uKernelModule::globalClusters.dtor();
+	uKernelModule::globalProcessors.dtor();
 
 	heapManagerDtor();
 	uHeapControl::finishup();

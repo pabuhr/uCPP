@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 20:47:53 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec 13 23:08:27 2022
-// Update Count     : 273
+// Last Modified On : Tue Apr 25 13:56:11 2023
+// Update Count     : 275
 // 
 
 #include <iostream>
@@ -20,7 +20,7 @@ using namespace std;
 #define xstr(s) str(s)
 #define str(s) #s
 
-#ifdef __x86_64__										// 64-bit architecture
+#if defined( __x86_64__ ) || defined( __arm_64__ )		// 64-bit architecture
 #define PRNG PRNG64
 #else													// 32-bit architecture
 #define PRNG PRNG32
@@ -38,10 +38,10 @@ enum { BUCKETS = 100'000, TRIALS = 1'000'000'000 };
 enum { BUCKETS = 100'000, TRIALS = 100'000'000 };
 #endif // TIME
 
-static void avgstd( unsigned int buckets[] ) {
-	unsigned int min = UINT_MAX, max = 0;
+static void avgstd( size_t trials, size_t buckets[] ) {
+	size_t min = UINT_MAX, max = 0;
 	double sum = 0.0, diff;
-	for ( unsigned int i = 0; i < BUCKETS; i += 1 ) {
+	for ( size_t i = 0; i < BUCKETS; i += 1 ) {
 		if ( buckets[i] < min ) min = buckets[i];
 		if ( buckets[i] > max ) max = buckets[i];
 		sum += buckets[i];
@@ -49,26 +49,26 @@ static void avgstd( unsigned int buckets[] ) {
 
 	double avg = sum / BUCKETS;							// average
 	sum = 0.0;
-	for ( unsigned int i = 0; i < BUCKETS; i += 1 ) {	// sum squared differences from average
+	for ( size_t i = 0; i < BUCKETS; i += 1 ) {			// sum squared differences from average
 		diff = buckets[i] - avg;
 		sum += diff * diff;
 	} // for
 	double std = sqrt( sum / BUCKETS );
-	osacquire( cout ) << fixed << setprecision(1) << "trials " << TRIALS << " buckets " << BUCKETS
+	osacquire( cout ) << fixed << setprecision(1) << "trials " << trials << " buckets " << BUCKETS
 					  << " min " << min << " max " << max
 					  << " avg " << avg << " std " << std << " rstd " << (avg == 0 ? 0.0 : std / avg * 100) << "%" << endl;
 } // avgstd
 
-size_t seed = 1009;
 
+size_t seed = 1009;
 
 _Task T1 {
 	void main() {
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS / 100; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS / 50; i += 1 ) {
 			buckets[rand() % BUCKETS] += 1;				// concurrent
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 50, buckets );
 		free( buckets );
 	} // main
 }; // T1
@@ -77,46 +77,46 @@ _Task T2 {
 	void main() {
 		PRNG prng;
 		if ( seed != 0 ) prng.set_seed( seed );
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS; i += 1 ) {
 			buckets[prng() % BUCKETS] += 1;				// concurrent
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS, buckets );
 		free( buckets );
 	} // main
 }; // T2
 
 _Task T3 {
 	void main() {
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS / 5; i += 1 ) {
 			buckets[::prng() % BUCKETS] += 1;			// concurrent
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 5, buckets );
 		free( buckets );
 	} // main
 }; // T3
 
 _Task T4 {
 	void main() {
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS; i += 1 ) {
 			buckets[prng() % BUCKETS] += 1;				// concurrent
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS, buckets );
 		free( buckets );
 	} // main
 }; // T4
 
-// Compiler bug requires hiding declaration of th from the bucket access, otherwise the compiler thinks th is aliased
+// Compiler bug requires hiding declaration of "th" from the bucket access, otherwise the compiler thinks th is aliased
 // and continually reloads it from memory, which doubles the cost.
 static void dummy( uBaseTask & th ) __attribute__(( noinline ));
 static void dummy( uBaseTask & th ) {
-	unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-	for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+	size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+	for ( size_t i = 0; i < TRIALS; i += 1 ) {
 		buckets[th.prng() % BUCKETS] += 1;				// sequential
 	} // for
-	avgstd( buckets );
+	avgstd( TRIALS, buckets );
 	free( buckets );
 } // dummy
 
@@ -126,20 +126,20 @@ int main() {
 	locale loc( getenv("LANG") );
 	cout.imbue( loc );
 
-	cout << xstr(PRNG_NAME_64) << endl << endl;
-	cout << LONG_MAX-1 << ' ' << LONG_MAX-1-25ull << ' ' << 256-5 << endl;
-
 	enum { TASKS = 4 };
 	uTime start;
+
 #ifdef TIME												// too slow for test and generates non-repeatable results
 #if 1
-	unsigned int rseed;
+	cout << "glib rand" << endl << endl;
+
+	size_t rseed;
 	if ( seed != 0 ) rseed = seed;
 	else rseed = uRdtsc();
 	srand( rseed );
 
 	cout << setw(26) << "rand()" << setw(12) << "rand(5)" << setw(12) << "rand(0,5)" << endl;
-	for ( unsigned int i = 0; i < 20; i += 1 ) {
+	for ( size_t i = 0; i < 20; i += 1 ) {
 		cout << setw(26) << rand();
 		cout << setw(12) << rand() % 5;
 		cout << setw(12) << rand() % (5 - 0 + 1) + 0 << endl;
@@ -149,34 +149,37 @@ int main() {
 	cout << endl << "Sequential" << endl;
 	STARTTIME;
 	{
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS / 10; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS / 5; i += 1 ) {
 			buckets[rand() % BUCKETS] += 1;				// sequential
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 5, buckets );
 		free( buckets );
 	}
-	ENDTIME( " x 10" );
+	ENDTIME( " x 5" );
 
 	cout << endl << "Concurrent" << endl;
 	STARTTIME;
 	{
 		uProcessor p[TASKS - 1];						// already 1 processor
 		// uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
-		// for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
+		// for ( size_t i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
 		{
 			T1 t[TASKS];
 		} // wait for tasks to complete
 	}
-	ENDTIME( " x 100" );
+	ENDTIME( " x 50" );
 #endif // 0
 #endif // TIME
+
+	cout << endl << "uC++ " xstr(PRNG_NAME) << endl;
+
 #if 1
 	PRNG sprng;
 	if ( seed != 0 ) sprng.set_seed( seed );
 
 	cout << endl << setw(26) << "PRNG()" << setw(12) << "PRNG(5)" << setw(12) << "PRNG(0,5)" << endl;
-	for ( unsigned int i = 0; i < 20; i += 1 ) {
+	for ( size_t i = 0; i < 20; i += 1 ) {
 		cout << setw(26) << sprng();					// cascading => side-effect functions called in arbitary order
 		cout << setw(12) << sprng( 5 );
 		cout << setw(12) << sprng( 0, 5 ) << endl;
@@ -186,11 +189,11 @@ int main() {
 	cout << endl << "Sequential" << endl;
 	STARTTIME;
 	{
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS; i += 1 ) {
 			buckets[sprng() % BUCKETS] += 1;			// sequential
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS, buckets );
 		free( buckets );
 	}
 	ENDTIME();
@@ -200,7 +203,7 @@ int main() {
 	{
 		uProcessor p[TASKS - 1];						// already 1 processor
 		// uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
-		// for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
+		// for ( size_t i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
 		{
 			T2 t[TASKS];
 		} // wait for tasks to complete
@@ -211,7 +214,7 @@ int main() {
 	if ( seed != 0 ) set_seed( seed );
 
 	cout << endl << setw(26) << "prng()" << setw(12) << "prng(5)" << setw(12) << "prng(0,5)" << endl;
-	for ( unsigned int i = 0; i < 20; i += 1 ) {
+	for ( size_t i = 0; i < 20; i += 1 ) {
 		cout << setw(26) << prng();						// cascading => side-effect functions called in arbitary order
 		cout << setw(12) << prng( 5 );
 		cout << setw(12) << prng( 0, 5 ) << endl;
@@ -221,33 +224,33 @@ int main() {
 	cout << endl << "Sequential" << endl;
 	STARTTIME;
 	{
-		unsigned int * buckets = (unsigned int *)calloc( BUCKETS, sizeof(unsigned int) ); // too big for task stack
-		for ( unsigned int i = 0; i < TRIALS; i += 1 ) {
+		size_t * buckets = (size_t *)calloc( BUCKETS, sizeof(size_t) ); // too big for task stack
+		for ( size_t i = 0; i < TRIALS / 5; i += 1 ) {
 			buckets[prng() % BUCKETS] += 1;				// sequential
 		} // for
-		avgstd( buckets );
+		avgstd( TRIALS / 5, buckets );
 		free( buckets );
 	}
-	ENDTIME();
+	ENDTIME( " x 5 " );
 
 	cout << endl << "Concurrent" << endl;
 	STARTTIME;
 	{
 		uProcessor p[TASKS - 1];						// already 1 processor
 		// uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
-		// for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
+		// for ( size_t i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
 		{
 			T3 t[TASKS];
 		} // wait for tasks to complete
 	}
-	ENDTIME();
+	ENDTIME( " x 5 " );
 #endif // 0
 #if 1
 	if ( seed != 0 ) set_seed( seed );
 	uBaseTask & th = uThisTask();
 
 	cout << endl << setw(26) << "prng(t)" << setw(12) << "prng(t,5)" << setw(12) << "prng(t,0,5)" << endl;
-	for ( unsigned int i = 0; i < 20; i += 1 ) {
+	for ( size_t i = 0; i < 20; i += 1 ) {
 		cout << setw(26) << th.prng();					// cascading => side-effect functions called in arbitary order
 		cout << setw(12) << th.prng( 5 );
 		cout << setw(12) << th.prng( 0, 5 ) << endl;
@@ -266,7 +269,7 @@ int main() {
 	{
 		uProcessor p[TASKS - 1];						// already 1 processor
 		// uThisProcessor().setAffinity( 0 );				// affinity cores 0 to TASK-1
-		// for ( unsigned int i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
+		// for ( size_t i = 0; i < TASKS - 1; i += 1 ) p[i].setAffinity( i + 1 );
 		{
 			T4 t[TASKS];
 		} // wait for tasks to complete

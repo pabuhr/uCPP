@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Dec 21 14:01:24 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:32:57 2022
-// Update Count     : 190
+// Last Modified On : Wed May  3 18:04:54 2023
+// Update Count     : 191
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -57,9 +57,9 @@ class uEventNode : public uSeqable {
 	uSignalHandler *sigHandler;							// action to perform when timer expires
 	bool executeLocked;									// true => handler executed with uEventlock acquired
 
-	void createEventNode( uBaseTask *task, uSignalHandler *sig, uTime alarm, uDuration period );
+	void createEventNode( uBaseTask * task, uSignalHandler * sig, uTime alarm, uDuration period );
 	uEventNode();
-	uEventNode( uBaseTask &task, uSignalHandler &sig, uTime alarm, uDuration period = 0 );
+	uEventNode( uBaseTask & task, uSignalHandler & sig, uTime alarm, uDuration period = 0 );
 	uEventNode( uSignalHandler &sig );
 
 	void add( bool block = false );						// activate event
@@ -76,6 +76,7 @@ class uEventList {
 	friend class uCondLock;								// access: addEvent, removeEvent
 	friend class UPP::uNBIO;							// access: addEvent, removeEvent, uNextAlarm
 	friend class uBaseTask;								// access: addEvent
+	template< typename T, bool runDtor > friend class uNoCtor; //  access: ~uEventList
 	friend class UPP::uKernelBoot;						// access: uEventList
 	friend class uProcessor;							// access: uEventList
 	friend class uEventListPop;							// access: eventLock, eventlist
@@ -103,16 +104,16 @@ class uEventList {
 
 
 class uEventListPop {
-	uEventList *events;									// list of handler events
+	uEventList * events;								// list of handler events
 	uClusterSeq wakeupList;								// list of clusters with wakeups
 	uTime currTime;										// time iteration starts
-	uSignalHandler *cxtSwHandler;						// ContextSwitch for system processor
+	uSignalHandler * cxtSwHandler;						// ContextSwitch for system processor
 	bool inKernel;										// processing events from the kernel
   public:
 	uEventListPop();									// use with "over" (not defined, uses default)
-	uEventListPop( uEventList &events, bool inKernel );
+	uEventListPop( uEventList & events, bool inKernel );
 	~uEventListPop();
-	void over( uEventList &events, bool inKernel );		// initialize iterator
+	void over( uEventList & events, bool inKernel );	// initialize iterator
 	bool operator>>( uEventNode *&node );				// traverse each event on list
 }; // uEventListPop
 

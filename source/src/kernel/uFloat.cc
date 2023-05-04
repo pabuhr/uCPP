@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 10 08:30:46 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:46:29 2022
-// Update Count     : 42
+// Last Modified On : Tue Apr 25 15:21:00 2023
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,6 +39,8 @@ void uFloatingPointContext::save() {
 	// saved by caller
 #elif defined( __x86_64__ )
 	// saved by caller
+#elif defined( __arm_64__ )
+	// saved by context switch
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif
@@ -50,6 +52,8 @@ void uFloatingPointContext::restore() {
 	// restored by caller
 #elif defined( __x86_64__ )
 	// restored by caller
+#elif defined( __arm_64__ )
+	// restored by context switch
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif

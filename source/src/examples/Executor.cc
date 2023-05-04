@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:47:36 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:48:27 2016
-// Update Count     : 1
+// Last Modified On : Sat Feb 18 08:43:00 2023
+// Update Count     : 3
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -58,9 +58,9 @@ int main() {
 	Future_ISM<char> fc[NoOfRequests];
 
 	for ( int i = 0; i < NoOfRequests; i += 1 ) {		// send off work for executor
-		fi[i] = executor.sendrecv( routine );			//  and get return future
-		fd[i] = executor.sendrecv( functor );
-		fc[i] = executor.sendrecv( []() { return 'a'; } );
+		executor.sendrecv( routine, fi[i] );			//  and get return future
+		executor.sendrecv( functor, fd[i] );
+		executor.sendrecv( []() { return 'a'; }, fc[i] );
 	} // for
 	executor.send( routine2 );							// send off work but no return value
 	executor.send( functor2 );

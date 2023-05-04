@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  2 18:15:22 2022
-// Update Count     : 1510
+// Last Modified On : Tue Apr 25 15:26:10 2023
+// Update Count     : 1511
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -242,6 +242,9 @@ namespace UPP {
 		uFetchAdd( Statistics::select_syscalls, 1 );
 		Statistics::select_pending = pending;
 #endif // __U_STATISTICS__
+
+		// Safe to make direct accesses through TLS pointer because only called from uNBIO::pollIO, where interrupts are
+		// disabled.
 		assert( uKernelModule::uKernelModuleBoot.disableInt );
 		// maxFD : most significant file descriptor in master mask
 		// mRFDs, mWFDs : read/write masks
@@ -307,6 +310,8 @@ namespace UPP {
 			} // if
 
 			// check if any interrupt occured before interrupts disabled (i.e., interrupt won race)
+
+			// Safe to make direct accesses through TLS pointer because interrupts disabled (see above).
 			if ( ! uKernelModule::uKernelModuleBoot.RFinprogress && uKernelModule::uKernelModuleBoot.RFpending ) { // need to start roll forward ?
 				// interrupt slipped through, so release mutual exclusion, reset the signal mask, and allow tasks to
 				// execute after I/O polling.

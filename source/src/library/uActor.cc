@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:41:44 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 29 20:42:40 2023
-// Update Count     : 115
+// Last Modified On : Fri Mar 10 10:41:58 2023
+// Update Count     : 116
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@ using namespace std;
 uExecutor * uActor::executor_ = nullptr;				// executor for all actors
 bool uActor::executorp = false;							// executor passed to start member
 uSemaphore uActor::wait_( 0 );							// wait for all actors to be destroyed
-unsigned long int uActor::actors_ = 0;					// number of actor objects in system
+size_t uActor::actors_ = 0;								// number of actor objects in system
 uActor::StartMsg uActor::startMsg;						// start actor
 uActor::StopMsg uActor::stopMsg;						// terminate actor
 uActor::UnhandledMsg uActor::unhandledMsg;				// tell error

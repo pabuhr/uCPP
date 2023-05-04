@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  4 16:20:23 2023
-// Update Count     : 6336
+// Last Modified On : Wed May  3 18:12:18 2023
+// Update Count     : 6338
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -78,6 +78,12 @@
 #else
 #define uDEBUG( stmt )
 #endif // __U_DEBUG__
+
+#ifdef __ARM_ARCH
+#define WO( stmt ) stmt
+#else
+#define WO( stmt )
+#endif
 
 #if defined( __U_MULTI__ )
 #define __U_THREAD_LOCAL__ __thread /* __attribute__(( tls_model("initial-exec") )) */
@@ -506,6 +512,7 @@ class uKernelModule {
 	struct uKernelModuleData {
 		#define activeProcessorKernel (uKernelModule::uKernelModuleBoot.processorKernelStorage)
 		uProcessor * activeProcessor;					// current active processor
+
 		// The next two private variables shadow the corresponding fields in the processor data structure. They are an
 		// optimization so that routines uThisCluster and uThisTask do not have to be atomic routines, and as a
 		// consequence can be inlined. The problem is the multiple activeProcessor variables (one per UNIX process). A
@@ -517,16 +524,45 @@ class uKernelModule {
 		uCluster * activeCluster;						// current active cluster for processor
 		uBaseTask * activeTask;							// current active task for processor
 
-		bool disableInt;								// task in kernel: no time slice interrupts
-		int disableIntCnt;
+		uintptr_t disableInt;							// task in kernel: no time slice interrupts
+		uintptr_t disableIntCnt;
 
-		bool disableIntSpin;							// task in spin lock; no time slice interrupts
-		int disableIntSpinCnt;
+		uintptr_t disableIntSpin;						// task in spin lock; no time slice interrupts
+		uintptr_t disableIntSpinCnt;
 
-		bool RFinprogress;								// roll forward in progress
-		bool RFpending;									// roll forward pending and needs execution
+		uintptr_t RFinprogress;							// roll forward in progress
+		uintptr_t RFpending;							// roll forward pending and needs execution
 
 		UPP::uProcessorKernel * processorKernelStorage;	// system-cluster processor kernel
+
+		// TLS access is unsafe on the ARM because the TLS pointer is stored in register C13, which does not have atomic
+		// base-displacement addressing. As a result, the TLS pointer is loaded and the offset to a TLS field is added
+		// separately, allowing a preemption to occur between these two instructions. The preemption puts the current
+		// user-thread on the ready queue and it can subsequently restart on a different kernel thread. It then has the
+		// wrong TLS pointer and accesses the TLS field from the old kernel thread versus the new kernel thread it is
+		// running on. To prevent this situation, all TLS field accesses on the ARM must be non-preemptable, which is
+		// accomplished by having a special code segment text_nopreempt for code accessing the TLS and the SIGALRM
+		// handler checks if execution is in this segment and simply returns but sets the rollforward flag. Hence, the
+		// routines below are non-inlined on the ARM and inlined on the X86, which does have atomic base-displacement
+		// addressing on the FS register.
+		#if defined( __arm_64__ )
+
+		#define TLS_GET( member ) ((decltype(uKernelModule::uKernelModuleData::member))uKernelModule::uKernelModuleData::TLS_Get( offsetof( uKernelModule::uKernelModuleData, member )))
+		#define TLS_SET( member, value ) (uKernelModule::uKernelModuleData::TLS_Set( offsetof( uKernelModule::uKernelModuleData, member ), (uintptr_t)value ))
+
+		static uintptr_t TLS_Get( size_t );
+		static void TLS_Set( size_t, uintptr_t );
+		static void disableInterrupts();
+		static void enableInterrupts();
+		static void enableInterruptsNoRF();
+		static void disableIntSpinLock();
+		static void enableIntSpinLock();
+		static void enableIntSpinLockNoRF();
+
+		#elif defined( __i386__ ) || defined( __x86_64__ ) || defined( __arm_64__ )
+
+		#define TLS_GET( member ) (uKernelModule::uKernelModuleBoot.member)
+		#define TLS_SET( member, value ) (uKernelModule::uKernelModuleBoot.member = value)
 
 		static inline __attribute__((always_inline)) void disableInterrupts() {
 			uKernelModuleBoot.disableInt = true;
@@ -592,6 +628,9 @@ class uKernelModule {
 
 			uDEBUG( assert( ( ! uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt == 0 ) || ( uKernelModuleBoot.disableIntSpin && uKernelModuleBoot.disableIntSpinCnt > 0 ) ); );
 		} // uKernelModule::uKernelModuleData::enableIntSpinLock
+		#else
+			#error uC++ : internal error, unsupported architecture
+		#endif
 
 		void ctor() volatile;							// POD constructor
 	}; // uKernelModuleData
@@ -609,12 +648,12 @@ class uKernelModule {
 	#endif // ! __U_MULTI__
 	static bool globalAbort;							// indicate aborting processor
 	static bool globalSpinAbort;						// indicate aborting processor to spin locks
-	static uSpinLock * globalAbortLock;					// only one aborting processors
-	static uSpinLock * globalProcessorLock;				// mutual exclusion for global processor operations
-	static uProcessorSeq * globalProcessors;			// global list of processors
-	static uSpinLock * globalClusterLock;				// mutual exclusion for global cluster operations
-	static uClusterSeq * globalClusters;				// global list of cluster
-	static uDefaultScheduler * systemScheduler;			// pointer to systen scheduler for system cluster
+	static uNoCtor<uSpinLock, false> globalAbortLock;	// only one aborting processors
+	static uNoCtor<uSpinLock, false> globalProcessorLock; // mutual exclusion for global processor operations
+	static uNoCtor<uProcessorSeq, false> globalProcessors; // global list of processors
+	static uNoCtor<uSpinLock, false> globalClusterLock;	// mutual exclusion for global cluster operations
+	static uNoCtor<uClusterSeq, false> globalClusters;	// global list of cluster
+	static uNoCtor<uDefaultScheduler, false> systemScheduler; // pointer to systen scheduler for system cluster
 	static UPP::uBootTask * bootTask;					// pointer to boot task for global constructors/destructors
 	static uProcessor ** userProcessors;				// pointer to user processors
 	static unsigned int numUserProcessors;				// number of user processors
@@ -637,18 +676,21 @@ class uKernelModule {
 }; // uKernelModule
 
 
-inline __attribute__((always_inline)) uProcessor & uThisProcessor() {
-	return *uKernelModule::uKernelModuleBoot.activeProcessor;
+inline __attribute__((always_inline))
+uProcessor & uThisProcessor() {
+	return *TLS_GET( activeProcessor );
 } // uThisProcessor
 
 
-inline __attribute__((always_inline)) uCluster & uThisCluster() {
-	return *uKernelModule::uKernelModuleBoot.activeCluster;
+inline __attribute__((always_inline))
+uCluster & uThisCluster() {
+	return *TLS_GET( activeCluster );
 } // uThisCluster
 
 
-inline __attribute__((always_inline)) uBaseTask & uThisTask() {
-	return *uKernelModule::uKernelModuleBoot.activeTask;
+inline __attribute__((always_inline))
+uBaseTask & uThisTask() {
+	return *TLS_GET( activeTask );
 } // uThisTask
 
 
@@ -672,7 +714,7 @@ class uSpinLock {										// non-yielding spinlock
 		// task is in the kernel because disableIntSpin is not set so the signal handler tries to yield.  However, the
 		// ready queue lock is held so the yield live-locks. There is a similar situation on releasing the lock.
 
-		enum { SPIN_START = 4, SPIN_END = 4 * 1024, };
+		enum { SPIN_START = 16, SPIN_END = 4 * 1024, };
 
 		#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
 		if ( value != 0 ) {								// locked ?
@@ -703,7 +745,7 @@ class uSpinLock {										// non-yielding spinlock
 
 			spin += spin;								// powers of 2
 			if ( spin > SPIN_END ) {
-				spin = SPIN_START;						// prevent overflow
+				spin = SPIN_START;						// restart (randomize) spinning length
 				// sched_yield();							// release CPU so someone else can execute
 				#ifdef __U_STATISTICS__
 				uFetchAdd( UPP::Statistics::spin_sched, 1 );
@@ -714,9 +756,11 @@ class uSpinLock {										// non-yielding spinlock
 		uKernelModule::uKernelModuleData::disableIntSpinLock();
 		value = 1;										// lock
 		#endif // __U_MULTI__
+		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::acquire_
 
 	void inline __attribute__((always_inline)) release_( bool rollforward ) {
+		asm( "" : : : "memory" );						// prevent code movement across barrier
 		assert( value != 0 );
 		uTestReset( value );
 		if ( rollforward ) {							// allow timeslicing during spinning
@@ -743,7 +787,7 @@ class uSpinLock {										// non-yielding spinlock
 		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::acquire
 
-	bool tryacquire() {
+	bool inline __attribute__((always_inline)) tryacquire() {
 		#if defined( __U_DEBUG__ ) && ! defined( __U_MULTI__ )
 		if ( value != 0 ) {								// locked ?
 			abort( "(uSpinLock &)%p.tryacquire() : internal error, attempt to multiply acquire spin lock by same task.", this );
@@ -753,14 +797,14 @@ class uSpinLock {										// non-yielding spinlock
 		uKernelModule::uKernelModuleData::disableIntSpinLock();
 
 		#ifdef __U_MULTI__
-		if ( uTestSet( value ) == 0 ) {						// get the lock ?
+		if ( uTestSet( value ) == 0 ) {					// get the lock ?
 			return true;
 		} else {
 			uKernelModule::uKernelModuleData::enableIntSpinLock();
 			return false;
 		} // if
 		#else
-		value = 1;											// lock
+		value = 1;										// lock
 		return true;
 		#endif // __U_MULTI__
 	} // uSpinLock::tryacquire
@@ -1160,6 +1204,8 @@ typedef uSequence<uContext> uContextSeq;
 // saved by caller
 #elif defined( __x86_64__ )
 // saved by caller
+#elif defined( __arm_64__ )
+// saved by context switch
 #else
 	#error uC++ : internal error, unsupported architecture
 #endif
@@ -2151,7 +2197,7 @@ namespace UPP {
 		// real-time
 
 		uEventNode timeoutEvent;						// event node for event list
-		uEventList * events;								// event list when event added
+		uNoCtor<uEventList, false> * events;			// event list when event added
 
 		// exception handling
 
@@ -2600,7 +2646,6 @@ namespace UPP {
 
 
 inline __attribute__((always_inline)) void uBaseTask::uYieldNoPoll() {
-	uDEBUG( assert( ! uKernelModule::uKernelModuleBoot.disableIntSpin ); )
 	UPP::uProcessorKernel::schedule( this );			// find someone else to execute; wake on kernel stack
 } // uBaseTask::uYieldNoPoll
 
@@ -2638,7 +2683,7 @@ class uProcessor {
 	friend class uProfileProcessorSampler;				// access: profileProcessorSamplerInstance
 	#endif // __U_PROFILER__
 
-	static uEventList * events;							// single list of events for all processors
+	static uNoCtor<uEventList, false> events;			// single list of events for all processors
 	#if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
 	#endif // ! __U_MULTI__
@@ -2682,7 +2727,6 @@ class uProcessor {
 	void fork( uProcessor * processor );
 	void setContextSwitchEvent( int msecs );			// set the real-time timer
 	void setContextSwitchEvent( uDuration duration );	// set the real-time timer
-
   public:
 	uProcessor( const uProcessor & ) = delete;			// no copy
 	uProcessor( uProcessor && ) = delete;

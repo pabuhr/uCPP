@@ -100,6 +100,7 @@ uninstall :
 		echo "" ; \
 		echo "	${MAKE} linux-x86_32" ; \
 		echo "	${MAKE} linux-x86_64" ; \
+		echo "	${MAKE} linux-arm_64" ; \
 		echo "" ; \
 		exit 1 ; \
 	fi
@@ -158,6 +159,8 @@ test :
 linux-x86 linux-i386 linux-x86_32 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=i386 TVENDOR=pc TOS=linux TCPU=i386 MULTI=TRUE
 
 linux-x86_64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=x86_64 TVENDOR=pc TOS=linux TCPU=x86_64 MULTI=TRUE
+
+linux-arm_64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=arm_64 TVENDOR=pc TOS=linux TCPU=arm_64 MULTI=TRUE
 
 #linux-ia64 : ; @${MAKE} configure VENDOR=pc OS=linux CPU=ia64 TVENDOR=pc TOS=linux TCPU=ia64 MULTI=TRUE
 #freebsd-x86 freebsd-i386 : ; @${MAKE} configure VENDOR=pc OS=freebsd CPU=i386 TVENDOR=pc TOS=freebsd TCPU=i386 MULTI=TRUE

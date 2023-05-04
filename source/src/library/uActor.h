@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 30 19:07:16 2023
-// Update Count     : 1231
+// Last Modified On : Thu Mar  9 14:37:01 2023
+// Update Count     : 1236
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -356,6 +356,10 @@ class uActor {
 				else if ( actor.promise_allocation_ == Nodelete ) actor.allocation( returnedAlloc );
 				// if both not Nodelete, this is erroneous behaviour so we abort
 				else abort( "Changing allocation status of an actor being destroyed/deleted/finished" );
+
+				// Process message first because it might be in actor-related storage (Finished) that is deallocated
+				// after the actor terminates.
+				checkMsg( msg );						// process message
 				checkActor( actor );
 			} catch ( uBaseEvent & ex ) {
 				// To have a zero-cost try block, the checkMsg call is duplicated above/below.
@@ -364,7 +368,6 @@ class uActor {
 			} catch ( ... ) {
 				abort( "C++ exception unsupported from throw in actor for promise message" );
 			} // try
-			checkMsg( msg );							// process message
 		} // Deliver_::operator()
 	}; // uActor::Deliver_
 

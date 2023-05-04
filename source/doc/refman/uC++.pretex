@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jan 30 20:41:24 2023
-%% Update Count     : 8533
+%% Last Modified On : Wed May  3 22:29:50 2023
+%% Update Count     : 8548
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2310,7 +2310,7 @@ class uSemaphore {
 };
 %]
 %[
-uSemaphore x, y(1), * z;
+uSemaphore x, y(0), * z;
 z = new uSemaphore(4);
 %]
 \index{uSemaphore@%(uSemaphore%)!P@%(P%)}%
@@ -2533,10 +2533,10 @@ The declarations create three condition locks and initializes them to closed (i.
 
 The routines %(wait%) and %(signal%) are used to block a thread on and unblock a thread from the queue of a condition, respectively.
 The %(wait%) routine atomically blocks the calling task and releases the argument owner-lock.
-For mutex locks, the %(wait%) routine does \emph{not} reacquire its argument lock before returning;
+For mutex locks, the %(wait%) routine does \emph{not} reacquire its argument lock before returning.
 For owner locks, the %(wait%) routine \emph{does} reacquire its argument lock before returning.
-If %(wait%) is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled;
-this form of %(wait%) returns %(true%) if the task is signalled and %(false%) otherwise (meaning timeout occurred).
+If %(wait%) is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled.
+This form of %(wait%) returns %(true%) if the task is signalled and %(false%) otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types %(uDuration%) and %(uTime%).)
 The member routine %(front%)\index{front@%(front%)} returns an integer value stored with the waiting task at the front of the condition queue.
 It is an error to examine the front of an empty condition-lock queue;
@@ -3759,7 +3759,7 @@ class uExecutor {
 		bool sepClus = uDefaultExecutorSepClus(), int affAffinity = uDefaultExecutorAffinity() );
 
 	template< typename Func > void send( Func action );
-	template< typename Func > auto sendrecv( Func action ) -> Future_ISM< decltype(action()) >;
+	template< typename Func, typename R > void sendrecv( Func & action, Future_ISM<R> & future );
 };
 %]
 \index{uExecutor@%(uExecutor%)!send@%(send%)}%
@@ -3787,16 +3787,16 @@ uExecutor executor( 0, uThisCluster().getProcessors() );
 %]
 \emph{after} the current cluster has created the appropriate number of processors, e.g., %(uProcessors p[3]%) to get 4 processors, as each cluster usually has an initial processor.
 
-The member routine %(send%) queues a unit of work %(action%), with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
-The member routine %(sendrecv%) queues a unit of work %(action%), with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
+The member routine %(send%) queues a unit of work %(action%) with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
+The member routine %(sendrecv%) queues a unit of work %(action%) with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
 
 \VRef[Figure]{f:ExecutorExample} shows an example where work is submitted to an executor in the form of a routine, functor and lambda, and then different types of values (%(int%), %(double%), %(char%)) are returned.
 
 \begin{figure}
 %[
 #include <iostream>
-#include <uFuture.h>
 using namespace std;
+#include <uFuture.h>
 
 int routine() {
 	return 3;											// perform work and return result
@@ -3828,9 +3828,9 @@ int main() {
 	Future_ISM<char> fc[NoOfRequests];
 
 	for ( int i = 0; i < NoOfRequests; i += 1 ) {		// send off work for executor
-		fi[i] = executor.sendrecv( routine );			//  and get return future
-		fd[i] = executor.sendrecv( functor );
-		fc[i] = executor.sendrecv( []() { return 'a'; } );
+		executor.sendrecv( routine, fi[i] );			//  and get return future
+		executor.sendrecv( functor, fd[i] );
+		executor.sendrecv( []() { return 'a'; }, fc[i] );
 	}
 	executor.send( routine2 );							// send off work but no return value
 	executor.send( functor2 );
@@ -3847,11 +3847,11 @@ int main() {
 
 Finally, the following routines control the default executor parameters.
 %[
-extern size_t uDefaultExecutorProcessors();				// kernel threads (processors) servicing worker threads
-extern size_t uDefaultExecutorWorkers();				// worker threads servicing work requests
-extern size_t uDefaultExecutorRQueues();				// executor request queues divided among workers
-extern bool uDefaultExecutorSepClus();					// create processors on separate cluster
-extern int uDefaultExecutorAffinity();					// affinity and offset (-1 => no affinity, default)
+extern size_t uDefaultExecutorProcessors();		// kernel threads (processors) servicing worker threads
+extern size_t uDefaultExecutorWorkers();		// worker threads servicing work requests
+extern size_t uDefaultExecutorRQueues();		// executor request queues divided among workers
+extern bool uDefaultExecutorSepClus();			// create processors on separate cluster
+extern int uDefaultExecutorAffinity();			// affinity and offset (-1 => no affinity, default)
 %]
 \index{uDefaultExecutorProcessors@%(uDefaultExecutorProcessors%)}%
 \index{uDefaultExecutorWorkers@%(uDefaultExecutorWorkers%)}%
@@ -3870,7 +3870,7 @@ Currently, the defaults are 2 processors, 2 threads 2 request queues, and the ex
 \label{s:Actor}
 
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
-Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
+Two programming systems providing actors are CAF~\cite{CAF} and Akka~\cite{Akka}.
 
 \VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of a \newterm{mailbox} (message queue/bounded buffer), and a set of \newterm{behaviour}s that receive from the mailbox to perform work.
 A behaviour is an actor member that takes a single message parameter, where the default behaviour is the member named %(receive%).
@@ -9420,7 +9420,7 @@ As a result, a \uC program is portable among POSIX-compliant systems and provide
 \chapter{OpenMP}
 \label{c:OpenMP}
 
-\Index{OpenMP}~\cite{OpenMP25} is a set of concurrent programming extensions to C, \CC, and Fortran.
+\Index{OpenMP}~\cite{OpenMP} is a set of concurrent programming extensions to C, \CC, and Fortran.
 It presents a very different model of concurrency from \uC: rather than create tasks directly, each with an independent control flow, an OpenMP program creates \emph{teams} of threads (using the %(omp parallel%) directive), with each thread in the team following the same basic control flow.
 Execution can be divided up among threads in a team using the \emph{work-sharing} directives %(omp \(for\)%) and %(omp sections%).
 For some applications (particularly ones that operate on large arrays of data, often found in scientific and financial computations) OpenMP can be used to transform a sequential program into a concurrent program with the addition of only a few directives, which often shows good parallel speedup.
@@ -10380,9 +10380,11 @@ Routine %(malloc_unfreed%) returns the amount subtracted to adjust for unfreed p
 \uC comes configured to run on any of the following platforms (single and multiple processor):
 \begin{itemize}[parsep=0pt,itemsep=0pt]
 \item
-linux-x86\_32 : Linux 4.x.x or greater, AMD/Intel 32-bit
+linux-x86\_32 : Linux 5.x.x or greater, AMD/Intel 32-bit
 \item
-linux-x86\_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
+linux-x86\_64 : Linux 5.x.x or greater, AMD/Intel 64-bit
+\item
+linux-arm\_64 : Linux 5.x.x or greater, ARM 64-bit
 % \item
 % linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
 % \item
@@ -10390,7 +10392,7 @@ linux-x86\_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
 \end{itemize}
-\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-6.0.0 or greater.
+\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-7.0.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the %(-fopenmp%)\index{-fopenmp@%(-fopenmp%) option}\index{compilation option!-fopenmp@%(-fopenmp%)} flag.
 \Emph{\uC does NOT compile using other compilers or operating systems.}

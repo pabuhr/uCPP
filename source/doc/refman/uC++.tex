@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Jan 30 20:41:24 2023
-%% Update Count     : 8533
+%% Last Modified On : Wed May  3 22:29:50 2023
+%% Update Count     : 8548
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2310,7 +2310,7 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{uSemaphore}\0\V{x},\0\V{y}(1),\0\*\0\V{z};}}
+\L{\LB{\V{uSemaphore}\0\V{x},\0\V{y}(0),\0\*\0\V{z};}}
 \L{\LB{\V{z}\0=\0\K{new}\0\V{uSemaphore}(4);}}
 \endlgrinde\LGend
 \index{uSemaphore@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}!P@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{P}}}\endlgrinde\LGend{}}%
@@ -2533,10 +2533,10 @@ The declarations create three condition locks and initializes them to closed (i.
 
 The routines \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{} are used to block a thread on and unblock a thread from the queue of a condition, respectively.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} routine atomically blocks the calling task and releases the argument owner-lock.
-For mutex locks, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} routine does \emph{not} reacquire its argument lock before returning;
+For mutex locks, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} routine does \emph{not} reacquire its argument lock before returning.
 For owner locks, the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} routine \emph{does} reacquire its argument lock before returning.
-If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled;
-this form of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the task is signalled and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise (meaning timeout occurred).
+If \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} is passed a duration or time value, the waiting task is unblocked after that period or when the specified time is exceeded even if the task has not been signalled.
+This form of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} if the task is signalled and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} otherwise (meaning timeout occurred).
 (See \VRef{s:DurationTime} for information on types \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDuration}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}.)
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}\index{front@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}} returns an integer value stored with the waiting task at the front of the condition queue.
 It is an error to examine the front of an empty condition-lock queue;
@@ -3759,7 +3759,7 @@ No work sharing or stealing is performed among the request queues.
 \L{\LB{}\Tab{8}{\K{bool}\0\V{sepClus}\0=\0\V{uDefaultExecutorSepClus}(),\0\K{int}\0\V{affAffinity}\0=\0\V{uDefaultExecutorAffinity}()\0);}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{void}\0\V{send}(\0\V{Func}\0\V{action}\0);}}
-\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func}\0\>\0\K{auto}\0\V{sendrecv}(\0\V{Func}\0\V{action}\0)\0\-\>\0\V{Future\_ISM}\<\0\K{decltype}(\V{action}())\0\>;}}
+\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}\0\V{Func},\0\K{typename}\0\V{R}\0\>\0\K{void}\0\V{sendrecv}(\0\V{Func}\0\&\0\V{action},\0\V{Future\_ISM}\<\V{R}\>\0\&\0\V{future}\0);}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uExecutor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uExecutor}}}\endlgrinde\LGend{}!send@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{send}}}\endlgrinde\LGend{}}%
@@ -3787,16 +3787,16 @@ Note, to get the executor to use processors on the current cluster, declare it a
 \endlgrinde\LGend
 \emph{after} the current cluster has created the appropriate number of processors, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uProcessors}\0\V{p}[3]}}\endlgrinde\LGend{} to get 4 processors, as each cluster usually has an initial processor.
 
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{send}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{}, with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{}, with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{send}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{} with \emph{no} return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde\LGend{} queues a unit of work \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{action}}}\endlgrinde\LGend{} with a return value, on a FIFO buffer in the executor to be eventually executed by one of the worker threads.
 
 \VRef[Figure]{f:ExecutorExample} shows an example where work is submitted to an executor in the form of a routine, functor and lambda, and then different types of values (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{double}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{char}}}\endlgrinde\LGend{}) are returned.
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\#include}\0\<\V{iostream}\>}}
-\L{\LB{\K{\#include}\0\<\V{uFuture}.\V{h}\>}}
 \L{\LB{\K{using}\0\K{namespace}\0\V{std};}}
+\L{\LB{\K{\#include}\0\<\V{uFuture}.\V{h}\>}}
 \L{\LB{}}
 \L{\LB{\K{int}\0\V{routine}()\0\{}}
 \L{\LB{}\Tab{4}{\K{return}\03;}\Tab{56}{\C{}\1\1\0perform\0work\0and\0return\0result}}
@@ -3828,9 +3828,9 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde
 \L{\LB{}\Tab{4}{\V{Future\_ISM}\<\K{char}\>\0\V{fc}[\V{NoOfRequests}];}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{NoOfRequests};\0\V{i}\0+=\01\0)\0\{}\Tab{56}{\C{}\1\1\0send\0off\0work\0for\0executor}}
-\CE{}\L{\LB{}\Tab{8}{\V{fi}[\V{i}]\0=\0\V{executor}.\V{sendrecv}(\0\V{routine}\0);}\Tab{56}{\C{}\1\1\0\0and\0get\0return\0future}}
-\CE{}\L{\LB{}\Tab{8}{\V{fd}[\V{i}]\0=\0\V{executor}.\V{sendrecv}(\0\V{functor}\0);}}
-\L{\LB{}\Tab{8}{\V{fc}[\V{i}]\0=\0\V{executor}.\V{sendrecv}(\0[\,]()\0\{\0\K{return}\0\S{}\'a\'\SE{};\0\}\0);}}
+\CE{}\L{\LB{}\Tab{8}{\V{executor}.\V{sendrecv}(\0\V{routine},\0\V{fi}[\V{i}]\0);}\Tab{56}{\C{}\1\1\0\0and\0get\0return\0future}}
+\CE{}\L{\LB{}\Tab{8}{\V{executor}.\V{sendrecv}(\0\V{functor},\0\V{fd}[\V{i}]\0);}}
+\L{\LB{}\Tab{8}{\V{executor}.\V{sendrecv}(\0[\,]()\0\{\0\K{return}\0\S{}\'a\'\SE{};\0\},\0\V{fc}[\V{i}]\0);}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{}\Tab{4}{\V{executor}.\V{send}(\0\V{routine2}\0);}\Tab{56}{\C{}\1\1\0send\0off\0work\0but\0no\0return\0value}}
 \CE{}\L{\LB{}\Tab{4}{\V{executor}.\V{send}(\0\V{functor2}\0);}}
@@ -3847,11 +3847,11 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sendrecv}}}\endlgrinde
 
 Finally, the following routines control the default executor parameters.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorProcessors}();}\Tab{56}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0worker\0threads}}
-\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorWorkers}();}\Tab{56}{\C{}\1\1\0worker\0threads\0servicing\0work\0requests}}
-\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorRQueues}();}\Tab{56}{\C{}\1\1\0executor\0request\0queues\0divided\0among\0workers}}
-\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultExecutorSepClus}();}\Tab{56}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
-\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultExecutorAffinity}();}\Tab{56}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
+\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorProcessors}();}\Tab{48}{\C{}\1\1\0kernel\0threads\0(processors)\0servicing\0worker\0threads}}
+\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorWorkers}();}\Tab{48}{\C{}\1\1\0worker\0threads\0servicing\0work\0requests}}
+\CE{}\L{\LB{\K{extern}\0\V{size\_t}\0\V{uDefaultExecutorRQueues}();}\Tab{48}{\C{}\1\1\0executor\0request\0queues\0divided\0among\0workers}}
+\CE{}\L{\LB{\K{extern}\0\K{bool}\0\V{uDefaultExecutorSepClus}();}\Tab{48}{\C{}\1\1\0create\0processors\0on\0separate\0cluster}}
+\CE{}\L{\LB{\K{extern}\0\K{int}\0\V{uDefaultExecutorAffinity}();}\Tab{48}{\C{}\1\1\0affinity\0and\0offset\0(\-1\0=\>\0no\0affinity,\0default)}}
 \CE{}\endlgrinde\LGend
 \index{uDefaultExecutorProcessors@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorProcessors}}}\endlgrinde\LGend{}}%
 \index{uDefaultExecutorWorkers@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorWorkers}}}\endlgrinde\LGend{}}%
@@ -3870,7 +3870,7 @@ Currently, the defaults are 2 processors, 2 threads 2 request queues, and the ex
 \label{s:Actor}
 
 The \newterm{actor model}~\cite{Hewitt73,Actors} is a message-passing (share nothing) system with an interesting abstraction for receiving messages.
-Two programming languages providing actors are Erlang~\cite{Erlang} and Scala~\cite{Scala}.
+Two programming systems providing actors are CAF~\cite{CAF} and Akka~\cite{Akka}.
 
 \VRef[Figure]{f:ActorModel} shows the actor model has an \newterm{actor} composed of a \newterm{mailbox} (message queue/bounded buffer), and a set of \newterm{behaviour}s that receive from the mailbox to perform work.
 A behaviour is an actor member that takes a single message parameter, where the default behaviour is the member named \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{receive}}}\endlgrinde\LGend{}.
@@ -9420,7 +9420,7 @@ As a result, a \uC program is portable among POSIX-compliant systems and provide
 \chapter{OpenMP}
 \label{c:OpenMP}
 
-\Index{OpenMP}~\cite{OpenMP25} is a set of concurrent programming extensions to C, \CC, and Fortran.
+\Index{OpenMP}~\cite{OpenMP} is a set of concurrent programming extensions to C, \CC, and Fortran.
 It presents a very different model of concurrency from \uC: rather than create tasks directly, each with an independent control flow, an OpenMP program creates \emph{teams} of threads (using the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{omp}\0\V{parallel}}}\endlgrinde\LGend{} directive), with each thread in the team following the same basic control flow.
 Execution can be divided up among threads in a team using the \emph{work-sharing} directives \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{omp}\0for}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{omp}\0\V{sections}}}\endlgrinde\LGend{}.
 For some applications (particularly ones that operate on large arrays of data, often found in scientific and financial computations) OpenMP can be used to transform a sequential program into a concurrent program with the addition of only a few directives, which often shows good parallel speedup.
@@ -10380,9 +10380,11 @@ Routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_unfreed}}}\endlgrinde\LGe
 \uC comes configured to run on any of the following platforms (single and multiple processor):
 \begin{itemize}[parsep=0pt,itemsep=0pt]
 \item
-linux-x86\_32 : Linux 4.x.x or greater, AMD/Intel 32-bit
+linux-x86\_32 : Linux 5.x.x or greater, AMD/Intel 32-bit
 \item
-linux-x86\_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
+linux-x86\_64 : Linux 5.x.x or greater, AMD/Intel 64-bit
+\item
+linux-arm\_64 : Linux 5.x.x or greater, ARM 64-bit
 % \item
 % linux-ia64 : Linux 2.4.x or greater, Intel IA-64 (Itanium)
 % \item
@@ -10390,7 +10392,7 @@ linux-x86\_64 : Linux 4.x.x or greater, AMD/Intel 64-bit
 % \item
 % freebsd-x86 : FreeBSD 6/7/8, Intel \& AMD 32
 \end{itemize}
-\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-6.0.0 or greater.
+\uC requires at least GNU~\cite{GNU-C++}\index{GNU C++@GNU \CC} g++-7.0.0 or greater.
 These compilers can be obtained free of charge.
 % As well, \uC programs may contain OpenMP\index{OpenMP} directives for the g++ compiler, when compiled with the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{}\index{-fopenmp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{} option}\index{compilation option!-fopenmp@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{fopenmp}}}\endlgrinde\LGend{}} flag.
 \Emph{\uC does NOT compile using other compilers or operating systems.}
