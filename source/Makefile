@@ -98,9 +98,9 @@ uninstall :
 		echo "The file ${CONFIG} was not found." ; \
 		echo "Create file ${CONFIG} with one of the following commands..." ; \
 		echo "" ; \
+		echo "	${MAKE} linux-arm_64" ; \
 		echo "	${MAKE} linux-x86_32" ; \
 		echo "	${MAKE} linux-x86_64" ; \
-		echo "	${MAKE} linux-arm_64" ; \
 		echo "" ; \
 		exit 1 ; \
 	fi

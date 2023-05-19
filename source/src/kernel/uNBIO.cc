@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:26:10 2023
-// Update Count     : 1511
+// Last Modified On : Thu May 11 20:38:43 2023
+// Update Count     : 1512
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -181,7 +181,7 @@ namespace UPP {
 	**************************************************/
 	void uNBIO::uSelectTimeoutHndlr::handler() {
 		*node.nbioTimeout = node.timedout = true;
-		uPid_t temp = cluster.NBIO->IOPollerPid;		// race: IOPollerPid can change to -1 if poller wakes before wakeup
+		uPid_t temp = cluster.NBIO.IOPollerPid;			// race: IOPollerPid can change to -1 if poller wakes before wakeup
 		if ( temp != (uPid_t)-1 ) cluster.wakeProcessor( temp ); // IOPoller set ? => wakeup
 	} // uNBIO::uSelectTimeoutHndlr::handler
 

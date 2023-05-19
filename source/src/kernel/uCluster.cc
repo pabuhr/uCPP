@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:34:24 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:20:24 2023
-// Update Count     : 635
+// Last Modified On : Thu May 11 21:09:04 2023
+// Update Count     : 639
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -358,10 +358,6 @@ void uCluster::createCluster( unsigned int stackSize, const char *name ) {
 		defaultReadyQueue = false;
 	} // if
 
-	#ifdef __U_MULTI__
-	NBIO = new uNBIO;
-	#endif // __U_MULTI__
-
 	#ifdef __U_PROFILER__
 	if ( uProfiler::uProfiler_registerCluster ) {
 		(*uProfiler::uProfiler_registerCluster)( uProfiler::profilerInstance, *this );
@@ -398,10 +394,6 @@ uCluster::~uCluster() {
 		(*uProfiler::uProfiler_deregisterCluster)( uProfiler::profilerInstance, *this );
 	} // if
 	#endif // __U_PROFILER__
-
-	#ifdef __U_MULTI__
-	delete NBIO;
-	#endif // __U_MULTI__
 
 	uProcessorDL *pr;
 	for ( uSeqIter<uProcessorDL> iter(processorsOnCluster); iter >> pr; ) {
@@ -474,7 +466,7 @@ int uCluster::select( int fd, int rwe, timeval *timeout ) {
 		Select( uIOaccess &access, int &retcode ) : uIOClosure( access, retcode ) {}
 	} selectClosure( access, retcode );
 
-	return NBIO->select( selectClosure, rwe, timeout );
+	return NBIO.select( selectClosure, rwe, timeout );
 } // uCluster::select
 
 

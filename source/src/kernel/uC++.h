@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  3 18:12:18 2023
-// Update Count     : 6338
+// Last Modified On : Thu May 18 14:48:46 2023
+// Update Count     : 6378
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -116,7 +116,7 @@
 #include <sys/mman.h>									// mmap
 #include <ucontext.h>									// ucontext_t
 
-#include <exception>
+#include <new>											// uNoCtor (also included by exception)
 #include <iosfwd>										// std::filebuf
 #include <pthread.h>									// PTHREAD_CANCEL_*
 #include <unwind-cxx.h>									// struct __cxa_eh_globals
@@ -302,11 +302,12 @@ extern uCluster & uThisCluster();						// forward declaration
 //######################### Profiling ########################
 
 
+#ifdef __U_PROFILER__
 _Task uProfiler;										// forward declaration
-class uProfilerBoot;
 class uProfileTaskSampler;
 class uProfileClusterSampler;
 class uProfileProcessorSampler;
+#endif // __U_PROFILER__
 
 extern "C" {
 	void __cyg_profile_func_enter( void * pcCurrentFunction, void * pcCallingFunction );
@@ -653,16 +654,16 @@ class uKernelModule {
 	static uNoCtor<uProcessorSeq, false> globalProcessors; // global list of processors
 	static uNoCtor<uSpinLock, false> globalClusterLock;	// mutual exclusion for global cluster operations
 	static uNoCtor<uClusterSeq, false> globalClusters;	// global list of cluster
-	static uNoCtor<uDefaultScheduler, false> systemScheduler; // pointer to systen scheduler for system cluster
+	static uNoCtor<uDefaultScheduler, false> systemScheduler; // systen scheduler for system cluster
 	static UPP::uBootTask * bootTask;					// pointer to boot task for global constructors/destructors
 	static uProcessor ** userProcessors;				// pointer to user processors
 	static unsigned int numUserProcessors;				// number of user processors
 	static uNoCtor<uProcessor, false> systemProcessor;
 	static uNoCtor<uCluster, false> systemCluster;
-	static uCluster * userCluster;						// pointer to user cluster
+	static uNoCtor<uCluster, false> userCluster;
 	static char bootTaskStorage[];
 
-	static std::filebuf * cerrFilebuf, * clogFilebuf, * coutFilebuf, * cinFilebuf;
+	static uNoCtor<std::filebuf, false> cerrFilebuf, clogFilebuf, coutFilebuf, cinFilebuf;
 
 	static void rollForward( bool inKernel = false );
 	static void * startThread( void * p );
@@ -756,11 +757,9 @@ class uSpinLock {										// non-yielding spinlock
 		uKernelModule::uKernelModuleData::disableIntSpinLock();
 		value = 1;										// lock
 		#endif // __U_MULTI__
-		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::acquire_
 
 	void inline __attribute__((always_inline)) release_( bool rollforward ) {
-		asm( "" : : : "memory" );						// prevent code movement across barrier
 		assert( value != 0 );
 		uTestReset( value );
 		if ( rollforward ) {							// allow timeslicing during spinning
@@ -768,6 +767,7 @@ class uSpinLock {										// non-yielding spinlock
 		} else {
 			uKernelModule::uKernelModuleData::enableIntSpinLock();
 		} // if
+		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::release_
   public:
 	uSpinLock( const uSpinLock & ) = delete;			// no copy
@@ -784,7 +784,6 @@ class uSpinLock {										// non-yielding spinlock
 
 	void inline __attribute__((always_inline)) acquire() {
 		acquire_( false );
-		asm( "" : : : "memory" );						// prevent code movement across barrier
 	} // uSpinLock::acquire
 
 	bool inline __attribute__((always_inline)) tryacquire() {
@@ -810,7 +809,6 @@ class uSpinLock {										// non-yielding spinlock
 	} // uSpinLock::tryacquire
 
 	void inline __attribute__((always_inline)) release() {
-		asm( "" : : : "memory" );						// prevent code movement across barrier
 		release_( false );
 	} // uSpinLock::release
 }; // uSpinLock
@@ -1442,9 +1440,11 @@ class uBaseCoroutine : public UPP::uMachContext {
 	friend __cxxabiv1::__cxa_eh_globals *__cxxabiv1::__cxa_get_globals_fast() throw();
 	friend __cxxabiv1::__cxa_eh_globals *__cxxabiv1::__cxa_get_globals() throw();
 
+	#ifdef __U_PROFILER__
 	// profiling : necessary for compatibility between non-profiling and profiling
 
 	mutable uProfileTaskSampler * profileTaskSamplerInstance; // pointer to related profiling object
+	#endif // __U_PROFILER__
 
 	void createCoroutine();
 
@@ -2203,9 +2203,11 @@ namespace UPP {
 
 		uBaseTask * lastAcceptor;						// acceptor of current entry for communication between acceptor and caller
 
+		#ifdef __U_PROFILER__
 		// profiling : necessary for compatibility between non-profiling and profiling
 
 		mutable uProfileTaskSampler * profileSerialSamplerInstance; // pointer to related profiling object
+		#endif // __U_PROFILER__
 
 		void resetDestructorStatus();					// allow destructor to be called
 		void enter( unsigned int & mr, uBasePrioritySeq & ml, int mp );
@@ -2608,6 +2610,7 @@ namespace UPP {
 		friend _Task ::uProcessorTask;					// access: terminated
 		friend class ::uProcessor;						// access: uProcessorKernel
 		friend class uNBIO;								// access: kernelClock
+		friend class uNoCtor<uProcessorKernel, false>;	// access: bootProcessorKernel
 
 		// real-time
 
@@ -2634,6 +2637,8 @@ namespace UPP {
 		void nextProcessor( uProcessorDL *& currProc, uProcessorDL * cycleStart );
 		#endif // __U_MULTI__
 		void main();
+
+		static uNoCtor<uProcessorKernel, false> bootProcessorKernel;
 
 		uProcessorKernel();
 		~uProcessorKernel();
@@ -2666,9 +2671,6 @@ class uProcessor {
 	friend class uEventListPop;							// access: contextSwitchHandler
 	friend void * uKernelModule::startThread( void * p ); // acesss: everything
 	friend class UPP::uMachContext;						// access: procTask
-//#if defined( __i386__ ) && ! defined( __old_perfmon__ )
-//	friend class HWCounters;							// access: uPerfctrContext (i386) or uPerfmon_fd (ia64)
-//#endif
 
 	// debugging
 
@@ -2697,6 +2699,7 @@ class uProcessor {
 	UPP::uProcessorKernel processorKer;					// need a uProcessorKernel
 	#endif // __U_MULTI__
 
+	#ifdef __U_PROFILER__
 	// profiling : necessary for compatibility between non-profiling and profiling
 
 	#ifndef __U_MULTI__
@@ -2705,6 +2708,7 @@ class uProcessor {
 	mutable
 	#endif // ! __U_MULTI__
 	uProfileProcessorSampler * profileProcessorSamplerInstance; // pointer to related profiling object
+	#endif // __U_PROFILER__
   protected:
 	uPid_t pid;
 
@@ -2868,11 +2872,13 @@ class uCluster {
 	#if ! defined( __U_MULTI__ )
 	static												// shared info on uniprocessor
 	#endif // ! __U_MULTI__
-	UPP::uNBIO * NBIO;									// non-blocking I/O facilities
+	UPP::uNBIO NBIO;									// non-blocking I/O facilities
 
+	#ifdef __U_PROFILER__
 	// profiling : necessary for compatibility between non-profiling and profiling
 
 	mutable uProfileClusterSampler * profileClusterSamplerInstance; // pointer to related profiling object
+	#endif // __U_PROFILER__
 
 	static void wakeProcessor( uPid_t pid );
 	void processorPause();
@@ -2899,7 +2905,7 @@ class uCluster {
 	void createCluster( unsigned int stackSize, const char * name );
 
 	int select( uIOClosure & closure, int rwe, timeval * timeout = nullptr ) {
-		return NBIO->select( closure, rwe, timeout );
+		return NBIO.select( closure, rwe, timeout );
 	} // uCluster::select
   public:
 	uCluster( const uCluster & ) = delete;				// no copy
@@ -2945,7 +2951,7 @@ class uCluster {
 	int select( int fd, int rwe, timeval * timeout = nullptr );
 
 	int select( int nfds, fd_set * rfd, fd_set * wfd, fd_set * efd, timeval * timeout = nullptr ) {
-		return NBIO->select( nfds, rfd, wfd, efd, timeout );
+		return NBIO.select( nfds, rfd, wfd, efd, timeout );
 	} // uCluster::select
 
 	const uBaseTaskSeq & getTasksOnCluster() {

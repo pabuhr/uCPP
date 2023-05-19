@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  3 18:08:33 2023
-// Update Count     : 3391
+// Last Modified On : Thu May 18 10:59:31 2023
+// Update Count     : 3420
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,6 @@
 #include <uDebug.h>										// access: uDebugWrite
 
 #include <iostream>
-#include <exception>
 #include <dlfcn.h>
 #include <cstdio>
 #include <unistd.h>										// _exit
@@ -220,13 +219,15 @@ uNoCtor<uProcessor, false> uKernelModule::systemProcessor;
 uNoCtor<uCluster, false> uKernelModule::systemCluster;
 UPP::uBootTask * uKernelModule::bootTask = (uBootTask *)&bootTaskStorage;
 uSystemTask * uKernelModule::systemTask = nullptr;
-uCluster * uKernelModule::userCluster = nullptr;
+uNoCtor<uCluster, false> uKernelModule::userCluster;
 uProcessor ** uKernelModule::userProcessors = nullptr;
 unsigned int uKernelModule::numUserProcessors = 0;
 
 char uKernelModule::bootTaskStorage[sizeof(uBootTask)] __attribute__(( aligned (16) ));
 
-std::filebuf * uKernelModule::cerrFilebuf = nullptr, * uKernelModule::clogFilebuf = nullptr, * uKernelModule::coutFilebuf = nullptr, * uKernelModule::cinFilebuf = nullptr;
+uNoCtor<UPP::uProcessorKernel, false> uProcessorKernel::bootProcessorKernel;
+
+uNoCtor<std::filebuf, false> uKernelModule::cerrFilebuf, uKernelModule::clogFilebuf, uKernelModule::coutFilebuf, uKernelModule::cinFilebuf;
 
 // Fake uKernelModule used before uKernelBoot::startup.
 volatile __U_THREAD_LOCAL__ uKernelModule::uKernelModuleData uKernelModule::uKernelModuleBoot;
@@ -254,7 +255,7 @@ bool uHeapControl::prtFree_ = false;
 #define __U_DESTRUCTORPOSN__ 1							// bit 1 is reserved for destructor
 
 #ifndef __U_MULTI__
-uNBIO * uCluster::NBIO = nullptr;
+uNBIO uCluster::NBIO;
 #endif // ! __U_MULTI__
 
 int UPP::uKernelBoot::count = 0;
@@ -2191,7 +2192,6 @@ void UPP::uKernelBoot::startup() {
 	#ifndef __U_MULTI__
 	uProcessor::contextSwitchHandler = new uCxtSwtchHndlr;
 	uProcessor::contextEvent = new uEventNode( *uProcessor::contextSwitchHandler );
-	uCluster::NBIO = new uNBIO;
 	#endif // ! __U_MULTI__
 
 	uProcessor::events.ctor();
@@ -2203,8 +2203,8 @@ void UPP::uKernelBoot::startup() {
 
 	// create processor kernel
 
-	uProcessorKernel * pk = new uProcessorKernel;
-	activeProcessorKernel = pk;
+	uProcessorKernel::bootProcessorKernel.ctor();
+	activeProcessorKernel = &uProcessorKernel::bootProcessorKernel;
 
 	// start boot task, which executes the global constructors and destructors
 
@@ -2242,7 +2242,7 @@ void UPP::uKernelBoot::startup() {
 
 	// create user cluster
 
-	uKernelModule::userCluster = new uCluster( "userCluster" );
+	uKernelModule::userCluster.ctor( "userCluster" );
 
 	// create user processors
 
@@ -2281,14 +2281,14 @@ void UPP::uKernelBoot::startup() {
 
 	// reset filebuf for default streams
 
-	uKernelModule::cerrFilebuf = new std::filebuf( 2, 0 ); // unbufferred
-	std::cerr.rdbuf( uKernelModule::cerrFilebuf );
-	uKernelModule::clogFilebuf = new std::filebuf( 2 );
-	std::clog.rdbuf( uKernelModule::clogFilebuf );
-	uKernelModule::coutFilebuf = new std::filebuf( 1 );
-	std::cout.rdbuf( uKernelModule::coutFilebuf );
-	uKernelModule::cinFilebuf  = new std::filebuf( 0 );
-	std::cin.rdbuf( uKernelModule::cinFilebuf );
+	uKernelModule::cerrFilebuf.ctor( 2, 0 );			// unbufferred
+	std::cerr.rdbuf( &uKernelModule::cerrFilebuf );
+	uKernelModule::clogFilebuf.ctor( 2 );
+	std::clog.rdbuf( &uKernelModule::clogFilebuf );
+	uKernelModule::coutFilebuf.ctor( 1 );
+	std::cout.rdbuf( &uKernelModule::coutFilebuf );
+	uKernelModule::cinFilebuf.ctor( 0 );
+	std::cin.rdbuf( &uKernelModule::cinFilebuf );
 
 	uDEBUGPRT( uDebugPrt( "uKernelBoot::startup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
 						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
@@ -2303,15 +2303,15 @@ void UPP::uKernelBoot::finishup() {
 
 	// Flush standard output streams as required by 27.4.2.1.6
 
-	delete uKernelModule::cinFilebuf;
+	uKernelModule::cinFilebuf.dtor();
 	std::cout.flush();
 	std::cout.rdbuf( nullptr );
-	delete uKernelModule::coutFilebuf;
+	uKernelModule::coutFilebuf.dtor();
 	std::clog.rdbuf( nullptr );
-	delete uKernelModule::clogFilebuf;
+	uKernelModule::clogFilebuf.dtor();
 	std::cerr.flush();
 	std::cerr.rdbuf( nullptr );
-	delete uKernelModule::cerrFilebuf;
+	uKernelModule::cerrFilebuf.dtor();
 
 	// If afterMain is false, control has reached here due to an "exit" call before the end of uMain::main. In this
 	// case, all user destructors have been executed (which is potentially dangerous as external user-tasks may be
@@ -2325,7 +2325,7 @@ void UPP::uKernelBoot::finishup() {
 
 	delete uKernelModule::userProcessors[0];
 	delete [] uKernelModule::userProcessors;
-	delete uKernelModule::userCluster;
+	uKernelModule::userCluster.dtor();
 
 	delete uKernelModule::systemTask;
 	uKernelModule::systemTask = nullptr;
@@ -2358,7 +2358,6 @@ void UPP::uKernelBoot::finishup() {
 	uKernelModule::systemCluster.dtor();
 
 	#ifndef __U_MULTI__
-	delete uCluster::NBIO;
 	delete uProcessor::contextEvent;
 	delete uProcessor::contextSwitchHandler;
 	#endif // ! __U_MULTI__
@@ -2366,7 +2365,7 @@ void UPP::uKernelBoot::finishup() {
 	uProcessor::events.dtor();
 
 	// remove processor kernal coroutine with execution still pending
-	delete activeProcessorKernel;
+	uProcessorKernel::bootProcessorKernel.dtor();
 
 	// add the boot task back so it can remove itself from the list
 	uKernelModule::systemCluster->taskAdd( *(uBaseTask *)uKernelModule::bootTask );

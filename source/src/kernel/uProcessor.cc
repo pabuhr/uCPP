@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  3 18:51:46 2023
-// Update Count     : 2209
+// Last Modified On : Thu May 11 20:41:41 2023
+// Update Count     : 2212
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -221,10 +221,8 @@ void * uKernelModule::startThread( void * p __attribute__(( unused )) ) {
 
 	uDEBUGPRT( uDebugPrt( "startthread, child started\n" ); );
 
-	uProcessor &processor = *(uProcessor *)p;
-	uProcessorKernel *pk = &processor.processorKer;
-
-	activeProcessorKernel = pk;
+	uProcessor & processor = *(uProcessor *)p;
+	activeProcessorKernel = &processor.processorKer;
 
 	// initialize thread members
 
@@ -455,8 +453,8 @@ void uProcessorKernel::main() {
 
 	uProcessorDL *currProc = &(uKernelModule::systemProcessor->globalRef);
 	uProcessorDL *cycleStart = nullptr;
-	bool &okToSelect = uCluster::NBIO->okToSelect;
-	uBaseTask *&IOPoller = uCluster::NBIO->IOPoller;
+	bool &okToSelect = uCluster::NBIO.okToSelect;
+	uBaseTask *&IOPoller = uCluster::NBIO.IOPoller;
 	#endif // ! __U_MULTI__
 
 	#if defined( __U_MULTI__ )
@@ -620,7 +618,7 @@ void uProcessorKernel::main() {
 			// ready queue is empty. Check before calling onBehalfOfUser, because IOPoller may put itself back on the
 			// ready queue, which makes the ready queue appear non-empty.
 
-			if ( readyTask != IOPoller || uCluster::NBIO->descriptors != 0 || ! processor->currCluster_->readyQueueEmpty() ) {
+			if ( readyTask != IOPoller || uCluster::NBIO.descriptors != 0 || ! processor->currCluster_->readyQueueEmpty() ) {
 				spin = 0;								// set number of spins back to zero
 			} // if
 			#endif // __U_MULTI__

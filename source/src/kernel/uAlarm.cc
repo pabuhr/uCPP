@@ -7,8 +7,8 @@
 // Author           : Philipp E. Lim
 // Created On       : Thu Jan  4 17:34:00 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:12:08 2023
-// Update Count     : 324
+// Last Modified On : Fri May 12 07:02:56 2023
+// Update Count     : 325
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -305,7 +305,7 @@ bool uEventListPop::operator>>( uEventNode *&node ) {
 		events->eventlist.insertBef( node, event );		// insert into sorted position in list
 	} // if
 
-	uCxtSwtchHndlr *cxtSwEvent = dynamic_cast<uCxtSwtchHndlr *>(node->sigHandler);
+	uCxtSwtchHndlr * cxtSwEvent = dynamic_cast<uCxtSwtchHndlr *>(node->sigHandler);
 	if ( cxtSwEvent != nullptr ) {						// ContextSwitch event ?
 #if defined( __U_MULTI__ )
 		if ( &cxtSwEvent->processor == &uKernelModule::systemProcessor ) {
