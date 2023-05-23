@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec  3 09:12:10 2022
-// Update Count     : 1029
+// Last Modified On : Tue May 23 08:26:36 2023
+// Update Count     : 1031
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -307,6 +307,10 @@ int main( int argc, char * argv[] ) {
 	#ifdef __x86_64__
 	args[nargs++] = "-mcx16";							// allow double-wide CAS
 	#endif // __x86_64__
+
+	#ifdef __arm_64__
+	args[nargs++] = "-mno-outline-atomics";				// use ARM LL/SC instructions for atomics
+	#endif // __arm_64__
 
 	uDEBUGPRT(
 		cerr << "args:";
