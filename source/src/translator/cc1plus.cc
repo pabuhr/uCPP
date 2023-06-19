@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 16 10:55:30 2021
-// Update Count     : 328
+// Last Modified On : Fri Jun  9 11:20:00 2023
+// Update Count     : 329
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -61,7 +61,7 @@ static void checkEnv1() {								// stage 1
 
 	for ( int i = 0; environ[i]; i += 1 ) {
 		string arg( environ[i] );
-		uDEBUGPRT( cerr << "env arg:\"" << arg << "\"" << endl; );
+		uDEBUGPRT( cerr << "env arg[" << i << "]:\"" << arg << "\"" << endl; );
 
 		if ( prefix( arg, __UPP_FLAGPREFIX__ ) ) {
 			string val( arg.substr( arg.find_first_of( "=" ) + 1 ) );
@@ -80,7 +80,7 @@ static void checkEnv2( const char * args[], int & nargs ) { // stage 2
 
 	for ( int i = 0; environ[i]; i += 1 ) {
 		string arg( environ[i] );
-		uDEBUGPRT( cerr << "env arg:\"" << arg << "\"" << endl; );
+		uDEBUGPRT( cerr << "env arg[" << i << "]:\"" << arg << "\"" << endl; );
 
 		if ( prefix( arg, __UPP_FLAGPREFIX__ ) ) {
 			string val( arg.substr( arg.find_first_of( "=" ) + 1 ) );
@@ -352,7 +352,8 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 				// strip inappropriate flags with an argument
 
-			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" || arg == "-dumpbase" || arg == "-dumpdir" ) {
+			} else if ( arg == "-auxbase" || arg == "-auxbase-strip" ||
+						arg == "-dumpbase" || arg == "-dumpbase-ext" || arg == "-dumpdir" ) {
 				i += 1;
 				uDEBUGPRT( cerr << "arg:\"" << argv[i] << "\"" << endl; );
 

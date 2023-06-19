@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Richard C. Bilson 2004
 // 
@@ -7,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May  3 18:05:39 2023
-// Update Count     : 164
+// Last Modified On : Wed Jun 14 22:24:10 2023
+// Update Count     : 170
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,7 +22,6 @@
 // You should  have received a  copy of the  GNU Lesser General  Public License
 // along  with this library.
 // 
-
 
 #pragma once
 
@@ -73,42 +71,67 @@ static inline __attribute__((always_inline)) void uPause() { // pause to prevent
 } // uPause
 
 
-template< typename T > static inline __attribute__((always_inline)) bool uTestSet( volatile T & lock ) {
+template< typename T > static inline __attribute__((always_inline)) bool uAtomicLoad( volatile T & val, int memorder = __ATOMIC_SEQ_CST ) {
+	return __atomic_load_n( &val, memorder );
+} // uAtomicLoad
+
+template< typename T > static inline __attribute__((always_inline)) bool uAtomicStore( volatile T & val, T replace, int memorder = __ATOMIC_SEQ_CST ) {
+	return __atomic_store_n( &val, replace, memorder );
+} // uAtomicStore
+
+
+template< typename T > static inline __attribute__((always_inline)) bool uTestSet( volatile T & lock, int memorder = __ATOMIC_ACQUIRE ) {
 	//return __sync_lock_test_and_set( &lock, 1 );
-	return __atomic_test_and_set( &lock, __ATOMIC_ACQUIRE );
+	return __atomic_test_and_set( &lock, memorder );
 } // uTestSet
 
-template< typename T > static inline __attribute__((always_inline)) void uTestReset( volatile T & lock ) {
+template< typename T > static inline __attribute__((always_inline)) void uTestReset( volatile T & lock, int memorder = __ATOMIC_RELEASE ) {
 	//__sync_lock_release( &lock );
-	__atomic_clear( &lock, __ATOMIC_RELEASE );
+	__atomic_clear( &lock, memorder );
 } // uTestReset
 
 
-template< typename T > static inline __attribute__((always_inline)) T uFetchAssign( volatile T & loc, T replacement ) {
-	//return __sync_lock_test_and_set( &loc, replacement );
-	return __atomic_exchange_n( &loc, replacement, __ATOMIC_ACQUIRE );
+template< typename T > static inline __attribute__((always_inline)) T uFetchAssign( volatile T & assn, T replace, int memorder = __ATOMIC_ACQUIRE ) {
+	//return __sync_lock_test_and_set( &assn, replace );
+	return __atomic_exchange_n( &assn, replace, memorder );
 } // uFetchAssign
 
 
-template< typename T > static inline __attribute__((always_inline)) T uFetchAdd( volatile T & counter, int increment ) {
+template< typename T > static inline __attribute__((always_inline)) T uFetchAdd( volatile T & counter, int increment, int memorder = __ATOMIC_SEQ_CST ) {
 	//return __sync_fetch_and_add( &counter, increment );
-	return __atomic_fetch_add( &counter, increment, __ATOMIC_SEQ_CST );
-} // uFetchAdd
-
-template< typename T > static inline __attribute__((always_inline)) T uFetchAdd( volatile T & counter, int increment, int order ) {
-	//return __sync_fetch_and_add( &counter, increment );
-	return __atomic_fetch_add( &counter, increment, order );
+	return __atomic_fetch_add( &counter, increment, memorder );
 } // uFetchAdd
 
 
-template< typename T > static inline __attribute__((always_inline)) bool uCompareAssign( volatile T & loc, T comp, T replacement ) {
-	//return __sync_bool_compare_and_swap( &loc, comp, replacement );
-	return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssign( volatile T & assn, T comp, T replace, int memorder1, int memorder2 ) {
+	return __atomic_compare_exchange_n( &assn, &comp, replace, false, memorder1, memorder2 );
+} // uCompareAssign
+
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssign( volatile T & assn, T comp, T replace ) {
+	return uCompareAssign( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+} // uCompareAssign
+// Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80878
+template<> inline __attribute__((always_inline)) bool uCompareAssign( volatile __int128 & assn, __int128 comp, __int128 replace ) {
+	return __sync_bool_compare_and_swap( &assn, comp, replace );
+	// return __atomic_compare_exchange_n( &assn, &comp, replace, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssign
 
 
-template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & loc, T & comp, T replacement ) {
-	return __atomic_compare_exchange_n( &loc, &comp, replacement, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & assn, T & comp, T replace, int memorder1, int memorder2 ) {
+	return __atomic_compare_exchange_n( &assn, &comp, replace, false, memorder1, memorder2 );
+} // uCompareAssignValue
+
+template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & assn, T & comp, T replace ) {
+	return uCompareAssignValue( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+} // uCompareAssignValue
+// Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80878
+template<> inline __attribute__((always_inline)) bool uCompareAssignValue( volatile __int128 & assn, __int128 & comp, __int128 replace ) {
+	__int128 temp = comp;
+	__int128 old = __sync_val_compare_and_swap( &assn, comp, replace );
+	return old == temp ? true : ( comp = old, false );
+	// return __atomic_compare_exchange_n( &assn, &comp, replace, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
 
 

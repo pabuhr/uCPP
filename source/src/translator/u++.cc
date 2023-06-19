@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue May 23 08:26:36 2023
-// Update Count     : 1031
+// Last Modified On : Fri Jun  9 11:18:24 2023
+// Update Count     : 1035
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -304,13 +304,17 @@ int main( int argc, char * argv[] ) {
 		} // if
 	} // for
 
-	#ifdef __x86_64__
-	args[nargs++] = "-mcx16";							// allow double-wide CAS
-	#endif // __x86_64__
+	if ( tcpu == "x86_64" ) {
+		args[nargs++] = "-mcx16";						// allow double-wide CAS
+	} // if
 
-	#ifdef __arm_64__
-	args[nargs++] = "-mno-outline-atomics";				// use ARM LL/SC instructions for atomics
-	#endif // __arm_64__
+	// ARM -mno-outline-atomics => use LL/SC instead of calls to atomic routines: __aarch64_swp_acq_rel, __aarch64_cas8_acq_rel
+	// ARM -march=armv8.2-a+lse => generate Arm LSE extension instructions SWAP and CAS
+	// https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/making-the-most-of-the-arm-architecture-in-gcc-10
+	if ( tcpu == "arm_64" ) {
+		args[nargs++] = "-mno-outline-atomics";			// use ARM LL/SC instructions for atomics
+		// args[nargs++] = "-march=armv8.2-a+lse";			// use ARM atomics instructions
+	} // if
 
 	uDEBUGPRT(
 		cerr << "args:";
@@ -525,7 +529,7 @@ int main( int argc, char * argv[] ) {
 		if ( multi ) {
 			libs[nlibs++] = "-pthread";
 		} // if
-		if ( tcpu == "x86_64" ) {
+		if ( tcpu == "x86_64" || tcpu == "arm_64" ) {
 			libs[nlibs++] = "-latomic";					// allow double-wide CAS
 		} // if
 

@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Aug 29 21:39:45 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 26 15:02:30 2022
-// Update Count     : 31
+// Last Modified On : Sat Jun 10 18:34:28 2023
+// Update Count     : 37
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -24,12 +23,16 @@
 // along  with this library.
 // 
 
-#include <uC++.h>
 #include <uRWLock.h>
 #include <iostream>
 using namespace std;
 
-const unsigned int NoOfTimes = 100000;
+const unsigned int NoOfTimes =
+#ifdef __U_STATISTICS__
+	100'000;
+#else
+	1'000'000;
+#endif // __U_STATISTICS__
 const unsigned int Work = 100;
 
 uRWLock rwlock;
@@ -69,7 +72,7 @@ _Task Writer {
 
 int main() {
 	enum { NoOfReaders = 6, NoOfWriters = 2 };
-	uProcessor p[8];
+	uProcessor p[NoOfReaders + NoOfWriters];
 	{
 		Writer writers[NoOfWriters];
 		Reader readers[NoOfReaders];
@@ -78,5 +81,5 @@ int main() {
 } // main
 
 // Local Variables: //
-// compile-command: "../../bin/u++ -multi -g RWLock.cc" //
+// compile-command: "../../bin/u++ -Wall -Wextra -O3 -multi -nodebug -g RWLock.cc" //
 // End: //

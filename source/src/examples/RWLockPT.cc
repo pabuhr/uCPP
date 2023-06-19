@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2016
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 23:01:36 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 20 23:06:52 2022
-// Update Count     : 3
+// Last Modified On : Fri Jun  9 17:28:06 2023
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,7 +27,7 @@
 #include <cstdlib>
 #include <pthread.h>
 
-const unsigned int NoOfTimes = 100000;
+const unsigned int NoOfTimes = 1'000'000;
 const unsigned int Work = 100;
 
 pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
@@ -39,6 +38,7 @@ void * reader( void * ) {
 		for ( volatile unsigned int b = 0; b < Work; b += 1 );
 		pthread_rwlock_unlock( &rwlock );
 	} // for
+	return nullptr;
 } // reader
 
 void *writer( void * ) {
@@ -49,6 +49,7 @@ void *writer( void * ) {
 		pthread_rwlock_unlock( &rwlock );
 		for ( volatile unsigned int b = 0; b < Work; b += 1 ); // do work
 	} // for
+	return nullptr;
 } // writer
 
 int main() {
@@ -92,5 +93,5 @@ int main() {
 } // main
 
 // Local Variables: //
-// compile-command: "g++ -g -pthread RWLock2.cc" //
+// compile-command: "g++ -Wall -Wextra -O3 -g RWLockPT.cc -pthread" //
 // End: //
