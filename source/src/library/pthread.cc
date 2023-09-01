@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar  2 10:54:44 2023
-// Update Count     : 1134
+// Last Modified On : Wed Aug  9 20:23:38 2023
+// Update Count     : 1198
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -56,8 +56,9 @@ namespace UPP {
 	}; // Pthread_keys
 
 	// Create storage separately to ensure no constructors are called.
-	char u_pthread_keys_storage[sizeof(Pthread_keys) * PTHREAD_KEYS_MAX] __attribute__((aligned (16))) = {0};
-	#define u_pthread_keys ((Pthread_keys *)u_pthread_keys_storage)
+//	char u_pthread_keys_storage[sizeof(Pthread_keys) * PTHREAD_KEYS_MAX] __attribute__((aligned (16))) = {0};
+//	#define u_pthread_keys ((Pthread_keys *)u_pthread_keys_storage)
+	static uNoCtor<Pthread_keys> u_pthread_keys[sizeof(Pthread_keys) * 8 * 1024 /*PTHREAD_KEYS_MAX*/];
 
 	static pthread_mutex_t u_pthread_keys_lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_mutex_t u_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -241,21 +242,12 @@ namespace UPP {
 
 		void * (* start_func)( void * );				// thread starting routine
 		void * arg;										// thread parameter
-
-		static unsigned int pthreadCount;
-		static uOwnerLock pthreadCountLock;
 	  public:
 		uPthread( pthread_t * threadId, void * (* start_func)( void * ), const pthread_attr_t * attr, void * arg ) : ::uPthreadable( attr ), start_func( start_func ), arg( arg ) {
-			pthreadCountLock.acquire();
-			pthreadCount += 1;
-			pthreadCountLock.release();
 			*threadId = pthreadId();					// publish thread id
 		} // uPthread::uPthread
 
 		~uPthread() {
-			pthreadCountLock.acquire();
-			pthreadCount -= 1;
-			pthreadCountLock.release();
 		} // uPthread::~uPthread
 
 		_Nomutex void finishUp() {
@@ -276,10 +268,6 @@ namespace UPP {
 			} // CancelSafeFinish::~CancelSafeFinish
 		}; // CancelSafeFinish
 	}; // uPthread
-
-
-	unsigned int uPthread::pthreadCount;
-	uOwnerLock uPthread::pthreadCountLock;
 
 
 	//######################### PthreadPid (cont.) ##################
@@ -757,25 +745,18 @@ extern "C" {
 		for ( int attempts = 0; attempts < PTHREAD_DESTRUCTOR_ITERATIONS && destcalled ; attempts += 1 ) {
 			destcalled = false;
 			for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) { // remove each value from key list
-				uDEBUGPRT(
-					if ( values[i].in_use ) {
-						uDebugPrt( "pthread_deletespecific_, value[%d].in_use:%d, value:%p\n",
-								   i, values[i].in_use, values[i].value );
-					} // if
-				);
 				if ( values[i].in_use ) {
+					uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, value[%d].in_use:%d, value:%p\n", i, values[i].in_use, values[i].value ); );
 					Pthread_values &entry = values[i];
 					entry.in_use = false;
-					u_pthread_keys[i].threads.remove( &entry );
-					if ( u_pthread_keys[i].destructor != nullptr && entry.value != nullptr ) {
+					u_pthread_keys[i]->threads.remove( &entry );
+					if ( u_pthread_keys[i]->destructor != nullptr && entry.value != nullptr ) {
 						void * data = entry.value;
 						entry.value = nullptr;
 						uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p begin\n",
 											  &uThisTask(), u_pthread_keys[i].destructor, data ); );
 						destcalled = true;
-						pthread_mutex_unlock( &u_pthread_keys_lock );
-						u_pthread_keys[i].destructor( data );
-						pthread_mutex_lock( &u_pthread_keys_lock );
+						u_pthread_keys[i]->destructor( data );
 						uDEBUGPRT( uDebugPrt( "pthread_deletespecific_, task:%p, destructor:%p, value:%p end\n",
 											  &uThisTask(), u_pthread_keys[i].destructor, data ); );
 					} // if
@@ -791,9 +772,9 @@ extern "C" {
 		uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%p, destructor:%p) enter task:%p\n", key, destructor, &uThisTask() ); );
 		pthread_mutex_lock( &u_pthread_keys_lock );
 		for ( int i = 0; i < PTHREAD_KEYS_MAX; i += 1 ) {
-			if ( ! u_pthread_keys[i].in_use ) {
-				u_pthread_keys[i].in_use = true;
-				u_pthread_keys[i].destructor = destructor;
+			if ( ! u_pthread_keys[i]->in_use ) {
+				u_pthread_keys[i]->in_use = true;
+				u_pthread_keys[i]->destructor = destructor;
 				pthread_mutex_unlock( &u_pthread_keys_lock );
 				*key = i;
 				uDEBUGPRT( uDebugPrt( "pthread_key_create(key:%d, destructor:%p) exit task:%p\n", *key, destructor, &uThisTask() ); );
@@ -808,17 +789,17 @@ extern "C" {
 	int pthread_key_delete( pthread_key_t key ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_key_delete(key:0x%x) enter task:%p\n", key, &uThisTask() ); );
 		pthread_mutex_lock( &u_pthread_keys_lock );
-		if ( key >= PTHREAD_KEYS_MAX || ! u_pthread_keys[key].in_use ) {
+		if ( key >= PTHREAD_KEYS_MAX || ! u_pthread_keys[key]->in_use ) {
 			pthread_mutex_unlock( &u_pthread_keys_lock );
 			return EINVAL;
 		} // if
-		u_pthread_keys[key].in_use = false;
-		u_pthread_keys[key].destructor = nullptr;
+		u_pthread_keys[key]->in_use = false;
+		u_pthread_keys[key]->destructor = nullptr;
 
 		// Remove key from all threads with a value.
 
 		Pthread_values * p;
-		uSequence<Pthread_values> &head = u_pthread_keys[key].threads;
+		uSequence<Pthread_values> &head = u_pthread_keys[key]->threads;
 		for ( uSeqIter<Pthread_values> iter( head ); iter >> p; ) {
 			p->in_use = false;
 			head.remove( p );
@@ -845,7 +826,7 @@ extern "C" {
 		} // if
 
 		pthread_mutex_lock( &u_pthread_keys_lock );
-		if ( key >= PTHREAD_KEYS_MAX || ! u_pthread_keys[key].in_use ) {
+		if ( key >= PTHREAD_KEYS_MAX || ! u_pthread_keys[key]->in_use ) {
 			pthread_mutex_unlock( &u_pthread_keys_lock );
 			return EINVAL;
 		} // if
@@ -853,7 +834,7 @@ extern "C" {
 		Pthread_values &entry = values[key];
 		if ( ! entry.in_use ) {
 			entry.in_use = true;
-			u_pthread_keys[key].threads.add( &entry );
+			u_pthread_keys[key]->threads.add( &entry );
 		} // if
 		entry.value = (void *)value;
 		pthread_mutex_unlock( &u_pthread_keys_lock );
@@ -888,9 +869,9 @@ extern "C" {
 		return 0;
 	} // pthread_sigmask
 
-	int pthread_kill( pthread_t thread __attribute__(( unused )), int sig ) __THROW {
+	int pthread_kill( pthread_t /* thread */, int sig ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_kill( 0x%lx, %d )\n", thread, sig ); );
-		assert( thread != NOT_A_PTHREAD );
+		// assert( thread != NOT_A_PTHREAD );
 	  if ( sig == 0 ) {
 			return 0;
 		} else {
@@ -905,16 +886,12 @@ extern "C" {
 
 	pthread_t pthread_self( void ) __THROW {
 		uDEBUGPRT( uDebugPrt( "pthread_self enter task:%p\n", &uThisTask() ); );
-		#ifdef __U_DEBUG__
 //		uPthreadable * p = dynamic_cast<uPthreadable *>(&uThisTask());
 		uPthreadable * p = (uPthreadable *)&uThisTask();
 		if ( p == nullptr ) {
 			return NOT_A_PTHREAD;
 		} // if
 		return p->pthreadId();
-		#else
-		return ((uPthreadable *)&uThisTask())->pthreadId();
-		#endif // __U_DEBUG__
 	} // pthread_self
 
 
@@ -1334,21 +1311,21 @@ extern "C" {
 
 	// Use the pthread versions.
 
-	// int pthread_setaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
-	// 	return 0;
-	// } // pthread_setaffinity_np
+	int pthread_setaffinity_np( pthread_t /* thread */, size_t /* cpusetsize */, const cpu_set_t * /* cpuset */ ) __THROW {
+	 	abort( "pthread_setaffinity_np not directly accessible" );
+	} // pthread_setaffinity_np
 
-	// int pthread_getaffinity_np( pthread_t /* __th */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
-	// 	return 0;
-	// } // pthread_getaffinity_np
+	int pthread_getaffinity_np( pthread_t /* thread */, size_t /* cpusetsize */, cpu_set_t * /* cpuset */ ) __THROW {
+	 	abort( "pthread_getaffinity_np not directly accessible" );
+	} // pthread_getaffinity_np
 
-	// int pthread_attr_setaffinity_np( pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, __const cpu_set_t * /* __cpuset */ ) __THROW {
-	// 	return 0;
-	// } // pthread_attr_setaffinity_np
+	int pthread_attr_setaffinity_np( pthread_attr_t * /* attr */, size_t /* cpusetsize */, const cpu_set_t * /* cpuset */ ) __THROW {
+	 	abort( "pthread_attr_setaffinity_np not directly accessible" );
+	} // pthread_attr_setaffinity_np
 
-	// int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
-	// 	return 0;
-	// } // pthread_attr_getaffinity_np
+	int pthread_attr_getaffinity_np( __const pthread_attr_t * /* __attr */, size_t /* __cpusetsize */, cpu_set_t * /* __cpuset */ ) __THROW {
+	 	abort( "pthread_attr_getaffinity_np not directly accessible" );
+	} // pthread_attr_getaffinity_np
 
 	//######################### Cancellation #########################
 

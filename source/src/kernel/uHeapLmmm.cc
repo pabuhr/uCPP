@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:23:52 2023
-// Update Count     : 2342
+// Last Modified On : Wed Aug  2 17:34:59 2023
+// Update Count     : 2356
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -307,9 +307,11 @@ static const unsigned int bucketSizes[] = {				// different bucket sizes
 static_assert( Heap::NoBucketSizes == sizeof(bucketSizes) / sizeof(bucketSizes[0] ), "size of bucket array wrong" );
 
 
-// Thread-local storage is allocated lazily when the storage is accessed.
+// Thread-local storage is allocated lazily when the storage is accessed. No tls_model("initial-exec") because uC++ is
+// statically linked.
 static __U_THREAD_LOCAL__ size_t PAD1 CALIGN __attribute__(( unused )); // protect false sharing
 static __U_THREAD_LOCAL__ Heap * heapManager CALIGN;
+static __U_THREAD_LOCAL__ bool heapManagerBootFlag CALIGN = false;
 static __U_THREAD_LOCAL__ size_t PAD2 CALIGN __attribute__(( unused )); // protect further false sharing
 
 
@@ -426,6 +428,7 @@ Heap * HeapMaster::getHeap() {
 		heap->heapReserve = 0;
 		heap->nextFreeHeapManager = nullptr;
 		uDEBUG( heap->allocUnfreed = 0; );
+		heapManagerBootFlag = true;
 	} // if
 
 	return heap;
@@ -437,6 +440,8 @@ void heapManagerCtor() {
 	if ( UNLIKELY( ! heapMasterBootFlag ) ) HeapMaster::heapMasterCtor();
 
 	heapMaster.mgrLock->acquire_( true );				// protect heapMaster counters
+
+	assert( ! heapManagerBootFlag );
 
 	// get storage for heap manager
 
@@ -453,6 +458,8 @@ void heapManagerCtor() {
 
 __attribute__(( visibility ("hidden") ))
 void heapManagerDtor() {
+  if ( UNLIKELY( ! heapManagerBootFlag ) ) return;		// thread never used ?
+
 	heapMaster.mgrLock->acquire_( true );				// protect heapMaster counters
 
 	// place heap on list of free heaps for reusability
@@ -460,11 +467,13 @@ void heapManagerDtor() {
 	heapMaster.freeHeapManagersList = heapManager;
 
 	#ifdef __U_STATISTICS__
+	heapMaster.stats += heapManager->stats;				// retain this heap's statistics
 	heapMaster.threads_exited += 1;
 	#endif // __U_STATISTICS__
 
 	// Do not set heapManager to NULL because it is used after uC++ is shutdown but before the program shuts down.
 
+	heapManagerBootFlag = false;
 	heapMaster.mgrLock->release_( true );
 } // heapManagerDtor
 
@@ -473,19 +482,18 @@ void heapManagerDtor() {
 
 
 void UPP::uHeapControl::startup() {						// singleton => called once at start of program
-	assert( heapManager );
-	#ifdef __U_DEBUG__
-	uDEBUGPRT( uDebugPrt( "startup %jd set to zero\n", heapManager->allocUnfreed ); );
-	heapManager->allocUnfreed = 0;						// clear prior allocation counts
-	#endif // __U_DEBUG__
-
-	#ifdef __U_STATISTICS__
-	HeapStatisticsCtor( heapManager->stats );			// clear statistic counters
-	#endif // __U_STATISTICS__
+	if ( ! heapMasterBootFlag ) heapManagerCtor();		// sanity check
+	uDEBUG( heapManager->allocUnfreed = 0; );			// clear prior allocation counts
 } // uHeapControl::startup
 
 
 void UPP::uHeapControl::finishup() {					// singleton => called once at end of program
+	#ifdef __U_STATISTICS__
+	if ( getenv( "UPP_MALLOC_STATS" ) ) {				// check for external printing
+		malloc_stats();
+	} // if
+	#endif // __U_STATISTICS__
+
 	#ifdef __U_DEBUG__
 	// allocUnfreed is set to 0 when a heap is created and it accumulates any unfreed storage during its multiple thread
 	// usages.  At the end, add up each heap allocUnfreed value across all heaps to get the total unfreed storage.
@@ -805,8 +813,7 @@ static void * manager_extend( size_t size ) {
 
 
 #define BOOT_HEAP_MANAGER \
-	if ( UNLIKELY( ! uKernelModule::kernelModuleInitialized ) ) { \
-		uKernelModule::startup(); \
+  	if ( UNLIKELY( ! heapMasterBootFlag ) ) { \
 		heapManagerCtor(); /* trigger for first heap */ \
 	} /* if */
 
@@ -822,9 +829,18 @@ static void * manager_extend( size_t size ) {
 #define STAT_0_CNT( counter )
 #endif // __U_STATISTICS__
 
+// Uncomment to get allocation addresses for a 0-sized allocation rather than a null pointer.
+//#define __NONNULL_0_ALLOC__
+#if ! defined( __NONNULL_0_ALLOC__ )
+#define __NULL_0_ALLOC__ UNLIKELY( size == 0 ) ||		/* 0 BYTE ALLOCATION RETURNS NULL POINTER */
+#else
+#define __NULL_0_ALLOC__
+#endif // __NONNULL_0_ALLOC__
+
 #define PROLOG( counter, ... ) \
 	BOOT_HEAP_MANAGER; \
-	if ( UNLIKELY( size == 0 ) ||						/* 0 BYTE ALLOCATION RETURNS NULL POINTER */ \
+	if ( \
+		__NULL_0_ALLOC__ \
 		UNLIKELY( size > ULONG_MAX - sizeof(Heap::Storage) ) ) { /* error check */ \
 		STAT_0_CNT( counter ); \
 		__VA_ARGS__; \
@@ -1207,7 +1223,7 @@ extern "C" {
 		headers( "resize", oaddr, header, freeHead, bsize, oalign );
 
 		size_t odsize = DataStorage( bsize, oaddr, header ); // data storage available in bucket
-		// same size, DO NOT preserve STICKY PROPERTIES.
+		// same size, DO NOT PRESERVE STICKY PROPERTIES.
 		if ( oalign == uAlign() && size <= odsize && odsize <= size * 2 ) { // allow 50% wasted storage for smaller size
 			ClearZeroFillBit( header );					// no alignment and turn off 0 fill
 			#ifdef __U_DEBUG__
@@ -1220,7 +1236,7 @@ extern "C" {
 			return oaddr;
 		} // if
 
-		// change size, DO NOT preserve STICKY PROPERTIES.
+		// change size, DO NOT PRESERVE STICKY PROPERTIES.
 		doFree( oaddr );								// free previous storage
 
 		return doMalloc( size STAT_ARG( HeapStatistics::RESIZE ) ); // create new area
@@ -1561,7 +1577,7 @@ void * resize( void * oaddr, size_t nalign, size_t size ) __THROW {
 		return resize( oaddr, size );					// duplicate special case checks
 	} // if
 
-	// change size, DO NOT preserve STICKY PROPERTIES.
+	// change size, DO NOT PRESERVE STICKY PROPERTIES.
 	doFree( oaddr );									// free previous storage
 	return memalignNoStats( nalign, size STAT_ARG( HeapStatistics::RESIZE ) ); // create new aligned area
 } // resize

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:25:26 2023
-// Update Count     : 972
+// Last Modified On : Mon Aug 14 18:25:57 2023
+// Update Count     : 973
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -79,7 +79,7 @@ namespace UPP {
 				This.main();							// start coroutine's "main" routine
 			} catch( uBaseCoroutine::UnwindStack & ex ) { // cancellation to force stack unwind
 				ex.exec_dtor = false;					// defuse the unwinder
-				This.notHalted_ = false;					// terminate coroutine
+				This.notHalted_ = false;				// terminate coroutine
 			} catch( uBaseCoroutine::UnhandledException & ex ) {
 				This.forwardUnhandled( ex );			// continue forwarding
 			} catch( uBaseEvent & ex ) {				// uC++ raise ?

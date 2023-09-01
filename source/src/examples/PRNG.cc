@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 20:47:53 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 13:56:11 2023
-// Update Count     : 275
+// Last Modified On : Tue Aug  8 07:43:29 2023
+// Update Count     : 283
 // 
 
 #include <iostream>
@@ -26,7 +26,9 @@ using namespace std;
 #define PRNG PRNG32
 #endif // __x86_64__
 
+#ifndef TIME
 #define TIME
+#endif
 
 #ifdef TIME												// use -O2 -nodebug
 #define STARTTIME start = uClock::getCPUTime();
@@ -123,8 +125,13 @@ static void dummy( uBaseTask & th ) {
 size_t malloc_unfreed() { return 16621; }				// unfreed storage from locale
 
 int main() {
-	locale loc( getenv("LANG") );
-	cout.imbue( loc );
+	try {
+		locale loc( getenv("LANG") );
+		cout.imbue( loc );								// print numbers with separators (',')
+	} catch( runtime_error & ) {
+		cerr << "Invalid locale language name \"" << getenv("LANG") << endl;
+		exit( EXIT_FAILURE );
+	} // try
 
 	enum { TASKS = 4 };
 	uTime start;

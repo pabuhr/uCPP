@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed May  3 22:29:50 2023
-%% Update Count     : 8548
+%% Last Modified On : Thu Aug 31 22:40:25 2023
+%% Update Count     : 8559
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -5981,7 +5981,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item when an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} statement begins/ends,
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} statement ends,
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEnableCancel}}}\endlgrinde\LGend{} object is instantiated (see \VRef{s:EnablingDisablingCancellation}),
-\item before a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed,
+\item before a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed (needed for immediate cancellation),
 \item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{Failure}}}\endlgrinde\LGend{},
 \item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}}}\endlgrinde\LGend{},
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uLock}::\V{acquire}}}\endlgrinde\LGend{} spins because of yielding,
@@ -10667,6 +10667,7 @@ If the allocation is not aligned or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{addr}
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}(\0\V{fd}\0)}}\endlgrinde\LGend{}]\index{malloc_stats_fd@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}}}\endlgrinde\LGend{}} set file-descriptor number for printing memory-allocation statistics (default \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{STDERR\_FILENO}}}\endlgrinde\LGend{}).
 This file descriptor is used implicitly by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}}}\endlgrinde\LGend{}.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats}()}}\endlgrinde\LGend{}]\index{malloc_stats@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats}}}\endlgrinde\LGend{}} print memory-allocation statistics on the file-descriptor set by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}}}\endlgrinde\LGend{}.
+If the shell variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UPP\_MALLOC\_STATS}}}\endlgrinde\LGend{}\index{UPP_MALLOC_STATS@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UPP\_MALLOC\_STATS}}}\endlgrinde\LGend{}} is defined, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats}}}\endlgrinde\LGend{} is implicitly called at program termination.
 \item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}(\0\V{options},\0\V{stream}\0)}}\endlgrinde\LGend{}]\index{malloc_info@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_info}}}\endlgrinde\LGend{}} print memory-allocation statistics as an XML string on the specified file-descriptor set by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{malloc\_stats\_fd}}}\endlgrinde\LGend{}.
 The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{options}}}\endlgrinde\LGend{} argument must be zero.
 \end{description}
@@ -10974,6 +10975,37 @@ For potentially large arrays, increase the coroutine/task stack size (see \VRef{
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
 \L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}].\V{ctor}(\0\V{i}\0);}}
 \L{\LB{}\Tab{4}{\}}}
+\endlgrinde\LGend
+
+
+\chapter{String to Intger}
+\label{s:StringToIntger}
+\index{string to intger}%
+
+The \CC \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stoi}}}\endlgrinde\LGend{} routine does not handle an erroneous string of the form \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\"123ABC\"\SE{}}}\endlgrinde\LGend{} correctly, returning a valid integer result instead of raising an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{invalid\_argument}}}\endlgrinde\LGend{} exception.
+The \uC \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convert}}}\endlgrinde\LGend{} routine:
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{intmax\_t}\0\V{convert}(\0\K{const}\0\K{char}\0\*\0\V{str}\0);}}
+\endlgrinde\LGend
+correctly handles erroneous string-to-integer conversions.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\#include}\0\<\V{iostream}\>}}
+\L{\LB{\K{\#include}\0\<\V{string}\>}}
+\L{\LB{\K{using}\0\K{namespace}\0\V{std};}}
+\L{\LB{}}
+\L{\LB{\K{int}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{4}{\K{try}\0\{}}
+\L{\LB{}\Tab{8}{\V{intmax\_t}\0\V{i}\0=\0\V{convert}(\0\S{}\"123\"\SE{}\0);}}
+\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\V{i}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{8}{\V{i}\0=\0\V{convert}(\0\S{}\"123ABC\"\SE{}\0);}}
+\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\V{i}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\}\0\K{catch}(\0\V{invalid\_argument}\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\S{}\"invalid\0integer\"\SE{}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\}}}
+\L{\LB{}}
+\L{\LB{123}}
+\L{\LB{\V{invalid}\0\V{integer}}}
 \endlgrinde\LGend
 
 
@@ -11626,6 +11658,8 @@ The server can deal with multiple simultaneous clients.
 
 \end{document}
 
+C++ fiber proposal
+https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p0876r11.pdf
 
 % Local Variables: %
 % tab-width: 4 %

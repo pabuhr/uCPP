@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 19 16:32:13 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:28:53 2023
-// Update Count     : 1009
+// Last Modified On : Fri Jul  7 11:53:29 2023
+// Update Count     : 1010
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -133,7 +133,7 @@ namespace UPP {
 		} // if
 		#endif // __U_STATISTICS__
 
-		int terrno = errno;								// preserve errno at point of interrupt
+		decltype(errno) terrno = errno;					// preserve errno at point of interrupt
 
 	  if ( uKernelModule::uKernelModuleBoot.RFinprogress || // roll forward in progress ?
 			 uKernelModule::uKernelModuleBoot.disableInt ||	// inside kernel ?

@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb  4 10:20:41 2022
-// Update Count     : 161
+// Last Modified On : Sun Aug  6 21:35:02 2023
+// Update Count     : 165
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -649,6 +649,8 @@ token_t * getinput() {
 				state = hexadecimal;
 				break;
 			  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+				// handles floating-point constants 0123456789., which can start with 0!
+			  case '8': case '9':
 			  case '\'':
 				break;
 			  case 'l': case 'L': case 'u': case 'U':

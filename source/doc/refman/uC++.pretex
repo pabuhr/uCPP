@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed May  3 22:29:50 2023
-%% Update Count     : 8548
+%% Last Modified On : Thu Aug 31 22:40:25 2023
+%% Update Count     : 8559
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -5981,7 +5981,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item when an %(_Enable%) statement begins/ends,
 \item when a %(_Disable%) statement ends,
 \item when a %(uEnableCancel%) object is instantiated (see \VRef{s:EnablingDisablingCancellation}),
-\item before a coroutine/task's %(main%)\index{main@%(main%)} routine is executed,
+\item before a coroutine/task's %(main%)\index{main@%(main%)} routine is executed (needed for immediate cancellation),
 \item after a call to %(uBaseCoroutine::suspend%)/%(uBaseCoroutine::resume%) for %(uBaseCoroutine::Failure%),
 \item after a call to %(uBaseTask::yield%),
 \item when a %(uLock::acquire%) spins because of yielding,
@@ -10667,6 +10667,7 @@ If the allocation is not aligned or %(addr%) is the %(nulladdr%), the minimal al
 \item[%(malloc_stats_fd( fd )%)]\index{malloc_stats_fd@%(malloc_stats_fd%)} set file-descriptor number for printing memory-allocation statistics (default %(STDERR_FILENO%)).
 This file descriptor is used implicitly by %(malloc_stats%) and %(malloc_info%).
 \item[%(malloc_stats()%)]\index{malloc_stats@%(malloc_stats%)} print memory-allocation statistics on the file-descriptor set by %(malloc_stats_fd%).
+If the shell variable %(UPP_MALLOC_STATS%)\index{UPP_MALLOC_STATS@%(UPP_MALLOC_STATS%)} is defined, %(malloc_stats%) is implicitly called at program termination.
 \item[%(malloc_info( options, stream )%)]\index{malloc_info@%(malloc_info%)} print memory-allocation statistics as an XML string on the specified file-descriptor set by %(malloc_stats_fd%).
 The %(options%) argument must be zero.
 \end{description}
@@ -10974,6 +10975,37 @@ For potentially large arrays, increase the coroutine/task stack size (see \VRef{
 	for ( int i = 0; i < 10; i += 1 ) {
 	 	c[i].ctor( i );
 	}
+%]
+
+
+\chapter{String to Intger}
+\label{s:StringToIntger}
+\index{string to intger}%
+
+The \CC %(stoi%) routine does not handle an erroneous string of the form %("123ABC"%) correctly, returning a valid integer result instead of raising an %(invalid_argument%) exception.
+The \uC %(convert%) routine:
+%[
+intmax_t convert( const char * str );
+%]
+correctly handles erroneous string-to-integer conversions.
+%[
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+	try {
+		intmax_t i = convert( "123" );
+		cout << i << endl;
+		i = convert( "123ABC" );
+		cout << i << endl;
+	} catch( invalid_argument ) {
+		cout << "invalid integer" << endl;
+	}
+}
+
+123
+invalid integer
 %]
 
 
@@ -11626,6 +11658,8 @@ The server can deal with multiple simultaneous clients.
 
 \end{document}
 
+C++ fiber proposal
+https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p0876r11.pdf
 
 % Local Variables: %
 % tab-width: 4 %

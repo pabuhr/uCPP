@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep 30 15:26:53 2022
-// Update Count     : 708
+// Last Modified On : Fri Jul  7 14:18:01 2023
+// Update Count     : 709
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -165,7 +165,7 @@ void uBaseCoroutine::corCxtSw() {						// switch between two coroutine contexts
 	if ( coroutine.currSerialCount_ == currTask.currSerialLevel ) {
 		coroutine.currSerialOwner_ = nullptr;
 	} // if
-	
+
 	// check and set for new owner
 	if ( currSerialOwner_ != &currTask ) {
 		if ( currSerialOwner_ != nullptr  ) {

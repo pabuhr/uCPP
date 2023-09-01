@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 18 14:48:46 2023
-// Update Count     : 6378
+// Last Modified On : Mon Aug 14 18:10:01 2023
+// Update Count     : 6385
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -123,6 +123,9 @@
 
 #include <assert.h>
 
+intmax_t convert( const char * str );					// proper string to integral convertion
+
+
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
@@ -165,6 +168,8 @@ namespace UPP {
 		static __typeof__( ::pthread_kill ) * pthread_kill;
 		static __typeof__( ::pthread_join ) * pthread_join;
 		static __typeof__( ::pthread_self ) * pthread_self;
+		static __typeof__( ::pthread_setaffinity_np ) * pthread_setaffinity_np;
+		static __typeof__( ::pthread_getaffinity_np ) * pthread_getaffinity_np;
 	}; // RealRtn
 } // UPP
 
@@ -479,6 +484,7 @@ class uKernelModule {
 	friend class UPP::uInitProcessorsBoot;				// access: numUserProcessors, userProcessors
 	friend class UPP::uHeapManager;						// access: bootTaskStorage, kernelModuleInitialized, startup
 	friend class UPP::uNBIO;							// access: uKernelModuleBoot
+	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: kernelModuleInitialized
 	friend int pthread_mutex_lock( pthread_mutex_t * mutex ) __THROW; // access: kernelModuleInitialized
 
 	// real-time
@@ -1509,18 +1515,18 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	void suspend() {									// restarts the coroutine that most recently resumed this coroutine
 		uBaseCoroutine & c = uThisCoroutine();			// optimization
-			uDEBUG(
-				if ( c.last_ == nullptr ) {
-					abort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
-						   "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
-						   getName(), this );
-				} // if
-				if ( ! c.last_->notHalted_ ) {			// check if terminated
-					abort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
-						   "Possible cause is terminated coroutine's main routine has already returned.",
-						   getName(), this, c.last_->getName(), c.last_ );
-				} // if
-			);
+		uDEBUG(
+			if ( c.last_ == nullptr ) {
+				abort( "Attempt to suspend coroutine %.256s (%p) that has never been resumed.\n"
+					   "Possible cause is a suspend executed in a member called by a coroutine user rather than by the coroutine main.",
+					   getName(), this );
+			} // if
+			if ( ! c.last_->notHalted_ ) {			// check if terminated
+				abort( "Attempt by coroutine %.256s (%p) to suspend back to terminated coroutine %.256s (%p).\n"
+					   "Possible cause is terminated coroutine's main routine has already returned.",
+					   getName(), this, c.last_->getName(), c.last_ );
+			} // if
+		);
 		c.last_->corCxtSw();
 
 		_Enable <Failure>;								// implicit poll

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 18 10:59:31 2023
-// Update Count     : 3420
+// Last Modified On : Fri Aug 11 08:52:01 2023
+// Update Count     : 3429
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,6 +43,18 @@
 #include <cstdio>
 #include <unistd.h>										// _exit
 #include <fenv.h>										// floating-point exceptions
+
+
+intmax_t convert( const char * str ) {					// convert C string to integer
+	char * endptr;
+	errno = 0;											// reset
+	intmax_t val = strtoll( str, &endptr, 10 );			// attempt conversion
+	if ( errno == ERANGE ) throw std::out_of_range("");
+	if ( endptr == str ||								// conversion failed, no characters generated
+		 *endptr != '\0' ) throw std::invalid_argument(""); // not at end of str ?
+	return val;
+} // convert
+
 
 using namespace UPP;
 
@@ -1039,6 +1051,8 @@ namespace UPP {
 	__typeof__( ::pthread_kill ) * RealRtn::pthread_kill;
 	__typeof__( ::pthread_join ) * RealRtn::pthread_join;
 	__typeof__( ::pthread_self ) * RealRtn::pthread_self;
+	__typeof__( ::pthread_setaffinity_np ) * RealRtn::pthread_setaffinity_np;
+	__typeof__( ::pthread_getaffinity_np ) * RealRtn::pthread_getaffinity_np;
 	#endif // __U_MULTI__
 
 
@@ -1061,6 +1075,8 @@ namespace UPP {
 		#endif // __i386__
 		INIT_REALRTN( pthread_create, version );
 		INIT_REALRTN( pthread_attr_init, version );
+		INIT_REALRTN( pthread_setaffinity_np, version );
+		INIT_REALRTN( pthread_getaffinity_np, version );
 		#endif // __U_MULTI__
 	} // RealRtn::startup
 } // UPP
@@ -2247,11 +2263,9 @@ void UPP::uKernelBoot::startup() {
 	// create user processors
 
 	uKernelModule::numUserProcessors = uDefaultProcessors();
-	uDEBUG(
-		if ( uKernelModule::numUserProcessors == 0 ) {
-			abort( "uDefaultProcessors must return a value 1 or greater" );
-		} // if
-	);
+	if ( uKernelModule::numUserProcessors == 0 ) {
+		abort( "uDefaultProcessors must return a value 1 or greater" );
+	} // if
 	uKernelModule::userProcessors = new uProcessor*[ uKernelModule::numUserProcessors ];
 	uKernelModule::userProcessors[0] = new uProcessor( *uKernelModule::userCluster );
 

@@ -7,8 +7,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Tue Aug  8 16:53:43 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:38:36 2022
-// Update Count     : 10
+// Last Modified On : Sun Jul 30 09:17:04 2023
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,7 +39,8 @@
 
 unsigned int uDefaultProcessors() {
 	unsigned int nprocs = 0;
-	char *value = getenv( "OMP_NUM_THREADS" );
+	const char * value = getenv( "OMP_NUM_THREADS" );	// OMP_NUM_THREADS=value
+
 	if ( value != nullptr ) {
 		nprocs = atoi( value );
 	} else {
