@@ -7,8 +7,8 @@
 // Author           : Nikita Borisov
 // Created On       : Tue Apr 28 15:26:27 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 11:18:24 2023
-// Update Count     : 1035
+// Last Modified On : Mon Sep 25 08:31:26 2023
+// Update Count     : 1053
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -240,37 +240,6 @@ int main( int argc, char * argv[] ) {
 				args[nargs++] = argv[i];				// pass flag along
 			} else if ( prefix( arg, "-B" ) ) {
 				bprefix = arg.substr(2);				// strip the -B flag
-				//args[nargs++] = ( *new string( string("-D__U_GCC_BPREFIX__=") + bprefix ) ).c_str();
-				// } else if ( prefix( arg, "-b" ) ) {
-				// 	if ( arg.length() == 2 ) {			// separate argument ?
-				// 	    i += 1;
-				// 	    if ( i == argc ) continue;		// next argument available ?
-				// 	    arg += argv[i];					// concatenate argument
-				// 	} // if
-				// 	// later versions of gcc require the -b option to appear at the start of the command line
-				// 	shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-				// 	args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
-				// 	if ( putenv( (char *)( *new string( string( "__U_GCC_MACHINE__=" ) + arg ) ).c_str() ) != 0 ) {
-				// 	    cerr << argv[0] << " error, cannot set environment variable." << endl;
-				// 	    exit( EXIT_FAILURE );
-				// 	} // if
-				// 	sargs += 1;
-				// 	nargs += 1;
-				// } else if ( prefix( arg, "-V" ) ) {
-				// 	if ( arg.length() == 2 ) {			// separate argument ?
-				// 	    i += 1;
-				// 	    if ( i == argc ) continue;		// next argument available ?
-				// 	    arg += argv[i];					// concatenate argument
-				// 	} // if
-				// 	// later versions of gcc require the -V option to appear at the start of the command line
-				// 	shuffle( args, sargs, nargs, 1 );	// make room at front of argument list
-				// 	args[sargs] = ( *new string( arg ) ).c_str(); // pass argument along
-				// 	if ( putenv( (char *)( *new string( string( "__U_GCC_VERSION__=" ) + arg ) ).c_str() ) != 0 ) {
-				// 	    cerr << argv[0] << " error, cannot set environment variable." << endl;
-				// 	    exit( EXIT_FAILURE );
-				// 	} // if
-				// 	sargs += 1;
-				// 	nargs += 1;
 			} else if ( arg == "-c" || arg == "-S" || arg == "-E" || arg == "-M" || arg == "-MM" ) {
 				args[nargs++] = argv[i];				// pass flag along
 				if ( arg == "-E" || arg == "-M" || arg == "-MM" ) {
@@ -467,6 +436,8 @@ int main( int argc, char * argv[] ) {
 
 		// link with the correct version of the kernel module
 
+		args[nargs++] = "-x";							// protect these files in case -x specified
+		args[nargs++] = "none";
 		args[nargs++] = ( *new string( installlibdir + "/uKernel" + m + d + ".a" ) ).c_str();
 		args[nargs++] = ( *new string( installlibdir + "/uScheduler" + m + d + ".a" ) ).c_str();
 
@@ -546,7 +517,7 @@ int main( int argc, char * argv[] ) {
 	// Note, when testing using -no-u++-include, the "inc" file is not present so special include files to adjust text
 	// do not occur. Hence, other errors may occur. See the "library" directory special include files.
 
-	if ( ! nouinc && ! x_flag ) {
+	if ( ! nouinc ) {
 		// add the directory that contains the include files to the list of arguments after any user specified include
 		// directives
 

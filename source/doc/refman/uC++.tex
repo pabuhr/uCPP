@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Thu Aug 31 22:40:25 2023
-%% Update Count     : 8559
+%% Last Modified On : Mon Nov  6 10:18:21 2023
+%% Update Count     : 8630
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -813,8 +813,8 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{cancelled}();}}
 \L{\LB{}\Tab{4}{\K{bool}\0\V{cancelInProgress}();}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}\Tab{48}{\C{}\1\1\0exceptions}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{UnhandledException};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}\Tab{48}{\C{}\1\1\0exceptions}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{UnhandledException};}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uBaseCoroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}!resume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resume}}}\endlgrinde\LGend{}}%
@@ -918,7 +918,7 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelled}}}\endlgrind
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelInProgress}}}\endlgrinde\LGend{}\index{cancelInProgress@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelInProgress}}}\endlgrinde\LGend{}} returns true if cancellation is started for the coroutine/task.
 \VRef{s:Cancellation} discusses cancellation in detail.
 
-The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}\index{_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}} is defined in \VRef{s:ExceptionType}.
+The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}\index{_Exception@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}} is defined in \VRef{s:ExceptionType}.
 
 The free routine:
 \LGinlinefalse\LGbegin\lgrinde
@@ -1503,7 +1503,7 @@ The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCondition}}}\endlgrinde\LGend{}
 \CE{}\L{\LB{}\Tab{4}{\K{bool}\0\V{empty}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{uintptr\_t}\0\V{front}()\0\K{const};}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WaitingFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WaitingFailure};}}
 \L{\LB{\};}}
 \L{\LB{\V{uCondition}\0\V{DiskNotIdle};}}
 \endlgrinde\LGend
@@ -2281,7 +2281,7 @@ Nevertheless, several low-level lock mechanisms are provided for teaching purpos
 A \Index{semaphore} in \uC is implemented as a counting semaphore as described by Dijkstra~\cite{Dijkstra65}.
 A counting semaphore has two parts: a counter and a list of waiting tasks.
 Both the counter and the list of waiting tasks is managed by the semaphore.
-The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}\index{uSemaphore@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}} defines a semaphore:
+The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}\index{uSemaphore@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}} defines a semaphore and \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uSemaphore}.\V{h}\>}}\endlgrinde\LGend{}}\index{uSemaphore.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}.\V{h}}}\endlgrinde\LGend{}}.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uSemaphore}\0\{}}
 \L{\LB{\0\0\K{public}:}}
@@ -2353,12 +2353,6 @@ positive means the semaphore is unlocked and allows $N$ tasks to acquire the sem
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}\index{empty@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}} returns \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{false}}}\endlgrinde\LGend{} if there are threads blocked on the semaphore and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{true}}}\endlgrinde\LGend{} otherwise.
 
 It is \emph{not} meaningful to read or to assign to a semaphore variable, or copy a semaphore variable (e.g., pass it as a value parameter).
-
-To use counting semaphores in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{uSemaphore}.\V{h}\>}}
-\endlgrinde\LGend
-\index{uSemaphore.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}.\V{h}}}\endlgrinde\LGend{}}%
 
 
 \subsubsection{Commentary}
@@ -2560,14 +2554,14 @@ It is \emph{not} meaningful to read or to assign to a lock variable, or copy a l
 A \Index{barrier} allows $N$ tasks to synchronize, possible multiple times, during their life time.
 Barriers are used to repeatedly coordinate a group of tasks performing a concurrent operation followed by a sequential operation.
 In \uC, a barrier is a mutex coroutine, i.e., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Cormonitor}}}\endlgrinde\LGend{}\index{_Cormonitor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Cormonitor}}}\endlgrinde\LGend{}}\index{_Mutex _Coroutine@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}\0\K{\_Coroutine}}}\endlgrinde\LGend{}!_Cormonitor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Cormonitor}}}\endlgrinde\LGend{}}, to provide the necessary mutual exclusion and to allow code to be easily executed both before and after the $N$ tasks synchronize on the barrier.
-The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}\index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}} defines a barrier:
+The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}\index{uBarrier@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}} defines a barrier and \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uBarrier}.\V{h}\>}}\endlgrinde\LGend{}}\index{uBarrier.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}.\V{h}}}\endlgrinde\LGend{}}.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Mutex}\0\K{\_Coroutine}\0\V{uBarrier}\0\{}}
 \L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\K{for}\0(\0;;\0)\0\{\0\V{suspend}();\0\}\0\}}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{last}()\0\{\0\V{resume}();\0\}}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{BlockFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0waiting\0tasks\0flushed}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{BlockFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0waiting\0tasks\0flushed}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{uBarrier}(\0\K{unsigned}\0\K{int}\0\V{total}\0);}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\K{unsigned}\0\K{int}\0\V{total}()\0\K{const};}}
@@ -2623,12 +2617,6 @@ tasks block until any \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde
 It can be replaced by subclassing from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{} to provide a specific action to be executed before or after a task blocks on \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}::\V{block}()}}\endlgrinde\LGend{}.
 
 It is \emph{not} meaningful to read or to assign to a barrier variable, or copy a barrier variable (e.g., pass it as a value parameter).
-
-To use barriers in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{uBarrier}.\V{h}\>}}
-\endlgrinde\LGend
-\index{uBarrier.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}.\V{h}}}\endlgrinde\LGend{}}%
 
 
 \section{Atomic Instructions}
@@ -3107,14 +3095,14 @@ The future operations available to a server are:
 This result is the value returned to the client.
 If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the result.
 
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{cause}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{delivery}(\0\V{uBaseException}\0\*\0\V{cause}\0)}}\endlgrinde\LGend{}]
 -- copy a server-generated exception into the future, unblocking all clients waiting for the result.
 This exception is thrown at any client instead of the future result.
 If the asynchronous call has already completed, an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{} is thrown at the server attempting to deliver the exception.
 
 For the future to manage the exception lifetime, the exception must be dynamically allocated:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\V{Future\_ISM}\<\K{int}\>\0\V{result};}}
 \L{\LB{\V{result}.\V{delivery}(\0\BF{\K{new}\0\V{E}}\0);}\Tab{36}{\C{}\1\1\0exception\0deleted\0by\0future}}
 \CE{}\endlgrinde\LGend
@@ -3166,7 +3154,7 @@ The explicit storage-management (ESM) future (see \VRef[Figure]{f:FutureExplicit
 \CE{}\L{\LB{}\Tab{4}{\V{ServerData}\0\V{serverData};}\Tab{44}{\C{}\1\1\0information\0needed\0by\0server}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseException}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
@@ -3221,7 +3209,7 @@ The implicit storage-management (ISM) future (see \VRef[Figure]{f:FutureImplicit
 \L{\LB{}\Tab{4}{\C{}\1\1\0used\0by\0server}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{T}\0\V{result}\0);}\Tab{44}{\C{}\1\1\0make\0result\0available\0in\0the\0future}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{reset}();}\Tab{44}{\C{}\1\1\0mark\0future\0as\0empty\0(for\0reuse)}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseEvent}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{delivery}(\0\V{uBaseException}\0\*\0\V{ex}\0);}\Tab{44}{\C{}\1\1\0make\0exception\0available\0in\0the\0future}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \index{Future_ISM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ISM}}}\endlgrinde\LGend{}!available@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{available}}}\endlgrinde\LGend{}}%
@@ -4085,11 +4073,11 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LG
 \L{\LB{\K{template}\<\K{typename}\0\V{Result}\>\0\K{class}\0\V{Promise}\0\{}}
 \L{\LB{}\Tab{4}{\V{std}::\V{function}\<\0\K{void}\0(\0\V{Result}\0\&\0)\0\>\0\V{callback};}\Tab{56}{\C{}\1\1\0functor\0type}}
 \CE{}\L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{PromiseFailure}\0\{\};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{DupCallback}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0callback}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{DupDelivery}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0delivery}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{NoResult}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0no\0result}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ChainedReset}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0pending\0chained\0callback}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{PromiseFailure}\0\{\};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{DupCallback}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0callback}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{DupDelivery}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0duplicate\0delivery}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{NoResult}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0no\0result}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ChainedReset}\0:\0\K{public}\0\V{PromiseFailure}\0\{\};}\Tab{56}{\C{}\1\1\0raised\0if\0pending\0chained\0callback}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{Promise}()\0\{\}}}
 \L{\LB{}\Tab{4}{\V{Promise}(\0\K{const}\0\V{Promise}\<\V{Result}\>\0\&\0\V{rhs}\0);}}
@@ -4941,7 +4929,7 @@ In \uC, a connection to a UNIX file is made by declaration of a \LGinlinetrue\LG
 \L{\LB{\V{uFile}\0\V{infile}(\0\S{}\"abc\"\SE{}\0),\0\V{outfile}(\0\S{}\"xyz\"\SE{}\0);}}
 \endlgrinde\LGend
 which creates two connection variables, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{infile}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{outfile}}}\endlgrinde\LGend{}, connected to UNIX files \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{abc}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{xyz}}}\endlgrinde\LGend{}, respectively.
-The operations available on a file object are listed in \VRef[Figure]{f:FileInterface}:
+The operations available on a file object are listed in \VRef[Figure]{f:FileInterface} and \Textbf{require \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uFile}.\V{h}\>}}\endlgrinde\LGend{}}\index{uFile.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}.\V{h}}}\endlgrinde\LGend{}}, which also includes \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{fcntl}.\V{h}\>}}\endlgrinde\LGend{}%)\index{fcntl.h@%(fcntl.h%)}.
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
@@ -4968,24 +4956,24 @@ The operations available on a file object are listed in \VRef[Figure]{f:FileInte
 \L{\LB{}\Tab{8}{\K{void}\0\V{status}(\0\K{struct}\0\V{stat}\0\&\0\V{buf}\0);}}
 \L{\LB{}\Tab{8}{\K{int}\0\V{fd}();}}
 \L{\LB{}\Tab{4}{}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{OpenFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{CloseFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{SeekFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{SyncFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{ReadFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{ReadTimeout};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{WriteFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{WriteTimeout};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{OpenFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{CloseFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{SeekFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{SyncFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{ReadFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{ReadTimeout};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{WriteFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{WriteTimeout};}}
 \L{\LB{}\Tab{4}{\};\0\C{}\1\1\0FileAccess}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\K{const}\0\K{char}\0\*\0\V{setName}(\0\K{char}\0\*\0\V{name}\0);}}
 \L{\LB{}\Tab{4}{\K{const}\0\K{char}\0\*\0\V{getName}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{status}(\0\K{struct}\0\V{stat}\0\&\0\V{buf}\0);}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{TerminateFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{StatusFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{TerminateFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{StatusFailure};}}
 \L{\LB{\};\0\C{}\1\1\0uFile}}
 \CE{}\endlgrinde\LGend
 \index{uFile@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}}}\endlgrinde\LGend{}!setName@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setName}}}\endlgrinde\LGend{}}%
@@ -5028,14 +5016,6 @@ The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getName}}}\endlgrinde\
 The parameter for member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{status}}}\endlgrinde\LGend{} is explained in the UNIX manual entry for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stat}}}\endlgrinde\LGend{}.
 (The first parameter to the UNIX \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stat}}}\endlgrinde\LGend{} routine is unnecessary, as it is provided implicitly by the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}}}\endlgrinde\LGend{} object.)
 Because a file object is still inaccessible after a connection is made, there are no member routines to access its contents.
-
-To use the file interface in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{uFile}.\V{h}\>}}
-\endlgrinde\LGend
-\index{uFile.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}.\V{h}}}\endlgrinde\LGend{}}%
-at the beginning of each source file.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}.\V{h}}}\endlgrinde\LGend{} also includes the following UNIX system file: \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{fcntl}.\V{h}\>}}\endlgrinde\LGend{}%).
 
 
 \subsection{File Access}
@@ -5085,9 +5065,9 @@ This relationship is represented in a \uC program by a declaration for a file an
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{uPipe}\0\{}}
 \L{\LB{\0\0\K{public}:}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{CloseFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{CloseFailure};}}
 \L{\LB{}}
 \L{\LB{}\Tab{4}{\K{class}\0\V{End}\0:\0\K{public}\0\V{uFileIO}\0\{}}
 \L{\LB{}\Tab{4}{\0\0\K{public}:}}
@@ -5097,11 +5077,11 @@ This relationship is represented in a \uC program by a declaration for a file an
 \L{\LB{}\Tab{8}{\K{int}\0\V{writev}(\0\K{const}\0\K{struct}\0\V{iovec}\0\*\0\V{iov},\0\K{int}\0\V{iovcnt},\0\V{uDuration}\0\*\0\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{8}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{ReadFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{ReadTimeout};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{WriteFailure};}}
-\L{\LB{}\Tab{8}{\K{\_Event}\0\V{WriteTimeout};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{ReadFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{ReadTimeout};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{WriteFailure};}}
+\L{\LB{}\Tab{8}{\K{\_Exception}\0\V{WriteTimeout};}}
 \L{\LB{}\Tab{4}{\};\0\C{}\1\1\0End}}
 \CE{}\L{\LB{}}
 \L{\LB{}\Tab{4}{\V{End}\0\V{ends}[2];}}
@@ -5219,15 +5199,7 @@ To mitigate having to specify the server address on each call for a message send
 The initial remembered (default) address can be set when the client socket-endpoint is created or set/reset at any time during its life-time.
 A similar convenience feature exists for the server socket-endpoint, where the last client address it receives a message from is remembered and can be implicitly used to send a message directly back to that client.
 
-\begin{sloppypar}
-To use the socket interface in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{uSocket}.\V{h}\>}}
-\endlgrinde\LGend
-\index{uSocket.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocket}.\V{h}}}\endlgrinde\LGend{}}%
-at the beginning of each source file.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocket}.\V{h}}}\endlgrinde\LGend{} also includes the following UNIX system files: \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{fcntl}.\V{h}\>}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{types}.\V{h}\>}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{socket}.\V{h}\>}}\endlgrinde\LGend{},\LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{un}.\V{h}\>}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{netdb}.\V{h}\>}}\endlgrinde\LGend{}.
-\end{sloppypar}
+To use the socket interface \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uSocket}.\V{h}\>}}\endlgrinde\LGend{}}\index{uSocket.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocket}.\V{h}}}\endlgrinde\LGend{}}, which also includes \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{fcntl}.\V{h}\>}}\endlgrinde\LGend{}\index{fcntl.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{fcntl}.\V{h}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{types}.\V{h}\>}}\endlgrinde\LGend{}\index{sys/types.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sys}\1\V{types}.\V{h}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{socket}.\V{h}\>}}\endlgrinde\LGend{}\index{sys/socket.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sys}\1\V{socket}.\V{h}}}\endlgrinde\LGend{}}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{sys}\1\V{un}.\V{h}\>}}\endlgrinde\LGend{}\index{sys/un.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sys}\1\V{un}.\V{h}}}\endlgrinde\LGend{}}, and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\<\V{netdb}.\V{h}\>}}\endlgrinde\LGend{}\index{netdb.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{netdb}.\V{h}}}\endlgrinde\LGend{}}.
 
 The following helper routines are available for converting different forms of Internet address to an ip address used by a client or a server.
 These routines are static within the type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocket}}}\endlgrinde\LGend{}\index{uSocket@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocket}}}\endlgrinde\LGend{}}:
@@ -5295,16 +5267,16 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}
 \L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\0\V{file},\0\V{off\_t}\0\*\0\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\0\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{CloseFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{CloseFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileTimeout};}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uSocketClient@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}}}\endlgrinde\LGend{}!setServer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setServer}}}\endlgrinde\LGend{}}%
@@ -5437,15 +5409,15 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketServer}
 \L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\0\V{file},\0\V{off\_t}\0\*\0\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\0\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{CloseFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileTimeout}}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{CloseFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileTimeout}}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uSocketServer@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketServer}}}\endlgrinde\LGend{}!setClient@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setClient}}}\endlgrinde\LGend{}}%
@@ -5574,16 +5546,16 @@ The operations provided by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketAccept}
 \L{\LB{}\Tab{4}{\V{ssize\_t}\0\V{sendfile}(\0\V{FileAccess}\0\&\0\V{file},\0\V{off\_t}\0\*\0\V{off},\0\V{size\_t}\0\V{len},\0\V{uDuration}\0\*\0\V{timeout}\0=\0\K{nullptr}\0);}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{fd}();}}
 \L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{OpenTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{CloseFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{ReadTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{WriteTimeout};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileFailure};}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{SendfileTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{Failure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{OpenTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{CloseFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{ReadTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{WriteTimeout};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileFailure};}}
+\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{SendfileTimeout};}}
 \L{\LB{\};}}
 \endlgrinde\LGend
 \index{uSocketAccept@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketAccept}}}\endlgrinde\LGend{}!accept@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{accept}}}\endlgrinde\LGend{}}%
@@ -5730,9 +5702,9 @@ It is also possible to (hierarchically) block these kinds of exceptions when del
 \section{Exception Type}
 \label{s:ExceptionType}
 
-While \CC allows any type to be used as an exception type, \uC restricts exception types to those defined by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}\index{_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}\index{keyword, additions!_Event@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}}, which has all the properties of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}:
+While \CC allows any type to be used as an exception type, \uC restricts exception types to those defined by \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}\index{_Exception@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}}\index{keyword, additions!_Exception@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}}, which has all the properties of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{}:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\nterminal{exception-type name}\0\{}}
+\L{\LB{\K{\_Exception}\0\nterminal{exception-type name}\0\{}}
 \L{\LB{}\Tab{4}{.\,.\,.}}
 \L{\LB{\};}}
 \endlgrinde\LGend
@@ -5755,7 +5727,7 @@ This practice is codified in \uC.
 
 An exception is the same as a class object with respect to creation and destruction:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\0.\,.\,.\0\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\0.\,.\,.\0\};}}
 \L{\LB{\V{E}\0\V{e};}\Tab{24}{\C{}\1\1\0local\0exception}}
 \CE{}\L{\LB{\K{\_Resume}\0\V{e};}}
 \L{\LB{\V{E}\0\*\0\V{ep}\0=\0\K{new}\0\V{E};}\Tab{24}{\C{}\1\1\0dynamic\0exception}}
@@ -5770,16 +5742,16 @@ An exception is the same as a class object with respect to creation and destruct
 \index{inherited members!exception type}
 \index{exception!inherited members}
 
-Each exception type, if not derived from another exception type, is implicitly derived from the event type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}, e.g.:
+Each exception type, if not derived from another exception type, is implicitly derived from the event type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\nterminal{exception-type name}\0:\0\K{public}\0\V{uBaseEvent}\0.\,.\,.}}
+\L{\LB{\K{\_Exception}\0\nterminal{exception-type name}\0:\0\K{public}\0\V{uBaseException}\0.\,.\,.}}
 \endlgrinde\LGend
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}}%
-where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{} is:
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}}%
+where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{} is:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{class}\0\V{uBaseEvent}\0\{}}
+\L{\LB{\K{class}\0\V{uBaseException}\0\{}}
 \L{\LB{\0\0\K{protected}:}}
-\L{\LB{}\Tab{4}{\V{uBaseEvent}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0);}}
+\L{\LB{}\Tab{4}{\V{uBaseException}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0);}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{setMsg}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0);}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\K{enum}\0\V{RaiseKind}\0\{\0\V{ThrowRaise},\0\V{ResumeRaise}\0\};}}
@@ -5789,25 +5761,25 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \L{\LB{}\Tab{4}{\K{const}\0\K{char}\0\*\0\V{sourceName}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{RaiseKind}\0\V{getRaiseKind}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{reraise}();}}
-\L{\LB{}\Tab{4}{\K{virtual}\0\V{uBaseEvent}\0\*\0\V{duplicate}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{virtual}\0\V{uBaseException}\0\*\0\V{duplicate}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{defaultTerminate}();}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{defaultResume}();}}
 \L{\LB{\};}}
 \endlgrinde\LGend
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!RaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RaiseKind}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!setMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!source@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{source}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!sourceName@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sourceName}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!getRaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseKind}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!reraise@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!duplicate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!defaultResume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultResume}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!defaultTerminate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!RaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RaiseKind}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!setMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!source@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{source}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!sourceName@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sourceName}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!getRaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseKind}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!reraise@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!duplicate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!defaultResume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultResume}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!defaultTerminate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}}%
 
-The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{} has the following form:
+The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{} has the following form:
 \begin{prefix}
-\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uBaseEvent}\V{uBaseEvent}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0)}}\endlgrinde\LGend{}]
+\item[\LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{uBaseException}\V{uBaseException}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0)}}\endlgrinde\LGend{}]
 -- creates an exception with specified message, which is printed in an error message if the exception is not handled.
 The message is copied when an exception is created so it is safe to use within an exception even if the context of the raise is deleted.
 \end{prefix}
@@ -5877,8 +5849,8 @@ For example:
 \endlgrinde\LGend
 &
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{B}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{D}\0:\0\K{public}\0\V{B}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{B}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{D}\0:\0\K{public}\0\V{B}\0\{\};}}
 \L{\LB{\K{void}\0\V{f}(\0\V{B}\0\&\0\V{t}\0)\0\{}}
 \L{\LB{}\Tab{4}{\K{\_Throw}\0\V{t};}}
 \L{\LB{\}}}
@@ -5918,7 +5890,7 @@ Note, \Emph{\Index{nonlocal exception}s\index{exception!nonlocal} are initially 
 
 \begin{figure}[htb]
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\K{try}\0\{}}
@@ -5957,7 +5929,70 @@ The arguments in angle brackets for the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\
 Specifying no exception type is shorthand for specifying all exception types.
 The specified exception types may overlap due to exception inheritance (see \VRef[Sections]{s:ExceptionsInheritedMembers} and \VRef[]{s:InheritanceEHM}), e.g., both base and derived exception types.
 
-Nested \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} blocks turn propagation on/off on entry and reestablishing the delivery state to its prior value on exit.
+Nested \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} \emph{or} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} blocks are additive, meaning the set of enabled or disabled exceptions increases on entry and decreases on exit, appropriately.
+\begin{flushleft}
+\begin{tabular}{@{}l@{}l@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Enable}\0\<\V{E}\>\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Enable}\0\<\V{F}\>}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0\&\0F\0enabled}}
+\CE{}\L{\LB{}\Tab{8}{\K{\_Enable}\0\{}}
+\L{\LB{}\Tab{12}{\C{}\1\1\0all\0non\-local\0exceptions\0enabled}}
+\CE{}\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0\&\0F\0enabled}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{\}}}
+\endlgrinde\LGend
+&
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Disable}\0\<\V{E}\>\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Disable}\0\<\V{F}\>}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0\&\0F\0disabled}}
+\CE{}\L{\LB{}\Tab{8}{\K{\_Disable}\0\{}}
+\L{\LB{}\Tab{12}{\C{}\1\1\0all\0non\-local\0exceptions\0disabled}}
+\CE{}\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0\&\0F\0disabled}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{\}}}
+\endlgrinde\LGend
+\end{tabular}
+\end{flushleft}
+Nested \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} \emph{and} \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} blocks are substractive, meaning the set of enabled or disabled exceptions decreases on entry and increases on exit, appropriately.
+\begin{flushleft}
+\begin{tabular}{@{}l@{}l@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Enable}\0\<\V{E}\>\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Disable}\0\<\V{E}\>}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{}\Tab{8}{\K{\_Disable}\0\{}}
+\L{\LB{}\Tab{12}{\C{}\1\1\0all\0non\-local\0exceptions\0disabled}}
+\CE{}\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{\}}}
+\endlgrinde\LGend
+&
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Disable}\0\<\V{E}\>\0\{}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Enable}\0\<\V{E}\>}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{}\Tab{8}{\K{\_Enable}\0\{}}
+\L{\LB{}\Tab{12}{\C{}\1\1\0all\0non\-local\0exceptions\0enabled}}
+\CE{}\L{\LB{}\Tab{8}{\}}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0non\-local\0exception\0E\0enabled}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0non\-local\0exception\0E\0disabled}}
+\CE{}\L{\LB{\}}}
+\endlgrinde\LGend
+\end{tabular}
+\end{flushleft}
 Upon entering a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} block, exceptions of the specified types are propagated, even if the exception types were previously disabled.
 Similarly, upon entering a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} block, exceptions of the specified types are disabled, even if the exception types were previously enabled.
 Upon exiting a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} block, the propagation of exceptions of the specified types are restored to their state prior to entering the block.
@@ -5966,11 +6001,11 @@ Initially, \Emph{nonlocal propagation is disabled for all exception types in a c
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0initialization,\0nonlocal\0exceptions\0disabled}}
-\CE{}\L{\LB{}\Tab{4}{\K{try}\0\{}\Tab{24}{\C{}\1\1\0setup\0handlers\0for\0nonlocal\0exceptions}}
-\CE{}\L{\LB{}\Tab{8}{\K{\_Enable}\0\{}\Tab{24}{\C{}\1\1\0enable\0propagation\0of\0all\0nonlocal\0exception\-types}}
+\CE{}\L{\LB{}\Tab{4}{\K{try}\0\{}\Tab{32}{\C{}\1\1\0setup\0handlers\0for\0nonlocal\0exceptions}}
+\CE{}\L{\LB{}\Tab{8}{\K{\_Enable}\0\{}\Tab{32}{\C{}\1\1\0enable\0propagation\0of\0all\0nonlocal\0exception\-types}}
 \CE{}\L{\LB{}\Tab{12}{\C{}\1\1\0rest\0of\0the\0code\0for\0this\0coroutine\0or\0task}}
-\CE{}\L{\LB{}\Tab{8}{\}}\Tab{24}{\C{}\1\1\0disable\0all\0nonlocal\0exception\-types}}
-\CE{}\L{\LB{}\Tab{4}{\}\0\K{catch}\0.\,.\,.}\Tab{24}{\C{}\1\1\0catch\0nonlocal\0exceptions\0occurring\0in\0enable\0block}}
+\CE{}\L{\LB{}\Tab{8}{\}}\Tab{32}{\C{}\1\1\0disable\0all\0nonlocal\0exception\-types}}
+\CE{}\L{\LB{}\Tab{4}{\}\0\K{catch}\0.\,.\,.}\Tab{32}{\C{}\1\1\0catch\0nonlocal\0exceptions\0occurring\0in\0enable\0block}}
 \CE{}\L{\LB{}\Tab{4}{\C{}\1\1\0finalization,\0nonlocal\0exceptions\0disabled}}
 \CE{}\L{\LB{\}}}
 \endlgrinde\LGend
@@ -5982,7 +6017,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{} statement ends,
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEnableCancel}}}\endlgrinde\LGend{} object is instantiated (see \VRef{s:EnablingDisablingCancellation}),
 \item before a coroutine/task's \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}\index{main@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{}} routine is executed (needed for immediate cancellation),
-\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{}/\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{} for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{Failure}}}\endlgrinde\LGend{},
+\item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{suspend}}}\endlgrinde\LGend{} or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{resume}}}\endlgrinde\LGend{},
 \item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}::\V{yield}}}\endlgrinde\LGend{},
 \item when a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uLock}::\V{acquire}}}\endlgrinde\LGend{} spins because of yielding,
 \item after a call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Accept}}}\endlgrinde\LGend{} unblocks for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{},
@@ -6022,7 +6057,7 @@ the first task to find the key needs to inform the other task to stop searching,
 \L{\LB{}\Tab{8}{\K{try}\0\{}}
 \L{\LB{}\Tab{12}{\K{\_Enable}\0\{}}
 \L{\LB{}\Tab{16}{.\,.\,.}\Tab{28}{\C{}\1\1\0implicit\0or\0explicit\0polling\0is\0occurring}}
-\CE{}\L{\LB{}\Tab{16}{\K{if}\0(\0\V{key}\0==\0.\,.\,.\0)}}
+\CE{}\L{\LB{\Proc{if}}\Tab{16}{\K{if}\0(\0\V{key}\0==\0.\,.\,.\0)}}
 \L{\LB{}\Tab{20}{\K{\_Resume}\0\V{stop}()\0\K{\_At}\0\V{partner};}\Tab{48}{\C{}\1\1\0inform\0partner\0search\0is\0finished}}
 \CE{}\L{\LB{}\Tab{12}{\}}}
 \L{\LB{}\Tab{8}{\}\0\K{catch}(\0\V{stop}\0)\0\{\0.\,.\,.\0\}}}
@@ -6084,7 +6119,7 @@ The differences are using \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Throw}}}\endl
 \endlgrinde\LGend
 &
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\BF{\K{\_Event}}\0\V{E}\0\{}}
+\L{\LB{\BF{\K{\_Exception}}\0\V{E}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\K{int}\0\V{i};}}
 \L{\LB{}\Tab{4}{\V{E}(\0\K{int}\0\V{i}\0)\0:\0\V{i}(\0\V{i}\0)\0\{\}}}
@@ -6148,7 +6183,7 @@ There may be recovery actions closer to the raise point that can better deal wit
 
 Values at the raise site can be modified directly in the handler if variables are visible in both contexts, or indirectly through reference or pointer variables in the caught exception:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\BF{\K{int}\0\&\0\V{r};}}\Tab{36}{\C{}\1\1\0reference\0to\0something}}
 \CE{}\L{\LB{}\Tab{4}{\BF{\V{E}(\0\K{int}\0\&\0\V{r}\0)\0:\0\V{r}(\0\V{r}\0)\0\{\}}}\Tab{36}{\C{}\1\1\0initialize\0reference}}
@@ -6186,7 +6221,7 @@ Often the set of exception types for termination and resumption handlers are dis
 However, it is possible for the set of exception types in each handler set to overlap.
 For example, the exception type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R}}}\endlgrinde\LGend{} appears in both the termination and resumption handler-sets:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{void}\0\V{rtn}()\0\{}}
 \L{\LB{}\Tab{4}{\K{try}\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Resume}\0\BF{\V{E}()};}}
@@ -6215,7 +6250,7 @@ In terminating propagation, the handlers in previous scopes disappear as the sta
 In some languages with a resuming propagation~\cite{MacLaren77,Buhr92b,ExceptionalC}, the presence of resumption handlers in previous scopes can cause a situation called \newterm{recursive resuming}.
 The simplest situation where recursive resuming can occur is when a handler for a resuming exception-type resumes the same exception, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{void}\0\V{rtn}()\0\{}}
 \L{\LB{}\Tab{4}{\K{try}\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Resume}\0\BF{\V{E}()};}}
@@ -6262,7 +6297,7 @@ Essentially, this rule follows a common rule for terminating and resuming propag
 Note, it is still possible to construct infinite recursions with respect to propagation;
 i.e., the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Resume}}}\endlgrinde\LGend{} propagation does not preclude all infinite recursions, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{void}\0\V{rtn}()\0\{}}
 \L{\LB{}\Tab{4}{\K{try}\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Resume}\0\V{E}();}}
@@ -6278,7 +6313,7 @@ This situation is considered a programming error with respect to recursion (no b
 
 There is an interesting interaction between resuming, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultResume}}}\endlgrinde\LGend{} (see \VRef{s:ExceptionsInheritedMembers}), and throwing.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{void}\0\V{rtn}()\0\{}}
 \L{\LB{}\Tab{4}{\K{try}\0\{}}
 \L{\LB{}\Tab{8}{\K{\_Resume}\0\V{E}();}\Tab{28}{\C{}\1\1\0resume\0not\0throw}}
@@ -6307,7 +6342,7 @@ The handlers in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\0\K{public}:\0\K{int}\0\V{i}\0=\00;\0\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\0\K{public}:\0\K{int}\0\V{i}\0=\00;\0\};}}
 \L{\LB{}}
 \L{\LB{\K{void}\0\V{rtn}(\0\K{int}\0\V{depth},\0\K{int}\0\V{resumes}\0)\0\{}}
 \L{\LB{}\Tab{4}{\K{if}\0(\0\V{depth}\0\>\00\0)\0\V{rtn}(\0\V{depth}\0\-\01,\0\V{resumes}\0);}\Tab{48}{\C{}\1\1\0recursion}}
@@ -6344,8 +6379,8 @@ However, this unambiguous semantics is often described as confusing.
 
 The following more complex program demonstrates how \uC and Mesa solve recursive resuming, but with different solutions:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{R1}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{R2}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{R1}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{R2}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{void}\0\V{rtn}()\0\{}}
 \L{\LB{}\Tab{4}{\K{try}\0\{}}
@@ -6362,7 +6397,7 @@ The following stack is generated at the point when handler \LGinlinetrue\LGbegin
 \L{\LB{\V{rtn}\0$\rightarrow$\0\K{try}\0\K{\_CatchResume}(\0\V{R2}\0)\0$\rightarrow$\0\K{try}\0\K{\_CatchResume}(\0\V{R1}\0)\0$\rightarrow$\0\K{try}\0\K{\_CatchResume}(\0\V{R2}\0)\0$\rightarrow$\0\V{H2}}}
 \endlgrinde\LGend
 Handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{H2}}}\endlgrinde\LGend{} now raises an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R2}}}\endlgrinde\LGend{}.
-The potential infinite recursion occurs because there is handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CatchResume}(\0\V{R2}\0)}}\endlgrinde\LGend{}, which resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R1}}}\endlgrinde\LGend{}, while handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CatchResume}(\0\V{R1}\0)}}\endlgrinde\LGend{} is still on the stack.
+The potential infinite recursion occurs because there is handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{\_CatchResume}\K{\_CatchResume}(\0\V{R2}\0)}}\endlgrinde\LGend{}, which resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R1}}}\endlgrinde\LGend{}, while handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\Proc{\_CatchResume}\K{\_CatchResume}(\0\V{R1}\0)}}\endlgrinde\LGend{} is still on the stack.
 Hence, handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{H2}}}\endlgrinde\LGend{} invokes \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{H1}}}\endlgrinde\LGend{} and vice versa with no base case to stop the recursion.
 
 \uC propagation prevents the infinite recursion when handler \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{H2}}}\endlgrinde\LGend{} resumes an exception of type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{R2}}}\endlgrinde\LGend{} because the next eligible handler is the one associated with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{H3}}}\endlgrinde\LGend{}.
@@ -6386,7 +6421,7 @@ Raising \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{const}}}\endlgrinde\LGend{} excep
 For termination, an exception is used to communicate information from the raise to the handler.
 Creating a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{const}}}\endlgrinde\LGend{} exception containing information for the handler, as in:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\0.\,.\,.\0\};}\Tab{24}{\C{}\1\1\0members\0contain\0information\0for\0handler}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\0.\,.\,.\0\};}\Tab{24}{\C{}\1\1\0members\0contain\0information\0for\0handler}}
 \CE{}\L{\LB{\K{const}\0\V{E}\0\V{e}(.\,.\,.);}\Tab{24}{\C{}\1\1\0initialize\0members\0at\0declaration\0(write\0once,\0read\-only)}}
 \CE{}\endlgrinde\LGend
 prevents its modification after initialization (modulo \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{mutable}}}\endlgrinde\LGend{} members).
@@ -6487,7 +6522,7 @@ Bound exceptions cannot be trivially mimicked by other mechanisms.
 Deriving a new exception type for each file object (e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Logfile\_IOError}}}\endlgrinde\LGend{} from \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{IOError}}}\endlgrinde\LGend{}) results in an explosion in the total number of exception types, and cannot handle dynamically allocated objects, which have no static name.
 Passing the associated object as an argument to the handler and checking if the argument is the bound object, as in:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{catch}(\0\V{IOError}\0\V{e}\0)\0\{\0}\Tab{28}{\C{}\1\1\0pass\0file\-object\0address\0at\0raise}}
+\L{\LB{\Proc{catch}\K{catch}(\0\V{IOError}\0\V{e}\0)\0\{\0}\Tab{28}{\C{}\1\1\0pass\0file\-object\0address\0at\0raise}}
 \CE{}\L{\LB{}\Tab{4}{\K{if}\0(\0\V{e}.\V{obj}\0==\0\&\V{f}\0)\0.\,.\,.}\Tab{28}{\C{}\1\1\0deal\0only\0with\0f}}
 \CE{}\L{\LB{}\Tab{4}{\K{else}\0\K{throw}}\Tab{28}{\C{}\1\1\0reraise\0exception}}
 \CE{}\endlgrinde\LGend
@@ -6585,17 +6620,17 @@ Bound resumption handlers appear in the \uC \LGinlinetrue\LGbegin\lgrinde\L{\LB{
 \label{s:InheritanceEHM}
 
 \VRef[Table]{f:InheritanceAmongExceptionTypes} shows the forms of inheritance allowed among \CC types and \uC exception-types.
-First, the case of \emph{single} public inheritance\index{inheritance!single} among homogeneous kinds of exception type, i.e., base and derived type are the both \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}, is supported in \uC (major diagonal), e.g.:
+First, the case of \emph{single} public inheritance\index{inheritance!single} among homogeneous kinds of exception type, i.e., base and derived type are the both \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}, is supported in \uC (major diagonal), e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{Ebase}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{Ederived}\0:\0\K{public}\0\V{Ebase}\0\{\};}\Tab{36}{\C{}\1\1\0homogeneous\0public\0inheritance}}
+\L{\LB{\K{\_Exception}\0\V{Ebase}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{Ederived}\0:\0\K{public}\0\V{Ebase}\0\{\};}\Tab{40}{\C{}\1\1\0homogeneous\0public\0inheritance}}
 \CE{}\endlgrinde\LGend
 In this case, all implicit functionality matches between base and derived types, and hence, there are no problems.
 Public derivation of exception types is for building the exception-type hierarchy, and restricting public inheritance to only exception types enhances the distinction between the class and exception hierarchies.
 Single private/protected inheritance among homogeneous kinds of exception types is not supported:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{Ederived}\0:\0\K{private}\0\V{Ebase}\0\{\};}\Tab{40}{\C{}\1\1\0homogeneous\0private\0inheritance,\0not\0allowed}}
-\CE{}\L{\LB{\K{\_Event}\0\V{Ederived}\0:\0\K{protected}\0\V{Ebase}\0\{\};}\Tab{40}{\C{}\1\1\0homogeneous\0protected\0inheritance,\0not\0allowed}}
+\L{\LB{\K{\_Exception}\0\V{Ederived}\0:\0\K{private}\0\V{Ebase}\0\{\};}\Tab{44}{\C{}\1\1\0homogeneous\0private\0inheritance,\0not\0allowed}}
+\CE{}\L{\LB{\K{\_Exception}\0\V{Ederived}\0:\0\K{protected}\0\V{Ebase}\0\{\};}\Tab{44}{\C{}\1\1\0homogeneous\0protected\0inheritance,\0not\0allowed}}
 \CE{}\endlgrinde\LGend
 because each exception type must appear in the exception-type hierarchy, and hence must be a subtype of another exception type.
 Neither \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{private}}}\endlgrinde\LGend{} nor \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{protected}}}\endlgrinde\LGend{} inheritance establishes a subtyping relationship.
@@ -6622,14 +6657,14 @@ Second, the case of \emph{single} private/protected/public inheritance\index{inh
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{Cbase}\0\{\};}\Tab{36}{\C{}\1\1\0only\0struct\1class\0allowed}}
 \CE{}\L{\LB{}}
-\L{\LB{\K{\_Event}\0\V{Ederived}\0:\0\K{public}\0\V{Cbase}\0\{\};}\Tab{36}{\C{}\1\1\0heterogeneous\0public\0inheritance}}
+\L{\LB{\K{\_Exception}\0\V{Ederived}\0:\0\K{public}\0\V{Cbase}\0\{\};}\Tab{40}{\C{}\1\1\0heterogeneous\0public\0inheritance}}
 \CE{}\endlgrinde\LGend
 An example for using such inheritance is different exception types using a common logging class.
 The ordinary class implements the logging functionality and can be reused among the different exception types.
 
 Heterogeneous inheritance from exception types by other kinds of class, exception type, coroutine, mutex or task, is not allowed, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{Ebase}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{Ebase}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{struct}\0\V{StructDerived}}\Tab{28}{:\0\K{public}\0\V{Ebase}\0\{\};}\Tab{48}{\C{}\1\1\0not\0allowed}}
 \CE{}\L{\LB{\K{class}\0\V{ClassDerived}}\Tab{28}{:\0\K{public}\0\V{Ebase}\0\{\};}\Tab{48}{\C{}\1\1\0not\0allowed}}
@@ -6644,7 +6679,7 @@ Rather, shared code must be factored out as an ordinary class and then inherited
 \L{\LB{\K{class}\0\V{CommonBase}\0\{.\,.\,.\};}}
 \L{\LB{}}
 \L{\LB{\K{class}\0\V{ClassDerived}}\Tab{28}{:\0\K{public}\0\V{CommonBase}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{Ederived}}\Tab{28}{:\0\K{public}\0\V{CommonBase}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{Ederived}}\Tab{32}{:\0\K{public}\0\V{CommonBase}\0\{\};}}
 \endlgrinde\LGend
 Technically, it is possible for exception types to inherit from mutex, coroutine, and task types, but logically there does not appear to be a need.
 Exception types do not need mutual exclusion because a new exception is generated at each throw, so the exception is not a shared resource.
@@ -6818,7 +6853,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{uBaseEvent}}}
+\L{\LB{\V{uBaseException}}}
 \L{\LB{}\Tab{4}{\V{uKernelFailure}}}
 \L{\LB{}\Tab{8}{\V{uMutexFailure}}}
 \L{\LB{}\Tab{12}{\V{uMutexFailure}::\V{EntryFailure}}}
@@ -6879,7 +6914,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \L{\LB{}\Tab{16}{\V{uSocketClient}::\V{SendfileFailure}}}
 \L{\LB{}\Tab{20}{\V{uSocketClient}::\V{SendfileTimeout}}}
 \endlgrinde\LGend
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!uKernelFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uKernelFailure}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!uKernelFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uKernelFailure}}}\endlgrinde\LGend{}}%
 \index{uKernelFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uKernelFailure}}}\endlgrinde\LGend{}!uMutexFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{}}%
 \index{uMutexFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{}!EntryFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{EntryFailure}}}\endlgrinde\LGend{}}%
 \index{uMutexFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{}!RendezvousFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RendezvousFailure}}}\endlgrinde\LGend{}}%
@@ -6894,7 +6929,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \index{uPthreadable@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{}!Failure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Failure}}}\endlgrinde\LGend{}}%
 \index{uPthreadable@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPthreadable}}}\endlgrinde\LGend{}!CreationFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{CreationFailure}}}\endlgrinde\LGend{}}%
 \index{CreationFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{CreationFailure}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!uIOFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uIOFailure}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!uIOFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uIOFailure}}}\endlgrinde\LGend{}}%
 \index{uIOFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uIOFailure}}}\endlgrinde\LGend{}}%
 \index{uFile@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}}}\endlgrinde\LGend{}!Failure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Failure}}}\endlgrinde\LGend{}}%
 \index{uFile@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFile}}}\endlgrinde\LGend{}!TerminateFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TerminateFailure}}}\endlgrinde\LGend{}}%
@@ -6980,7 +7015,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 \index{SendfileFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileFailure}}}\endlgrinde\LGend{}}%
 \index{uSocketClient@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSocketClient}}}\endlgrinde\LGend{}!SendfileTimeout@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileTimeout}}}\endlgrinde\LGend{}}%
 \index{SendfileTimeout@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{SendfileTimeout}}}\endlgrinde\LGend{}}%
-\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}}%
 \index{uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}!uCancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}}%
 \index{uCancelled@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}}%
 \index{uFutureFailure@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}!uDelivered@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{}}%
@@ -7004,7 +7039,7 @@ The predefined exception-type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailu
 \subsection{Unhandled Exception}
 \label{s:UnhandledException}
 
-An exception raised and not handled inside a coroutine/task terminates it, and either the default or exception specific \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}\index{uBaseEvent@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseEvent}}}\endlgrinde\LGend{}!defaultTerminate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}} member is called.
+An exception raised and not handled inside a coroutine/task terminates it, and either the default or exception specific \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!defaultTerminate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}} member is called.
 The default action is to copy the unhandled exception into an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}}, which is forwarded as a \Index{nonlocal exception}\index{exception!nonlocal} to the last resumer for a coroutine or the joiner for a task.
 If the exception specific \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{} returns, the default forwarding action occurs.
 
@@ -7028,7 +7063,7 @@ Note, forwarding can occur across any number of coroutines and tasks, until the 
 \subfloat[Coroutine]{
 \label{f:CoroutineUnhandled}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\BF{\K{\_Throw}\0\V{E}();}\0\}\0\C{}\1\1\0unwind}}
 \CE{}\L{\LB{}\Tab{4}{\CMfont// defaultTerminate $\Rightarrow$ {\BB{\_Resume UnhandledException() \_At resumer()}}}}
@@ -7050,7 +7085,7 @@ Note, forwarding can occur across any number of coroutines and tasks, until the 
 \subfloat[Task]{
 \label{f:TaskUnhandled}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{\K{\_Task}\0\V{T}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\BF{\K{\_Throw}\0\V{E}();}\0\}\0\C{}\1\1\0unwind}}
 \CE{}\L{\LB{\};}}
@@ -7309,7 +7344,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: accept on a nomutex member "mem", possibly caused by accept statement appearing before mutex-member definition.
+test.cc:3: uC++ Translator error: accept on a nomutex member "mem", possibly caused by accept statement appearing before mutex-member definition.
 \end{quote}
 because the accept of member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{} appears \emph{before} the definition of member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{}, and hence, the \uC translator encounters the identifier \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{} before it knows it is a mutex member.
 \CC requires definition before use in most circumstances.
@@ -7329,7 +7364,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:8: uC++ Translator error: multiple accepts of mutex member "mem".
+test.cc:7: uC++ Translator error: multiple accepts of mutex member "mem".
 \end{quote}
 because the accept statement specifies the same member, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{}, twice.
 The second specification is superfluous.
@@ -7347,7 +7382,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:6: uC++ Translator error: accepting an invalid destructor; destructor name must be the same as the containing class "T2".
+test.cc:5: uC++ Translator error: accepting an invalid destructor; destructor name must be the same as the containing class "T2".
 \end{quote}
 because the accept statement specifies the destructor from a different class, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T1}}}\endlgrinde\LGend{}, within class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T2}}}\endlgrinde\LGend{}.
 
@@ -7361,26 +7396,26 @@ The following program:
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: derived type "C" of kind "COROUTINE" is incompatible with the base type "M" of kind "MONITOR"; inheritance ignored.
+test.cc:2: uC++ Translator error: derived type "C" of kind "COROUTINE" is incompatible with the base type "M" of kind "MONITOR"; inheritance ignored.
 \newline
-test.cc:4: uC++ Translator error: derived type "T1" of kind "TASK" is incompatible with the base type "C" of kind "COROUTINE"; inheritance ignored.
+test.cc:3: uC++ Translator error: derived type "T1" of kind "TASK" is incompatible with the base type "C" of kind "COROUTINE"; inheritance ignored.
 \newline
-test.cc:5: uC++ Translator error: multiple inheritance disallowed between base type "M" of kind "MONITOR" and base type "C" of kind "COROUTINE"; inheritance ignored.
+test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "M" of kind "MONITOR" and base type "C" of kind "COROUTINE"; inheritance ignored.
 \end{quote}
 because of inheritance restrictions among kinds of types in \uC (see \VRef{s:Inheritance}).
 
 Similarly, the following program:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{T1}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{T2}\0:\0\K{private}\0\V{T1}\0\{\};}}
-\L{\LB{\K{\_Event}\0\V{T3}\0:\0\K{public}\0\V{T1},\0\K{public}\0\V{T2}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{T1}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{T2}\0:\0\K{private}\0\V{T1}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{T3}\0:\0\K{public}\0\V{T1},\0\K{public}\0\V{T2}\0\{\};}}
 \endlgrinde\LGend
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: non-public inheritance disallowed between the derived type "T2" of kind "EVENT" and the base type "T1" of kind "EVENT"; inheritance ignored.
+test.cc:2: uC++ Translator error: non-public inheritance disallowed between the derived type "T2" of kind "EXCEPTION" and the base type "T1" of kind "EXCEPTION"; inheritance ignored.
 \newline
-test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "T1" of kind "EVENT" and base type "T2" of kind "EVENT"; inheritance ignored.
+test.cc:3: uC++ Translator error: multiple inheritance disallowed between base type "T1" of kind "EXCEPTION" and base type "T2" of kind "EXCEPTION"; inheritance ignored.
 \end{quote}
 because of inheritance restrictions among exception types in \uC (see \VRef{s:InheritanceEHM}).
 
@@ -7392,7 +7427,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: "T" redeclared with different kind.
+test.cc:2: uC++ Translator error: "T" redeclared with different kind.
 \end{quote}
 because the kind of type for the prototype, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Task}}}\endlgrinde\LGend{}, does not match the kind of type for the definition, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Coroutine}}}\endlgrinde\LGend{}.
 
@@ -7405,7 +7440,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "M1" of kind "MONITOR" and base type "M2" of kind "MONITOR"; inheritance ignored.
+test.cc:3: uC++ Translator error: multiple inheritance disallowed between base type "M1" of kind "MONITOR" and base type "M2" of kind "MONITOR"; inheritance ignored.
 \end{quote}
 because only one base type can be a mutex type when inheriting.
 
@@ -7420,7 +7455,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:6: uC++ Translator error: mutex attribute of "T::mem" conflicts with previously declared nomutex attribute.
+test.cc:5: uC++ Translator error: mutex attribute of "T::mem" conflicts with previously declared nomutex attribute.
 \end{quote}
 because the kind of mutual exclusion, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Nomutex}}}\endlgrinde\LGend{}, for the prototype of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{mem}}}\endlgrinde\LGend{}, does not match the kind of mutual exclusion, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Mutex}}}\endlgrinde\LGend{}, for the definition.
 
@@ -7438,15 +7473,15 @@ The following program:
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: constructor must be mutex, nomutex attribute ignored.
+test.cc:3: uC++ Translator error: constructor must be mutex, nomutex attribute ignored.
 \newline
-test.cc:5: uC++ Translator error: "new" operator must be nomutex, mutex attribute ignored.
+test.cc:4: uC++ Translator error: "new" operator must be nomutex, mutex attribute ignored.
 \newline
-test.cc:6: uC++ Translator error: "delete" operator must be nomutex, mutex attribute ignored.
+test.cc:5: uC++ Translator error: "delete" operator must be nomutex, mutex attribute ignored.
 \newline
-test.cc:7: uC++ Translator error: static member "mem" must be nomutex, mutex attribute ignored.
+test.cc:6: uC++ Translator error: static member "mem" must be nomutex, mutex attribute ignored.
 \newline
-test.cc:9: uC++ Translator error: destructor must be mutex for mutex type, nomutex attribute ignored.
+test.cc:8: uC++ Translator error: destructor must be mutex for mutex type, nomutex attribute ignored.
 \end{quote}
 because certain members may or may not have the mutex property \emph{for any mutex type}.
 The constructor(s) of a mutex type must be mutex because the thread of the constructing task is active in the object.
@@ -7474,13 +7509,13 @@ The following program:
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring previous declaration.
+test.cc:2: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring previous declaration.
 \newline
-test.cc:6: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring this declaration.
+test.cc:5: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring this declaration.
 \newline
-test.cc:9: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Assuming default attribute.
+test.cc:8: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Assuming default attribute.
 \newline
-test.cc:14: uC++ Translator error: mutex attribute of "T4::mem" conflicts with previously declared nomutex attribute.
+test.cc:13: uC++ Translator error: mutex attribute of "T4::mem" conflicts with previously declared nomutex attribute.
 \end{quote}
 because there are conflicts between mutex qualifiers.
 For type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{T1}}}\endlgrinde\LGend{}, the mutex qualifier for the forward declaration does not match with the actual declaration because the default qualifier for a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{class}}}\endlgrinde\LGend{} is \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Nomutex}}}\endlgrinde\LGend{}.
@@ -7495,7 +7530,7 @@ The following program:
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:2: uC++ Translator error: cannot create anonymous coroutine or task because of the need for named constructors and destructors.
+test.cc:1: uC++ Translator error: cannot create anonymous coroutine or task because of the need for named constructors and destructors.
 \end{quote}
 because a type without a name cannot have constructors or destructors since both are named after the type, and the \uC translator needs to generate constructors and destructors if not present for certain kinds of types.
 
@@ -7521,18 +7556,12 @@ While not all warning/error situations are enumerated, the list covers the commo
 
 Assertions define runtime checks that must be true or the basic algorithm is incorrect;
 if the assertion is false, a message is printed and the program is aborted.
-Assertions are written using the macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}\index{assert@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}}:
+Assertions are written using the macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}\index{assert@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}} and \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{assert}.\V{h}\>}}\endlgrinde\LGend{}}\index{assert.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}.\V{h}}}\endlgrinde\LGend{}}.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{assert}(\0\nterminal{boolean-expression}\0);}}
 \endlgrinde\LGend
 Asserts can be turned off by defining the preprocessor variable \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{NDEBUG}}}\endlgrinde\LGend{} before including \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}.\V{h}}}\endlgrinde\LGend{}.
 % \Emph{All \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}}}\endlgrinde\LGend{}s are implicitly turned off when the compiler flag \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\V{nodebug}}}\endlgrinde\LGend{} is specified} (see \VRef{s:CompilinguCProgram}).
-
-To use assertions in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{assert}.\V{h}\>}}
-\endlgrinde\LGend
-\index{assert.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{assert}.\V{h}}}\endlgrinde\LGend{}}%
 
 
 \subsection{Termination}
@@ -7613,7 +7642,7 @@ because routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{f}}}\endlgrinde\LGend{} d
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\K{\_Throw}\0\V{E}();\0\}}}
@@ -7637,7 +7666,7 @@ As a result, when the top of \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{c}}}\endlgri
 A more complex version of this situation occurs when there is a resume chain and no coroutine along the chain handles the exception.
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Coroutine}\0\V{C2}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\K{\_Throw}\0\V{E}();\0\}}}
@@ -7794,7 +7823,7 @@ As a result, when the \Index{program main} attempts to delete task \LGinlinetrue
 
 The following program:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Task}\0\V{T}\0\{}}
 \L{\LB{}\Tab{4}{\V{uBaseTask}\0\&\0\V{t};}}
@@ -7834,7 +7863,7 @@ A more complex version of this situation occurs when a blocked call is aborted, 
 The following program:
 \end{sloppypar}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\_Event}\0\V{E}\0\{\};}}
+\L{\LB{\K{\_Exception}\0\V{E}\0\{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Task}\0\V{T}\0\{}}
 \L{\LB{}\Tab{4}{\V{uBaseTask}\0\&\0\V{t};}}
@@ -9314,8 +9343,8 @@ In order to ease the co-operation with pthreads code, and possibly help transiti
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\K{\_Nomutex}\0\V{pthread\_t}\0\V{pthreadId}();}\Tab{44}{\C{}\1\1\0returns\0a\0pthread\0id\0for\0a\0uC++\0task}}
 \CE{}\L{\LB{}}
-\L{\LB{}\Tab{4}{\K{\_Event}\0\V{Failure};}\Tab{44}{\C{}\1\1\0exceptions}}
-\CE{}\L{\LB{}\Tab{4}{\K{\_Event}\0\V{CreationFailure};}}
+\L{\LB{}\Tab{4}{\V{\_Excpetion}\0\V{Failure};}\Tab{44}{\C{}\1\1\0exceptions}}
+\CE{}\L{\LB{}\Tab{4}{\K{\_Exception}\0\V{CreationFailure};}}
 \L{\LB{\};}}
 \L{\LB{}}
 \L{\LB{\K{\_Task}\0\V{T}\0:\0\K{public}\0\V{uPthreadable}\0\{}\Tab{44}{\C{}\1\1\0inherit\0so\0uC++\0task\0can\0mimic\0pthreads\0task}}
@@ -10483,7 +10512,7 @@ The ellipsis in the following rules represent the productions elided from the \C
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_RealTimeTask}}}\endlgrinde\LGend{} \nterminal{queue-types}\opt
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_PeriodicTask}}}\endlgrinde\LGend{} \nterminal{queue-types}\opt
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_SporadicTask}}}\endlgrinde\LGend{} \nterminal{queue-types}\opt
-	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Event}}}\endlgrinde\LGend{}
+	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Actor}}}\endlgrinde\LGend{}
 	\rhs \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_CorActor}}}\endlgrinde\LGend{}
 
@@ -10683,18 +10712,18 @@ If the algorithm uses deterministic computation (a predictable sequence of value
 
 All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some technique to scramble bits of a value, e.g., multiplicative recurrence:
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{rand}\0=\036973\0\*\0(\V{rand}\0\&\065535)\0+\0(\V{rand}\0\>\>\016);\0\C{}\1\1\0scramble\0bits}}
+\L{\LB{\V{rand}\0=\033967\0\*\0(\V{rand}\0+\01063);\0\C{}\1\1\0scramble\0bits}}
 \CE{}\endlgrinde\LGend
 Multiplication of large values adds new least-significant bits and drops most-significant bits.
 \begin{quote}
 \begin{tabular}{@{}r|l@{}}
 bits 63--32 (most)	& bits 31--0 (least)	\\
 \hline
-0x0					& 0x3e8e36				\\
-0x5f				& 0x718c25e1			\\
-0xad3e				& 0x7b5f1dbe			\\
-0xbc3b				& 0xac69ff19			\\
-0x1070f				& 0x2d258dc6			\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0x0}}\endlgrinde\LGend{}				& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x3e8e36}}\endlgrinde\LGend{}			\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0x5f}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x718c25e1}}\endlgrinde\LGend{}		\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0xad3e}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x7b5f1dbe}}\endlgrinde\LGend{}		\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0xbc3b}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0xac69ff19}}\endlgrinde\LGend{}		\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0x1070f}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x2d258dc6}}\endlgrinde\LGend{}		\\
 \end{tabular}
 \end{quote}
 By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
@@ -10705,47 +10734,52 @@ hence, one random value bootstraps another.
 Finally, a PRNG usually generates a range of large values, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{[0,\0\V{UINT\_MAX}]}}\endlgrinde\LGend{}, which are scaled using the modulus operator, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{prng}()\0\%\05}}\endlgrinde\LGend{} produces random values in the range 0--4.
 
 \uC provides 32/64-bit sequential PRNG classes only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
+To use the PRNG interface \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uPRNG}.\V{h}\>}}\endlgrinde\LGend{}}\index{uPRNG.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}}.
 \begin{itemize}
 \item
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} classes for sequential programs, like coroutining are:
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} classes for sequential programs, like coroutining, are:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{PRNG32}\0\{}}
-\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type,\0no\0copy\0or\0assignment}}
 \CE{}\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{PRNG32}();}\Tab{52}{\C{}\1\1\0random\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{PRNG32}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint32\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{prng}(\0\V{PRNG32}\0\&\0\V{prng},\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\K{operator}()(\0\V{uint32\_t}\0\V{l},\0\V{uint32\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint32\_t}\0\V{calls}()\0\K{const};}\Tab{52}{\C{}\1\1\0number\0of\0calls}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{copy}(\0\V{PRNG32}\0\&\0\V{src}\0);}\Tab{52}{\C{}\1\1\0checkpoint\0PRNG\0state}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{PRNG64}\0\{}}
-\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type}}
+\L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type,\0no\0copy\0or\0assignment}}
 \CE{}\L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\V{PRNG64}();}\Tab{52}{\C{}\1\1\0random\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{PRNG64}(\0\V{uint64\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0fixed\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{set\_seed}(\0\V{uint64\_t}\0\V{seed}\0);}\Tab{52}{\C{}\1\1\0set\0seed}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{get\_seed}()\0\K{const};}\Tab{52}{\C{}\1\1\0get\0seed}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng}\0);}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng},\0\V{uint64\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
-\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{prng}(\0\V{PRNG64}\0\&\0\V{prng},\0\V{uint64\_t}\0\V{l},\0\V{uint64\_t}\0\V{u}\0);\0\C{}\1\1\0[l,u]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\K{operator}()();}\Tab{52}{\C{}\1\1\0[0,UINT\_MAX]}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\K{operator}()(\0\V{uint64\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[0,u)}}
+\CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\K{operator}()(\0\V{uint64\_t}\0\V{l},\0\V{uint64\_t}\0\V{u}\0);}\Tab{52}{\C{}\1\1\0[l,u]}}
 \CE{}\L{\LB{}\Tab{4}{\V{uint64\_t}\0\V{calls}()\0\K{const};}\Tab{52}{\C{}\1\1\0number\0of\0calls}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{copy}(\0\V{PRNG64}\0\&\0\V{src}\0);}\Tab{52}{\C{}\1\1\0checkpoint\0PRNG\0state}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 The type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} is aliased to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG64}}}\endlgrinde\LGend{} on 64-bit architectures and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG32}}}\endlgrinde\LGend{} on 32-bit architectures.
 A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} object is used to randomize behaviour or values during execution, e.g., in games, a character makes a random move or an object takes on a random value.
 In this scenario, it is useful to have multiple \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} objects, e.g., one per player or object.
-However, sequential execution is still repeatable given the same starting seeds for all \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s. 
+However, sequential execution is still repeatable given the same starting seeds for all \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s.
 \VRef[Figure]{f:SequentialPRNG} shows an example that creates two sequential \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s, sets both to the same seed (1009), and illustrates the three forms for generating random values, where both \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{}s generate the same sequence of values.
+Note, to prevent accidental PRNG copying, the copy constructor and assignment are hidden.
+To copy a PRNG for checkpointing, use the explicit \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{copy}}}\endlgrinde\LGend{} member.
 
 \begin{figure}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{PRNG64}\0\V{sprng1},\0\V{sprng2};}}
-\L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0)};\0\0\0\BF{\V{sprng2}.\V{set\_seed}(\01009\0);}}}
+\L{\LB{\V{PRNG}\0\V{sprng1},\0\V{sprng2};}\Tab{52}{\C{}\1\1\0select\0appropriate\032\164\-bit\0PRNG}}
+\CE{}\L{\LB{\BF{\V{sprng1}.\V{set\_seed}(\01009\0)};\0\0\0\BF{\V{sprng2}.\V{set\_seed}(\01009\0);}}}
 \L{\LB{\K{for}\0(\0\K{unsigned}\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0Do\0not\0cascade\0prng\0calls\0because\0side\-effect\0functions\0called\0in\0arbitrary\0order.}}
 \CE{}\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\V{sprng1}()}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng1}(\05\0)}\0\<\<\0\S{}\'\0\'\SE{};\0\V{cout}\0\<\<\0\BF{\V{sprng1}(\00,\05\0)}\0\<\<\0\S{}\'\2t\'\SE{};}}
@@ -10870,25 +10904,21 @@ If a task pointer is available, e.g., in task main, eliminating the call to \LGi
 \end{figure}
 \end{itemize}
 
-To use the PRNG in a \uC program, include the file:
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\K{\#include}\0\<\V{uPRNG}.\V{h}\>}}
-\endlgrinde\LGend
-\index{uPRNG.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}}%
 
-
-\chapter{Object Stack Allocation}
-\label{s:ObjectStackAllocation}
-\index{object stack allocation}%
+\chapter{Stack Object Allocation}
+\label{s:StackObjectAllocation}
+\index{stack object allocation}%
 
 \CC has no mechanism to created an array of objects where each object in the array is initialized via the object's constructor and each element has a different value.
 As result, it is necessary to use the heap.
-\begin{flushleft}
+
+\par\noindent
 \begin{tabular}{@{}l|l@{}}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{struct}\0\V{Obj}\0\{}}
 \L{\LB{}\Tab{4}{\K{const}\0\K{int}\0\V{id};\0.\,.\,.}}
 \L{\LB{}\Tab{4}{\V{Obj}(\0\K{int}\0\V{id}\0)\0:\0\V{id}(\0\V{id}\0)\0\{\0.\,.\,.\0\}}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{mem}(.\,.\,.)\0\{\0.\,.\,.\0\}}}
 \L{\LB{\}}}
 \L{\LB{\V{cin}\0\>\>\0\V{size};}}
 \L{\LB{}}
@@ -10907,16 +10937,16 @@ As result, it is necessary to use the heap.
 \L{\LB{}}
 \L{\LB{}}
 \L{\LB{}}
+\L{\LB{}}
 \L{\LB{\{}}
 \L{\LB{}\Tab{4}{\BF{\V{unique\_ptr}\<\V{Obj}\>}\0\V{objs}[\V{size}];}}
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
 \L{\LB{}\Tab{8}{\V{objs}[\V{id}]\0=\0\BF{\V{make\_unique}\<\V{Obj}\>}(\0\V{id}\0);}}
 \L{\LB{}\Tab{4}{.\,.\,.}}
-\L{\LB{}}
 \L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs\0array\0elements}}
-\CE{}\endlgrinde\LGend
+\CE{}\L{\LB{}}
+\endlgrinde\LGend
 \end{tabular}
-\end{flushleft}
 
 \uC provides template \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}\index{uNoCtor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} mechanism (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{optional}::\V{emplace\_back}}}\endlgrinde\LGend{}).
 \LGinlinefalse\LGbegin\lgrinde
@@ -10928,11 +10958,13 @@ As result, it is necessary to use the heap.
 \L{\LB{}\Tab{4}{\V{T}\0\&\0\K{operator}\*();}}
 \L{\LB{}\Tab{4}{\K{const}\0\V{T}\0\*\0\K{operator}\-\>()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{T}\0\*\0\K{operator}\-\>();}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{ctor}();}}
-\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\K{void}\0\V{ctor}(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{dtor}();}}
+\L{\LB{}\Tab{4}{\V{T}\0\&\0\V{ctor}();}}
+\L{\LB{}\Tab{4}{\V{T}\0\&\0\K{operator}()();\0\C{}\1\1\0same\0as\0ctor}}
+\CE{}\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\V{T}\0\&\0\V{ctor}(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);}}
+\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\V{T}\0\&\0\K{operator}()(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);\0\C{}\1\1\0same\0as\0ctor}}
+\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{dtor}();}}
 \L{\LB{}\Tab{4}{\~\V{uNoCtor}();}}
-\L{\LB{\};}}
+\L{\LB{\};\V{t}}}
 \endlgrinde\LGend
 The template parameters specify the type of object embedded in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} and a boolean indicating if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} destructor runs the embedded object's destructor (true) or relies on an explicit call to member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} (false).
 In the latter case, if an object has no destructor, no call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} is required.
@@ -10944,7 +10976,6 @@ The following example shows how to use use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\
 \CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
 \L{\LB{}\Tab{8}{\V{objs}[\V{id}]\BF{.\V{ctor}(\0\V{id}\0)};\0\C{}\1\1\0placement\0allocation\0\&\0call\0initialization\0constructor}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
-\L{\LB{}}
 \L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs\0array\0elements}}
 \CE{}\endlgrinde\LGend
 As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, fields are accessed using \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{}
@@ -10952,6 +10983,10 @@ As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGi
 \L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
 \L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\V{objs}[\V{id}]\BF{\-\>}\V{id}\0\<\<\0\V{endl};\0\BF{\CMfont// MUST USE -\> NOT . FOR FIELD ACCESS}}}
 \endlgrinde\LGend
+The old-style constructor syntax (parenthesis versus curly brackets) is allowed for initialization and the constructed object is returned so it can be used immediately to access the object.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{objs}[\V{id}]\BF{(\0\V{id}\0)}\-\>\V{mem}(\03\0);\0\C{}\1\1\0initialize\0and\0use}}
+\CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} can be used with all new \uC types, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
@@ -10962,13 +10997,13 @@ As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGi
 \L{\LB{}\Tab{4}{\~\V{C}()\0\{\0\V{cout}\0\<\<\0\S{}\"dtor\"\SE{}\0\<\<\0\V{endl};\0\}}}
 \L{\LB{\};}}
 \L{\LB{\K{int}\0\V{main}()\0\{}}
-\L{\LB{}\Tab{4}{\V{uNoCtor}\<\V{C}\>\0\V{c}[10];}}
+\L{\LB{}\Tab{4}{\BF{\V{uNoCtor}\<\V{C}\>\0\V{c}[10];}}}
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
-\L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}].\V{ctor}(\0\V{i}\0);}}
+\L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}]\BF{(\0\V{i}\0)};}}
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{\}\0\C{}\1\1\0automatically\0delete\0coroutine\0array\0elements\0calling\0destructors\0on\0each\0element}}
 \CE{}\endlgrinde\LGend
-Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
+Creating large VLAs on a coroutine's or task's stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{}\Tab{4}{\V{uNoCtor}\<\V{C}\>\0\*\0\V{c}\0=\0\K{new}\0\V{uNoCtor}\<\V{C}\>[10000];}}

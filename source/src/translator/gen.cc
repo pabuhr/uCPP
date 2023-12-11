@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:00:53 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 17:24:51 2021
-// Update Count     : 1038
+// Last Modified On : Sat Oct  7 08:14:36 2023
+// Update Count     : 1040
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,7 +76,7 @@ token_t * gen_warning( token_t * before, const char * text ) {
 void gen_base_clause( token_t * before, symbol_t * symbol ) {
 	uassert( symbol != nullptr );
 
-	if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EVENT || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) &&
+	if ( ( symbol->data->key == COROUTINE || symbol->data->key == TASK || symbol->data->key == EXCEPTION || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) &&
 		 ( symbol->data->base == nullptr ||
 		   ( symbol->data->base->data->attribute.Mutex && ( symbol->data->base->data->key == STRUCT || symbol->data->base->data->key == CLASS ) ) ) ) {
 		uassert( before != nullptr );
@@ -108,8 +108,8 @@ void gen_base_clause( token_t * before, symbol_t * symbol ) {
 			} else {
 				gen_code( next, "public uBaseTask" );
 			} // if
-		} else if ( symbol->data->key == EVENT ) {
-			gen_code( next, "public uBaseEvent" );
+		} else if ( symbol->data->key == EXCEPTION ) {
+			gen_code( next, "public uBaseException" );
 		} else if ( symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 			if ( symbol->data->key == CORACTOR ) {
 				gen_code( next, "public uCorActorType <" );
@@ -503,7 +503,7 @@ void gen_constructor( symbol_t * symbol ) {
 
 	// if necessary, generate a default constructor
 
-	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EVENT || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
+	if ( symbol->data->key == COROUTINE || symbol->data->attribute.Mutex || symbol->data->key == EXCEPTION || symbol->data->key == ACTOR || symbol->data->key == CORACTOR ) {
 		symbol->data->table->hasdefault = true;
 		gen_hash( table->public_area, symbol->hash );
 
@@ -610,7 +610,7 @@ void gen_class_prefix( token_t * before, symbol_t * symbol ) {
 	  case CLASS:
 	  case COROUTINE:
 	  case TASK:
-	  case EVENT:
+	  case EXCEPTION:
 	  case ACTOR:
 	  case CORACTOR:
 		gen_code( before, "private :" );
@@ -633,7 +633,7 @@ void gen_class_suffix( symbol_t * symbol ) {
 	table = symbol->data->table;
 	uassert( table != nullptr );
 
-	if ( symbol->data->key == EVENT ) {
+	if ( symbol->data->key == EXCEPTION ) {
 		gen_code( table->protected_area, "virtual" );
 		gen_hash( table->protected_area, symbol->hash );
 		gen_code( table->protected_area, "* duplicate ( ) const override { return new" );

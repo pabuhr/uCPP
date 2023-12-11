@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  7 12:15:30 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  1 20:54:04 2020
-// Update Count     : 42
+// Last Modified On : Sat Oct  7 08:05:45 2023
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,8 +30,8 @@ using std::osacquire;
 using std::endl;
 
 
-_Event Up { public: int & up; Up( int & up ) : up(up) {}; };
-_Event Down { public: int & down; Down( int & down ) : down(down) {}; };
+_Exception Up { public: int & up; Up( int & up ) : up(up) {}; };
+_Exception Down { public: int & down; Down( int & down ) : down(down) {}; };
 
 void foo() {
 	int up = 0;
@@ -54,8 +54,8 @@ int main() {
 	// Checks marking of handlers is performed correctly during propagation.
 	// Marking prevents recursive resumption.
 
-	_Event R1 {};
-	_Event R2 {};
+	_Exception R1 {};
+	_Exception R2 {};
 
 	try {
 		try {

@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:34:43 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 24 17:00:31 2022
-// Update Count     : 19
+// Last Modified On : Sat Oct  7 08:06:15 2023
+// Update Count     : 20
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,10 +28,10 @@
 using std::cout;
 using std::endl;
 
-_Event fred {
+_Exception fred {
   public:
-  int k;
-  fred ( int k ) : k(k) {}
+	int k;
+	fred ( int k ) : k(k) {}
 };
 
 class mary {

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 16:38:54 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 12:25:20 2022
-// Update Count     : 212
+// Last Modified On : Sat Oct  7 07:57:05 2023
+// Update Count     : 213
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -84,7 +84,7 @@ class uFile {
 		uFetchAdd( accessCnt, -1 );
 	} // uFile::unaccess
   public:
-	_Event Failure : public uIOFailure {
+	_Exception Failure : public uIOFailure {
 		const uFile &f;
 		char name[uEHMMaxName];
 	  protected:
@@ -95,14 +95,14 @@ class uFile {
 		virtual void defaultTerminate() override;
 	}; // uFile::Failure
 
-	_Event TerminateFailure : public Failure {
+	_Exception TerminateFailure : public Failure {
 		const int accessCnt;
 	  public:
 		TerminateFailure( const uFile &f, int errno_, const int accessCnt, const char *const msg );
 		virtual void defaultTerminate() override;
 	}; // uFile::TerminateFailure
 
-	_Event StatusFailure : public Failure {
+	_Exception StatusFailure : public Failure {
 		const struct stat &buf;
 	  public:
 		StatusFailure( const uFile &f, int errno_, const struct stat &buf, const char *const msg );
@@ -130,7 +130,7 @@ class uFile {
 		void writeFailure( int errno_, const char *buf, const int len, const uDuration *timeout, const char *const op );
 		void writeTimeout( const char *buf, const int len, const uDuration *timeout, const char *const op );
 	  public:
-		_Event Failure : public uFile::Failure {
+		_Exception Failure : public uFile::Failure {
 			const FileAccess &fa;
 			int fd;
 		  protected:
@@ -141,9 +141,9 @@ class uFile {
 			virtual void defaultTerminate() override;
 		}; // FileAccess::Failure
 
-		friend _Event Failure;
+		friend _Exception Failure;
 
-		_Event OpenFailure : public Failure {
+		_Exception OpenFailure : public Failure {
 			const int flags;
 			const int mode;
 		  public:
@@ -151,13 +151,13 @@ class uFile {
 			virtual void defaultTerminate() override;
 		}; // FileAccess::OpenFailure
 
-		_Event CloseFailure : public Failure {
+		_Exception CloseFailure : public Failure {
 		  public:
 			CloseFailure( FileAccess &fa, int errno_, const char *const msg );
 			virtual void defaultTerminate() override;
 		}; // FileAccess::CloseFailure
 
-		_Event SeekFailure : public Failure {
+		_Exception SeekFailure : public Failure {
 			const off_t offset;
 			const int whence;
 		  public:
@@ -165,13 +165,13 @@ class uFile {
 			virtual void defaultTerminate() override;
 		}; // FileAccess::SeekFailure
 
-		_Event SyncFailure : public Failure {
+		_Exception SyncFailure : public Failure {
 		  public:
 			SyncFailure( const FileAccess &fa, int errno_, const char *const msg );
 			virtual void defaultTerminate() override;
 		}; // FileAccess::SyncFailure
 
-		_Event ReadFailure : public Failure {
+		_Exception ReadFailure : public Failure {
 		  protected:
 			const char *buf;
 			const int len;
@@ -181,12 +181,12 @@ class uFile {
 			virtual void defaultTerminate() override;
 		}; // FileAccess::ReadFailure
 
-		_Event ReadTimeout : public ReadFailure {
+		_Exception ReadTimeout : public ReadFailure {
 		  public:
 			ReadTimeout( const FileAccess &fa, const char *buf, const int len, const uDuration *timeout, const char *const msg );
 		}; // FileAccess::ReadTimeout
 
-		_Event WriteFailure : public Failure {
+		_Exception WriteFailure : public Failure {
 		  protected:
 			const char *buf;
 			const int len;
@@ -197,7 +197,7 @@ class uFile {
 			virtual void defaultTerminate() override;
 		}; // FileAccess::WriteFailure
 
-		_Event WriteTimeout : public WriteFailure {
+		_Exception WriteTimeout : public WriteFailure {
 		  public:
 			WriteTimeout( const FileAccess &fa, const char *buf, const int len, const uDuration *timeout, const char *const msg );
 		}; // FileAccess::WriteTimeout
@@ -242,7 +242,7 @@ class uFile {
 
 class uPipe {
   public:
-	_Event Failure : public uIOFailure {
+	_Exception Failure : public uIOFailure {
 		const uPipe &p;
 	  protected:
 		Failure( const uPipe &pipe, int errno_, const char *const msg );
@@ -251,13 +251,13 @@ class uPipe {
 		virtual void defaultTerminate() override;
 	}; // uPipe::Failure
 
-	_Event OpenFailure : public Failure {
+	_Exception OpenFailure : public Failure {
 	  public:
 		OpenFailure( const uPipe &pipe, int errno_, const char *const msg );
 		virtual void defaultTerminate() override;
 	}; // uPipe::OpenFailure
 
-	_Event CloseFailure : public Failure {
+	_Exception CloseFailure : public Failure {
 	  public:
 		CloseFailure( const uPipe &pipe, int errno_, const char *const msg );
 		virtual void defaultTerminate() override;
@@ -277,7 +277,7 @@ class uPipe {
 		End() : uFileIO( access ) {}
 		_Mutex virtual ~End() {}
 	  public:
-		_Event Failure : public uPipe::Failure {
+		_Exception Failure : public uPipe::Failure {
 			const End &end;
 			int fd;
 		  protected:
@@ -288,7 +288,7 @@ class uPipe {
 			virtual void defaultTerminate() override;
 		}; // End::Failure
 
-		_Event ReadFailure : public Failure {
+		_Exception ReadFailure : public Failure {
 		  protected:
 			const char *buf;
 			const int len;
@@ -298,12 +298,12 @@ class uPipe {
 			virtual void defaultTerminate() override;
 		}; // End::ReadFailure
 
-		_Event ReadTimeout : public ReadFailure {
+		_Exception ReadTimeout : public ReadFailure {
 		  public:
 			ReadTimeout( const End &end, const char *buf, const int len, const uDuration *timeout, const char *const msg );
 		}; // End::ReadTimeout
 
-		_Event WriteFailure : public Failure {
+		_Exception WriteFailure : public Failure {
 		  protected:
 			const char *buf;
 			const int len;
@@ -314,7 +314,7 @@ class uPipe {
 			virtual void defaultTerminate() override;
 		}; // End::WriteFailure
 
-		_Event WriteTimeout : public WriteFailure {
+		_Exception WriteTimeout : public WriteFailure {
 		  public:
 			WriteTimeout( const End &end, const char *buf, const int len, const uDuration *timeout, const char *const msg );
 		}; // End::WriteTimeout

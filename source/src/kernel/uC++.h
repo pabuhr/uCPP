@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:10:01 2023
-// Update Count     : 6385
+// Last Modified On : Sun Oct 29 21:44:56 2023
+// Update Count     : 6393
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -133,17 +133,19 @@ intmax_t convert( const char * str );					// proper string to integral convertio
 template< typename T, bool runDtor = true > class uNoCtor {
 	char storage[sizeof(T)] __attribute__(( aligned(alignof(T)) ));
   public:
-	inline __attribute__((always_inline)) const T * operator&() const { return (T *)(&storage); }
-	inline __attribute__((always_inline)) T * operator&() { return (T *)(&storage); }
-	inline __attribute__((always_inline)) const T & operator*() const { return (T &)*((T *)(&storage)); }
-	inline __attribute__((always_inline)) T & operator*() { return (T &)*((T *)(&storage)); }
-	inline __attribute__((always_inline)) const T * operator->() const { return (T *)(&storage); }
-	inline __attribute__((always_inline)) T * operator->() { return (T *)(&storage); }
-	void ctor() { new( &storage ) T; }
-	template< typename... Args > void ctor( Args &&... args ) { new( &storage ) T( std::forward<Args>(args)... ); }
+	inline __attribute__((always_inline)) const T * operator&() const { return (T *)&storage; }
+	inline __attribute__((always_inline)) T * operator&() { return (T *)&storage; }
+	inline __attribute__((always_inline)) const T & operator*() const { return (T &)*((T *)&storage); }
+	inline __attribute__((always_inline)) T & operator*() { return (T &)*((T *)&storage); }
+	inline __attribute__((always_inline)) const T * operator->() const { return (T *)&storage; }
+	inline __attribute__((always_inline)) T * operator->() { return (T *)&storage; }
+	T & ctor() { return *new( &storage ) T; }
+	T & operator()() { return *new( &storage ) T; }
+	template< typename... Args > T & ctor( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
+	template< typename... Args > T & operator()( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
 	void dtor() { ((T *)&storage)->~T(); }
-	~uNoCtor() { if ( runDtor ) dtor(); } 
-};
+	~uNoCtor() { if ( runDtor ) dtor(); }
+}; // uNoCtor
 
 
 //######################### InterposeSymbol #########################
@@ -884,7 +886,7 @@ class uLock {											// yielding spinlock
 #include <uEHM.h>
 
 
-_Event uKernelFailure {									// general event for kernel failures, inherit implicitly from uBaseEvent (exception root)
+_Exception uKernelFailure {								// general event for kernel failures, inherit implicitly from uBaseEvent (exception root)
   protected:
 	uKernelFailure( const char * const msg = "" );
   public:
@@ -893,7 +895,7 @@ _Event uKernelFailure {									// general event for kernel failures, inherit im
 }; // uKernelFailure
 
 
-_Event uMutexFailure : public uKernelFailure {			// general event for mutex member failures
+_Exception uMutexFailure : public uKernelFailure {		// general event for mutex member failures
 	const UPP::uSerial * const serial;					// identify the mutex object of _Cormonitor or _Task
   protected:
 	uMutexFailure( const UPP::uSerial * const serial, const char * const msg = "" );
@@ -903,12 +905,12 @@ _Event uMutexFailure : public uKernelFailure {			// general event for mutex memb
 
 	// exception handling
 
-	_Event EntryFailure;
-	_Event RendezvousFailure;
+	_Exception EntryFailure;
+	_Exception RendezvousFailure;
 }; // uMutexFailure
 
 
-_Event uMutexFailure::EntryFailure : public uMutexFailure {
+_Exception uMutexFailure::EntryFailure : public uMutexFailure {
   public:
 	EntryFailure( const UPP::uSerial * const serial, const char * const msg = "" );
 	EntryFailure( const char * const msg = "" );
@@ -917,7 +919,7 @@ _Event uMutexFailure::EntryFailure : public uMutexFailure {
 }; // uMutexFailure::EntryFailure
 
 
-_Event uMutexFailure::RendezvousFailure : public uMutexFailure {
+_Exception uMutexFailure::RendezvousFailure : public uMutexFailure {
 	const uBaseCoroutine * const caller_;
   public:
 	RendezvousFailure( const UPP::uSerial * const serial, const char * const msg = "" );
@@ -927,7 +929,7 @@ _Event uMutexFailure::RendezvousFailure : public uMutexFailure {
 }; // uMutexFailure::RendezvousFailure
 
 
-_Event uIOFailure {										// general event for IO failures, inherit implicitly from uBaseEvent (exception root)
+_Exception uIOFailure {									// general event for IO failures, inherit implicitly from uBaseEvent (exception root)
 	int errno_;
   protected:
 	uIOFailure( int errno__, const char * const msg );
@@ -1407,7 +1409,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 
 	// cancellation
 
-	_Event UnwindStack {
+	_Exception UnwindStack {
 		friend class uBaseCoroutine;
 		friend class UPP::uMachContext;					// access: exec_dtor
 		friend _Task uPthread;							// access: exec_dtor
@@ -1469,13 +1471,13 @@ class uBaseCoroutine : public UPP::uMachContext {
   public:
 	// exception handling
 
-	_Event Failure : public uKernelFailure {
+	_Exception Failure : public uKernelFailure {
 	  protected:
 		Failure( const char * const msg = "" );
 	  public:
 	}; // uBaseCoroutine::Failure
 
-	_Event UnhandledException : public uBaseCoroutine::Failure {
+	_Exception UnhandledException : public uBaseCoroutine::Failure {
 		friend class uBaseCoroutine;					// access: all
 		friend class uBaseTask;							// access: all
 
@@ -2120,7 +2122,7 @@ class uBaseTask : public uBaseCoroutine {
 		thread_random_prime = seed;
 		thread_random_mask = true;
 	} // uBaseTask::set_seed
-	size_t get_seed() { return thread_random_seed; }
+	size_t get_seed() __attribute__(( warn_unused_result )) { return thread_random_seed; }
 	size_t prng() __attribute__(( warn_unused_result )) { return PRNG_NAME( random_state ); } // [0,UINT_MAX]
 	size_t prng( size_t u ) __attribute__(( warn_unused_result )) { return prng() % u; } // [0,u)
 	size_t prng( size_t l, size_t u ) __attribute__(( warn_unused_result )) { return prng( u - l + 1 ) + l; } // [l,u]
@@ -2495,7 +2497,7 @@ class uCondition {
 
 	// exception handling
 
-	_Event WaitingFailure : public uKernelFailure {		// condition queue deleted before restarted from waiting
+	_Exception WaitingFailure : public uKernelFailure {	// condition queue deleted before restarted from waiting
 		friend class uCondition;
 
 		const uCondition & cond;
@@ -3092,12 +3094,12 @@ _Task uPthreadable {									// abstract class (inheritance only)
 
 	// exception handling
 
-	_Event Failure : public uKernelFailure {
+	_Exception Failure : public uKernelFailure {
 	  protected:
 		Failure();
 	}; // uPthreadable::Failure
 
-	_Event CreationFailure : public uPthreadable::Failure {
+	_Exception CreationFailure : public uPthreadable::Failure {
 	}; // uPthreadable::CreationFailure
   private:
 	// The following routines should only have to be called by the original task owner.
@@ -3107,7 +3109,7 @@ _Task uPthreadable {									// abstract class (inheritance only)
 	} // uPthreadable::join
 
 	static void restart_unwinding( _Unwind_Reason_Code urc, _Unwind_Exception * e );
-	static _Unwind_Reason_Code unwinder_cleaner( int version, _Unwind_Action ,_Unwind_Exception_Class, _Unwind_Exception *, _Unwind_Context *, void * );
+	static _Unwind_Reason_Code unwinder_cleaner( int version, _Unwind_Action, _Unwind_Exception_Class, _Unwind_Exception *, _Unwind_Context *, void * );
 	void do_unwind();
 	void cleanup_pop( int ex );
 	void cleanup_push( void (* routine)(void *), void * args, void * stackaddress );		

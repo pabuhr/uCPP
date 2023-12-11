@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:09:30 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb  4 09:16:45 2022
-// Update Count     : 254
+// Last Modified On : Sat Oct  7 08:13:59 2023
+// Update Count     : 255
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -144,7 +144,7 @@ void putoutput( token_t * token ) {
 		*yyout << " " << "catch";
 		break;
 	  case ACTOR:
-	  case EVENT:
+	  case EXCEPTION:
 	  case CORACTOR:
 	  case COROUTINE:
 	  case TASK:

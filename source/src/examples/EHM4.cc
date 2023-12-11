@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Tue Mar 26 23:01:30 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct  3 22:43:21 2022
-// Update Count     : 219
+// Last Modified On : Sat Oct  7 08:08:15 2023
+// Update Count     : 220
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ _Task worker {
 uBarrier b( NTASK + 1 );								// control start and finish of main/worker tasks
 worker * w[NTASK];										// shared resource controlled by barrier
 
-_Event Rev {
+_Exception Rev {
   public:
 	int ticket;
 	Rev( const char * msg, int ticket ) : ticket( ticket ) { setMsg( msg ); }

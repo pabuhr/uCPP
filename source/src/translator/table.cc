@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 24 18:19:08 2021
-// Update Count     : 413
+// Last Modified On : Sat Oct  7 08:14:12 2023
+// Update Count     : 414
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -172,8 +172,8 @@ void table_t::display_table( int blank ) {
 			  case TASK:
 				cerr << " TASK";
 				break;
-			  case EVENT:
-				cerr << " EVENT";
+			  case EXCEPTION:
+				cerr << " EXCEPTION";
 				break;
 			  case ACTOR:
 				cerr << " ACTOR";

@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr  3 09:44:40 2022
-// Update Count     : 533
+// Last Modified On : Thu Sep 21 10:11:34 2023
+// Update Count     : 535
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -35,13 +35,15 @@
 #define uEHMMaxMsg 156
 #define uEHMMaxName 100
 
+#define uBaseEvent uBaseException
+
 class uEHM;												// forward declaration
 
 
-//######################### uBaseEvent ########################
+//######################### uBaseException ########################
 
 
-class uBaseEvent {
+class uBaseException {
 	friend class uEHM;
   public:
 	enum RaiseKind { ThrowRaise, ResumeRaise };
@@ -52,12 +54,12 @@ class uBaseEvent {
 	mutable void * staticallyBoundObject;				// bound object for matching, set at raise
 	mutable RaiseKind raiseKind;						// how the exception is raised
 
-	uBaseEvent( const char * const msg = "" ) { src = nullptr; setMsg( msg ); }
+	uBaseException( const char * const msg = "" ) { src = nullptr; setMsg( msg ); }
 	const std::type_info * getEventType() const { return &typeid( *this ); };
 	void setMsg( const char * const msg );
 	virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
   public:
-	virtual ~uBaseEvent();
+	virtual ~uBaseException();
 
 	const char * message() const { return msg; }
 	const uBaseCoroutine & source() const { return *src; }
@@ -66,10 +68,10 @@ class uBaseEvent {
 	RaiseKind getRaiseKind() const { return raiseKind; }
 	const void * getOriginalThrower() const { return staticallyBoundObject; }
 	void reraise();
-	virtual uBaseEvent * duplicate() const = 0;			// translator generated => object specific
+	virtual uBaseException * duplicate() const = 0;			// translator generated => object specific
 	virtual void defaultTerminate();
 	virtual void defaultResume();
-}; // uBaseEvent
+}; // uBaseException
 
 
 //######################### uEHM ########################
@@ -80,7 +82,7 @@ class uEHM {
 	friend class UPP::uMachContext;						// access: terminate
 	friend class uBaseCoroutine;						// access: ResumeWorkHorseInit, uResumptionHandlers, uDeliverEStack, unexpected, strncpy
 	friend class uBaseTask;								// access: terminateHandler
-	friend class uBaseEvent;							// access: AsyncEMsg
+	friend class uBaseException;						// access: AsyncEMsg
 
 	class ResumeWorkHorseInit;
 	class AsyncEMsg;
@@ -103,28 +105,28 @@ class uEHM {
 	class uHandlerBase;
 	class uDeliverEStack;
 
-	static void asyncToss( const uBaseEvent & event, uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind, bool rethrow = false );
-	static void asyncReToss( uBaseCoroutine & target, uBaseEvent::RaiseKind raiseKind );
+	static void asyncToss( const uBaseException & event, uBaseCoroutine & target, uBaseException::RaiseKind raiseKind, bool rethrow = false );
+	static void asyncReToss( uBaseCoroutine & target, uBaseException::RaiseKind raiseKind );
 
-	static void Throw( const uBaseEvent & event, void * const bound = nullptr ) __attribute__(( noreturn ));
-	//static void ThrowAt( const uBaseEvent & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseEvent::ThrowRaise ); }
-	//static void ThrowAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseEvent::ThrowRaise ); } // asynchronous rethrow
+	static void Throw( const uBaseException & event, void * const bound = nullptr ) __attribute__(( noreturn ));
+	//static void ThrowAt( const uBaseException & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseException::ThrowRaise ); }
+	//static void ThrowAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseException::ThrowRaise ); } // asynchronous rethrow
 	static void ReThrow() __attribute__(( noreturn ));	// synchronous rethrow
 
-	static void Resume( const uBaseEvent & event, void * const bound = nullptr, bool conseq = true );
+	static void Resume( const uBaseException & event, void * const bound = nullptr, bool conseq = true );
 	static void ReResume( bool conseq = true );
-	static void ResumeAt( const uBaseEvent & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseEvent::ResumeRaise ); }
-	static void ResumeAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseEvent::ResumeRaise ); } // asynchronous reresume
+	static void ResumeAt( const uBaseException & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseException::ResumeRaise ); }
+	static void ResumeAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseException::ResumeRaise ); } // asynchronous reresume
 
 	static bool pollCheck();
 	static int poll();
 	static const std::type_info * getTopResumptionType();
-	static uBaseEvent * getCurrentException();
-	static uBaseEvent * getCurrentResumption();
-	static char * getCurrentEventName( uBaseEvent::RaiseKind raiseKind, char * s1, size_t n );
+	static uBaseException * getCurrentException();
+	static uBaseException * getCurrentResumption();
+	static char * getCurrentEventName( uBaseException::RaiseKind raiseKind, char * s1, size_t n );
 	static char * strncpy( char * s1, const char * s2, size_t n );
   private:
-	static void resumeWorkHorse( const uBaseEvent & event, bool conseq );
+	static void resumeWorkHorse( const uBaseException & event, bool conseq );
 }; // uEHM
 
 
@@ -134,16 +136,16 @@ class uEHM {
 class uEHM::AsyncEMsg : public uSeqable {
 	friend class uEHM;
 	friend class uEHM::AsyncEMsgBuffer;
-	//friend void uEHM::ThrowAt( const uBaseEvent &, uBaseCoroutine & );
-	friend void uEHM::ResumeAt( const uBaseEvent &, uBaseCoroutine & );
+	//friend void uEHM::ThrowAt( const uBaseException &, uBaseCoroutine & );
+	friend void uEHM::ResumeAt( const uBaseException &, uBaseCoroutine & );
 
 	bool hidden;
-	uBaseEvent * asyncEvent;
+	uBaseException * asyncEvent;
 
 	AsyncEMsg & operator=( const AsyncEMsg & );
 	AsyncEMsg( const AsyncEMsg & );
 
-	AsyncEMsg( const uBaseEvent & event );
+	AsyncEMsg( const uBaseException & event );
   public:
 	~AsyncEMsg();
 }; // uEHM::AsyncEMsg
@@ -179,7 +181,7 @@ class uEHM::uHandlerBase {
 	uHandlerBase( const void * matchBinding, const std::type_info * eventType ) : matchBinding( matchBinding ), eventType( eventType ) {}
 	virtual ~uHandlerBase() {}
   public:
-	virtual void uHandler( uBaseEvent & exn ) = 0;
+	virtual void uHandler( uBaseException & exn ) = 0;
 	const void * getMatchBinding() const { return matchBinding; }
 	const std::type_info * getEventType() const { return eventType; }
 }; // uHandlerBase
@@ -190,14 +192,14 @@ class uRoutineHandler : public uEHM::uHandlerBase {
   public:
 	uRoutineHandler( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > & handlerRtn ) : uHandlerBase( nullptr, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
 	uRoutineHandler( const void * originalThrower, const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN ( Exn & ) > & handlerRtn ) : uHandlerBase( originalThrower, &typeid( Exn ) ), handlerRtn( handlerRtn ) {}
-	virtual void uHandler( uBaseEvent & exn ) { handlerRtn( (Exn &)exn ); }
+	virtual void uHandler( uBaseException & exn ) { handlerRtn( (Exn &)exn ); }
 }; // uRoutineHandler
 
 class uRoutineHandlerAny : public uEHM::uHandlerBase {
 	const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > handlerRtn; // lambda for exception handling routine
   public:
 	uRoutineHandlerAny( const std::function< uEHM::FINALLY_CATCHRESUME_DISALLOW_RETURN () > & handlerRtn ) : uHandlerBase( nullptr, nullptr ), handlerRtn( handlerRtn ) {}
-	virtual void uHandler( uBaseEvent & /* exn */ ) { handlerRtn(); }
+	virtual void uHandler( uBaseException & /* exn */ ) { handlerRtn(); }
 }; // uRoutineHandlerAny
 
 
@@ -205,7 +207,7 @@ class uRoutineHandlerAny : public uEHM::uHandlerBase {
 // resuming handler hierarchy is implemented as a linked list.
 
 class uEHM::uResumptionHandlers {
-	friend void uEHM::resumeWorkHorse( const uBaseEvent &, bool );
+	friend void uEHM::resumeWorkHorse( const uBaseException &, bool );
 
 	uResumptionHandlers * next, * conseqNext;			// uNext maintains a proper stack, while uConseqNext is used to skip
 	// over handlers that have already been examined for resumption (to avoid recursion)

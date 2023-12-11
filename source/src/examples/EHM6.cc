@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:31 2016
-// Update Count     : 29
+// Last Modified On : Sat Oct  7 08:08:34 2023
+// Update Count     : 30
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,13 +29,13 @@ using std::cout;
 using std::osacquire;
 using std::endl;
 
-_Event R1 {
+_Exception R1 {
   public:
 	int &i; char &c;
 	R1( int &i, char &c ) : i( i ), c( c ) {}
 };
 
-_Event R2 {};
+_Exception R2 {};
 
 
 class fred {

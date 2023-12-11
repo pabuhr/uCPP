@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May 31 08:20:46 2021
-// Update Count     : 128
+// Last Modified On : Sat Oct  7 08:29:51 2023
+// Update Count     : 131
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -143,7 +143,8 @@ keyword_t key[] = {
 	{ "_Disable", DISABLE },
 	{ "_Else", UELSE },
 	{ "_Enable", ENABLE },
-	{ "_Event", EVENT },
+	{ "_Event", EXCEPTION },							// deprecated
+	{ "_Exception", EXCEPTION },
 	{ "_Finally", FINALLY },
 	{ "_Mutex", MUTEX },
 	{ "_Nomutex", NOMUTEX },

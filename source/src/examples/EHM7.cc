@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:42:34 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 26 15:03:16 2022
-// Update Count     : 33
+// Last Modified On : Sat Oct  7 08:08:52 2023
+// Update Count     : 34
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,10 +29,10 @@ using std::cout;
 using std::osacquire;
 using std::endl;
 
-_Event Fred {
+_Exception Fred {
   public:
-  int k;
-  Fred ( int k ) : k(k) {}
+	int k;
+	Fred ( int k ) : k(k) {}
 };
 
 _Task Mary {

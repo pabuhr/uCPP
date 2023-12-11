@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar  2 11:55:41 2023
-// Update Count     : 1252
+// Last Modified On : Sat Oct  7 07:54:12 2023
+// Update Count     : 1253
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,9 +31,9 @@
 //############################## uBaseFuture ##############################
 
 
-_Event uFutureFailue {};
-_Event uCancelled : public uFutureFailue {};			// raised if future cancelled
-_Event uDelivered : public uFutureFailue {};			// raised if future has value/exception
+_Exception uFutureFailue {};
+_Exception uCancelled : public uFutureFailue {};		// raised if future cancelled
+_Exception uDelivered : public uFutureFailue {};		// raised if future has value/exception
 
 namespace UPP {
 	template<typename T> _Monitor uBaseFuture {

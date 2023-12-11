@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 28 07:23:06 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 25 22:39:08 2022
-// Update Count     : 2
+// Last Modified On : Sat Oct  7 08:08:24 2023
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -29,8 +29,8 @@
 
 using namespace std;
 
-_Event Ping {};
-_Event Pong {};
+_Exception Ping {};
+_Exception Pong {};
 
 void pinger( int i, int N ) {
 	cout << "Enter pinger " << i << ' ' << N << endl;

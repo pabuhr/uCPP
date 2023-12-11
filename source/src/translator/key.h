@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:39:05 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb  4 10:19:46 2022
-// Update Count     : 103
+// Last Modified On : Sat Oct  7 08:14:47 2023
+// Update Count     : 104
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -173,7 +173,7 @@ enum key_value_t {
 	DISABLE,
 	UELSE,
 	ENABLE,
-	EVENT,
+	EXCEPTION,
 	FINALLY,
 	MUTEX,
 	NOMUTEX,

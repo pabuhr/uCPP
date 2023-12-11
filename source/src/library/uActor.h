@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar  9 14:37:01 2023
-// Update Count     : 1236
+// Last Modified On : Wed Oct 18 20:16:32 2023
+// Update Count     : 1238
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -238,11 +238,11 @@ class uActor {
 
 		Impl * impl;									// storage for implementation
 	  public:
-		_Event PromiseFailure {};
-		_Event DupCallback : public PromiseFailure {};	// raised if duplicate callback
-		_Event DupDelivery : public PromiseFailure {};	// raised if duplicate delivery
-		_Event NoResult : public PromiseFailure {};		// raised if no result
-		_Event ChainedReset : public PromiseFailure {};	// raised if pending chained callback
+		_Exception PromiseFailure {};
+		_Exception DupCallback : public PromiseFailure {};	// raised if duplicate callback
+		_Exception DupDelivery : public PromiseFailure {};	// raised if duplicate delivery
+		_Exception NoResult : public PromiseFailure {};		// raised if no result
+		_Exception ChainedReset : public PromiseFailure {};	// raised if pending chained callback
 
 		Promise() : impl( new Impl() ) {}
 
@@ -534,9 +534,9 @@ class uActor {
 		bool stopped = true;
 		if ( actors_ != 0 ) {							// actors running ?
 			if ( duration == 0 ) {						// optimization
-				uActor::wait_.P();
+				wait_.P();
 			} else {
-				stopped = uActor::wait_.P( duration );	// true => Ved, false => timeout
+				stopped = wait_.P( duration );			// true => Ved, false => timeout
 			} // if
 		} // if
 
@@ -547,9 +547,9 @@ class uActor {
 
 	// Messages
 
-	static struct StartMsg : public uActor::SenderMsg {} startMsg; // start actor
-	static struct StopMsg : public uActor::SenderMsg {} stopMsg; // terminate actor
-	static struct UnhandledMsg : public uActor::SenderMsg {} unhandledMsg; // tell error
+	static struct StartMsg : public SenderMsg {} startMsg; // start actor
+	static struct StopMsg : public SenderMsg {} stopMsg; // terminate actor
+	static struct UnhandledMsg : public SenderMsg {} unhandledMsg; // tell error
 }; // uActor
 
 

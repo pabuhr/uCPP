@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 26 23:06:25 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 25 17:26:53 2022
-// Update Count     : 266
+// Last Modified On : Sat Oct  7 08:08:02 2023
+// Update Count     : 267
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,14 +34,14 @@ using std::endl;
 //######################### uBaseCoroutine::uFailure #########################
 
 
-_Event XXX {
+_Exception XXX {
   public:
-  XXX( const char *const msg ) : uBaseEvent( msg ) {}
+	XXX( const char *const msg ) : uBaseEvent( msg ) {}
 };
 
-_Event YYY {
+_Exception YYY {
   public:
-  YYY( const char *msg ) { setMsg( msg ); }
+	YYY( const char *msg ) { setMsg( msg ); }
 };
 
 _Coroutine CoroutineDummy1 {

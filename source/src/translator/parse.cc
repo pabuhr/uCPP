@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan  3 16:24:02 2023
-// Update Count     : 5071
+// Last Modified On : Sun Dec 10 06:39:19 2023
+// Update Count     : 5086
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -126,8 +126,8 @@ static const char * kind( symbol_t * symbol ) {
 		else return "CORMONITOR";
 	} else if ( symbol->data->key == TASK ) {
 		return "TASK";
-	} else if ( symbol->data->key == EVENT ) {
-		return "EVENT";
+	} else if ( symbol->data->key == EXCEPTION ) {
+		return "EXCEPTION";
 	} else if ( symbol->data->key == ACTOR ) {
 		return "ACTOR";
 	} else if ( symbol->data->key == CORACTOR ) {
@@ -2495,16 +2495,16 @@ static bool base_specifier_list( symbol_t * symbol ) {
 				symbol->hash->text, kind( symbol ), symbol->data->key, symbol->data->attribute.Mutex, symbol->data->index,
 				base->hash->text, kind( base ), base->data->key, base->data->attribute.Mutex, base->data->index );
 #endif
-		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EVENT || base->data->key == ACTOR || base->data->key == CORACTOR ) {
+		if ( base->data->key == COROUTINE || base->data->key == TASK || base->data->attribute.Mutex || base->data->key == EXCEPTION || base->data->key == ACTOR || base->data->key == CORACTOR ) {
 
 			// copy the left and right template delimiters from the scanned token
 
 			symbol->data->left = token->left;
 			symbol->data->right = token->right;
 
-			if ( ( ( symbol->data->key == EVENT || base->data->key == EVENT ) && ( symbol->data->key != base->data->key || access != PUBLIC ) )
+			if ( ( ( symbol->data->key == EXCEPTION || base->data->key == EXCEPTION ) && ( symbol->data->key != base->data->key || access != PUBLIC ) )
 				 || symbol->data->base != nullptr ) {
-				// This section only handles EVENT and multiple inheritance problems. The error checking for coroutine,
+				// This section only handles EXCEPTION and multiple inheritance problems. The error checking for coroutine,
 				// monitor, comonitor and task is in class_specifier, after the type's members are parsed because mutex
 				// members affect a type's kind. A side effect of separating the checking is for error messages to
 				// appear out of order.
@@ -2633,9 +2633,12 @@ static int class_key( attribute_t & attribute ) {
 		return TASK;
 	} // if
 
-	if ( match( EVENT ) ) {
+	if ( match( EXCEPTION ) ) {
 		gen_code( ahead, "class" );
-		return EVENT;
+		if ( strcmp( back->hash->text, "_Event" ) == 0 ) {
+			gen_warning( ahead, "_Event keyword deprecated and replaced with _Exception." );
+		} // if
+		return EXCEPTION;
 	} // if
 
 	if ( match( ACTOR ) ) {
@@ -3150,7 +3153,7 @@ static token_t * class_head( attribute_t & attribute ) {
 
 			symbol->data->key = key;
 
-			if ( key == COROUTINE || key == TASK || key == EVENT ) { // monitor is checked elsewhere
+			if ( key == COROUTINE || key == TASK || key == EXCEPTION ) { // monitor is checked elsewhere
 				symbol->data->key = key;
 				char msg[256];
 				sprintf( msg, "cannot create anonymous %s because of the need for constructors and destructors.", kind( symbol ) );
@@ -4300,6 +4303,9 @@ static bool function_declaration( bool explict, attribute_t & attribute ) {
 			if ( strcmp( function->hash->text, "main" ) == 0 ) {
 				if ( table->symbol != nullptr ) {		// member ?
 					if ( ( table->symbol->data->key == COROUTINE || table->symbol->data->key == TASK ) ) {
+						if ( strcmp( table->symbol->hash->text, "uMain" ) == 0 ) {
+							gen_error( ahead, "explicit declaration of uMain::main deprecated and replaced by program main: int main(...)." );
+						} // if
 						if ( table->access == PUBLIC ) { // public member ?
 							gen_code( prefix->next_parse_token(), "static_assert( false, \"main member of coroutine or task cannot have public access.\" );" );
 						} else {

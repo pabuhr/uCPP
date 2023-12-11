@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Nov 11 16:07:20 1988
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug  2 17:34:59 2023
-// Update Count     : 2356
+// Last Modified On : Mon Sep 11 11:21:08 2023
+// Update Count     : 2358
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -608,6 +608,7 @@ static void printStatsXML( HeapStatistics & stats, FILE * stream ) { // see mall
 static HeapStatistics & collectStats( HeapStatistics & stats ) {
 	heapMaster.mgrLock->acquire();
 
+	// Accumulate the heap master and all active thread heaps.
 	stats += heapMaster.stats;
 	for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
 		stats += heap->stats;
@@ -616,6 +617,18 @@ static HeapStatistics & collectStats( HeapStatistics & stats ) {
 	heapMaster.mgrLock->release();
 	return stats;
 } // collectStats
+
+static inline void clearStats() {
+	heapMaster.mgrLock->acquire();
+
+	// Zero the heap master and all active thread heaps.
+	HeapStatisticsCtor( heapMaster.stats );
+	for ( Heap * heap = heapMaster.heapManagersList; heap; heap = heap->nextHeapManager ) {
+		HeapStatisticsCtor( heap->stats );
+	} // for
+
+	heapMaster.mgrLock->release();
+} // clearStats
 #endif // __U_STATISTICS__
 
 
@@ -1453,6 +1466,17 @@ extern "C" {
 		uDebugWrite( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ );
 		#endif // __U_STATISTICS__
 	} // malloc_stats
+
+
+	// Zero the heap master and all active thread heaps.
+	void malloc_stats_clear() {
+		#ifdef __U_STATISTICS__
+		clearStats();
+		#else
+		#define MALLOC_STATS_MSG "malloc_stats statistics disabled.\n"
+		uDebugWrite( STDERR_FILENO, MALLOC_STATS_MSG, sizeof( MALLOC_STATS_MSG ) - 1 /* size includes '\0' */ );
+		#endif // __U_STATISTICS__
+	} // malloc_stats_clear
 
 
 	// Changes the file descriptor where malloc_stats() writes statistics.

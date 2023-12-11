@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May  1 09:18:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 14 16:14:09 2022
-// Update Count     : 180
+// Last Modified On : Sat Oct  7 08:07:39 2023
+// Update Count     : 181
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ _CorActor PhoneNo {
 		return Nodelete;
 	} // PhoneNo::receive
   private:
-	_Event Err {};										// last character => string not in the language
+	_Exception Err {};									// last character => string not in the language
 
 	void error() {
 		msg->status = ERROR;

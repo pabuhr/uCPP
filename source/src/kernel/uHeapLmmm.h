@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct  4 19:12:11 2022
-// Update Count     : 533
+// Last Modified On : Mon Sep 11 11:07:57 2023
+// Update Count     : 534
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,6 +41,7 @@ extern "C" {
 	size_t malloc_expansion();							// heap expansion size (bytes)
 	size_t malloc_mmap_start();							// crossover allocation size from sbrk to mmap
 	size_t malloc_unfreed();							// heap unfreed size (bytes)
+	void malloc_stats_clear();							// clear heap statistics
 } // extern "C"
 
 void * resize( void * oaddr, size_t alignment, size_t size ) __THROW;

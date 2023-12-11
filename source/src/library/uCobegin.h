@@ -7,8 +7,8 @@
 // Author           : Aaron Moss and Peter A. Buhr
 // Created On       : Sat Dec 27 18:31:33 2014
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 17 09:33:53 2023
-// Update Count     : 66
+// Last Modified On : Mon Sep 11 23:21:11 2023
+// Update Count     : 67
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -70,7 +70,7 @@ void uCofor( Low low, High high, std::function<void ( decltype(high) )> f ) {
 	const unsigned int nprocs = uThisCluster().getProcessors();	// parallelism
   if ( nprocs == 0 ) return;							// no processors ? skip otherwise zero divide
 	const unsigned int threads = (decltype(nprocs))range < nprocs ? range : nprocs; // (min) may not need all processors
-	uNoCtor< Runner > * runners = new uNoCtor< Runner >[threads];			// do not use up task stack
+	uNoCtor< Runner > * runners = new uNoCtor< Runner >[threads]; // do not use up task stack
 	// distribute extras among threads by increasing stride by 1
 	unsigned int stride = range / threads + 1, extras = range % threads;
 	// chunk the iterations across the user-threads

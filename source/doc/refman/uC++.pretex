@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Thu Aug 31 22:40:25 2023
-%% Update Count     : 8559
+%% Last Modified On : Mon Nov  6 10:18:21 2023
+%% Update Count     : 8630
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -813,8 +813,8 @@ _Coroutine uBaseCoroutine {
 	bool cancelled();
 	bool cancelInProgress();
 
-	_Event Failure;								// exceptions
-	_Event UnhandledException;
+	_Exception Failure;							// exceptions
+	_Exception UnhandledException;
 };
 %]
 \index{uBaseCoroutine@%(uBaseCoroutine%)!resume@%(resume%)}%
@@ -918,7 +918,7 @@ The member routine %(cancelled%)\index{cancelled@%(cancelled%)} returns true if 
 The member routine %(cancelInProgress%)\index{cancelInProgress@%(cancelInProgress%)} returns true if cancellation is started for the coroutine/task.
 \VRef{s:Cancellation} discusses cancellation in detail.
 
-The type %(_Event%)\index{_Event@%(_Event%)} is defined in \VRef{s:ExceptionType}.
+The type %(_Exception%)\index{_Exception@%(_Exception%)} is defined in \VRef{s:ExceptionType}.
 
 The free routine:
 %[
@@ -1503,7 +1503,7 @@ class uCondition {
 	bool empty() const;
 	uintptr_t front() const;
 
-	_Event WaitingFailure;
+	_Exception WaitingFailure;
 };
 uCondition DiskNotIdle;
 %]
@@ -2281,7 +2281,7 @@ Nevertheless, several low-level lock mechanisms are provided for teaching purpos
 A \Index{semaphore} in \uC is implemented as a counting semaphore as described by Dijkstra~\cite{Dijkstra65}.
 A counting semaphore has two parts: a counter and a list of waiting tasks.
 Both the counter and the list of waiting tasks is managed by the semaphore.
-The type %(uSemaphore%)\index{uSemaphore@%(uSemaphore%)} defines a semaphore:
+The type %(uSemaphore%)\index{uSemaphore@%(uSemaphore%)} defines a semaphore and \Textbf{requires %(#include <uSemaphore.h>%)}\index{uSemaphore.h@%(uSemaphore.h%)}.
 %[
 class uSemaphore {
   public:
@@ -2353,12 +2353,6 @@ positive means the semaphore is unlocked and allows $N$ tasks to acquire the sem
 The member routine %(empty%)\index{empty@%(empty%)} returns %(false%) if there are threads blocked on the semaphore and %(true%) otherwise.
 
 It is \emph{not} meaningful to read or to assign to a semaphore variable, or copy a semaphore variable (e.g., pass it as a value parameter).
-
-To use counting semaphores in a \uC program, include the file:
-%[
-#include <uSemaphore.h>
-%]
-\index{uSemaphore.h@%(uSemaphore.h%)}%
 
 
 \subsubsection{Commentary}
@@ -2560,14 +2554,14 @@ It is \emph{not} meaningful to read or to assign to a lock variable, or copy a l
 A \Index{barrier} allows $N$ tasks to synchronize, possible multiple times, during their life time.
 Barriers are used to repeatedly coordinate a group of tasks performing a concurrent operation followed by a sequential operation.
 In \uC, a barrier is a mutex coroutine, i.e., %(_Cormonitor%)\index{_Cormonitor@%(_Cormonitor%)}\index{_Mutex _Coroutine@%(_Mutex _Coroutine%)!_Cormonitor@%(_Cormonitor%)}, to provide the necessary mutual exclusion and to allow code to be easily executed both before and after the $N$ tasks synchronize on the barrier.
-The type %(uBarrier%)\index{uBarrier@%(uBarrier%)} defines a barrier:
+The type %(uBarrier%)\index{uBarrier@%(uBarrier%)} defines a barrier and \Textbf{requires %(#include <uBarrier.h>%)}\index{uBarrier.h@%(uBarrier.h%)}.
 %[
 _Mutex _Coroutine uBarrier {
   protected:
 	void main() { for ( ;; ) { suspend(); } }
 	virtual void last() { resume(); }
   public:
-	_Event BlockFailure {};								// raised if waiting tasks flushed
+	_Exception BlockFailure {};							// raised if waiting tasks flushed
 
 	uBarrier( unsigned int total );
 	_Nomutex unsigned int total() const;
@@ -2623,12 +2617,6 @@ tasks block until any %(total%) tasks have called %(block%).
 It can be replaced by subclassing from %(uBarrier%) to provide a specific action to be executed before or after a task blocks on %(uBarrier::block()%).
 
 It is \emph{not} meaningful to read or to assign to a barrier variable, or copy a barrier variable (e.g., pass it as a value parameter).
-
-To use barriers in a \uC program, include the file:
-%[
-#include <uBarrier.h>
-%]
-\index{uBarrier.h@%(uBarrier.h%)}%
 
 
 \section{Atomic Instructions}
@@ -3107,14 +3095,14 @@ The future operations available to a server are:
 This result is the value returned to the client.
 If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the result.
 
-\item[%(delivery( uBaseEvent * cause )%)]
+\item[%(delivery( uBaseException * cause )%)]
 -- copy a server-generated exception into the future, unblocking all clients waiting for the result.
 This exception is thrown at any client instead of the future result.
 If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the exception.
 
 For the future to manage the exception lifetime, the exception must be dynamically allocated:
 %[
-_Event E {};
+_Exception E {};
 Future_ISM<int> result;
 result.delivery( \(\BF{\)new E\(}\) );\(}\Tab{36}{\)// exception deleted by future
 %]
@@ -3166,7 +3154,7 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 	ServerData serverData;					// information needed by server
 
 	void delivery( T result );				// make result available in the future
-	void delivery( uBaseEvent * ex );		// make exception available in the future
+	void delivery( uBaseException * ex );	// make exception available in the future
 	void reset();							// mark future as empty (for reuse)
 };
 %]
@@ -3221,7 +3209,7 @@ template<typename T> class Future_ISM {
 	// used by server
 	void delivery( T result );				// make result available in the future
 	void reset();							// mark future as empty (for reuse)
-	void delivery( uBaseEvent * ex );		// make exception available in the future
+	void delivery( uBaseException * ex );	// make exception available in the future
 };
 %]
 \index{Future_ISM@%(Future_ISM%)!available@%(available%)}%
@@ -4085,11 +4073,11 @@ The member routine %(reset%) allows the promise to be reused by reseting for a n
 template<typename Result> class Promise {
 	std::function< void ( Result & ) > callback;		// functor type
   public:
-	_Event PromiseFailure {};
-	_Event DupCallback : public PromiseFailure {};		// raised if duplicate callback
-	_Event DupDelivery : public PromiseFailure {};		// raised if duplicate delivery
-	_Event NoResult : public PromiseFailure {};			// raised if no result
-	_Event ChainedReset : public PromiseFailure {};		// raised if pending chained callback
+	_Exception PromiseFailure {};
+	_Exception DupCallback : public PromiseFailure {};	// raised if duplicate callback
+	_Exception DupDelivery : public PromiseFailure {};	// raised if duplicate delivery
+	_Exception NoResult : public PromiseFailure {};		// raised if no result
+	_Exception ChainedReset : public PromiseFailure {};	// raised if pending chained callback
 
 	Promise() {}
 	Promise( const Promise<Result> & rhs );
@@ -4941,7 +4929,7 @@ In \uC, a connection to a UNIX file is made by declaration of a %(uFile%)\index{
 uFile infile( "abc" ), outfile( "xyz" );
 %]
 which creates two connection variables, %(infile%) and %(outfile%), connected to UNIX files %(abc%) and %(xyz%), respectively.
-The operations available on a file object are listed in \VRef[Figure]{f:FileInterface}:
+The operations available on a file object are listed in \VRef[Figure]{f:FileInterface} and \Textbf{require %(#include <uFile.h>%)}\index{uFile.h@%(uFile.h%)}, which also includes %(<fcntl.h>%)%)\index{fcntl.h@%(fcntl.h%)}.
 
 \begin{figure}
 %[
@@ -4968,24 +4956,24 @@ class uFile {
 		void status( struct stat & buf );
 		int fd();
 	
-		_Event Failure;
-		_Event OpenFailure;
-		_Event CloseFailure;
-		_Event SeekFailure;
-		_Event SyncFailure;
-		_Event ReadFailure;
-		_Event ReadTimeout;
-		_Event WriteFailure;
-		_Event WriteTimeout;
+		_Exception Failure;
+		_Exception OpenFailure;
+		_Exception CloseFailure;
+		_Exception SeekFailure;
+		_Exception SyncFailure;
+		_Exception ReadFailure;
+		_Exception ReadTimeout;
+		_Exception WriteFailure;
+		_Exception WriteTimeout;
 	}; // FileAccess
 
 	const char * setName( char * name );
 	const char * getName() const;
 	void status( struct stat & buf );
 
-	_Event Failure;
-	_Event TerminateFailure;
-	_Event StatusFailure;
+	_Exception Failure;
+	_Exception TerminateFailure;
+	_Exception StatusFailure;
 }; // uFile
 %]
 \index{uFile@%(uFile%)!setName@%(setName%)}%
@@ -5028,14 +5016,6 @@ The member routine %(getName%)\index{getName@%(getName%)} returns the string nam
 The parameter for member routine %(status%) is explained in the UNIX manual entry for %(stat%).
 (The first parameter to the UNIX %(stat%) routine is unnecessary, as it is provided implicitly by the %(uFile%) object.)
 Because a file object is still inaccessible after a connection is made, there are no member routines to access its contents.
-
-To use the file interface in a \uC program, include the file:
-%[
-#include <uFile.h>
-%]
-\index{uFile.h@%(uFile.h%)}%
-at the beginning of each source file.
-%(uFile.h%) also includes the following UNIX system file: %(<fcntl.h>%)%).
 
 
 \subsection{File Access}
@@ -5085,9 +5065,9 @@ This relationship is represented in a \uC program by a declaration for a file an
 %[
 class uPipe {
   public:
-	_Event Failure;
-	_Event OpenFailure;
-	_Event CloseFailure;
+	_Exception Failure;
+	_Exception OpenFailure;
+	_Exception CloseFailure;
 
 	class End : public uFileIO {
 	  public:
@@ -5097,11 +5077,11 @@ class uPipe {
 		int writev( const struct iovec * iov, int iovcnt, uDuration * timeout = nullptr );
 		int fd();
 
-		_Event Failure;
-		_Event ReadFailure;
-		_Event ReadTimeout;
-		_Event WriteFailure;
-		_Event WriteTimeout;
+		_Exception Failure;
+		_Exception ReadFailure;
+		_Exception ReadTimeout;
+		_Exception WriteFailure;
+		_Exception WriteTimeout;
 	}; // End
 
 	End ends[2];
@@ -5219,15 +5199,7 @@ To mitigate having to specify the server address on each call for a message send
 The initial remembered (default) address can be set when the client socket-endpoint is created or set/reset at any time during its life-time.
 A similar convenience feature exists for the server socket-endpoint, where the last client address it receives a message from is remembered and can be implicitly used to send a message directly back to that client.
 
-\begin{sloppypar}
-To use the socket interface in a \uC program, include the file:
-%[
-#include <uSocket.h>
-%]
-\index{uSocket.h@%(uSocket.h%)}%
-at the beginning of each source file.
-%(uSocket.h%) also includes the following UNIX system files: %(<sys/fcntl.h>%), %(<sys/types.h>%), %(<sys/socket.h>%),%(<sys/un.h>%), %(<netdb.h>%).
-\end{sloppypar}
+To use the socket interface \Textbf{requires %(#include <uSocket.h>%)}\index{uSocket.h@%(uSocket.h%)}, which also includes %(<fcntl.h>%)\index{fcntl.h@%(fcntl.h%)}, %(<sys/types.h>%)\index{sys/types.h@%(sys/types.h%)}, %(<sys/socket.h>%)\index{sys/socket.h@%(sys/socket.h%)}, %(<sys/un.h>%)\index{sys/un.h@%(sys/un.h%)}, and %(<netdb.h>%)\index{netdb.h@%(netdb.h%)}.
 
 The following helper routines are available for converting different forms of Internet address to an ip address used by a client or a server.
 These routines are static within the type %(uSocket%)\index{uSocket@%(uSocket%)}:
@@ -5295,16 +5267,16 @@ _Monitor uSocketClient {
 	ssize_t sendfile( FileAccess & file, off_t * off, size_t len, uDuration * timeout = nullptr );
 	int fd();
 
-	_Event Failure;
-	_Event OpenFailure;
-	_Event OpenTimeout;
-	_Event CloseFailure;
-	_Event ReadFailure;
-	_Event ReadTimeout;
-	_Event WriteFailure;
-	_Event WriteTimeout;
-	_Event SendfileFailure;
-	_Event SendfileTimeout;
+	_Exception Failure;
+	_Exception OpenFailure;
+	_Exception OpenTimeout;
+	_Exception CloseFailure;
+	_Exception ReadFailure;
+	_Exception ReadTimeout;
+	_Exception WriteFailure;
+	_Exception WriteTimeout;
+	_Exception SendfileFailure;
+	_Exception SendfileTimeout;
 };
 %]
 \index{uSocketClient@%(uSocketClient%)!setServer@%(setServer%)}%
@@ -5437,15 +5409,15 @@ _Monitor uSocketServer {
 	ssize_t sendfile( FileAccess & file, off_t * off, size_t len, uDuration * timeout = nullptr );
 	int fd();
 
-	_Event Failure;
-	_Event OpenFailure;
-	_Event CloseFailure;
-	_Event ReadFailure;
-	_Event ReadTimeout;
-	_Event WriteFailure;
-	_Event WriteTimeout;
-	_Event SendfileFailure;
-	_Event SendfileTimeout
+	_Exception Failure;
+	_Exception OpenFailure;
+	_Exception CloseFailure;
+	_Exception ReadFailure;
+	_Exception ReadTimeout;
+	_Exception WriteFailure;
+	_Exception WriteTimeout;
+	_Exception SendfileFailure;
+	_Exception SendfileTimeout
 };
 %]
 \index{uSocketServer@%(uSocketServer%)!setClient@%(setClient%)}%
@@ -5574,16 +5546,16 @@ _Monitor uSocketAccept {
 	ssize_t sendfile( FileAccess & file, off_t * off, size_t len, uDuration * timeout = nullptr );
 	int fd();
 
-	_Event Failure;
-	_Event OpenFailure;
-	_Event OpenTimeout;
-	_Event CloseFailure;
-	_Event ReadFailure;
-	_Event ReadTimeout;
-	_Event WriteFailure;
-	_Event WriteTimeout;
-	_Event SendfileFailure;
-	_Event SendfileTimeout;
+	_Exception Failure;
+	_Exception OpenFailure;
+	_Exception OpenTimeout;
+	_Exception CloseFailure;
+	_Exception ReadFailure;
+	_Exception ReadTimeout;
+	_Exception WriteFailure;
+	_Exception WriteTimeout;
+	_Exception SendfileFailure;
+	_Exception SendfileTimeout;
 };
 %]
 \index{uSocketAccept@%(uSocketAccept%)!accept@%(accept%)}%
@@ -5730,9 +5702,9 @@ It is also possible to (hierarchically) block these kinds of exceptions when del
 \section{Exception Type}
 \label{s:ExceptionType}
 
-While \CC allows any type to be used as an exception type, \uC restricts exception types to those defined by %(_Event%)\index{_Event@%(_Event%)}\index{keyword, additions!_Event@%(_Event%)}, which has all the properties of a %(class%):
+While \CC allows any type to be used as an exception type, \uC restricts exception types to those defined by %(_Exception%)\index{_Exception@%(_Exception%)}\index{keyword, additions!_Exception@%(_Exception%)}, which has all the properties of a %(class%):
 %[
-_Event \(\nterminal{exception-type name}\) {
+_Exception \(\nterminal{exception-type name}\) {
 	...
 };
 %]
@@ -5755,7 +5727,7 @@ This practice is codified in \uC.
 
 An exception is the same as a class object with respect to creation and destruction:
 %[
-_Event E { ... };
+_Exception E { ... };
 E e;					// local exception
 _Resume e;
 E * ep = new E;			// dynamic exception
@@ -5770,16 +5742,16 @@ _Throw E();				// temporary local exception
 \index{inherited members!exception type}
 \index{exception!inherited members}
 
-Each exception type, if not derived from another exception type, is implicitly derived from the event type %(uBaseEvent%), e.g.:
+Each exception type, if not derived from another exception type, is implicitly derived from the event type %(uBaseException%), e.g.:
 %[
-_Event \(\nterminal{exception-type name}\) : public uBaseEvent ...
+_Exception \(\nterminal{exception-type name}\) : public uBaseException ...
 %]
-\index{uBaseEvent@%(uBaseEvent%)}%
-where the interface for the base-class %(uBaseEvent%) is:
+\index{uBaseException@%(uBaseException%)}%
+where the interface for the base-class %(uBaseException%) is:
 %[
-class uBaseEvent {
+class uBaseException {
   protected:
-	uBaseEvent( const char * const msg = "" );
+	uBaseException( const char * const msg = "" );
 	void setMsg( const char * const msg );
   public:
 	enum RaiseKind { ThrowRaise, ResumeRaise };
@@ -5789,25 +5761,25 @@ class uBaseEvent {
 	const char * sourceName() const;
 	RaiseKind getRaiseKind() const;
 	void reraise();
-	virtual uBaseEvent * duplicate() const;
+	virtual uBaseException * duplicate() const;
 	virtual void defaultTerminate();
 	virtual void defaultResume();
 };
 %]
-\index{uBaseEvent@%(uBaseEvent%)!RaiseKind@%(RaiseKind%)}%
-\index{uBaseEvent@%(uBaseEvent%)!setMsg@%(setMsg%)}%
-\index{uBaseEvent@%(uBaseEvent%)!message@%(message%)}%
-\index{uBaseEvent@%(uBaseEvent%)!source@%(source%)}%
-\index{uBaseEvent@%(uBaseEvent%)!sourceName@%(sourceName%)}%
-\index{uBaseEvent@%(uBaseEvent%)!getRaiseKind@%(getRaiseKind%)}%
-\index{uBaseEvent@%(uBaseEvent%)!reraise@%(reraise%)}%
-\index{uBaseEvent@%(uBaseEvent%)!duplicate@%(duplicate%)}%
-\index{uBaseEvent@%(uBaseEvent%)!defaultResume@%(defaultResume%)}%
-\index{uBaseEvent@%(uBaseEvent%)!defaultTerminate@%(defaultTerminate%)}%
+\index{uBaseException@%(uBaseException%)!RaiseKind@%(RaiseKind%)}%
+\index{uBaseException@%(uBaseException%)!setMsg@%(setMsg%)}%
+\index{uBaseException@%(uBaseException%)!message@%(message%)}%
+\index{uBaseException@%(uBaseException%)!source@%(source%)}%
+\index{uBaseException@%(uBaseException%)!sourceName@%(sourceName%)}%
+\index{uBaseException@%(uBaseException%)!getRaiseKind@%(getRaiseKind%)}%
+\index{uBaseException@%(uBaseException%)!reraise@%(reraise%)}%
+\index{uBaseException@%(uBaseException%)!duplicate@%(duplicate%)}%
+\index{uBaseException@%(uBaseException%)!defaultResume@%(defaultResume%)}%
+\index{uBaseException@%(uBaseException%)!defaultTerminate@%(defaultTerminate%)}%
 
-The constructor routine %(uBaseEvent%) has the following form:
+The constructor routine %(uBaseException%) has the following form:
 \begin{prefix}
-\item[%(uBaseEvent( const char * const msg = "" )%)]
+\item[%(uBaseException( const char * const msg = "" )%)]
 -- creates an exception with specified message, which is printed in an error message if the exception is not handled.
 The message is copied when an exception is created so it is safe to use within an exception even if the context of the raise is deleted.
 \end{prefix}
@@ -5877,8 +5849,8 @@ f( m );
 %]
 &
 %[
-_Event B {};
-_Event D : public B {};
+_Exception B {};
+_Exception D : public B {};
 void f( B & t ) {
 	_Throw t;
 }
@@ -5918,7 +5890,7 @@ Note, \Emph{\Index{nonlocal exception}s\index{exception!nonlocal} are initially 
 
 \begin{figure}[htb]
 %[
-_Event E {};
+_Exception E {};
 _Coroutine C {
 	void main() {
 		try {
@@ -5957,7 +5929,70 @@ The arguments in angle brackets for the %(_Enable%) or %(_Disable%) block specif
 Specifying no exception type is shorthand for specifying all exception types.
 The specified exception types may overlap due to exception inheritance (see \VRef[Sections]{s:ExceptionsInheritedMembers} and \VRef[]{s:InheritanceEHM}), e.g., both base and derived exception types.
 
-Nested %(_Enable%) and %(_Disable%) blocks turn propagation on/off on entry and reestablishing the delivery state to its prior value on exit.
+Nested %(_Enable%) \emph{or} %(_Disable%) blocks are additive, meaning the set of enabled or disabled exceptions increases on entry and decreases on exit, appropriately.
+\begin{flushleft}
+\begin{tabular}{@{}l@{}l@{}}
+%[
+_Enable <E> {
+	// non-local exception E enabled
+	_Enable <F>
+		// non-local exception E & F enabled
+		_Enable {
+			// all non-local exceptions enabled
+		}
+		// non-local exception E & F enabled
+	}
+	// non-local exception E enabled
+}
+%]
+&
+%[
+_Disable <E> {
+	// non-local exception E disabled
+	_Disable <F>
+		// non-local exception E & F disabled
+		_Disable {
+			// all non-local exceptions disabled
+		}
+		// non-local exception E & F disabled
+	}
+	// non-local exception E disabled
+}
+%]
+\end{tabular}
+\end{flushleft}
+Nested %(_Enable%) \emph{and} %(_Disable%) blocks are substractive, meaning the set of enabled or disabled exceptions decreases on entry and increases on exit, appropriately.
+\begin{flushleft}
+\begin{tabular}{@{}l@{}l@{}}
+%[
+_Enable <E> {
+	// non-local exception E enabled
+	_Disable <E>
+		// non-local exception E disabled
+		_Disable {
+			// all non-local exceptions disabled
+		}
+		// non-local exception E disabled
+	}
+	// non-local exception E enabled
+}
+%]
+&
+%[
+_Disable <E> {
+	// non-local exception E disabled
+	_Enable <E>
+		// non-local exception E enabled
+		_Enable {
+			// all non-local exceptions enabled
+		}
+		// non-local exception E enabled
+	}
+	// non-local exception E disabled
+}
+%]
+\end{tabular}
+\end{flushleft}
 Upon entering a %(_Enable%) block, exceptions of the specified types are propagated, even if the exception types were previously disabled.
 Similarly, upon entering a %(_Disable%) block, exceptions of the specified types are disabled, even if the exception types were previously enabled.
 Upon exiting a %(_Enable%) or %(_Disable%) block, the propagation of exceptions of the specified types are restored to their state prior to entering the block.
@@ -5966,11 +6001,11 @@ Initially, \Emph{nonlocal propagation is disabled for all exception types in a c
 %[
 void main() {
 	// initialization, nonlocal exceptions disabled
-	try {				// setup handlers for nonlocal exceptions
-		_Enable {		// enable propagation of all nonlocal exception-types
+	try {						// setup handlers for nonlocal exceptions
+		_Enable {				// enable propagation of all nonlocal exception-types
 			// rest of the code for this coroutine or task
-		}				// disable all nonlocal exception-types
-	} catch ...			// catch nonlocal exceptions occurring in enable block
+		}						// disable all nonlocal exception-types
+	} catch ...					// catch nonlocal exceptions occurring in enable block
 	// finalization, nonlocal exceptions disabled
 }
 %]
@@ -5982,7 +6017,7 @@ The\label{p:ListPollingPoints} \uC kernel implicitly polls for nonlocal exceptio
 \item when a %(_Disable%) statement ends,
 \item when a %(uEnableCancel%) object is instantiated (see \VRef{s:EnablingDisablingCancellation}),
 \item before a coroutine/task's %(main%)\index{main@%(main%)} routine is executed (needed for immediate cancellation),
-\item after a call to %(uBaseCoroutine::suspend%)/%(uBaseCoroutine::resume%) for %(uBaseCoroutine::Failure%),
+\item after a call to %(uBaseCoroutine::suspend%) or %(uBaseCoroutine::resume%),
 \item after a call to %(uBaseTask::yield%),
 \item when a %(uLock::acquire%) spins because of yielding,
 \item after a call to %(_Accept%) unblocks for %(uMutexFailure%),
@@ -6084,7 +6119,7 @@ int main() {
 %]
 &
 %[
-\(\BF{\)_Event\(}\) E {
+\(\BF{\)_Exception\(}\) E {
   public:
 	int i;
 	E( int i ) : i( i ) {}
@@ -6148,7 +6183,7 @@ There may be recovery actions closer to the raise point that can better deal wit
 
 Values at the raise site can be modified directly in the handler if variables are visible in both contexts, or indirectly through reference or pointer variables in the caught exception:
 %[
-_Event E {
+_Exception E {
   public:
 	\(\BF{\)int & r;\(}\)			// reference to something
 	\(\BF{\)E( int & r ) : r( r ) {}\(}\)\(}\Tab{36}{\)// initialize reference
@@ -6186,7 +6221,7 @@ Often the set of exception types for termination and resumption handlers are dis
 However, it is possible for the set of exception types in each handler set to overlap.
 For example, the exception type %(R%) appears in both the termination and resumption handler-sets:
 %[
-_Event E {};
+_Exception E {};
 void rtn() {
 	try {
 		_Resume \(\BF{\)E()\(}\);
@@ -6215,7 +6250,7 @@ In terminating propagation, the handlers in previous scopes disappear as the sta
 In some languages with a resuming propagation~\cite{MacLaren77,Buhr92b,ExceptionalC}, the presence of resumption handlers in previous scopes can cause a situation called \newterm{recursive resuming}.
 The simplest situation where recursive resuming can occur is when a handler for a resuming exception-type resumes the same exception, e.g.:
 %[
-_Event E {};
+_Exception E {};
 void rtn() {
 	try {
 		_Resume \(\BF{\)E()\(}\);
@@ -6262,7 +6297,7 @@ Essentially, this rule follows a common rule for terminating and resuming propag
 Note, it is still possible to construct infinite recursions with respect to propagation;
 i.e., the %(_Resume%) propagation does not preclude all infinite recursions, e.g.:
 %[
-_Event E {};
+_Exception E {};
 void rtn() {
 	try {
 		_Resume E();
@@ -6278,7 +6313,7 @@ This situation is considered a programming error with respect to recursion (no b
 
 There is an interesting interaction between resuming, %(defaultResume%) (see \VRef{s:ExceptionsInheritedMembers}), and throwing.
 %[
-_Event E {};
+_Exception E {};
 void rtn() {
 	try {
 		_Resume E();		// resume not throw
@@ -6307,7 +6342,7 @@ The handlers in %(main%) and %(rtn%) then call each other recursively four times
 
 \begin{figure}
 %[
-_Event E { public: int i = 0; };
+_Exception E { public: int i = 0; };
 
 void rtn( int depth, int resumes ) {
 	if ( depth > 0 ) rtn( depth - 1, resumes );	// recursion
@@ -6344,8 +6379,8 @@ However, this unambiguous semantics is often described as confusing.
 
 The following more complex program demonstrates how \uC and Mesa solve recursive resuming, but with different solutions:
 %[
-_Event R1 {};
-_Event R2 {};
+_Exception R1 {};
+_Exception R2 {};
 
 void rtn() {
 	try {
@@ -6386,7 +6421,7 @@ Raising %(const%) exceptions in \uC is disallowed for the following reason.
 For termination, an exception is used to communicate information from the raise to the handler.
 Creating a %(const%) exception containing information for the handler, as in:
 %[
-_Event E { ... };		// members contain information for handler
+_Exception E { ... };	// members contain information for handler
 const E e(...);			// initialize members at declaration (write once, read-only)
 %]
 prevents its modification after initialization (modulo %(mutable%) members).
@@ -6585,17 +6620,17 @@ _CatchResume( \(\nterminal{raising-object}\) . \(\nterminal{exception-declaratio
 \label{s:InheritanceEHM}
 
 \VRef[Table]{f:InheritanceAmongExceptionTypes} shows the forms of inheritance allowed among \CC types and \uC exception-types.
-First, the case of \emph{single} public inheritance\index{inheritance!single} among homogeneous kinds of exception type, i.e., base and derived type are the both %(_Event%), is supported in \uC (major diagonal), e.g.:
+First, the case of \emph{single} public inheritance\index{inheritance!single} among homogeneous kinds of exception type, i.e., base and derived type are the both %(_Exception%), is supported in \uC (major diagonal), e.g.:
 %[
-_Event Ebase {};
-_Event Ederived : public Ebase {};	// homogeneous public inheritance
+_Exception Ebase {};
+_Exception Ederived : public Ebase {};	// homogeneous public inheritance
 %]
 In this case, all implicit functionality matches between base and derived types, and hence, there are no problems.
 Public derivation of exception types is for building the exception-type hierarchy, and restricting public inheritance to only exception types enhances the distinction between the class and exception hierarchies.
 Single private/protected inheritance among homogeneous kinds of exception types is not supported:
 %[
-_Event Ederived : private Ebase {};		// homogeneous private inheritance, not allowed
-_Event Ederived : protected Ebase {};	// homogeneous protected inheritance, not allowed
+_Exception Ederived : private Ebase {};		// homogeneous private inheritance, not allowed
+_Exception Ederived : protected Ebase {};	// homogeneous protected inheritance, not allowed
 %]
 because each exception type must appear in the exception-type hierarchy, and hence must be a subtype of another exception type.
 Neither %(private%) nor %(protected%) inheritance establishes a subtyping relationship.
@@ -6622,14 +6657,14 @@ Second, the case of \emph{single} private/protected/public inheritance\index{inh
 %[
 class Cbase {};						// only struct/class allowed
 
-_Event Ederived : public Cbase {};	// heterogeneous public inheritance
+_Exception Ederived : public Cbase {};	// heterogeneous public inheritance
 %]
 An example for using such inheritance is different exception types using a common logging class.
 The ordinary class implements the logging functionality and can be reused among the different exception types.
 
 Heterogeneous inheritance from exception types by other kinds of class, exception type, coroutine, mutex or task, is not allowed, e.g.:
 %[
-_Event Ebase {};
+_Exception Ebase {};
 
 struct StructDerived		: public Ebase {};	// not allowed
 class ClassDerived			: public Ebase {};	// not allowed
@@ -6644,7 +6679,7 @@ Rather, shared code must be factored out as an ordinary class and then inherited
 class CommonBase {...};
 
 class ClassDerived			: public CommonBase {};
-_Event Ederived				: public CommonBase {};
+_Exception Ederived				: public CommonBase {};
 %]
 Technically, it is possible for exception types to inherit from mutex, coroutine, and task types, but logically there does not appear to be a need.
 Exception types do not need mutual exclusion because a new exception is generated at each throw, so the exception is not a shared resource.
@@ -6818,7 +6853,7 @@ Only the kernel exception-types are discussed, as the I/O exception-types are OS
 
 \begin{figure}
 %[
-uBaseEvent
+uBaseException
 	uKernelFailure
 		uMutexFailure
 			uMutexFailure::EntryFailure
@@ -6879,7 +6914,7 @@ uBaseEvent
 				uSocketClient::SendfileFailure
 					uSocketClient::SendfileTimeout
 %]
-\index{uBaseEvent@%(uBaseEvent%)!uKernelFailure@%(uKernelFailure%)}%
+\index{uBaseException@%(uBaseException%)!uKernelFailure@%(uKernelFailure%)}%
 \index{uKernelFailure@%(uKernelFailure%)!uMutexFailure@%(uMutexFailure%)}%
 \index{uMutexFailure@%(uMutexFailure%)!EntryFailure@%(EntryFailure%)}%
 \index{uMutexFailure@%(uMutexFailure%)!RendezvousFailure@%(RendezvousFailure%)}%
@@ -6894,7 +6929,7 @@ uBaseEvent
 \index{uPthreadable@%(uPthreadable%)!Failure@%(Failure%)}%
 \index{uPthreadable@%(uPthreadable%)!CreationFailure@%(CreationFailure%)}%
 \index{CreationFailure@%(CreationFailure%)}%
-\index{uBaseEvent@%(uBaseEvent%)!uIOFailure@%(uIOFailure%)}%
+\index{uBaseException@%(uBaseException%)!uIOFailure@%(uIOFailure%)}%
 \index{uIOFailure@%(uIOFailure%)}%
 \index{uFile@%(uFile%)!Failure@%(Failure%)}%
 \index{uFile@%(uFile%)!TerminateFailure@%(TerminateFailure%)}%
@@ -6980,7 +7015,7 @@ uBaseEvent
 \index{SendfileFailure@%(SendfileFailure%)}%
 \index{uSocketClient@%(uSocketClient%)!SendfileTimeout@%(SendfileTimeout%)}%
 \index{SendfileTimeout@%(SendfileTimeout%)}%
-\index{uBaseEvent@%(uBaseEvent%)!uFutureFailure@%(uFutureFailure%)}%
+\index{uBaseException@%(uBaseException%)!uFutureFailure@%(uFutureFailure%)}%
 \index{uFutureFailure@%(uFutureFailure%)!uCancelled@%(uCancelled%)}%
 \index{uCancelled@%(uCancelled%)}%
 \index{uFutureFailure@%(uFutureFailure%)!uDelivered@%(uDelivered%)}%
@@ -7004,7 +7039,7 @@ The predefined exception-type %(uMutexFailure::RendezvousFailure%)\index{uSerial
 \subsection{Unhandled Exception}
 \label{s:UnhandledException}
 
-An exception raised and not handled inside a coroutine/task terminates it, and either the default or exception specific %(defaultTerminate%)\index{uBaseEvent@%(uBaseEvent%)!defaultTerminate@%(defaultTerminate%)} member is called.
+An exception raised and not handled inside a coroutine/task terminates it, and either the default or exception specific %(defaultTerminate%)\index{uBaseException@%(uBaseException%)!defaultTerminate@%(defaultTerminate%)} member is called.
 The default action is to copy the unhandled exception into an %(UnhandledException%)\index{UnhandledException@%(UnhandledException%)}, which is forwarded as a \Index{nonlocal exception}\index{exception!nonlocal} to the last resumer for a coroutine or the joiner for a task.
 If the exception specific %(defaultTerminate%) returns, the default forwarding action occurs.
 
@@ -7028,7 +7063,7 @@ Note, forwarding can occur across any number of coroutines and tasks, until the 
 \subfloat[Coroutine]{
 \label{f:CoroutineUnhandled}
 %[
-_Event E {};
+_Exception E {};
 _Coroutine C {
 	void main() { \(\BF{\)_Throw E();\(}\) } // unwind
 	\(\CMfont// defaultTerminate $\Rightarrow$ {\BB{\_Resume UnhandledException() \_At resumer()}}\)
@@ -7050,7 +7085,7 @@ int main() {
 \subfloat[Task]{
 \label{f:TaskUnhandled}
 %[
-_Event E {};
+_Exception E {};
 _Task T {
 	void main() { \(\BF{\)_Throw E();\(}\) } // unwind
 };
@@ -7309,7 +7344,7 @@ _Task T {
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: accept on a nomutex member "mem", possibly caused by accept statement appearing before mutex-member definition.
+test.cc:3: uC++ Translator error: accept on a nomutex member "mem", possibly caused by accept statement appearing before mutex-member definition.
 \end{quote}
 because the accept of member %(mem%) appears \emph{before} the definition of member %(mem%), and hence, the \uC translator encounters the identifier %(mem%) before it knows it is a mutex member.
 \CC requires definition before use in most circumstances.
@@ -7329,7 +7364,7 @@ _Task T {
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:8: uC++ Translator error: multiple accepts of mutex member "mem".
+test.cc:7: uC++ Translator error: multiple accepts of mutex member "mem".
 \end{quote}
 because the accept statement specifies the same member, %(mem%), twice.
 The second specification is superfluous.
@@ -7347,7 +7382,7 @@ _Task T2 {
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:6: uC++ Translator error: accepting an invalid destructor; destructor name must be the same as the containing class "T2".
+test.cc:5: uC++ Translator error: accepting an invalid destructor; destructor name must be the same as the containing class "T2".
 \end{quote}
 because the accept statement specifies the destructor from a different class, %(T1%), within class %(T2%).
 
@@ -7361,26 +7396,26 @@ _Task T2 : public M, public C {};
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: derived type "C" of kind "COROUTINE" is incompatible with the base type "M" of kind "MONITOR"; inheritance ignored.
+test.cc:2: uC++ Translator error: derived type "C" of kind "COROUTINE" is incompatible with the base type "M" of kind "MONITOR"; inheritance ignored.
 \newline
-test.cc:4: uC++ Translator error: derived type "T1" of kind "TASK" is incompatible with the base type "C" of kind "COROUTINE"; inheritance ignored.
+test.cc:3: uC++ Translator error: derived type "T1" of kind "TASK" is incompatible with the base type "C" of kind "COROUTINE"; inheritance ignored.
 \newline
-test.cc:5: uC++ Translator error: multiple inheritance disallowed between base type "M" of kind "MONITOR" and base type "C" of kind "COROUTINE"; inheritance ignored.
+test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "M" of kind "MONITOR" and base type "C" of kind "COROUTINE"; inheritance ignored.
 \end{quote}
 because of inheritance restrictions among kinds of types in \uC (see \VRef{s:Inheritance}).
 
 Similarly, the following program:
 %[
-_Event T1 {};
-_Event T2 : private T1 {};
-_Event T3 : public T1, public T2 {};
+_Exception T1 {};
+_Exception T2 : private T1 {};
+_Exception T3 : public T1, public T2 {};
 %]
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: non-public inheritance disallowed between the derived type "T2" of kind "EVENT" and the base type "T1" of kind "EVENT"; inheritance ignored.
+test.cc:2: uC++ Translator error: non-public inheritance disallowed between the derived type "T2" of kind "EXCEPTION" and the base type "T1" of kind "EXCEPTION"; inheritance ignored.
 \newline
-test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "T1" of kind "EVENT" and base type "T2" of kind "EVENT"; inheritance ignored.
+test.cc:3: uC++ Translator error: multiple inheritance disallowed between base type "T1" of kind "EXCEPTION" and base type "T2" of kind "EXCEPTION"; inheritance ignored.
 \end{quote}
 because of inheritance restrictions among exception types in \uC (see \VRef{s:InheritanceEHM}).
 
@@ -7392,7 +7427,7 @@ _Coroutine T {};	// definition
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: "T" redeclared with different kind.
+test.cc:2: uC++ Translator error: "T" redeclared with different kind.
 \end{quote}
 because the kind of type for the prototype, %(_Task%), does not match the kind of type for the definition, %(_Coroutine%).
 
@@ -7405,7 +7440,7 @@ _Mutex class M3 : public M1, public M2 {}; // multiple inheritance
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: multiple inheritance disallowed between base type "M1" of kind "MONITOR" and base type "M2" of kind "MONITOR"; inheritance ignored.
+test.cc:3: uC++ Translator error: multiple inheritance disallowed between base type "M1" of kind "MONITOR" and base type "M2" of kind "MONITOR"; inheritance ignored.
 \end{quote}
 because only one base type can be a mutex type when inheriting.
 
@@ -7420,7 +7455,7 @@ _Mutex void T::mem() {}
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:6: uC++ Translator error: mutex attribute of "T::mem" conflicts with previously declared nomutex attribute.
+test.cc:5: uC++ Translator error: mutex attribute of "T::mem" conflicts with previously declared nomutex attribute.
 \end{quote}
 because the kind of mutual exclusion, %(_Nomutex%), for the prototype of %(mem%), does not match the kind of mutual exclusion, %(_Mutex%), for the definition.
 
@@ -7438,15 +7473,15 @@ _Task T {
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:4: uC++ Translator error: constructor must be mutex, nomutex attribute ignored.
+test.cc:3: uC++ Translator error: constructor must be mutex, nomutex attribute ignored.
 \newline
-test.cc:5: uC++ Translator error: "new" operator must be nomutex, mutex attribute ignored.
+test.cc:4: uC++ Translator error: "new" operator must be nomutex, mutex attribute ignored.
 \newline
-test.cc:6: uC++ Translator error: "delete" operator must be nomutex, mutex attribute ignored.
+test.cc:5: uC++ Translator error: "delete" operator must be nomutex, mutex attribute ignored.
 \newline
-test.cc:7: uC++ Translator error: static member "mem" must be nomutex, mutex attribute ignored.
+test.cc:6: uC++ Translator error: static member "mem" must be nomutex, mutex attribute ignored.
 \newline
-test.cc:9: uC++ Translator error: destructor must be mutex for mutex type, nomutex attribute ignored.
+test.cc:8: uC++ Translator error: destructor must be mutex for mutex type, nomutex attribute ignored.
 \end{quote}
 because certain members may or may not have the mutex property \emph{for any mutex type}.
 The constructor(s) of a mutex type must be mutex because the thread of the constructing task is active in the object.
@@ -7474,13 +7509,13 @@ _Mutex class T4 {
 generates these errors:
 \begin{quote}
 \BGfont
-test.cc:3: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring previous declaration.
+test.cc:2: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring previous declaration.
 \newline
-test.cc:6: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring this declaration.
+test.cc:5: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Ignoring this declaration.
 \newline
-test.cc:9: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Assuming default attribute.
+test.cc:8: uC++ Translator error: may not specify both mutex and nomutex attributes for a class. Assuming default attribute.
 \newline
-test.cc:14: uC++ Translator error: mutex attribute of "T4::mem" conflicts with previously declared nomutex attribute.
+test.cc:13: uC++ Translator error: mutex attribute of "T4::mem" conflicts with previously declared nomutex attribute.
 \end{quote}
 because there are conflicts between mutex qualifiers.
 For type %(T1%), the mutex qualifier for the forward declaration does not match with the actual declaration because the default qualifier for a %(class%) is %(_Nomutex%).
@@ -7495,7 +7530,7 @@ _Task /* no name */ {};
 generates this error:
 \begin{quote}
 \BGfont
-test.cc:2: uC++ Translator error: cannot create anonymous coroutine or task because of the need for named constructors and destructors.
+test.cc:1: uC++ Translator error: cannot create anonymous coroutine or task because of the need for named constructors and destructors.
 \end{quote}
 because a type without a name cannot have constructors or destructors since both are named after the type, and the \uC translator needs to generate constructors and destructors if not present for certain kinds of types.
 
@@ -7521,18 +7556,12 @@ While not all warning/error situations are enumerated, the list covers the commo
 
 Assertions define runtime checks that must be true or the basic algorithm is incorrect;
 if the assertion is false, a message is printed and the program is aborted.
-Assertions are written using the macro %(assert%)\index{assert@%(assert%)}:
+Assertions are written using the macro %(assert%)\index{assert@%(assert%)} and \Textbf{requires %(#include <assert.h>%)}\index{assert.h@%(assert.h%)}.
 %[
 assert( \(\nterminal{boolean-expression}\) );
 %]
 Asserts can be turned off by defining the preprocessor variable %(NDEBUG%) before including %(assert.h%).
 % \Emph{All %(assert%)s are implicitly turned off when the compiler flag %(-nodebug%) is specified} (see \VRef{s:CompilinguCProgram}).
-
-To use assertions in a \uC program, include the file:
-%[
-#include <assert.h>
-%]
-\index{assert.h@%(assert.h%)}%
 
 
 \subsection{Termination}
@@ -7613,7 +7642,7 @@ because routine %(f%) defines it raises no exceptions and then an exception is r
 
 The following program:
 %[
-_Event E {};
+_Exception E {};
 
 _Coroutine C {
 	void main() { _Throw E(); }
@@ -7637,7 +7666,7 @@ As a result, when the top of %(c%)'s stack is reached, an exception of type %(uB
 A more complex version of this situation occurs when there is a resume chain and no coroutine along the chain handles the exception.
 The following program:
 %[
-_Event E {};
+_Exception E {};
 
 _Coroutine C2 {
 	void main() { _Throw E(); }
@@ -7794,7 +7823,7 @@ As a result, when the \Index{program main} attempts to delete task %(t1%), it fi
 
 The following program:
 %[
-_Event E {};
+_Exception E {};
 
 _Task T {
 	uBaseTask & t;
@@ -7834,7 +7863,7 @@ A more complex version of this situation occurs when a blocked call is aborted, 
 The following program:
 \end{sloppypar}
 %[
-_Event E {};
+_Exception E {};
 
 _Task T {
 	uBaseTask & t;
@@ -9314,8 +9343,8 @@ _Task uPthreadable {						// abstract class (inheritance only)
   public:
 	_Nomutex pthread_t pthreadId();			// returns a pthread id for a uC++ task
 
-	_Event Failure;							// exceptions
-	_Event CreationFailure;
+	_Excpetion Failure;						// exceptions
+	_Exception CreationFailure;
 };
 
 _Task T : public uPthreadable {				// inherit so uC++ task can mimic pthreads task
@@ -10483,7 +10512,7 @@ The ellipsis in the following rules represent the productions elided from the \C
 	\rhs %(_RealTimeTask%) \nterminal{queue-types}\opt
 	\rhs %(_PeriodicTask%) \nterminal{queue-types}\opt
 	\rhs %(_SporadicTask%) \nterminal{queue-types}\opt
-	\rhs %(_Event%)
+	\rhs %(_Exception%)
 	\rhs %(_Actor%)
 	\rhs %(_CorActor%)
 
@@ -10683,18 +10712,18 @@ If the algorithm uses deterministic computation (a predictable sequence of value
 
 All \newterm{pseudo random-number generators} (\newterm{PRNG}) involve some technique to scramble bits of a value, e.g., multiplicative recurrence:
 %[
-rand = 36973 * (rand & 65535) + (rand >> 16); // scramble bits
+rand = 33967 * (rand + 1063); // scramble bits
 %]
 Multiplication of large values adds new least-significant bits and drops most-significant bits.
 \begin{quote}
 \begin{tabular}{@{}r|l@{}}
 bits 63--32 (most)	& bits 31--0 (least)	\\
 \hline
-0x0					& 0x3e8e36				\\
-0x5f				& 0x718c25e1			\\
-0xad3e				& 0x7b5f1dbe			\\
-0xbc3b				& 0xac69ff19			\\
-0x1070f				& 0x2d258dc6			\\
+%(0x0%)				& %(0x3e8e36%)			\\
+%(0x5f%)			& %(0x718c25e1%)		\\
+%(0xad3e%)			& %(0x7b5f1dbe%)		\\
+%(0xbc3b%)			& %(0xac69ff19%)		\\
+%(0x1070f%)			& %(0x2d258dc6%)		\\
 \end{tabular}
 \end{quote}
 By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
@@ -10705,46 +10734,51 @@ hence, one random value bootstraps another.
 Finally, a PRNG usually generates a range of large values, e.g., %([0, UINT_MAX]%), which are scaled using the modulus operator, e.g., %(prng() % 5%) produces random values in the range 0--4.
 
 \uC provides 32/64-bit sequential PRNG classes only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
+To use the PRNG interface \Textbf{requires %(#include <uPRNG.h>%)}\index{uPRNG.h@%(uPRNG.h%)}.
 \begin{itemize}
 \item
-The %(PRNG%) classes for sequential programs, like coroutining are:
+The %(PRNG%) classes for sequential programs, like coroutining, are:
 %[
 class PRNG32 {
-	// opaque type
+	// opaque type, no copy or assignment
   public:
 	PRNG32();										// random seed
 	PRNG32( uint32_t seed );						// fixed seed
 	void set_seed( uint32_t seed );					// set seed
 	uint32_t get_seed() const;						// get seed
-	uint32_t prng( PRNG32 & prng );					// [0,UINT_MAX]
-	uint32_t prng( PRNG32 & prng, uint32_t u );		// [0,u)
-	uint32_t prng( PRNG32 & prng, uint32_t l, uint32_t u ); // [l,u]
+	uint32_t operator()();							// [0,UINT_MAX]
+	uint32_t operator()( uint32_t u );				// [0,u)
+	uint32_t operator()( uint32_t l, uint32_t u );	// [l,u]
 	uint32_t calls() const;							// number of calls
+	void copy( PRNG32 & src );						// checkpoint PRNG state
 };
 %]
 %[
 class PRNG64 {
-	// opaque type
+	// opaque type, no copy or assignment
   public:
 	PRNG64();										// random seed
 	PRNG64( uint64_t seed );						// fixed seed
 	void set_seed( uint64_t seed );					// set seed
 	uint64_t get_seed() const;						// get seed
-	uint64_t prng( PRNG64 & prng );					// [0,UINT_MAX]
-	uint64_t prng( PRNG64 & prng, uint64_t u );		// [0,u)
-	uint64_t prng( PRNG64 & prng, uint64_t l, uint64_t u ); // [l,u]
+	uint64_t operator()();							// [0,UINT_MAX]
+	uint64_t operator()( uint64_t u );				// [0,u)
+	uint64_t operator()( uint64_t l, uint64_t u );	// [l,u]
 	uint64_t calls() const;							// number of calls
+	void copy( PRNG64 & src );						// checkpoint PRNG state
 };
 %]
 The type %(PRNG%) is aliased to %(PRNG64%) on 64-bit architectures and %(PRNG32%) on 32-bit architectures.
 A %(PRNG%) object is used to randomize behaviour or values during execution, e.g., in games, a character makes a random move or an object takes on a random value.
 In this scenario, it is useful to have multiple %(PRNG%) objects, e.g., one per player or object.
-However, sequential execution is still repeatable given the same starting seeds for all %(PRNG%)s. 
+However, sequential execution is still repeatable given the same starting seeds for all %(PRNG%)s.
 \VRef[Figure]{f:SequentialPRNG} shows an example that creates two sequential %(PRNG%)s, sets both to the same seed (1009), and illustrates the three forms for generating random values, where both %(PRNG%)s generate the same sequence of values.
+Note, to prevent accidental PRNG copying, the copy constructor and assignment are hidden.
+To copy a PRNG for checkpointing, use the explicit %(copy%) member.
 
 \begin{figure}
 %[
-PRNG64 sprng1, sprng2;
+PRNG sprng1, sprng2;								// select appropriate 32/64-bit PRNG
 \(\BF{\)sprng1.set_seed( 1009 )\(}\);   \(\BF{\)sprng2.set_seed( 1009 );\(}\)
 for ( unsigned int i = 0; i < 10; i += 1 ) {
 	// Do not cascade prng calls because side-effect functions called in arbitrary order.
@@ -10870,25 +10904,21 @@ int main() {
 \end{figure}
 \end{itemize}
 
-To use the PRNG in a \uC program, include the file:
-%[
-#include <uPRNG.h>
-%]
-\index{uPRNG.h@%(uPRNG.h%)}%
 
-
-\chapter{Object Stack Allocation}
-\label{s:ObjectStackAllocation}
-\index{object stack allocation}%
+\chapter{Stack Object Allocation}
+\label{s:StackObjectAllocation}
+\index{stack object allocation}%
 
 \CC has no mechanism to created an array of objects where each object in the array is initialized via the object's constructor and each element has a different value.
 As result, it is necessary to use the heap.
-\begin{flushleft}
+
+\par\noindent
 \begin{tabular}{@{}l|l@{}}
 %[
 struct Obj {
 	const int id; ...
 	Obj( int id ) : id( id ) { ... }
+	void mem(...) { ... }
 }
 cin >> size;
 
@@ -10907,16 +10937,16 @@ for ( int id = 0; id < size; id += 1 )
 
 
 
+
 {
 	\(\BF{\)unique_ptr<Obj>\(}\) objs[size];
 	for ( int id = 0; id < size; id += 1 )
 		objs[id] = \(\BF{\)make_unique<Obj>\(}\)( id );
 	...
-
 } // automatically delete objs array elements
+
 %]
 \end{tabular}
-\end{flushleft}
 
 \uC provides template %(uNoCtor%)\index{uNoCtor@%(uNoCtor%)} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement %(new%) mechanism (like %(optional::emplace_back%)).
 %[
@@ -10928,11 +10958,13 @@ template< typename T, bool runDtor = true > class uNoCtor {
 	T & operator*();
 	const T * operator->() const;
 	T * operator->();
-	void ctor();
-	template< typename... Args > void ctor( Args &&... args );
+	T & ctor();
+	T & operator()(); // same as ctor
+	template< typename... Args > T & ctor( Args &&... args );
+	template< typename... Args > T & operator()( Args &&... args ); // same as ctor
 	void dtor();
 	~uNoCtor();
-};
+};t
 %]
 The template parameters specify the type of object embedded in the %(uNoCtor%) and a boolean indicating if the %(uNoCtor%) destructor runs the embedded object's destructor (true) or relies on an explicit call to member %(dtor%) (false).
 In the latter case, if an object has no destructor, no call to %(dtor%) is required.
@@ -10944,13 +10976,16 @@ The following example shows how to use use %(uNoCtor%) to create an array of obj
 	for ( int id = 0; id < size; id += 1 )
 		objs[id]\(\BF{\).ctor( id )\(}\); // placement allocation & call initialization constructor
 	...
-
 } // automatically delete objs array elements
 %]
 As for %(new%) and %(unique_ptr%), fields are accessed using %(->%)
 %[
 for ( int id = 0; id < size; id += 1 )
 	cout << objs[id]\(\BF{\)->\(}\)id << endl; \(\BF{\CMfont// MUST USE -\> NOT . FOR FIELD ACCESS}\)
+%]
+The old-style constructor syntax (parenthesis versus curly brackets) is allowed for initialization and the constructed object is returned so it can be used immediately to access the object.
+%[
+objs[id]\(\BF{\)( id )\(}\)->mem( 3 ); // initialize and use
 %]
 %(uNoCtor%) can be used with all new \uC types, e.g.:
 %[
@@ -10962,13 +10997,13 @@ _Coroutine C {
 	~C() { cout << "dtor" << endl; }
 };
 int main() {
-	uNoCtor<C> c[10];
+	\(\BF{\)uNoCtor<C> c[10];\(}\)
 	for ( int i = 0; i < 10; i += 1 ) {
-	 	c[i].ctor( i );
+	 	c[i]\(\BF{\)( i )\(}\);
 	}
 } // automatically delete coroutine array elements calling destructors on each element
 %]
-Note, creating large VLAs on a coroutine's or task's stack can overflow the stack.
+Creating large VLAs on a coroutine's or task's stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
 %[
 	uNoCtor<C> * c = new uNoCtor<C>[10000];

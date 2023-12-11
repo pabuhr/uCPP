@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Mar 29 17:06:26 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:35:57 2022
-// Update Count     : 1101
+// Last Modified On : Sat Oct  7 07:55:10 2023
+// Update Count     : 1102
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -512,7 +512,7 @@ void uSocketServer::sendfileTimeout( const int in_fd, const off_t *off, const si
 } // uSocketServer::sendfileTimeout
 
 
-void uSocketServer::openFailure( int errno_, const char *const name, const unsigned short port, const in_addr ip, int domain, int type, int protocol, int backlog, const char *const msg ) { // prevent expanding _Event at call site to reduce stack size
+void uSocketServer::openFailure( int errno_, const char *const name, const unsigned short port, const in_addr ip, int domain, int type, int protocol, int backlog, const char *const msg ) { // prevent expanding _Exception at call site to reduce stack size
 	_Throw OpenFailure( *this, errno_, name, port, ip, domain, type, protocol, backlog, msg );
 } // uSocketServer::openFailure
 
@@ -632,12 +632,12 @@ void uSocketAccept::sendfileTimeout( const int in_fd, const off_t *off, const si
 } // uSocketAccept::sendfileTimeout
 
 
-void uSocketAccept::openFailure( int errno_, const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len ) { // prevent expanding _Event at call site to reduce stack size
+void uSocketAccept::openFailure( int errno_, const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len ) { // prevent expanding _Exception at call site to reduce stack size
 	_Throw OpenFailure( *this, errno_, timeout, adr, len, "unable to accept connection on socket server" );
 } // uSocketAccept::openFailure
 
 
-void uSocketAccept::openTimeout( const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len ) { // prevent expanding _Event at call site to reduce stack size
+void uSocketAccept::openTimeout( const uDuration *timeout, const struct sockaddr *adr, const socklen_t *len ) { // prevent expanding _Exception at call site to reduce stack size
 	_Throw OpenTimeout( *this, timeout, adr, len, "timeout during accept" );
 } // uSocketAccept::openTimeout
 
@@ -837,12 +837,12 @@ void uSocketClient::sendfileTimeout( const int in_fd, const off_t *off, const si
 } // uSocketClient::sendfileTimeout
 
 
-void uSocketClient::openFailure( int errno_, const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) { // prevent expanding _Event at call site to reduce stack size
+void uSocketClient::openFailure( int errno_, const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) { // prevent expanding _Exception at call site to reduce stack size
 	_Throw OpenFailure( *this, errno_, name, port, ip, timeout, domain, type, protocol, msg );
 } // uSocketClient::openFailure
 
 
-void uSocketClient::openTimeout( const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) { // prevent expanding _Event at call site to reduce stack size
+void uSocketClient::openTimeout( const char *const name, const unsigned short port, const in_addr ip, uDuration *timeout, const int domain, const int type, const int protocol, const char *const msg ) { // prevent expanding _Exception at call site to reduce stack size
 	_Throw OpenTimeout( *this, name, port, ip, timeout, domain, type, protocol, msg );
 } // uSocketClient::openTimeout
 

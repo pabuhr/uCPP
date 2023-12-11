@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 16 20:56:38 1995
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  4 21:23:07 2022
-// Update Count     : 57
+// Last Modified On : Sat Oct  7 07:54:31 2023
+// Update Count     : 58
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,7 +47,7 @@ _Mutex _Coroutine uBarrier {
 		resume();
 	} // uBarrier::last
   public:
-	_Event BlockFailure {};								// raised if waiting tasks flushed
+	_Exception BlockFailure {};							// raised if waiting tasks flushed
 
 	uBarrier() {										// for use with reset
 		init( 0 );

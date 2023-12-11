@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Wed Oct  8 22:02:29 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan  3 16:14:04 2023
-// Update Count     : 89
+// Last Modified On : Sat Oct  7 08:05:33 2023
+// Update Count     : 90
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -37,8 +37,8 @@ using std::endl;
 #define ROUNDS  10000
 #define NP 8
 
-_Event E1 {};
-_Event E2 {};
+_Exception E1 {};
+_Exception E2 {};
 
 void one() {
 	abort( "invalid 1\n" );

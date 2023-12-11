@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 22 21:17:24 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 19 08:44:52 2016
-// Update Count     : 14
+// Last Modified On : Sat Oct  7 08:06:27 2023
+// Update Count     : 15
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -28,13 +28,13 @@
 using std::cout;
 using std::endl;
 
-_Event R1 {
+_Exception R1 {
   public:
 	int &i;
 	R1( int &i ) : i(i) {}
 };
 
-_Event R2 {
+_Exception R2 {
   public:
 	int &i;
 	R2( int &i ) : i(i) {}

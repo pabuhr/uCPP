@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 24 18:20:52 2022
-// Update Count     : 54
+// Last Modified On : Sat Oct  7 08:07:23 2023
+// Update Count     : 55
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,15 +31,15 @@ using std::endl;
 
 const int NUM = 3;
 
-_Event R1 {
+_Exception R1 {
   public:
-  int &i; char &c;
-  R1( int &i, char &c ) : i( i ), c( c ) {}
+	int &i; char &c;
+	R1( int &i, char &c ) : i( i ), c( c ) {}
 };
 
-_Event R2 {};
+_Exception R2 {};
 
-_Event R3 {};
+_Exception R3 {};
 
 
 void f( int x, char y ) {
@@ -53,7 +53,7 @@ void g( int &x, char &y ) {
 	osacquire( cout ) << "exit g, x:" << x << " y:" << y << endl;
 }
 
-_Event D {};
+_Exception D {};
 
 _Task T1 {
 	uBaseTask &partner;

@@ -7,8 +7,8 @@
 // Author           : Peter A Buhr
 // Created On       : Tue Feb 25 09:04:44 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 11:20:00 2023
-// Update Count     : 329
+// Last Modified On : Mon Sep 25 10:46:27 2023
+// Update Count     : 350
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -26,13 +26,11 @@
 
 
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <string>
-using std::string;
 #include <algorithm>									// find
 #include <cstdio>										// stderr, stdout, perror, fprintf
 #include <cstdlib>										// getenv, exit, mkstemp
+using namespace std;
 #include <unistd.h>										// execvp, fork, unlink
 #include <sys/wait.h>									// wait
 #include <fcntl.h>										// creat
@@ -144,13 +142,15 @@ static void Stage1( const int argc, const char * const argv[] ) {
 	const char * args[argc + 100];						// leave space for 100 additional cpp command line values
 	int nargs = 1;										// number of arguments in args list; 0 => command name
 
-	uDEBUGPRT( cerr << "Stage1" << endl; );
+	uDEBUGPRT( cerr << "#########" << endl << "Stage1 " << string( 100, '#' ) << endl << "#########" << endl; );
 	checkEnv1();										// arguments passed via environment variables
+	uDEBUGPRT( cerr << string( 100, '*' ) << endl; );
 	uDEBUGPRT(
 		for ( int i = 1; i < argc; i += 1 ) {
 			cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
 		} // for
 	);
+	uDEBUGPRT( cerr << string( 100, '*' ) << endl; );
 
 	// process all the arguments
 
@@ -197,14 +197,12 @@ static void Stage1( const int argc, const char * const argv[] ) {
 					) {
 					i += 1;
 					args[nargs++] = argv[i];			// pass argument along
-					uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; );
 				} else if ( arg == "-MD" || arg == "-MMD" ) {
 					// gcc frontend generates the dependency file-name after the -MD/-MMD flag, but it is necessary to
 					// prefix that file name with -MF.
 					args[nargs++] = "-MF";				// insert before file
 					i += 1;
 					args[nargs++] = argv[i];			// pass argument along
-					uDEBUGPRT( cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl; );
 				} // if
 			} // if
 		} else {										// obtain input and possibly output files
@@ -243,7 +241,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 		args[0] = compiler_path.c_str();
 		if ( lang.size() != 0 ) {
 			args[nargs++] = "-x";
-			args[nargs++] = ( *new string( lang.c_str() ) ).c_str();
+			args[nargs++] = ( *new string( lang ) ).c_str();
 		} // if
 		args[nargs++] = cpp_in;
 		if ( o_flag ) {									// location for output
@@ -259,6 +257,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 			} // for
 			cerr << endl;
 		);
+		uDEBUGPRT( cerr << string( 100, '*' ) << endl; );
 
 		execvp( args[0], (char * const *)args );		// should not return
 		perror( "CC1plus Translator error: stage 1, execvp" );
@@ -283,7 +282,7 @@ static void Stage1( const int argc, const char * const argv[] ) {
 		#endif // CLANG
 		if ( lang.size() != 0 ) {
 			args[nargs++] = "-x";
-			args[nargs++] = ( *new string( lang.c_str() ) ).c_str();
+			args[nargs++] = ( *new string( lang ) ).c_str();
 		} // if
 		args[nargs++] = cpp_in;							// input to cpp
 		args[nargs] = nullptr;							// terminate argument list
@@ -328,13 +327,15 @@ static void Stage2( const int argc, const char * const * argv ) {
 	const char * cargs[20];								// leave space for 20 additional u++-cpp command line values
 	int ncargs = 1;										// 0 => command name
 
-	uDEBUGPRT( cerr << "Stage2" << endl; );
+	uDEBUGPRT( cerr << "#########" << endl << "Stage2 " << string( 100, '#' ) << endl << "#########" << endl; );
 	checkEnv2( cargs, ncargs );							// arguments passed via environment variables
+	uDEBUGPRT( cerr << string( 100, '*' ) << endl; );
 	uDEBUGPRT(
 		for ( int i = 1; i < argc; i += 1 ) {
 			cerr << "argv[" << i << "]:\"" << argv[i] << "\"" << endl;
 		} // for
 	);
+	uDEBUGPRT( cerr << string( 100, '*' ) << endl; );
 
 	// process all the arguments
 
@@ -443,7 +444,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 
 		if ( UPP_flag ) {								// run u++-cpp ?
 			if ( o_file.size() != 0 ) {					// location for output
-				cargs[ncargs++] = ( *new string( o_file.c_str() ) ).c_str();
+				cargs[ncargs++] = ( *new string( o_file ) ).c_str();
 			} // if
 		} else {
 			cargs[ncargs++] = upp_cpp_out.c_str();
@@ -532,11 +533,7 @@ static void Stage2( const int argc, const char * const * argv ) {
 // doubly preprocessed program.
 
 int main( const int argc, const char * const argv[], __attribute__((unused)) const char * const env[] ) {
-	uDEBUGPRT(
-		for ( int i = 0; env[i] != nullptr; i += 1 ) {
-			cerr << env[i] << endl;
-		} // for
-	);
+	uDEBUGPRT( cerr << "#########" << endl << "main cc1plus " << string( 100, '#' ) << endl << "#########" << endl; );
 
 	signal( SIGINT,  sigTermHandler );
 	signal( SIGTERM, sigTermHandler );

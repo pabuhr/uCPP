@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 24 18:20:10 2022
-// Update Count     : 43
+// Last Modified On : Sat Oct  7 08:06:53 2023
+// Update Count     : 44
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -25,16 +25,16 @@
 // 
 
 
-_Event xxx {
+_Exception xxx {
   public:
-  uBaseTask *tid;
-  xxx( uBaseTask *tid ) : tid(tid) {}
+	uBaseTask *tid;
+	xxx( uBaseTask *tid ) : tid(tid) {}
 };
 
-_Event yyy {
+_Exception yyy {
   public:
-  uBaseTask *tid;
-  yyy( uBaseTask *tid ) : tid(tid) {}
+	uBaseTask *tid;
+	yyy( uBaseTask *tid ) : tid(tid) {}
 };
 
 
