@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 19 13:24:20 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:26:45 2022
-// Update Count     : 21
+// Last Modified On : Tue Jun 11 09:12:39 2024
+// Update Count     : 24
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -103,8 +103,13 @@ namespace std {
 
 	template< typename Ch, typename Tr >
 	void basic_ifstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
-		rdbuf()->open( name, mode );
-	} // ifstream<Ch, Tr>::ifstream
+		try {
+			rdbuf()->open( name, mode );
+		} catch( uFile::FileAccess::OpenFailure & ex ) {
+			ex.setRaiseObject( this );					// change bound object from FileAccess to ifstream
+			_Throw;										// rethrow
+		} // try
+	} // ifstream<Ch, Tr>::open
 
 	template< typename Ch, typename Tr >
 	void basic_ifstream<Ch, Tr>::close() {
@@ -136,8 +141,13 @@ namespace std {
 
 	template< typename Ch, typename Tr >
 	void basic_ofstream<Ch, Tr>::open( const char *name, std::ios_base::openmode mode ) {
-		rdbuf()->open( name, mode );
-	} // ofstream<Ch, Tr>::ofstream
+		try {
+			rdbuf()->open( name, mode );
+		} catch( uFile::FileAccess::OpenFailure & ex ) {
+			ex.setRaiseObject( this );					// change bound object from FileAccess to ofstream
+			_Throw;										// rethrow
+		} // try
+	} // ofstream<Ch, Tr>::open
 
 	template< typename Ch, typename Tr >
 	void basic_ofstream<Ch, Tr>::close() {

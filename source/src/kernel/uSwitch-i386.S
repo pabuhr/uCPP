@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Oct  9 11:46:38 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  6 18:23:34 2020
-// Update Count     : 38
+// Last Modified On : Thu Aug 22 23:09:59 2024
+// Update Count     : 39
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,6 +36,9 @@
 // Context switch between coroutines/tasks.
 //   void uSwitch( uMachContext::uContext_t * from, uMachContext::uContext_t * to );
 // Arguments "from" in register 4(%esp), "to" in register 28(%esp)
+
+	// Prevent warning message from GNU bin-utils V2.39 about executable stack.
+	.section .note.GNU-stack
 
 	.file "uSwitch-i386.S"
 	.text

@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 // 
@@ -8,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:05:12 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:05:17 2019
-// Update Count     : 53
+// Last Modified On : Sat Jan 20 08:02:52 2024
+// Update Count     : 54
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -132,6 +131,5 @@ int main( int argc, char *argv[] ) {
 } // main
 
 // Local Variables: //
-// tab-width: 4 //
 // compile-command: "u++-work ClientUNIXDGRAM.cc -o Client" //
 // End: //

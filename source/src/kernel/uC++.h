@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 29 21:44:56 2023
-// Update Count     : 6393
+// Last Modified On : Mon Aug 26 21:16:57 2024
+// Update Count     : 6418
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -130,6 +130,7 @@ intmax_t convert( const char * str );					// proper string to integral convertio
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 
+// VLA arrays with post constructor initialization but no subscript checking.
 template< typename T, bool runDtor = true > class uNoCtor {
 	char storage[sizeof(T)] __attribute__(( aligned(alignof(T)) ));
   public:
@@ -143,9 +144,29 @@ template< typename T, bool runDtor = true > class uNoCtor {
 	T & operator()() { return *new( &storage ) T; }
 	template< typename... Args > T & ctor( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
 	template< typename... Args > T & operator()( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
+	template< typename RHS > T & operator=( const RHS & rhs ) { return *(T *)storage = rhs; }
 	void dtor() { ((T *)&storage)->~T(); }
-	~uNoCtor() { if ( runDtor ) dtor(); }
+	~uNoCtor() { if ( runDtor ) dtor(); }				// destroy (array) element ?
 }; // uNoCtor
+
+
+// VLA arrays with post constructor initialization and subscript checking.
+#define uArray( T, V, S ) uNoCtor<T> __ ## V ## _Impl__[S]; uArrayImpl<T> V( __ ## V ## _Impl__, S )
+#define uArrayPtr( T, V, S ) uArrayImpl<T, true> V( new uNoCtor<T>[S], S )
+
+template< typename T, bool runDtor = false > class uArrayImpl {
+	uNoCtor<T> * arr;
+	size_t size;
+  public:
+	uArrayImpl( uNoCtor<T> * arr, size_t size ) : arr{ arr }, size{ size } {}
+	uNoCtor<T> & operator[]( size_t index ) const {
+		if ( index >= size ) {
+			abort( "bad subscript: array %p has subscript %zu outside dimension 0..%zu.", arr, index, size - 1 );
+		} // if
+		return arr[index];
+	} // operator[]
+	~uArrayImpl() { if ( runDtor ) delete [] arr; }		// used by uArrayPtr
+}; // uArrayImpl
 
 
 //######################### InterposeSymbol #########################
@@ -769,7 +790,11 @@ class uSpinLock {										// non-yielding spinlock
 
 	void inline __attribute__((always_inline)) release_( bool rollforward ) {
 		assert( value != 0 );
+		#ifdef __U_MULTI__
 		uTestReset( value );
+		#else
+		value = 0;										// unlock
+		#endif // __U_MULTI__
 		if ( rollforward ) {							// allow timeslicing during spinning
 			uKernelModule::uKernelModuleData::enableIntSpinLockNoRF();
 		} else {

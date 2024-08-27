@@ -43,6 +43,15 @@ file :
 	fi ; \
 	times=3 ; \
 	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
+	    ${CXX} ${CXXFLAGS} $${ccflags} CmdLine.cc ; \
+	    i=0 ; \
+	    while [ $${i} -lt $${times} ] ; do \
+		./a.out 34 0 File.cc ; \
+		i=`expr $${i} + 1` ; \
+		echo "\n************************** $${i} **************************" ; \
+	    done ; \
+	done ; \
+	for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 	    ${CXX} ${CXXFLAGS} $${ccflags} File.cc ; \
 	    i=0 ; \
 	    while [ $${i} -lt $${times} ] ; do \

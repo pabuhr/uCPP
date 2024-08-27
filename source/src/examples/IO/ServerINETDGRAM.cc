@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1999
 // 
@@ -8,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:02:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 13 09:07:22 2019
-// Update Count     : 47
+// Last Modified On : Sat Jan 20 08:04:04 2024
+// Update Count     : 48
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,6 +75,5 @@ int main( int argc, char *argv[] ) {
 } // uMain
 
 // Local Variables: //
-// tab-width: 4 //
 // compile-command: "u++-work -o Server ServerINETDGRAM.cc" //
 // End: //

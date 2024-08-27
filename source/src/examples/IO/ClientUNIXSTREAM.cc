@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -8,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:42:32 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 14:36:03 2017
-// Update Count     : 109
+// Last Modified On : Sat Jan 20 08:01:27 2024
+// Update Count     : 110
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -109,6 +108,5 @@ int main( int argc, char *argv[] ) {
 } // main
 
 // Local Variables: //
-// tab-width: 4 //
 // compile-command: "u++-work ClientUNIXSTREAM.cc -o Client" //
 // End: //

@@ -6,8 +6,6 @@
 \renewcommand{\textfraction}{0.0}	% the entire page maybe devoted to floats with no text on the page at all
 \usepackage{pslatex}			% reduce size of san serif font
 
-\renewcommand{\labelitemi}{\textbullet}
-
 %       ****************************************
 %       *              PAGESTYLE               *
 %       ****************************************
@@ -250,6 +248,16 @@
 
 }% ifundefined{lgrind}
 
+%       ****************************************
+%       *              CODE QUOTE              *
+%       ****************************************
+
+\newenvironment{cquote}{%
+	\list{}{\topsep=1pt\parskip=0pt\partopsep=0pt\itemsep=0pt\parsep=0pt\listparindent=0pt\leftmargin=0pt\rightmargin=0pt}%
+	\item\relax
+}{%
+	\endlist
+}% cquote
 
 %       ****************************************
 %       *         MODIFY BIBLIOGRAPHY          *

@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 2003
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jan 22 12:32:28 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 22 10:57:42 2022
-// Update Count     : 12
+// Last Modified On : Sat Jan 20 08:04:54 2024
+// Update Count     : 13
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -78,6 +77,5 @@ int main( int argc, char *argv[] ) {
 }
 
 // Local Variables: //
-// tab-width: 4 //
 // compile-command: "u++ StringIO.cc" //
 // End: //

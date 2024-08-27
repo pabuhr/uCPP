@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  4 21:20:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 14 16:14:58 2022
-// Update Count     : 92
+// Last Modified On : Tue Apr 30 20:56:33 2024
+// Update Count     : 93
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -135,7 +135,7 @@ _Actor Generator {
 				cout << " Message too long";
 				goto common;
 			  case Driver::ECRC:
-				cout << " CRC error";
+				cout << " CRC invalid";
 			  common:
 				byteMsg.status = Driver::CONT;
 			  default: ;

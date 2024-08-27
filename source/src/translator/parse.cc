@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 10 06:39:19 2023
-// Update Count     : 5086
+// Last Modified On : Thu Aug 22 10:45:39 2024
+// Update Count     : 5092
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -318,7 +318,7 @@ static token_t * nested_name_specifier() {
 			if ( template_key() ) templateSpecial = true;
 
 			uassert( token->symbol != nullptr );
-			// uassert( token->symbol->data != nullptr );
+			uassert( token->symbol->data != nullptr );
 			if ( check( COLON_COLON ) && ( token->symbol->typname || ( token->symbol->data != nullptr && token->symbol->data->key != 0 ) ) ) { // type must have substructure
 				if ( token->symbol->data->key != 0 ) {
 					uDEBUGPRT( print_focus_change( "nested_name_specifier3", focus, token->symbol->data->table ); )
@@ -425,6 +425,9 @@ static token_t * identifier() {
 			token->symbol = new symbol_t( token->value, token->hash );
 		} // if
 		if ( strcmp( token->hash->text, "__make_integer_seq" ) == 0 ) { // clang builtin template
+			make_type( token, token->symbol );
+		} // if
+		if ( strcmp( token->hash->text, "__type_pack_element" ) == 0 ) { // g++ builtin template
 			make_type( token, token->symbol );
 		} // if
 		template_key();									// optional
@@ -1790,7 +1793,7 @@ static bool catch_clause( symbol_t * symbol, bool & bflag, bool & optimized, has
 					} // for
 					gen_code( prefix, ")" );
 					gen_code( prefix, bound.pointer ? "->" : "." );
-					gen_code( prefix, "getOriginalThrower ( ) ;" );
+					gen_code( prefix, "getRaiseObject ( ) ;" );
 					token_t * realend = prefix->prev_parse_token(); // remember for optimization part
 					gen_code( prefix, "if ( _U_bindingVal == & (" );
 					// Move the tokens for the bound object expression from the catch clause argument to the if
@@ -1809,8 +1812,8 @@ static bool catch_clause( symbol_t * symbol, bool & bflag, bool & optimized, has
 					gen_code( ahead, "else { throw ; } }" );
 					bflag = true;
 
-					// Optimization part, remove catch clause, remove "if uOrigRethrow", remove "getOriginalThrower()",
-					// add "else".  It would be more efficient to not insert them in the first place, but I like to keep
+					// Optimization part, remove catch clause, remove "if uOrigRethrow", remove "getRaiseObject()",
+					// add "else".  It would be more efficient to not insert them in the first place, but this keeps
 					// the optimization code separate from the normal case.
 
 					if ( exception_type == bound.extype && local_param_name == para_name ) {
@@ -3686,7 +3689,9 @@ static bool cv_qualifier_list() {
 	// over constrained to handle multiple contexts
 	while ( match( CONST ) || match( VOLATILE ) || match( RESTRICT ) ||
 			match( ATOMIC ) || match( FINAL ) || match( OVERRIDE ) ||
-			attribute_clause() || asm_clause() || exception_list() );
+			attribute_clause() || asm_clause() || exception_list() ||
+			match( '&' ) || match( AND_AND )			// reference qualifier
+		);
 	return true;
 } // cv_qualifier_list
 
@@ -5042,8 +5047,9 @@ static bool object_declaration() {
 static bool asm_declaration() {
 	token_t * back = ahead;
 
+	match( EXTENSION );									// optional
 	if ( match( ASM ) ) {
-		match( VOLATILE );								// optional
+		while ( match( VOLATILE ) | match( INLINE ) | match( GOTO ) ); // optional
 		if ( match( LP ) && match_closing( LP, RP ) && match( ';' ) ) return true;
 	} // if
 

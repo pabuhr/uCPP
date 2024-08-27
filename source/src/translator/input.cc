@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug  6 21:35:02 2023
-// Update Count     : 165
+// Last Modified On : Thu Aug 22 20:35:13 2024
+// Update Count     : 167
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -116,6 +116,7 @@ typedef enum state_t {
 	possible_signed_exponent,
 	exponent,
 	float_long,
+	float_size,											// g++-14, floating-point constant suffix
 	divide_or_comment,
 	new_comment,
 	old_comment,
@@ -719,7 +720,7 @@ token_t * getinput() {
 			  case 'e': case 'E':
 				state = possible_exponent;
 				break;
-			  case 'f': case 'F': case 'l': case 'L':
+			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
 				state = float_long;
 				break;
 			  default:
@@ -759,7 +760,7 @@ token_t * getinput() {
 			  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 			  case '\'':
 				break;
-			  case 'f': case 'F': case 'l': case 'L':
+			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
 				state = float_long;
 				break;
 			  default:
@@ -770,7 +771,16 @@ token_t * getinput() {
 			break;
 		  case float_long:
 			switch ( c ) {
-			  case 'f': case 'F': case 'l': case 'L':
+			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+				break;
+			  default:
+				unget( c );								// put character back as it could start float size
+			} // switch
+			state = float_size;
+			break;
+		  case float_size:
+			switch ( c ) {
+			  case '1': case '2': case '3': case '4': case '6': case '8':
 				break;
 			  default:
 				unget( c );

@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 21 10:11:34 2023
-// Update Count     : 535
+// Last Modified On : Sun Jun 16 08:57:55 2024
+// Update Count     : 551
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -45,32 +45,36 @@ class uEHM;												// forward declaration
 
 class uBaseException {
 	friend class uEHM;
+	const std::type_info * getEventType() const { return &typeid( *this ); };
+	virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
   public:
 	enum RaiseKind { ThrowRaise, ResumeRaise };
   protected:
 	const uBaseCoroutine * src;							// source execution for async raise, set at raise
 	char srcName[uEHMMaxName + 1];						//    and this field, too (+1 for string terminator)
 	char msg[uEHMMaxMsg + 1];							// message to print if exception uncaught
-	mutable void * staticallyBoundObject;				// bound object for matching, set at raise
+	mutable void * boundObject;							// bound object for matching, set at raise
 	mutable RaiseKind raiseKind;						// how the exception is raised
 
 	uBaseException( const char * const msg = "" ) { src = nullptr; setMsg( msg ); }
-	const std::type_info * getEventType() const { return &typeid( *this ); };
+	void setSrc( uBaseCoroutine & coroutine );
 	void setMsg( const char * const msg );
-	virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
   public:
 	virtual ~uBaseException();
 
 	const char * message() const { return msg; }
 	const uBaseCoroutine & source() const { return *src; }
 	const char * sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
-	void setSrc( uBaseCoroutine & coroutine );
 	RaiseKind getRaiseKind() const { return raiseKind; }
-	const void * getOriginalThrower() const { return staticallyBoundObject; }
-	void reraise();
-	virtual uBaseException * duplicate() const = 0;			// translator generated => object specific
+	const void * getRaiseObject() const { return boundObject; }
+	const void * getOriginalThrower() const __attribute__(( deprecated )) { return getRaiseObject(); }
+	const void * setRaiseObject( void * object ) { void * temp = boundObject; boundObject = object; return temp; }
 	virtual void defaultTerminate();
 	virtual void defaultResume();
+
+	// These members should be private but cannot be because they are referenced from user code.
+	virtual uBaseException * duplicate() const = 0;		// translator generated => object specific
+	void reraise();
 }; // uBaseException
 
 

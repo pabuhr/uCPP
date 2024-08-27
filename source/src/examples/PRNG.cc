@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Dec 25 20:47:53 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Aug  8 07:43:29 2023
-// Update Count     : 283
+// Last Modified On : Tue Jun 11 07:12:40 2024
+// Update Count     : 286
 // 
 
 #include <iostream>
@@ -122,14 +122,15 @@ static void dummy( uBaseTask & th ) {
 	free( buckets );
 } // dummy
 
-size_t malloc_unfreed() { return 16621; }				// unfreed storage from locale
+size_t malloc_unfreed() { return 16621; }				// unfreed storage from locale for en_US.UTF-8
 
 int main() {
+	const char * lang = getenv( "LANG" );				// may cause memory leak
 	try {
-		locale loc( getenv("LANG") );
+		locale loc( lang );
 		cout.imbue( loc );								// print numbers with separators (',')
 	} catch( runtime_error & ) {
-		cerr << "Invalid locale language name \"" << getenv("LANG") << endl;
+		cerr << "Invalid locale language name \"" << lang << "\"" << endl;
 		exit( EXIT_FAILURE );
 	} // try
 

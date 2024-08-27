@@ -6,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon Feb 28 13:36:42 2005
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 30 22:51:50 2023
-// Update Count     : 29
+// Last Modified On : Tue Aug 20 07:37:54 2024
+// Update Count     : 31
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,6 +36,9 @@
 // Context switch between coroutines/tasks.
 //   void uSwitch( uMachContext::uContext_t * from, uMachContext::uContext_t * to );
 // Arguments "from" in register rdi, "to" in register rsi.
+
+	// Prevent warning message from GNU bin-utils V2.39 about executable stack.
+	.section .note.GNU-stack
 
 	.file "uSwitch-x64.S"
 	.text

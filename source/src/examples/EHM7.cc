@@ -7,8 +7,8 @@
 // Author           : Roy Krischer
 // Created On       : Sun Nov 24 12:42:34 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:08:52 2023
-// Update Count     : 34
+// Last Modified On : Tue Jun 11 08:52:23 2024
+// Update Count     : 36
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -53,7 +53,7 @@ void Mary::main() {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
 	} catch ( john.Fred & fred ) {
-		assert( &john == fred.getOriginalThrower() );
+		assert( &john == fred.getRaiseObject() );
 		assert( &john == &fred.source() );
 		assert( fred.k == 84 ); 
 		osacquire( cout ) << "Mary catches exception from John: " << fred.k << endl;
@@ -68,11 +68,11 @@ void John::main() {
 			for ( int i = 0; i < 200; i+= 1 ) yield();
 		} // _Enable
 	} catch ( mary.Fred & fred ) {
-		assert( &mary == fred.getOriginalThrower() );
+		assert( &mary == fred.getRaiseObject() );
 		assert( &mary == &fred.source() );
 		assert( fred.k == 42 ); 
 		osacquire( cout ) << "John catches exception from Mary: " << fred.k << endl
-						  << "Mary's address: " << (void *)&mary << " exception binding: " << fred.getOriginalThrower()
+						  << "Mary's address: " << (void *)&mary << " exception binding: " << fred.getRaiseObject()
 						  << " exception Src: " << (void *)&fred.source() << endl;
 		for ( int i = 0; i < 200; i+= 1 ) yield();
 	} // try

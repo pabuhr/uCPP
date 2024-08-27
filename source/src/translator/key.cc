@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:06:35 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:29:51 2023
-// Update Count     : 131
+// Last Modified On : Thu Aug 22 10:43:12 2024
+// Update Count     : 132
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -169,6 +169,7 @@ keyword_t key[] = {
 	{ "auto", AUTO },									// C++11
 	{ "constexpr", CONSTEXPR },							// C++11
 	{ "decltype", DECLTYPE },							// C++11
+	{ "__decltype", DECLTYPE },							// g++ builtin
 	{ "final", FINAL },									// C++11
 	{ "noexcept", NOEXCEPT },							// C++11
 	{ "nullptr", nullptrPTR },							// C++11

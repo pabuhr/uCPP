@@ -6,8 +6,8 @@
 # Author           : Lynn Tran
 # Created On       : Mon Oct 1 22:06:09 2018
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Sun Feb 20 23:07:47 2022
-# Update Count     : 44
+# Last Modified On : Thu Jun 20 07:27:23 2024
+# Update Count     : 48
 # 
 
 """
@@ -85,7 +85,8 @@ def get_cluster_root():
     """
     Return: gdb.Value of globalClusters.root (is an address)
     """
-    cluster_root = gdb.parse_and_eval('uKernelModule::globalClusters.root')
+    # globalClusters is uNoCtor<uClusterSeq, false> => explicitly cast raw storage on stack
+    cluster_root = gdb.parse_and_eval('((uClusterSeq &)*((uClusterSeq *)&uKernelModule::globalClusters)).root')
     if cluster_root.address == 0x0:
         print('No clusters, program terminated')
     return cluster_root

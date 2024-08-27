@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 20 00:07:05 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 11 11:07:57 2023
-// Update Count     : 534
+// Last Modified On : Tue Jul  2 22:39:16 2024
+// Update Count     : 536
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,10 +42,12 @@ extern "C" {
 	size_t malloc_mmap_start();							// crossover allocation size from sbrk to mmap
 	size_t malloc_unfreed();							// heap unfreed size (bytes)
 	void malloc_stats_clear();							// clear heap statistics
+	void heap_stats();									// print thread-heap statistics
 } // extern "C"
 
-void * resize( void * oaddr, size_t alignment, size_t size ) __THROW;
-void * realloc( void * oaddr, size_t alignment, size_t size ) __THROW;
+// New allocation operations.
+void * resize( void * oaddr, size_t nalign, size_t size ) __THROW;
+void * realloc( void * oaddr, size_t nalign, size_t size ) __THROW;
 void * reallocarray( void * oaddr, size_t nalign, size_t dim, size_t elemSize ) __THROW;
 
 

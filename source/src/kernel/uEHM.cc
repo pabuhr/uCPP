@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 21 10:10:21 2023
-// Update Count     : 860
+// Last Modified On : Tue Jun 11 08:30:39 2024
+// Update Count     : 862
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -146,7 +146,6 @@ uEHM::AsyncEMsg * uEHM::AsyncEMsgBuffer::uRmMsg() {
 
 uEHM::AsyncEMsg * uEHM::AsyncEMsgBuffer::uRmMsg( AsyncEMsg * msg ) {
 	// Only lock at the end or the start of the list as these are the only places where interference can occur.
-
 	if ( msg == tail() || msg == head() ) {
 		uCSpinLock dummy( lock );
 		remove( msg );
@@ -181,7 +180,7 @@ void uBaseException::setSrc( uBaseCoroutine & coroutine ) {
 
 void uBaseException::reraise() {
 	if ( getRaiseKind() == uBaseException::ThrowRaise ) {
-		uEHM::Throw( *this, staticallyBoundObject );
+		uEHM::Throw( *this, boundObject );
 		// CONTROL NEVER REACHES HERE!
 		assert( false );
 	} // if
@@ -296,7 +295,7 @@ void uEHM::asyncToss( const uBaseException & event, uBaseCoroutine & target, uBa
 		AsyncEMsg * temp = new AsyncEMsg( event );
 		uBaseCoroutine & coroutine = uThisCoroutine();
 		if ( ! rethrow ) {								// reset current raiser ?
-			temp->asyncEvent->staticallyBoundObject = (void *)&coroutine;
+			temp->asyncEvent->boundObject = (void *)&coroutine;
 			temp->asyncEvent->setSrc( coroutine );
 		} // if
 		target.asyncEBuf.uAddMsg( temp );
@@ -329,7 +328,7 @@ void uEHM::asyncReToss( uBaseCoroutine & target, uBaseException::RaiseKind raise
 void uEHM::Throw( const uBaseException & event, void * const bound ) {
 	uDEBUGPRT( uDebugPrt( "uEHM::Throw( uBaseException::event:%p, bound:%p ) from task %.256s (%p)\n",
 						  &event, bound, uThisTask().getName(), &uThisTask() ); )
-		event.staticallyBoundObject = bound;
+	event.boundObject = bound;
 	event.raiseKind = uBaseException::ThrowRaise;
 	event.stackThrow();
 	// CONTROL NEVER REACHES HERE!
@@ -350,7 +349,7 @@ void uEHM::ReThrow() {
 void uEHM::Resume( const uBaseException & event, void * const bound, bool conseq ) {
 	uDEBUGPRT( uDebugPrt( "uEHM::Resume( uBaseException::event:%p, bound:%p ) from task %.256s (%p)\n",
 						  &event, bound, uThisTask().getName(), &uThisTask() ); )
-		event.staticallyBoundObject = bound;
+	event.boundObject = bound;
 	event.raiseKind = uBaseException::ResumeRaise;
 	resumeWorkHorse( event, conseq );
 } // uEHM::Resume
@@ -537,7 +536,7 @@ void uEHM::resumeWorkHorse( const uBaseException & event, bool conseq ) {
 		// search all resumption handlers in the same handler clause
 		for ( unsigned int i = 0; i < tmp->size; i += 1 ) {
 			uHandlerBase * elem = tmp->table[i];		// optimization
-			const void * bound = event.staticallyBoundObject;
+			const void * bound = event.boundObject;
 			uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
 								  i, elem, elem->getMatchBinding(), elem->getEventType(), bound ); )
 				// if (no binding OR binding match) AND (type match OR resume_any) => handler found

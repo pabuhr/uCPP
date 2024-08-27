@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Oct 18 20:16:32 2023
-// Update Count     : 1238
+// Last Modified On : Wed Jan  3 08:21:59 2024
+// Update Count     : 1240
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -505,7 +505,7 @@ class uActor {
 		// Race on send, which publishes the message to this actor. This actor can process and delete the promise result
 		// in the message before it is copied by value at the return. Hence, the promise result is copied before
 		// publishing and the copy returned.
-		auto ret = msg.result_;				// copy
+		auto ret = msg.result_;							// copy
 		executor_->send( Deliver_( *this, msg ), ticket ); // publish
 		return ret;
 	} // uActor::ask
@@ -517,7 +517,7 @@ class uActor {
 	// Administration
 
 	// use processors on current cluster
-	#define uActorStart() uActor::start()				  // deprecated
+	#define uActorStart() uActor::start()				// deprecated
 	static void start( uExecutor * executor = nullptr ) { // create executor to run actors
 		uDEBUG( if ( executor_ ) { abort( "Duplicate call to uActor::start()." ); } );
 		if ( ! executor ) {

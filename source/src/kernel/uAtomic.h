@@ -6,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 14 22:24:10 2023
-// Update Count     : 170
+// Last Modified On : Thu Aug 22 23:08:47 2024
+// Update Count     : 171
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -110,12 +110,15 @@ template< typename T > static inline __attribute__((always_inline)) bool uCompar
 template< typename T > static inline __attribute__((always_inline)) bool uCompareAssign( volatile T & assn, T comp, T replace ) {
 	return uCompareAssign( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssign
+
+#ifdef __SIZEOF_INT128__
 // Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80878
 template<> inline __attribute__((always_inline)) bool uCompareAssign( volatile __int128 & assn, __int128 comp, __int128 replace ) {
 	return __sync_bool_compare_and_swap( &assn, comp, replace );
 	// return __atomic_compare_exchange_n( &assn, &comp, replace, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssign
+#endif // __SIZEOF_INT128__
 
 
 template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & assn, T & comp, T replace, int memorder1, int memorder2 ) {
@@ -125,6 +128,8 @@ template< typename T > static inline __attribute__((always_inline)) bool uCompar
 template< typename T > static inline __attribute__((always_inline)) bool uCompareAssignValue( volatile T & assn, T & comp, T replace ) {
 	return uCompareAssignValue( assn, comp, replace, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
+
+#ifdef __SIZEOF_INT128__
 // Use __sync because __atomic with 128-bit CAA can result in calls to pthread_mutex_lock.
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80878
 template<> inline __attribute__((always_inline)) bool uCompareAssignValue( volatile __int128 & assn, __int128 & comp, __int128 replace ) {
@@ -133,6 +138,7 @@ template<> inline __attribute__((always_inline)) bool uCompareAssignValue( volat
 	return old == temp ? true : ( comp = old, false );
 	// return __atomic_compare_exchange_n( &assn, &comp, replace, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
 } // uCompareAssignValue
+#endif // __SIZEOF_INT128__
 
 
 // Local Variables: //

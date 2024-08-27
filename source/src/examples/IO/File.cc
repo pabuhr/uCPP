@@ -1,4 +1,3 @@
-//                              -*- Mode: C++ -*- 
 // 
 // uC++ Version 7.0.0, Copyright (C) Peter A. Buhr 1994
 // 
@@ -7,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:44:56 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 23 13:43:14 2017
-// Update Count     : 46
+// Last Modified On : Sat Jan 20 08:03:21 2024
+// Update Count     : 47
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -66,6 +65,5 @@ int main( int argc, char *argv[] ) {
 } // main
 
 // Local Variables: //
-// tab-width: 4 //
 // compile-command: "u++ File.cc" //
 // End: //

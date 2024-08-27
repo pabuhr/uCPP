@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Mon Nov  6 10:18:21 2023
-%% Update Count     : 8630
+%% Last Modified On : Sun Jun 16 18:20:56 2024
+%% Update Count     : 8695
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -773,7 +773,7 @@ Therefore, it is suggested that these kinds of references be used with extreme c
 \index{inherited members!coroutine}
 \index{coroutine!inherited members}
 
-Each coroutine type, if not derived from some other coroutine type, is implicitly derived from the coroutine type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}, e.g.:
+Each coroutine type, if not derived from some other coroutine type, is implicitly derived from the coroutine type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Coroutine}\0\nterminal{coroutine-name}\0:\0\K{public}\0\V{uBaseCoroutine}\0\{\0\0\C{}\1\1\0implicit\0inheritance}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
@@ -1933,7 +1933,7 @@ However, to ensure that only one thread is executing a coroutine at a time, the 
 \index{inherited members!task}
 \index{task!inherited members}
 
-Each task type, if not derived from some other task type, is implicitly derived from the task type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}}}\endlgrinde\LGend{}, e.g.:
+Each task type, if not derived from some other task type, is implicitly derived from the task type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseTask}}}\endlgrinde\LGend{}.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Task}\0\nterminal{task-name}\0:\0\K{public}\0\V{uBaseTask}\0\{}}
 \L{\LB{}\Tab{4}{.\,.\,.}}
@@ -5636,19 +5636,19 @@ As well, with hindsight some of the poorer features of \CC's EHM are replaced by
 
 \section{EHM}
 
-An \newterm{exceptional event} is an event that is (usually) known to exist but which is \emph{ancillary} to an algorithm, i.e., an exceptional event usually occurs with low frequency.
-Some examples of exceptional events are division by zero, I/O failure, end of file, pop from an empty stack, inverse of a singular matrix.
-Often an exceptional event occurs when an operation cannot perform its desired computation (Eiffel's notion of contract failure~\cite[p.~395]{Eiffel}).
-While errors occur infrequently, and hence, are often considered an exceptional event, it is incorrect to associate exceptions solely with errors;
+An \newterm{exception} is an event that is (usually) known to exist but which is \emph{ancillary} to an algorithm, i.e., an exception usually occurs with low frequency.
+Some examples of exceptions are division by zero, I/O failure, end of file, pop from an empty stack, inverse of a singular matrix.
+Often an exception occurs when an operation cannot perform its desired computation (Eiffel's notion of contract failure~\cite[p.~395]{Eiffel}).
+While errors occur infrequently, and hence, are often considered an exception, it is incorrect to associate exceptions solely with errors;
 exceptions can complement regular control flow in an algorithm.
 
-An exceptional event is often represented in a programming language by a type name, called an \newterm[exception!type]{exception type}.
+An exception is often represented in a programming language by a type name, called an \newterm[exception!type]{exception type}.
 An \newterm{exception} is an instance of an exception type, which is used in a special operation, called \newterm{raising}, indicating an ancillary (exceptional) situation.
 Raising results in an \emph{exceptional} change of control flow in the normal computation of an operation, i.e., control propagates immediately to a dynamically specified \newterm{handler}.
 To be useful, the handler location must be dynamically determined, as opposed to statically determined;
 otherwise, the same action and context for that action is executed for every exceptional change.
 
-Two actions can sensibly be taken for an exceptional event.
+Two actions can sensibly be taken for an exception.
 \begin{enumerate}
 \item
 The operation can fail requiring \newterm{termination} of the expression, statement or block from which the operation is invoked.
@@ -5662,7 +5662,7 @@ Both kinds of actions are supported in \uC.
 Thus, there are two possible outcomes of an operation: normal completion possibly with a correction action, or failure with change in control flow and alternate computation.
 
 \begin{annotation}
-Even with the availability of modern EHMs, the common programming techniques often used to handle exceptional events are return codes and status flags (although this is slowly changing).
+Even with the availability of modern EHMs, the common programming techniques often used to handle exceptions are return codes and status flags (although this is slowly changing).
 The \newterm{return code} technique requires each routine to return a correctness value on completion, where different values indicate a normal or exceptional result during a routine's execution.
 An intermediate approach is the \newterm{return union}, which combines return-code/result and implicitly checks the return code on result access (see \CC \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{optional}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{variant}}}\endlgrinde\LGend{}).
 Alternatively, or in conjunction with return codes, is the \newterm{status flag} technique requiring each routine to set a shared variable on completion, where different values indicate a normal or exceptional result during a routine's execution, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{errno}}}\endlgrinde\LGend{} in UNIX systems.
@@ -5713,7 +5713,7 @@ As well, every exception type must have a public default and copy constructor.
 \begin{annotation}
 Because \CC allows any type to be used as an exception type, it seems to provide additional generality, i.e., there is no special exception type in the language.
 However, in practice, this generality is almost never used.
-First, using a builtin type like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} as an exception type is dangerous because the type has no inherent meaning for any exceptional event.
+First, using a builtin type like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} as an exception type is dangerous because the type has no inherent meaning for any exception.
 That is, one library routine can raise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} to mean one thing and another routine can raise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} to mean another;
 a handler catching \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{int}}}\endlgrinde\LGend{} may have no idea about the meaning of the exception.
 To prevent this ambiguity, programmers create specific types describing the exception, e.g., \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{overflow}}}\endlgrinde\LGend{}, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{underflow}}}\endlgrinde\LGend{}, etc.
@@ -5742,7 +5742,9 @@ An exception is the same as a class object with respect to creation and destruct
 \index{inherited members!exception type}
 \index{exception!inherited members}
 
-Each exception type, if not derived from another exception type, is implicitly derived from the event type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}, e.g.:
+\begin{sloppypar}
+Each exception type, if not derived from another exception type, is implicitly derived from the exception type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}.
+\end{sloppypar}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Exception}\0\nterminal{exception-type name}\0:\0\K{public}\0\V{uBaseException}\0.\,.\,.}}
 \endlgrinde\LGend
@@ -5752,6 +5754,7 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \L{\LB{\K{class}\0\V{uBaseException}\0\{}}
 \L{\LB{\0\0\K{protected}:}}
 \L{\LB{}\Tab{4}{\V{uBaseException}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0=\0\S{}\"\"\SE{}\0);}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{setSrc}(\0\V{uBaseCoroutine}\0\&\0\V{coroutine}\0);}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{setMsg}(\0\K{const}\0\K{char}\0\*\0\K{const}\0\V{msg}\0);}}
 \L{\LB{\0\0\K{public}:}}
 \L{\LB{}\Tab{4}{\K{enum}\0\V{RaiseKind}\0\{\0\V{ThrowRaise},\0\V{ResumeRaise}\0\};}}
@@ -5760,22 +5763,25 @@ where the interface for the base-class \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uB
 \L{\LB{}\Tab{4}{\K{const}\0\V{uBaseCoroutine}\0\&\0\V{source}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\K{const}\0\K{char}\0\*\0\V{sourceName}()\0\K{const};}}
 \L{\LB{}\Tab{4}{\V{RaiseKind}\0\V{getRaiseKind}()\0\K{const};}}
-\L{\LB{}\Tab{4}{\K{void}\0\V{reraise}();}}
-\L{\LB{}\Tab{4}{\K{virtual}\0\V{uBaseException}\0\*\0\V{duplicate}()\0\K{const};}}
+\L{\LB{}\Tab{4}{\K{const}\0\K{void}\0\*\0\V{getRaiseObject}()\0\K{const}\0\{\0\K{return}\0\V{boundObject};\0\}}}
+\L{\LB{}\Tab{4}{\K{const}\0\K{void}\0\*\0\V{setRaiseObject}(\0\K{void}\0\*\0\V{object}\0);}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{defaultTerminate}();}}
 \L{\LB{}\Tab{4}{\K{virtual}\0\K{void}\0\V{defaultResume}();}}
 \L{\LB{\};}}
 \endlgrinde\LGend
-\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!RaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RaiseKind}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!setSrc@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setSrc}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!setMsg@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!RaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RaiseKind}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!message@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!source@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{source}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!sourceName@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sourceName}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!getRaiseKind@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseKind}}}\endlgrinde\LGend{}}%
-\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!reraise@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{}}%
-\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!duplicate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!getRaiseObject@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseObject}}}\endlgrinde\LGend{}}%
+\index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!setRaiseObject@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setRaiseObject}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!defaultResume@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultResume}}}\endlgrinde\LGend{}}%
 \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!defaultTerminate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}}%
+% \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!reraise@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{}}%
+% \index{uBaseException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{}!duplicate@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{}}%
 
 The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}\endlgrinde\LGend{} has the following form:
 \begin{prefix}
@@ -5783,6 +5789,7 @@ The constructor routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseException}}}
 -- creates an exception with specified message, which is printed in an error message if the exception is not handled.
 The message is copied when an exception is created so it is safe to use within an exception even if the context of the raise is deleted.
 \end{prefix}
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setSrc}}}\endlgrinde\LGend{} is an alternate way to associate the coroutine/task raising a non-local exception.
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\LGend{} is an alternate way to associate a message with an exception.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{} returns the string message associated with an exception.
@@ -5792,10 +5799,13 @@ In some cases, the coroutine or task may be deleted when the exception is caught
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{sourceName}}}\endlgrinde\LGend{} returns the name of the coroutine/task raising a non-local exception;
 if an exception is raised locally, the value \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\"\*unknown\*\"\SE{}}}\endlgrinde\LGend{} is returned.
 This name is copied from the raising coroutine/task when an exception is created so it is safe to use even if the coroutine/task is deleted.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseKind}}}\endlgrinde\LGend{} returns whether the exception is thrown (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ThrowRaise}}}\endlgrinde\LGend{}) or resumed (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ResumeRaise}}}\endlgrinde\LGend{}) at the raise.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{} either rethrows or reresumes the exception depending on how the exception was originally raised.
-The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{} returns a copy of the raised exception created using the exception's copy constructor, which can be used to raise the same exception in a different context after it has been caught;
-the copy is allocated on the heap, so ownership is transferred to the caller to delete the exception.
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseObject}}}\endlgrinde\LGend{} returns the address of the object that raised the exception, which is used with bound exceptions (see \VRef{s:BoundExceptions}).
+The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setRaiseKind}}}\endlgrinde\LGend{} (re)sets the object raising the exception and returns the previous object that raised the exception.
+Changing the raising object is useful if an object invokes another object that raises an exception, but the invoking object wants to be identified as raising the exception for bound exceptions.
+
+% The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{} either rethrows or reresumes the exception depending on how the exception was originally raised.
+% The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{} returns a copy of the raised exception created using the exception's copy constructor, which can be used to raise the same exception in a different context after it has been caught;
+% the copy is allocated on the heap, so ownership is transferred to the caller to delete the exception.
 
 The member routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{} is implicitly called if an exception is thrown but not handled;
 the default action is to raise an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}::\V{UnhandledException}}}\endlgrinde\LGend{}\index{UnhandledException@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{UnhandledException}}}\endlgrinde\LGend{}} (see \VRef{s:UnhandledException}).
@@ -6032,7 +6042,7 @@ If this level of polling is insufficient, explicit polling is possible by callin
 \index{uEHM@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}}}\endlgrinde\LGend{}!poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{poll}}}\endlgrinde\LGend{}}%
 \index{poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{poll}}}\endlgrinde\LGend{}}%
 The routine \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{}\index{uEHM::poll@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{}} returns the number of asynchronous exceptions propagated by this call to poll.
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{} is a static member-routine that always polls the calling thread's asynchronous event-queue.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uEHM}::\V{poll}}}\endlgrinde\LGend{} is a static member-routine that always polls the calling thread's asynchronous exception-queue.
 \VRef{s:EnablingDisablingPropagation} discusses nonlocal propagation control in detail.
 In general, explicit polling is only necessary if \Index{pre-emption} is disabled, a large number of nonlocal exception-types are arriving, or timely propagation is essential.
 
@@ -6073,7 +6083,7 @@ If multiple concurrent-exceptions are raised at a task, the exceptions are deliv
 
 \section{Handler}
 
-A \Index{handler} catches a propagated exception and attempts to deal with the exceptional event.
+A \Index{handler} catches a propagated exception and attempts to deal with the exception.
 Each handler is associated with a particular block of code, called a \newterm{guarded block}.
 \uC supports two kinds of handlers, termination and resumption, which match with the kind of raise.
 An unhandled exception is dealt with by an exception default-member (see \VRef{s:ExceptionsInheritedMembers}).
@@ -6085,7 +6095,7 @@ A \newterm{termination handler}\index{handler!termination} is a corrective actio
 When a termination handler begins execution, the stack from the point of the throw up to and including the guarded block is unwound;
 hence, all block and routine activations on the stack at or below the guarded block are deallocated, including all objects contained in these activations.
 After a termination handler completes, i.e., it does not perform another throw, control continues after the guarded block it is associated with.
-A termination handler often only has approximate knowledge of where an exceptional event occurred in the guarded block (e.g., a failure in library code), and hence, any partial results of the guarded-block computation are suspect.
+A termination handler often only has approximate knowledge of where an exception occurred in the guarded block (e.g., a failure in library code), and hence, any partial results of the guarded-block computation are suspect.
 In \uC, a termination handler is specified identically to that in \CC: \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{catch}}}\endlgrinde\LGend{} clause of a \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{try}}}\endlgrinde\LGend{} statement.
 (The details of termination handlers can be found in a \CC textbook.)
 \VRef[Figure]{f:CCversusuCTerminatingPropagation} shows how \CC and \uC throws an exception to a termination handler.
@@ -6152,7 +6162,7 @@ A \newterm{resumption handler}\index{handler!resumption} is an \Index{interventi
 When a resumption handler begins execution, the stack is \emph{not} unwound;
 hence, all block and routine activations on the stack at or below the guarded block are retained, including all objects contained in these activations.
 After a resumption handler completes, i.e., it does not perform a throw, control returns after the raise statement initiating the propagation.
-To obtain precise knowledge of the exceptional event, information about the event and variables at the resumption raise are passed to the handler so it can effect a change before returning.
+To obtain precise knowledge of the exception, information about the exception and variables at the resumption raise are passed to the handler so it can effect a change before returning.
 Alternatively, the resumption handler may determine a correction is impossible and throw an exception, effectively changing the original resume into a throw, which unwinds the stack.
 Unlike normal routine calls, the call to a resumption handler is dynamically bound rather than statically bound, so different corrections can occur for the same static context.
 
@@ -6367,7 +6377,7 @@ The handlers in \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{main}}}\endlgrinde\LGend{
 \label{f:UsingResumeTop}
 \end{figure}
 
-Finally, a \Index{nonlocal exception}s\index{exception!nonlocal} is always propagated with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Resume}}}\endlgrinde\LGend{}, which starts propagation from current stack position.
+Finally, a \Index{nonlocal exception}\index{exception!nonlocal} is propagated with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Resume}}}\endlgrinde\LGend{} starting propagation from the current stack position.
 
 
 \subsubsection{Commentary}
@@ -6529,7 +6539,7 @@ Passing the associated object as an argument to the handler and checking if the 
 requires programmers to follow a coding convention of reraising the exception if the bound object is inappropriate~\cite{Buhr92b}.
 Such a coding convention is unreliable, significantly reducing robustness.
 In addition, mimicking becomes infeasible for derived exception-types using the termination model, as in:
-{\par
+\begin{cquote}
 \begin{tabular}{@{}l|l}
 \multicolumn{1}{@{}l}{
 \LGinlinefalse\LGbegin\lgrinde
@@ -6550,7 +6560,6 @@ In addition, mimicking becomes infeasible for derived exception-types using the 
 \CE{}\L{\LB{}\Tab{4}{\K{else}\0\K{throw}}\Tab{28}{\C{}\1\1\0reraise\0exception}}
 \CE{}\endlgrinde\LGend
 &
-\LGindent=0pt
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\C{}\1\1\0bound\0form}}
 \CE{}\L{\LB{\}\0\K{catch}(\0\V{o1}.\V{D}\0)\0\{}}
@@ -6561,8 +6570,7 @@ In addition, mimicking becomes infeasible for derived exception-types using the 
 \L{\LB{}}
 \endlgrinde\LGend
 \end{tabular}
-\par}
-\noindent
+\end{cquote}
 When exception type \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{D}}}\endlgrinde\LGend{} is raised, the problem occurs when the first handler catches the derived exception-type and reraises it if the object is inappropriate.
 The reraise immediately terminates the current guarded block, which precludes the handler for the base exception-type in that guarded block from being considered.
 The bound form (on the right) matches the handler for the base exception-type.
@@ -6640,12 +6648,12 @@ Neither \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{private}}}\endlgrinde\LGend{} nor
 \begin{tabular}{r||c|c}
 \multicolumn{1}{r||}{base}	& \multicolumn{1}{c}{}	& \multicolumn{1}{|c}{\emph{public only} / \emph{NO multiple inheritance}}		\\
 \cline{2-3}
-\multicolumn{1}{l||}{derived}& struct/class		& event			\\
+\multicolumn{1}{l||}{derived}& struct/class		& exception			\\
 \hline
 \hline
 struct/class				& $\surd$	& \textsf{X}\\
 \hline
-event						& $\surd$	& $\surd$	\\
+exception					& $\surd$	& $\surd$	\\
 \end{tabular}
 \par
 \end{center}
@@ -6797,7 +6805,7 @@ This decision may sacrifice runtime efficiency and memory space.
 In other words, universal, crisp criteria for making a decision do not exist.
 Nevertheless, some important guidelines are given to encourage good use of exceptions.
 
-First, use exceptions to indicate exceptional event in library code to ensure a library user cannot ignoring the event, as is possible with return codes and status values.
+First, use exceptions to indicate events in library code that a user cannot ignore, as is possible with return codes and status values.
 Hence, exceptions improve safety and robustness, while still allowing a library user to explicitly catch and do nothing about an exception.
 Second, use exceptions to improve clarity and maintainability over techniques like status return values and status flags where normal and exceptional control-flow are mixed together within a block.
 Using exceptions not only separates the normal flow in a guarded block from the exceptional flow in handlers, but also avoids mixing normal return-values with exceptional return-values.
@@ -6828,7 +6836,7 @@ For example, \Index{deadlock} is potentially a rare condition and a thrown excep
 
 \subsection{Resuming Propagation}
 
-Typical use of resuming propagation is to do additional computation, in the form of a resumption handler, for an exceptional event or as a form of polymorphism, where an action is left unspecified (e.g., in a library routine) and specified by a user using dynamic lookup (similar to a virtual routine in a class).
+Typical use of resuming propagation is to do additional computation, in the form of a resumption handler, for an exception or as a form of polymorphism, where an action is left unspecified (e.g., in a library routine) and specified by a user using dynamic lookup (similar to a virtual routine in a class).
 The additional computation may modify the state of the execution, which can be useful for error recovery.
 Alternatively, it may cause information about the execution to be gathered and saved as a side-effect without effectively modifying the execution's computation.
 
@@ -6838,7 +6846,7 @@ Alternatively, it may cause information about the execution to be gathered and s
 Any exception type can be both thrown or resumed.
 When feasible, it is best to initially resume an exception-type to avoid loss of local information.
 If no resumption handler handles the exception, the same exception-type can be thrown (default action).
-For example, in a real-time application, missing a real-time constraint, say an execution cannot finish before a deadline, is considered an exceptional event.
+For example, in a real-time application, missing a real-time constraint, say an execution cannot finish before a deadline, is considered an exception.
 For some applications, the constraint violation can result in termination.
 Other applications can modify internal parameters to increase execution by sacrificing the quality of the solution or by acquiring more computing resources to speedup execution.
 
@@ -10723,7 +10731,7 @@ bits 63--32 (most)	& bits 31--0 (least)	\\
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x5f}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x718c25e1}}\endlgrinde\LGend{}		\\
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{0xad3e}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x7b5f1dbe}}\endlgrinde\LGend{}		\\
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{0xbc3b}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0xac69ff19}}\endlgrinde\LGend{}		\\
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{0x1070f}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x2d258dc6}}\endlgrinde\LGend{}		\\
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{0x1070f}}\endlgrinde\LGend{}			& \LGinlinetrue\LGbegin\lgrinde\L{\LB{0x2d258dc6}}\endlgrinde\LGend{}
 \end{tabular}
 \end{quote}
 By dropping bits 63--32, bits 31--0 become scrambled after each multiply.
@@ -10737,7 +10745,7 @@ Finally, a PRNG usually generates a range of large values, e.g., \LGinlinetrue\L
 To use the PRNG interface \Textbf{requires \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\#include}\0\<\V{uPRNG}.\V{h}\>}}\endlgrinde\LGend{}}\index{uPRNG.h@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPRNG}.\V{h}}}\endlgrinde\LGend{}}.
 \begin{itemize}
 \item
-The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} classes for sequential programs, like coroutining, are:
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{PRNG}}}\endlgrinde\LGend{} classes for sequential programs, including coroutining, are:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{class}\0\V{PRNG32}\0\{}}
 \L{\LB{}\Tab{4}{\C{}\1\1\0opaque\0type,\0no\0copy\0or\0assignment}}
@@ -10909,10 +10917,9 @@ If a task pointer is available, e.g., in task main, eliminating the call to \LGi
 \label{s:StackObjectAllocation}
 \index{stack object allocation}%
 
-\CC has no mechanism to created an array of objects where each object in the array is initialized via the object's constructor and each element has a different value.
+\CC has no mechanism to created an array of objects where each array element is initialized via the object's constructor to a different value.
 As result, it is necessary to use the heap.
-
-\par\noindent
+\begin{cquote}
 \begin{tabular}{@{}l|l@{}}
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{struct}\0\V{Obj}\0\{}}
@@ -10920,8 +10927,10 @@ As result, it is necessary to use the heap.
 \L{\LB{}\Tab{4}{\V{Obj}(\0\K{int}\0\V{id}\0)\0:\0\V{id}(\0\V{id}\0)\0\{\0.\,.\,.\0\}}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{mem}(.\,.\,.)\0\{\0.\,.\,.\0\}}}
 \L{\LB{\}}}
+\L{\LB{\V{ostream}\0\&\0\K{operator}\<\<(\0\V{ostream}\0\&\0\V{os},\0\K{const}\0\V{Obj}\0\&\0\V{obj}\0)\0\{}}
+\L{\LB{\0\0\0\0\K{return}\0\V{os}\0\<\<\0\V{obj}.\V{id};}}
+\L{\LB{\}}}
 \L{\LB{\V{cin}\0\>\>\0\V{size};}}
-\L{\LB{}}
 \L{\LB{\V{Obj}\0\BF{\*}\0\V{objs}[\V{size}];}}
 \L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
 \L{\LB{}\Tab{4}{\V{objs}[\V{id}]\0=\0\BF{\K{new}}\0\V{Obj}(\0\V{id}\0);}}
@@ -10938,6 +10947,8 @@ As result, it is necessary to use the heap.
 \L{\LB{}}
 \L{\LB{}}
 \L{\LB{}}
+\L{\LB{}}
+\L{\LB{}}
 \L{\LB{\{}}
 \L{\LB{}\Tab{4}{\BF{\V{unique\_ptr}\<\V{Obj}\>}\0\V{objs}[\V{size}];}}
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
@@ -10947,6 +10958,10 @@ As result, it is necessary to use the heap.
 \CE{}\L{\LB{}}
 \endlgrinde\LGend
 \end{tabular}
+\end{cquote}
+
+
+\section{\texorpdfstring{\BGfont uNoCtor}{uNoCtor}}
 
 \uC provides template \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}\index{uNoCtor@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} mechanism (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{optional}::\V{emplace\_back}}}\endlgrinde\LGend{}).
 \LGinlinefalse\LGbegin\lgrinde
@@ -10962,31 +10977,28 @@ As result, it is necessary to use the heap.
 \L{\LB{}\Tab{4}{\V{T}\0\&\0\K{operator}()();\0\C{}\1\1\0same\0as\0ctor}}
 \CE{}\L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\V{T}\0\&\0\V{ctor}(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);}}
 \L{\LB{}\Tab{4}{\K{template}\<\0\K{typename}.\,.\,.\0\V{Args}\0\>\0\V{T}\0\&\0\K{operator}()(\0\V{Args}\0\&\&.\,.\,.\0\V{args}\0);\0\C{}\1\1\0same\0as\0ctor}}
-\CE{}\L{\LB{}\Tab{4}{\K{void}\0\V{dtor}();}}
-\L{\LB{}\Tab{4}{\~\V{uNoCtor}();}}
-\L{\LB{\};\V{t}}}
+\CE{}\L{\LB{\0\0\0\0\K{template}\<\0\K{typename}\0\V{RHS}\0\>\0\V{T}\0\&\0\K{operator}=(\0\K{const}\0\V{RHS}\0\&\0\V{rhs}\0);}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{dtor}();}}
+\L{\LB{}\Tab{4}{\~\V{uNoCtor}();}\Tab{28}{\C{}\1\1\0destroy\0(array)\0element\0?}}
+\CE{}\L{\LB{\};\V{t}}}
 \endlgrinde\LGend
 The template parameters specify the type of object embedded in the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} and a boolean indicating if the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} destructor runs the embedded object's destructor (true) or relies on an explicit call to member \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} (false).
 In the latter case, if an object has no destructor, no call to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{dtor}}}\endlgrinde\LGend{} is required.
 
-The following example shows how to use use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} to create an array of objects on the stack and then initialize each array element to a different value using the object's constructor.
+The following example shows how \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} is used to create an array of objects on the stack and initialize each array element to a different value using the old-style constructor syntax (parenthesis versus curly brackets).
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\{}}
 \L{\LB{}\Tab{4}{\BF{\V{uNoCtor}\<\V{Obj}\>}\0\V{objs}[\V{size}];\0\C{}\1\1\0objs\0on\0stack\0and\0no\0default\0constructor\0calls}}
 \CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
-\L{\LB{}\Tab{8}{\V{objs}[\V{id}]\BF{.\V{ctor}(\0\V{id}\0)};\0\C{}\1\1\0placement\0allocation\0\&\0call\0initialization\0constructor}}
+\L{\LB{}\Tab{8}{\V{objs}[\V{id}]\BF{(\0\V{id}\0)};\0\C{}\1\1\0initialize\0and\0use}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
 \L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs\0array\0elements}}
 \CE{}\endlgrinde\LGend
-As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{new}}}\endlgrinde\LGend{} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, fields are accessed using \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{}
+As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\*}}\endlgrinde\LGend{} for object and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{} for field access.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
-\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\V{objs}[\V{id}]\BF{\-\>}\V{id}\0\<\<\0\V{endl};\0\BF{\CMfont// MUST USE -\> NOT . FOR FIELD ACCESS}}}
+\L{\LB{}\Tab{4}{\V{cout}\0\<\<\0\BF{\*}\V{objs}[\V{id}]\0\<\<\0\S{}\'\0\'\SE{}\0\<\<\0\V{objs}[\V{id}]\BF{\-\>}\V{id}\0\<\<\0\V{endl};}}
 \endlgrinde\LGend
-The old-style constructor syntax (parenthesis versus curly brackets) is allowed for initialization and the constructed object is returned so it can be used immediately to access the object.
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{objs}[\V{id}]\BF{(\0\V{id}\0)}\-\>\V{mem}(\03\0);\0\C{}\1\1\0initialize\0and\0use}}
-\CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} can be used with all new \uC types, e.g.:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
@@ -11003,19 +11015,84 @@ The old-style constructor syntax (parenthesis versus curly brackets) is allowed 
 \L{\LB{}\Tab{4}{\}}}
 \L{\LB{\}\0\C{}\1\1\0automatically\0delete\0coroutine\0array\0elements\0calling\0destructors\0on\0each\0element}}
 \CE{}\endlgrinde\LGend
-Creating large VLAs on a coroutine's or task's stack can overflow the stack.
+Creating large VLAs on a coroutine or task stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
+\begin{cquote}
+\begin{tabular}{@{}l|l@{}}
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{}\Tab{4}{\V{uNoCtor}\<\V{C}\>\0\*\0\V{c}\0=\0\K{new}\0\V{uNoCtor}\<\V{C}\>[10000];}}
-\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
-\L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}].\V{ctor}(\0\V{i}\0);}}
-\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\0\C{}\1\1\064K\0stack}}
+\CE{}\L{\LB{}\Tab{8}{\V{Obj}\0\BF{\V{objs}[100000];}\0\C{}\1\1\0overflow}}
+\CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0implicit\0initialize\0with\0ctor\0calls}}
+\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\L{\LB{}}
+\L{\LB{}\Tab{4}{\}\0\C{}\1\1\0implicitly\0array\0deallocate}}
+\CE{}\L{\LB{\};}}
 \endlgrinde\LGend
+&
+\LGindent=0pt
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{8}{\BF{\V{uNoCtor}\<\V{Obj}\>\0\*\0\V{objs}\0=\0\K{new}\0\V{uNoCtor}\<\V{Obj}\>[100000]};}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0explicit\0initialize\0with\0ctor\0calls}}
+\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\L{\LB{}\Tab{8}{\K{delete}\0[\,]\0\BF{\V{objs}};\0\C{}\1\1\0explicit\0array\0deallocation}}
+\CE{}\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\};}}
+\endlgrinde\LGend
+\end{tabular}
+\end{cquote}
+The \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} array is in the heap but the constructor calls for that array can be done after the allocation.
+Alternatives are large stacks (waste virtual space) or dynamic stack growth (complex and pauses).
 
 
-\chapter{String to Intger}
-\label{s:StringToIntger}
-\index{string to intger}%
+\section{\texorpdfstring{\BGfont uArray}{uArray}}
+
+\uC provides wrappers \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{}\index{uArray@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{}} and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}\index{uArrayPtr@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}} for single-dimension \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{} arrays \BF{with subscript checking}.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\{\0\C{}\1\1\0GOOD,\0use\0stack}}
+\CE{}\L{\LB{}\Tab{4}{\V{cin}\0\>\>\0\V{size};}}
+\L{\LB{}\Tab{4}{\BF{\V{uArray}(\0\V{Obj},\0\V{objs},\0\V{size}\0);}\0\C{}\1\1\0macro:\0type,\0variable,\0dimension}}
+\CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
+\L{\LB{}\Tab{8}{\V{objs}[\V{id}]\BF{(\0\V{id}\0)};\0\C{}\1\1\0subscript\0checking,\0constructor\0call}}
+\CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
+\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0objs}}
+\CE{}\endlgrinde\LGend
+Macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}(\0\V{Obj},\0\V{objs},\0\V{size}\0)}}\endlgrinde\LGend{} is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}\<\V{Obj}\>\0\V{objs}[\V{size}]}}\endlgrinde\LGend{}, but the \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} type redefines the subscript operator to check the subscript is within the dimension range \LGinlinetrue\LGbegin\lgrinde\L{\LB{0.\,.N\-1}}\endlgrinde\LGend{};
+otherwise \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} usage is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}}\endlgrinde\LGend{}.
+
+When large local variables are allocated on a small stack use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}.
+\begin{cquote}
+\begin{tabular}{@{}l|l@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\0\C{}\1\1\064K\0stack}}
+\CE{}\L{\LB{}\Tab{8}{\V{Obj}\0\BF{\V{objs}[100000];}\0\C{}\1\1\0overflow}}
+\CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0implicit\0initialize\0with\0ctor\0calls}}
+\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\L{\LB{}\Tab{4}{\}\0\C{}\1\1\0implicitly\0array\0deallocate}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+&
+\LGindent=0pt
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
+\L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
+\L{\LB{}\Tab{8}{\BF{\V{uArrayPtr}(\0\V{Obj},\0\V{objs},\0100000\0)}}}
+\L{\LB{}\Tab{8}{\C{}\1\1\0explicit\0initialize\0with\0ctor\0calls}}
+\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\L{\LB{}\Tab{4}{\}\0\C{}\1\1\0implicitly\0array\0deallocate}}
+\CE{}\L{\LB{\};}}
+\endlgrinde\LGend
+\end{tabular}
+\end{cquote}
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}\index{uArrayPtr@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}} dynamically allocates the array in the heap, and implicitly frees it at the end of the block (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}).
+
+
+\chapter{String to Integer}
+\label{s:StringToInteger}
+\index{string to integer}%
 
 The \CC \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stoi}}}\endlgrinde\LGend{} routine does not handle an erroneous string of the form \LGinlinetrue\LGbegin\lgrinde\L{\LB{\S{}\"123ABC\"\SE{}}}\endlgrinde\LGend{} correctly, returning a valid integer result instead of raising an \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{invalid\_argument}}}\endlgrinde\LGend{} exception.
 The \uC \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{convert}}}\endlgrinde\LGend{} routine:
@@ -11049,10 +11126,8 @@ correctly handles erroneous string-to-integer conversions.
 \index{data structure library}%
 
 \uC makes use of several basic data structures to manage objects in its runtime environment: stack, queue and sequence.
-Since these data structures are needed at compile time because of inlining, it is possible to use them in a \uC application program.
-When appropriate, reusing code by an application programmer can save significant time and effort.
-However, be forewarned that the \uC DSL is only as extensive as needed to implement \uC;
-it is not meant to be a complete data structure library.
+For efficiency, these data structures are inlined throughout the \uC runtime, and hence, are included implicitly in a \uC application.
+When appropriate, using these data structures in an application program can save time and effort, while increasing performance.
 
 A data structure is defined to be a group of nodes, containing user data, organized into a particular format, with specific operations peculiar to that format.
 For all data structures in this library, it is the user's responsibility to create and delete all nodes.

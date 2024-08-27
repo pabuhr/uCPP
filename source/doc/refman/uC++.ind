@@ -34,9 +34,9 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Coroutine}}}\endlgrinde\LGend{}, 
 		\hyperpage{7}, \hyperpage{12}
   \item {\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Disable}}}\endlgrinde\LGend{}}, 
-		\hyperpage{86}
+		\hyperpage{87}
   \item {\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Enable}}}\endlgrinde\LGend{}}, 
-		\hyperpage{86}
+		\hyperpage{87}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Exception}}}\endlgrinde\LGend{}, 
 		\hyperpage{15}, \hyperpage{84}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{\_Finally}}}\endlgrinde\LGend{}, 
@@ -316,12 +316,11 @@
 		\hyperpage{91}, \hyperpage{115}
     \subitem inherited members, \hyperpage{85}
     \subitem local, \hyperpage{88}
-    \subitem nonlocal, \hyperpage{86}, \hyperpage{88}, \hyperpage{92}, 
+    \subitem nonlocal, \hyperpage{86--88}, \hyperpage{92}, 
 		\hyperpage{99}
     \subitem resume, \hyperpage{84}
     \subitem throw, \hyperpage{84}
     \subitem {exception type}, \hyperpage{83}
-  \item exceptional event, \hyperpage{83}
   \item execution state, \hyperpage{4}
     \subitem active, \hyperpage{4}
     \subitem inactive, \hyperpage{4}
@@ -658,9 +657,8 @@
 		\hyperpage{75}
   \item non-detached, \hyperpage{130}
   \item nonblocking i/o, \hyperpage{71}
-  \item nonlocal exception, \hyperpage{84}, \hyperpage{86}, 
-		\hyperpage{88}, \hyperpage{92}, \hyperpage{99}, 
-		\hyperpage{103}
+  \item nonlocal exception, \hyperpage{84}, \hyperpage{86--88}, 
+		\hyperpage{92}, \hyperpage{99}, \hyperpage{103}
 
   \indexspace
 
@@ -845,9 +843,9 @@
   \indexspace
 
   \item raii, \hyperpage{72}
-  \item raising, \hyperpage{83--85}
-    \subitem resuming, \hyperpage{84, 85}
-    \subitem throwing, \hyperpage{84, 85}
+  \item raising, \hyperpage{83, 84}, \hyperpage{86}
+    \subitem resuming, \hyperpage{84}, \hyperpage{86}
+    \subitem throwing, \hyperpage{84}, \hyperpage{86}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{read}}}\endlgrinde\LGend{}, 
 		\hyperpage{71}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{ReadFailure}}}\endlgrinde\LGend{}, 
@@ -1007,14 +1005,14 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{static}}}\endlgrinde\LGend{} storage, 
 		\hyperpage{14}, \hyperpage{29}
   \item static multi-level exit, \hyperpage{11}
-  \item status flag, \hyperpage{83}
+  \item status flag, \hyperpage{84}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StatusFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{74}, \hyperpage{100}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{stop}}}\endlgrinde\LGend{}, 
 		\hyperpage{64}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StopdMsg}}}\endlgrinde\LGend{}, 
 		\hyperpage{64}
-  \item string to intger, \hyperpage{169}
+  \item string to integer, \hyperpage{169}
   \item subtyping, \hyperpage{33}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{succ}}}\endlgrinde\LGend{}, 
 		\hyperpage{173}, \hyperpage{175}
@@ -1152,6 +1150,10 @@
 		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unhandledMsg}}}\endlgrinde\LGend{}, 
 		\hyperpage{63}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{}, 
+		\hyperpage{168}
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}, 
+		\hyperpage{168}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
@@ -1214,17 +1216,19 @@
 		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{defaultTerminate}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}, \hyperpage{99}
-    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{duplicate}}}\endlgrinde\LGend{}, 
-		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseKind}}}\endlgrinde\LGend{}, 
+		\hyperpage{85}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getRaiseObject}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{message}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{RaiseKind}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}
-    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reraise}}}\endlgrinde\LGend{}, 
-		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setMsg}}}\endlgrinde\LGend{}, 
+		\hyperpage{85}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setRaiseObject}}}\endlgrinde\LGend{}, 
+		\hyperpage{85}
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{setSrc}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{source}}}\endlgrinde\LGend{}, 
 		\hyperpage{85}

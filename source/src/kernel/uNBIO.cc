@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar  7 13:56:53 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 11 20:38:43 2023
-// Update Count     : 1512
+// Last Modified On : Thu Aug 22 22:53:53 2024
+// Update Count     : 1515
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1046,6 +1046,11 @@ extern "C" int pselect( int nfds, fd_set *rfd, fd_set *wfd, fd_set *efd, const t
 } // pselect
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+// Problem with __fortified_attr_access causing warning in g++-14
+//   extern int poll (struct pollfd *__fds, nfds_t __nfds, int __timeout)
+//            __fortified_attr_access (__write_only__, 1, 2);
 extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
 	fd_set rfd, wfd, efd;
 	int maxfd = -1;
@@ -1101,6 +1106,7 @@ extern "C" int poll( struct pollfd *fds, nfds_t nfds, int timeout ) { // replace
 	uDEBUGPRT( uDebugPrt( "poll( %p, %lu, %d ) returns %d\n", fds, nfds, timeout, nresults ); );
 	return nresults;
 } // poll
+#pragma GCC diagnostic pop
 
 
 extern "C" int ppoll( struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask ) { // replace
