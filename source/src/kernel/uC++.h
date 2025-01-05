@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 26 21:16:57 2024
-// Update Count     : 6418
+// Last Modified On : Thu Nov 28 11:05:22 2024
+// Update Count     : 6427
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -146,7 +146,7 @@ template< typename T, bool runDtor = true > class uNoCtor {
 	template< typename... Args > T & operator()( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
 	template< typename RHS > T & operator=( const RHS & rhs ) { return *(T *)storage = rhs; }
 	void dtor() { ((T *)&storage)->~T(); }
-	~uNoCtor() { if ( runDtor ) dtor(); }				// destroy (array) element ?
+	~uNoCtor() { if constexpr ( runDtor ) dtor(); }		// destroy (array) element ?
 }; // uNoCtor
 
 
@@ -911,7 +911,7 @@ class uLock {											// yielding spinlock
 #include <uEHM.h>
 
 
-_Exception uKernelFailure {								// general event for kernel failures, inherit implicitly from uBaseEvent (exception root)
+_Exception uKernelFailure {								// general event for kernel failures, inherit implicitly from uBaseException (exception root)
   protected:
 	uKernelFailure( const char * const msg = "" );
   public:
@@ -954,7 +954,7 @@ _Exception uMutexFailure::RendezvousFailure : public uMutexFailure {
 }; // uMutexFailure::RendezvousFailure
 
 
-_Exception uIOFailure {									// general event for IO failures, inherit implicitly from uBaseEvent (exception root)
+_Exception uIOFailure {									// general event for IO failures, inherit implicitly from uBaseException (exception root)
 	int errno_;
   protected:
 	uIOFailure( int errno__, const char * const msg );
@@ -1463,7 +1463,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 	// exception handling
 
 	uEHM::uResumptionHandlers * handlerStackTop_, * handlerStackVisualTop_;
-	uBaseEvent * resumedObj_;							// the object that is currently being handled during resumption
+	uBaseException * resumedObj_;						// the object that is currently being handled during resumption
 	const std::type_info * topResumedType_;				// the top of the currently handled resumption stack (unchanged during stack unwind through EH)
 	uEHM::uDeliverEStack * DEStack_;					// manage exception enable/disable
 	std::unexpected_handler unexpectedRtn_;				// per coroutine handling unexpected action
@@ -1506,10 +1506,10 @@ class uBaseCoroutine : public UPP::uMachContext {
 		friend class uBaseCoroutine;					// access: all
 		friend class uBaseTask;							// access: all
 
-		uBaseEvent * cause;								// initial exception
+		uBaseException * cause;							// initial exception
 		unsigned int multiple;							// multiple exceptions ?
 		mutable bool cleanup;							// => delete "cause"
-		UnhandledException( uBaseEvent * cause, const char * const msg = "" );
+		UnhandledException( uBaseException * cause, const char * const msg = "" );
 	  public:
 		UnhandledException( const UnhandledException & ex );
 		unsigned int unhandled() const { return multiple; }
@@ -1622,7 +1622,7 @@ class uBaseCoroutine : public UPP::uMachContext {
 	bool cancelInProgress() { return cancelInProgress_; }
   private:
 	void forwardUnhandled( UnhandledException & ex );
-	void handleUnhandled( uBaseEvent * ex = nullptr );
+	void handleUnhandled( uBaseException * ex = nullptr );
   public:
 	// These members should be private but cannot be because they are referenced from user code.
 
@@ -1858,6 +1858,7 @@ class uBaseTask : public uBaseCoroutine {
 	static size_t thread_random_prime;
 	static bool thread_random_mask;
 
+	friend UPP::uKernelBoot;							// access: thread_random_seed
 	friend class UPP::uSerial;							// access: everything
 	friend class UPP::uSerialConstructor;				// access: profileActive, setSerial
 	friend class UPP::uSerialDestructor;				// access: mutexRef_, profileActive, mutexRecursion, setState
@@ -2055,7 +2056,7 @@ class uBaseTask : public uBaseCoroutine {
 	}; // uTaskMain
 
 	void forwardUnhandled( UnhandledException & ex );
-	void handleUnhandled( uBaseEvent * ex = nullptr );
+	void handleUnhandled( uBaseException * ex = nullptr );
   public:
 	uBaseTask( const uBaseTask & ) = delete;			// no copy
 	uBaseTask( uBaseTask && ) = delete;

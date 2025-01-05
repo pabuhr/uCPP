@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep 27 16:46:37 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  7 14:18:01 2023
-// Update Count     : 709
+// Last Modified On : Tue Sep 10 22:31:34 2024
+// Update Count     : 710
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -285,7 +285,7 @@ uBaseCoroutine::Failure::Failure( const char *const msg ) : uKernelFailure( msg 
 } // uBaseCoroutine::Failure::Failure
 
 
-uBaseCoroutine::UnhandledException::UnhandledException( uBaseEvent * cause, const char * const msg ) : Failure( msg ), cause( cause ), multiple( 1 ) {
+uBaseCoroutine::UnhandledException::UnhandledException( uBaseException * cause, const char * const msg ) : Failure( msg ), cause( cause ), multiple( 1 ) {
 	cleanup = true;
 } // uBaseCoroutine::UnhandledException::UnhandledException
 
@@ -317,13 +317,13 @@ void uBaseCoroutine::forwardUnhandled( UnhandledException & ex ) {
 	_Resume _At resumer();								// forward original exception at resumer
 } // uBaseCoroutine::forwardUnhandled
 
-void uBaseCoroutine::handleUnhandled( uBaseEvent * ex ) {
+void uBaseCoroutine::handleUnhandled( uBaseException * ex ) {
 	#define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
 	#define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
 	char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
-	uBaseEvent::RaiseKind raisekind = ex == nullptr ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
-	strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
-	uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
+	uBaseException::RaiseKind raisekind = ex == nullptr ? uBaseException::ThrowRaise : ex->getRaiseKind();
+	strcpy( msg, raisekind == uBaseException::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
+	uEHM::getCurrentExceptionName( raisekind, msg + strlen( msg ), uEHMMaxName );
 	notHalted_ = false;									// terminate coroutine
 	_Resume UnhandledException( ex == nullptr ? ex : ex->duplicate(), msg ) _At resumer();
 } // uBaseCoroutine::handleUnhandled

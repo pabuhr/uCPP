@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 07:54:12 2023
-// Update Count     : 1253
+// Last Modified On : Tue Dec 31 15:34:17 2024
+// Update Count     : 1279
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,9 +31,20 @@
 //############################## uBaseFuture ##############################
 
 
+// Cannot be nested in future template.
+
 _Exception uFutureFailue {};
-_Exception uCancelled : public uFutureFailue {};		// raised if future cancelled
-_Exception uDelivered : public uFutureFailue {};		// raised if future has value/exception
+
+_Exception uCancelled : public uFutureFailue {			// raised if future cancelled
+  public:
+	uCancelled();
+}; // uCancelled
+
+_Exception uDelivery : public uFutureFailue {			// raised if future has value/exception
+  public:
+	uDelivery();
+}; // uDelivery
+
 
 namespace UPP {
 	template<typename T> _Monitor uBaseFuture {
@@ -52,7 +63,7 @@ namespace UPP {
 
 		uCondition delay;								// clients waiting for future result
 		uSequence<UPP::BaseFutureDL> selectClients;		// clients waiting for future result in selection
-		uBaseEvent * cause;								// synchronous exception raised during future computation
+		uBaseException * cause;							// synchronous exception raised during future computation
 		volatile bool available_, cancelled_;			// future status
 
 		void makeavailable() {
@@ -84,7 +95,7 @@ namespace UPP {
 
 		// USED BY CLIENT
 
-		_Nomutex T & operator()() {						// access result, possibly having to wait
+		_Nomutex const T & operator()() {				// access result, possibly having to wait
 			if ( UNLIKELY( ! available() ) ) {			// first check
 				doubleCheck();
 			} // if
@@ -95,18 +106,18 @@ namespace UPP {
 		// USED BY SERVER
 
 		void delivery( T res ) {						// make result available in the future
-			if ( UNLIKELY( cancelled() || available() ) ) _Throw uDelivered(); // already set or client does not want it
+			if ( UNLIKELY( cancelled() || available() ) ) _Throw uDelivery(); // already set or client does not want it
 			result = res;
 			makeavailable();
 		} // uBaseFuture::delivery
 
-		void delivery( uBaseEvent * ex ) {				// make exception available in the future : exception/result mutual exclusive
-			if ( UNLIKELY( available() || cancelled() ) ) _Throw uDelivered(); // already set or client does not want it
+		void delivery( uBaseException * ex ) {			// make exception available in the future : exception/result mutual exclusive
+			if ( UNLIKELY( available() || cancelled() ) ) _Throw uDelivery(); // already set or client does not want it
 			cause = ex;
 			makeavailable();							// unblock waiting clients ?
 		} // uBaseFuture::delivery
 
-		void exception( uBaseEvent * ex ) __attribute__(( deprecated )) {
+		void exception( uBaseException * ex ) __attribute__(( deprecated )) {
 			delivery( ex );
 		} // uBaseFuture::exception
 
@@ -200,7 +211,7 @@ template<typename T, typename ServerData> _Monitor Future_ESM : public UPP::uBas
 		} // if
 	} // Future_ESM::delivery
 
-	void exception( uBaseEvent * ex ) {					// make exception available in the future : exception and result mutual exclusive
+	void exception( uBaseException * ex ) {				// make exception available in the future : exception and result mutual exclusive
 		if ( cancelInProgress ) {
 			makeavailable();
 		} else {
@@ -365,7 +376,7 @@ template<typename T> class Future_ISM {
 	bool available() { return impl->available(); }		// future result available ?
 	bool cancelled() { return impl->cancelled(); }		// future result cancelled ?
 
-	T & operator()() {									// access result, possibly having to wait
+	const T & operator()() {							// access result, possibly having to wait
 		return (*impl)();
 	} // Future_ISM::operator()()
 
@@ -383,11 +394,11 @@ template<typename T> class Future_ISM {
 		impl->delivery( result );
 	} // Future_ISM::delivery
 
-	void delivery( uBaseEvent * cause ) {				// make exception available in the future
+	void delivery( uBaseException * cause ) {			// make exception available in the future
 		impl->delivery( cause );
 	} // Future_ISM::delivery
 
-	void exception( uBaseEvent * cause ) __attribute__(( deprecated )) {
+	void exception( uBaseException * cause ) __attribute__(( deprecated )) {
 		impl->delivery( cause );
 	} // Future_ISM::exception
 

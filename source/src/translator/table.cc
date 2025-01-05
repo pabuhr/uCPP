@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:32:43 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:14:12 2023
-// Update Count     : 414
+// Last Modified On : Thu Jan  2 10:09:33 2025
+// Update Count     : 436
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -125,7 +125,7 @@ static void print_blanks( int blank ) {
 
 void table_t::display_table( int blank ) {
 	print_blanks( blank );
-	cerr << "** table " << this << " lexical " << lexical;
+	cerr << "** table " << this << " focus " << ::focus << " lexical " << lexical;
 	if ( symbol != nullptr && symbol->hash != nullptr ) {
 		cerr << " \"" << symbol->hash->text << "\"" << endl;
 	} else {
@@ -198,6 +198,9 @@ void table_t::display_table( int blank ) {
 			break;
 		  case IDENTIFIER:
 			cerr << " IDENTIFIER" << endl;
+			break;
+		  case OPERATOR:
+			cerr << " OPERATOR" << endl;
 			break;
 		  case LABEL:
 			cerr << " LABEL" << endl;

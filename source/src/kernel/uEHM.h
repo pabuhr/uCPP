@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jun 16 08:57:55 2024
-// Update Count     : 551
+// Last Modified On : Sun Sep 29 11:44:13 2024
+// Update Count     : 553
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -32,8 +32,8 @@
 #include <functional>
 
 #define uRendezvousAcceptor uSerialMemberInstance.uAcceptor
-#define uEHMMaxMsg 156
-#define uEHMMaxName 100
+enum { uEHMMaxMsg = 156 };
+enum { uEHMMaxName = 100 };
 
 #define uBaseEvent uBaseException
 
@@ -45,7 +45,7 @@ class uEHM;												// forward declaration
 
 class uBaseException {
 	friend class uEHM;
-	const std::type_info * getEventType() const { return &typeid( *this ); };
+	const std::type_info * getExceptionType() const { return &typeid( *this ); };
 	virtual void stackThrow() const __attribute__(( noreturn )) = 0; // translator generated => object specific
   public:
 	enum RaiseKind { ThrowRaise, ResumeRaise };
@@ -127,7 +127,7 @@ class uEHM {
 	static const std::type_info * getTopResumptionType();
 	static uBaseException * getCurrentException();
 	static uBaseException * getCurrentResumption();
-	static char * getCurrentEventName( uBaseException::RaiseKind raiseKind, char * s1, size_t n );
+	static char * getCurrentExceptionName( uBaseException::RaiseKind raiseKind, char * s1, size_t n );
 	static char * strncpy( char * s1, const char * s2, size_t n );
   private:
 	static void resumeWorkHorse( const uBaseException & event, bool conseq );
@@ -144,7 +144,7 @@ class uEHM::AsyncEMsg : public uSeqable {
 	friend void uEHM::ResumeAt( const uBaseException &, uBaseCoroutine & );
 
 	bool hidden;
-	uBaseException * asyncEvent;
+	uBaseException * asyncException;
 
 	AsyncEMsg & operator=( const AsyncEMsg & );
 	AsyncEMsg( const AsyncEMsg & );
@@ -187,7 +187,7 @@ class uEHM::uHandlerBase {
   public:
 	virtual void uHandler( uBaseException & exn ) = 0;
 	const void * getMatchBinding() const { return matchBinding; }
-	const std::type_info * getEventType() const { return eventType; }
+	const std::type_info * getExceptionType() const { return eventType; }
 }; // uHandlerBase
 
 template< typename Exn >

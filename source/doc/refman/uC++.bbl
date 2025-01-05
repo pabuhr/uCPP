@@ -4,9 +4,8 @@
 \bibitem[Ada83]{Ada}
 Ada.
 \newblock {\em The Programming Language {Ada}: Reference Manual}.
-\newblock United States Department of Defense, {ANSI/MIL-STD-1815A-1983}
-  edition, February 1983.
-\newblock Springer, New York.
+\newblock United States Department of Defense, Springer, New York,
+  {ANSI/MIL-STD-1815A-1983} edition, February 1983.
 
 \bibitem[Agh86]{Actors}
 Gul~A. Agha.
@@ -122,8 +121,7 @@ Alan Burns and A.~J. Wellings.
 International Standard Organization, Geneva, Switzerland.
 \newblock {\em {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Programming
   Language ISO/IEC 14882:1998}, 1st edition, 1998.
-\newblock
-  \href{https://www.iso.org/standard/25845.html}{https://\-www.iso.org/\-standard/\-25845.html}.
+\newblock \url{https://www.iso.org/standard/25845.html}.
 
 \bibitem[Car90]{Cargill90}
 Tom~A. Cargill.
@@ -146,8 +144,8 @@ Nicholas Carriero and David Gelernter.
 
 \bibitem[CHS14]{CAF}
 Dominik Charousset, Raphael Hiesgen, and Thomas~C. Schmidt.
-\newblock {CAF} - the {C}++ Actor Framework for Scalable and Resource-Efficient
-  Applications.
+\newblock {CAF} -- the {C}++ Actor Framework for Scalable and
+  Resource-Efficient Applications.
 \newblock AGERE'14, pages 15--28, New York, NY, USA, 2014. Proceedings of the
   4th International Workshop on Programming Based on Actors Agents \&
   Decentralized Control, ACM.
@@ -172,18 +170,12 @@ Thomas~W. Doeppner and Alan~J. Gebele.
 Edsger~W. Dijkstra.
 \newblock Cooperating Sequential Processes.
 \newblock Technical report, Technological University, Eindhoven, Neth., 1965.
-\newblock Reprinted in \cite{Genuys68} pp. 43--112.
+\newblock \url{https://pure.tue.nl/ws/files/4279816/344354178746665.pdf}.
 
 \bibitem[Geh92]{ExceptionalC}
 N.~H. Gehani.
 \newblock Exceptional {C} or {C} with Exceptions.
 \newblock {\em Softw. Pract. Exper.}, 22(10):827--848, October 1992.
-
-\bibitem[Gen68]{Genuys68}
-F.~Genuys, editor.
-\newblock {\em Programming Languages}.
-\newblock Academic Press, London, New York, 1968.
-\newblock NATO Advanced Study Institute, Villard-de-Lans, 1966.
 
 \bibitem[Gen81]{Gentleman81}
 W.~Morven Gentleman.
@@ -274,8 +266,7 @@ Pierre Labr{\`{e}}che.
 \bibitem[Lig16]{Akka}
 Lightbend Inc.
 \newblock {\em {A}kka {S}cala Documentation, Release 2.4.11}, September 2016.
-\newblock
-  \href{http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf}{http://\-doc.akka.io/\-docs/\-akka/\-2.4/\-AkkaScala.pdf}.
+\newblock \url{http://doc.akka.io/docs/akka/2.4/AkkaScala.pdf}.
 
 \bibitem[LN88]{Lin88}
 K.J. Lin and S.~Natarajan.
@@ -322,8 +313,7 @@ James~G. Mitchell, William Maybury, and Richard Sweet.
 
 \bibitem[Ope15]{OpenMP}
 {\em OpenMP Application Program Interface, Version 4.5}, November 2015.
-\newblock
-  \href{https://www.openmp.org/wp-content/uploads/openmp-4.5.pdf}{https://\-www.openmp.org/\-wp-content/\-uploads/\-openmp-4.5.pdf}.
+\newblock \url{https://www.openmp.org/wp-content/uploads/openmp-4.5.pdf}.
 
 \bibitem[POS08]{POSIX08}
 IEEE and The Open Group.

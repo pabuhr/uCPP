@@ -292,11 +292,11 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{equals}}}\endlgrinde\LGend{}, 
 		\hyperpage{50}
   \item errors, \hyperpage{107}
-    \subitem accept statement, \hyperpage{122}
+    \subitem accept statement, \hyperpage{123}
     \subitem calendar, \hyperpage{123}
     \subitem cluster, \hyperpage{123}
     \subitem compile-time, \hyperpage{107}
-    \subitem condition variable, \hyperpage{121}
+    \subitem condition variable, \hyperpage{122}
     \subitem coroutine, \hyperpage{116}
     \subitem default action, \hyperpage{111}
     \subitem dynamic, \hyperpage{110}
@@ -304,7 +304,7 @@
     \subitem I/O, \hyperpage{125}
     \subitem lock, \hyperpage{123}
     \subitem mutex type, \hyperpage{118}
-    \subitem processor, \hyperpage{125}
+    \subitem processor, \hyperpage{126}
     \subitem runtime, \hyperpage{110}
     \subitem static, \hyperpage{107}
     \subitem task, \hyperpage{121}
@@ -1298,7 +1298,7 @@
   \item \uC translator, \hyperpage{7}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
-  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{}, 
+  \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivery}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
   \item \uC kernel, \hyperpage{9}, \hyperpage{127}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uClock}}}\endlgrinde\LGend{}
@@ -1428,7 +1428,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uFutureFailure}}}\endlgrinde\LGend{}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCancelled}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
-    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivered}}}\endlgrinde\LGend{}, 
+    \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDelivery}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uIOFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}

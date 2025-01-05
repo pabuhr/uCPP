@@ -7,8 +7,8 @@
 // Author           : Jingge Fu
 // Created On       : Sat Jul 14 07:25:52 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 22 21:01:21 2022
-// Update Count     : 462
+// Last Modified On : Tue Dec 31 09:04:17 2024
+// Update Count     : 464
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -332,7 +332,7 @@ namespace UPP {
 		// Get the next action, if the whole expression is true, return 0.
 		// If it has _Else, return 1;
 		// If it has _TimeOut, return 2;
-		// Otherwise, block until a futre becomes available
+		// Otherwise, block until a future becomes available
 		int nextAction() {
 			int action;
 
@@ -375,7 +375,7 @@ namespace UPP {
 					} // if
 
 					//osacquire( cerr ) << "nextAction top block" << endl;
-					selectState.sem.P();				//wait for future to become available
+					selectState.sem.P();				// wait for future to become available
 				} // if
 			} // for
 		} // Executor::nextAction

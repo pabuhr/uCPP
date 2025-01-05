@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Jun 16 18:20:56 2024
-%% Update Count     : 8695
+%% Last Modified On : Wed Jan  1 17:04:39 2025
+%% Update Count     : 8710
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -2452,7 +2452,7 @@ It is \emph{not} meaningful to read or to assign to an mutex lock variable, or c
 An \Index{owner lock} is owned by the task that acquires it;
 all other tasks attempting to acquire the lock block until the owner releases it.
 The owner of an owner lock can acquire the lock multiple times, but a matching number of releases must occur or the lock remains in the owner's possession and other tasks cannot acquire it.
-(Owner locks are used in the implementation of the non-blocking I/O stream library, see \VRef{s:streamIO}).
+(Owner locks are used in the implementation of the nonblocking I/O stream library, see \VRef{s:streamIO}).
 As a result, an owner lock can \emph{only} be used for mutual exclusion, because synchronization requires the locking task to be different from the unlocking one.
 The type %(uOwnerLock%)\index{uOwnerLock@%(uOwnerLock%)} defines an owner lock:
 %[
@@ -3093,12 +3093,12 @@ The future operations available to a server are:
 \item[%(delivery( T result )%)]
 -- copy the server-generated result into the future, unblocking all clients waiting for the result.
 This result is the value returned to the client.
-If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the result.
+If the asynchronous call has already completed, an exception of type %(uDelivery%) is thrown at the server attempting to deliver the result.
 
 \item[%(delivery( uBaseException * cause )%)]
 -- copy a server-generated exception into the future, unblocking all clients waiting for the result.
 This exception is thrown at any client instead of the future result.
-If the asynchronous call has already completed, an exception of type %(uDelivered%) is thrown at the server attempting to deliver the exception.
+If the asynchronous call has already completed, an exception of type %(uDelivery%) is thrown at the server attempting to deliver the exception.
 
 For the future to manage the exception lifetime, the exception must be dynamically allocated:
 %[
@@ -3365,7 +3365,7 @@ During execution of the statement, each %(_Select%)-clause action is executed wh
 however, control does not continue until the selector-expression associated with the entire statement is satisfied.
 For example, if %(f2%) becomes available, statement-2 is executed but the selector-expression associated with the entire statement is not satisfied so control blocks again.
 When either %(f1%) or %(f3%) become available, statement-1 or 3 is executed, and the selector-expression associated with the entire statement is satisfied so control continues.
-For this example, within the action statement, it is possible to access the future using the non-blocking access-operator since the future is known to be available.
+Within an action statement, accessing the associated future is cheap because it is know to be available.
 
 For the complex form of the select statment, if a guard is false, execution continues without waiting for that future to become available.
 %[
@@ -3375,7 +3375,7 @@ or												or
 	and
 	_When( true ) _Select( f3 ) {...}				_When( true ) _Select( f3 ) {...}
 %]
-Assume only %(f3%) becomes available, execution continues.
+If only %(f3%) becomes available, execution continues.
 
 An action statement is triggered only once for its selector-expression, even if the selector-expression is compound.
 For example, for %(&&%):
@@ -3385,7 +3385,7 @@ _Select( f1 )
 or _Select( \(\BF{\)f2 && f3\(}\) )
 	\(\nterminal{statement-2}\)\(}\Tab{28}{\)// triggered once after both available
 %]
-statement-2 is only executed when both futures %(f2%) and %(f3%) are available (non-blocking access for both).
+statement-2 is only executed when both futures %(f2%) and %(f3%) are available (nonblocking access for both).
 However, for %(||%):
 %[
 _Select( \(\BF{\)f1 || f2\(}\) )
@@ -3405,7 +3405,7 @@ The left example waits for only future %(f1%) if %(C1%) is true or only %(f2%) i
 The right example waits for either %(f1%) or %(f2%) if %(C1%) and %(C2%) are true.
 Like the %(_Accept%) statement, it takes $2^{N}-1$ %(if%) statements to simulate a compound %(_Select%) statement with $N$ %(_When%) guards (see p.~\VPageref{p:ExponentialExpansion}).
 
-Finally, a select statement can be made non-blocking using a terminating %(_Else%) clause, e.g.:
+Finally, a select statement can be made nonblocking using a terminating %(_Else%) clause, e.g.:
 %[
 _Select( \(\NT{selector-expression}\) )
 	\(\NT{statement}\)				// action
@@ -6874,7 +6874,7 @@ uBaseException
 			uPthreadable::CreationFailure
 	uFutureFailure
 		uCancelled
-		uDelivered
+		uDelivery
 	uIOFailure
 		uFile::Failure
 			uFile::TerminateFailure
@@ -7026,8 +7026,8 @@ uBaseException
 \index{uBaseException@%(uBaseException%)!uFutureFailure@%(uFutureFailure%)}%
 \index{uFutureFailure@%(uFutureFailure%)!uCancelled@%(uCancelled%)}%
 \index{uCancelled@%(uCancelled%)}%
-\index{uFutureFailure@%(uFutureFailure%)!uDelivered@%(uDelivered%)}%
-\index{uCancelled@%(uDelivered%)}%
+\index{uFutureFailure@%(uFutureFailure%)!uDelivery@%(uDelivery%)}%
+\index{uCancelled@%(uDelivery%)}%
 \caption{\uC Predefined Exception-Type Hierarchy}
 \label{f:uCPredefinedExceptionTypeHierarchy}
 \end{figure}
@@ -8419,7 +8419,7 @@ The following program:
 _Task T {
 	uCondition w;
 	void main() {
-		_Accept( ~T );		// main routine invokes destructor
+		_Accept( ~T );		// task main invokes destructor
 		w.wait();			// T continues but blocks, which restarts the program main
 	}
 };
@@ -8430,12 +8430,37 @@ int main() {
 generates this error:
 \begin{quote}
 \BGfont
-uC++ Runtime error (UNIX pid:24374) Attempt to delete task T (0x1e83d90) that is not halted.
+uC++ Runtime error (UNIX pid:24374) After implicitl/explicit accept of a destructor call, task T (0x1e83d90) blocks, which restarts the destructor call before the task's main has terminated.
 Possible cause is task blocked on a condition queue.
 Error occurred while executing task program main (0x7ffdd7629650).
 \end{quote}
 because the call to the destructor restarts the accept statement (see \VRef{s:AcceptingDestructor}), and the thread of %(t%) blocks on condition %(w%), which restarts the destructor.
 However, the destructor cannot cleanup without invalidating any subsequent execution of task %(t%).
+
+Cannot raise an exception across implicit task joins.
+The following program:
+%[
+_Task T {
+	void main() {
+		...
+	}
+};
+
+_Exception E {};
+
+int main() {
+	T t;
+	_Throw E();
+} // implicitly invoke T::~T
+%]
+generates this error:
+\begin{quote}
+\BGfont
+uC++ Runtime error (UNIX pid:24374) Attempt to propagate exception across implicit task join.
+Possible cause is missing try block before task join.
+Try catching exception uBaseException and print the exception's message.
+\end{quote}
+because the implicit destructor call for %(t%) is invoked during propagation of exception %(E%) and waiting for %(t%) to finish could cause a deadlock as the exception is pointing out an issue has occurred.
 
 
 \subsubsection{Condition Variable}
@@ -10475,7 +10500,7 @@ Brian Younger built Version 1.0 by modifying the AT\&T 1.2.1 \CC compiler~\cite{
 Version 2.0 was designed by Peter Buhr, Glen Ditchfield, Rick Stroobosscher and Bob Zarnke~\cite{Buhr92a}.
 Version 3.0 was designed by Peter Buhr, Rick Stroobosscher and Bob Zarnke.
 Rick Stroobosscher built both Version 2.0 and 3.0 translator and kernel.
-Peter Buhr wrote the documentation and built the non-blocking I/O library as well as doing other sundry coding.
+Peter Buhr wrote the documentation and built the nonblocking I/O library as well as doing other sundry coding.
 Version 4.0 kernel was designed and implemented by Peter Buhr.
 Nikita Borisov and Peter Buhr fixed several problems in the translator.
 Amir Michail started the real-time work and built a working prototype.
@@ -10531,8 +10556,12 @@ The ellipsis in the following rules represent the productions elided from the \C
 %	\rhs %(_AcceptWait%) %((%) \nterminal{(mutex-)identifier-list} %()%) \nterminal{expression} %(_With%) \nterminal{expression} %(;%)
 %	\rhs %(_AcceptReturn%) %((%) \nterminal{(mutex-)identifier-list} %()%) \nterminal{expression}\opt %(;%)
 	\rhs \nterminal{select-statement} %(;%)
-	\rhs %(_Disable%) \nterminal{(exception-)identifier-list}\opt \nterminal{statement} %(;%)
-	\rhs %(_Enable%) \nterminal{(exception-)identifier-list}\opt \nterminal{statement} %(;%)
+	\rhs %(_Enable%) \nterminal{exception-types}\opt \nterminal{statement}\opt %(;%)
+	\rhs %(_Disable%) \nterminal{exception-types}\opt \nterminal{statement}\opt %(;%)
+
+\lhs{exception-types}
+	\rhs %(<%) \nterminal{exception-name} %(>%)
+	\rhs \nterminal{exception-types} %(<%) \nterminal{exception-name} %(>%)
 
 \lhs{jump-statement}
 	\rhs %(break%) \nterminal{identifier}\opt %(;%)

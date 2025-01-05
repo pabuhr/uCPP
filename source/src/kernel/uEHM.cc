@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Sun Jun 29 00:15:09 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 11 08:30:39 2024
-// Update Count     : 862
+// Last Modified On : Tue Sep 10 22:35:38 2024
+// Update Count     : 863
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -46,8 +46,8 @@
 void uEHM::terminate() {
 	char ExName[uEHMMaxName], ResName[uEHMMaxName];
 
-	getCurrentEventName( uBaseException::ThrowRaise, ExName, uEHMMaxName );
-	getCurrentEventName( uBaseException::ResumeRaise, ResName, uEHMMaxName );
+	getCurrentExceptionName( uBaseException::ThrowRaise, ExName, uEHMMaxName );
+	getCurrentExceptionName( uBaseException::ResumeRaise, ResName, uEHMMaxName );
 
 	bool exception = ExName[0] != '\0';					// optimization
 	bool resumption = ResName[0] != '\0';
@@ -111,11 +111,11 @@ std::unexpected_handler std::set_unexpected( std::unexpected_handler func ) thro
 
 
 uEHM::AsyncEMsg::AsyncEMsg( const uBaseException & event ) : hidden( false ) {
-	asyncEvent = event.duplicate();
+	asyncException = event.duplicate();
 } // uEHM::AsyncEMsg::AsyncEMsg
 
 uEHM::AsyncEMsg::~AsyncEMsg() {
-	delete asyncEvent;
+	delete asyncException;
 } // uEHM::AsyncEMsg::~AsyncEMsg
 
 
@@ -295,8 +295,8 @@ void uEHM::asyncToss( const uBaseException & event, uBaseCoroutine & target, uBa
 		AsyncEMsg * temp = new AsyncEMsg( event );
 		uBaseCoroutine & coroutine = uThisCoroutine();
 		if ( ! rethrow ) {								// reset current raiser ?
-			temp->asyncEvent->boundObject = (void *)&coroutine;
-			temp->asyncEvent->setSrc( coroutine );
+			temp->asyncException->boundObject = (void *)&coroutine;
+			temp->asyncException->setSrc( coroutine );
 		} // if
 		target.asyncEBuf.uAddMsg( temp );
 	} // if
@@ -397,17 +397,17 @@ int uEHM::poll() {										// handle pending nonlocal exceptions
 
 	int handled = 0;									// number of exceptions handled
 	while ( asyncMsg != nullptr ) {
-		if ( deliverable_exception( asyncMsg->asyncEvent->getEventType() ) ) {
+		if ( deliverable_exception( asyncMsg->asyncException->getExceptionType() ) ) {
 			RAIIdelete dummy( asyncMsg, msgbuf );		// ensure deletion of node even if exception raised
 
 			asyncMsg->hidden = true;					// hide node from recursive children of poll
-			uBaseException * asyncEvent = asyncMsg->asyncEvent; // optimization
+			uBaseException * asyncException = asyncMsg->asyncException; // optimization
 
 			// Recover memory allocated for async event message. Resuming handler should not destroyed raised exception
 			// regardless of whether the exception is normal or nonlocal.
 
-			if ( asyncEvent->raiseKind == uBaseException::ThrowRaise ) { // throw event ?
-				asyncEvent->stackThrow();
+			if ( asyncException->raiseKind == uBaseException::ThrowRaise ) { // throw event ?
+				asyncException->stackThrow();
 				// CONTROL NEVER REACHES HERE!
 				assert( false );
 			} // if
@@ -415,7 +415,7 @@ int uEHM::poll() {										// handle pending nonlocal exceptions
 			// Note, implicit context switches only call uYieldNoPoll(), hence poll can only be called from
 			// resumeWorkHorse again, which is a safe recursion.
 
-			resumeWorkHorse( *asyncEvent, false );		// handle event: potential recursion and exception
+			resumeWorkHorse( *asyncException, false );		// handle event: potential recursion and exception
 			handled += 1;
 			asyncMsg = msgbuf.nextVisible( asyncMsg );	// advance to next visible node
 
@@ -453,7 +453,7 @@ const std::type_info * uEHM::getTopResumptionType() {
 } // uEHM::getCurrentResumptionType()
 
 
-char * uEHM::getCurrentEventName( uBaseException::RaiseKind raiseKind, char * s1, size_t n ) {
+char * uEHM::getCurrentExceptionName( uBaseException::RaiseKind raiseKind, char * s1, size_t n ) {
 	const std::type_info * t;
 
 	if ( raiseKind == uBaseException::ResumeRaise ) {
@@ -525,7 +525,7 @@ void uEHM::resumeWorkHorse( const uBaseException & event, bool conseq ) {
 	uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse( ex:%p, conseq:%d ) from task %.256s (%p)\n",
 						  &event, conseq, uThisTask().getName(), &uThisTask() ); )
 
-		const std::type_info * raisedtype = event.getEventType();
+		const std::type_info * raisedtype = event.getExceptionType();
 	uResumptionHandlers * tmp = (conseq) ? uThisCoroutine().handlerStackVisualTop_ : uThisCoroutine().handlerStackTop_;
 
 	while ( tmp ) {
@@ -537,11 +537,11 @@ void uEHM::resumeWorkHorse( const uBaseException & event, bool conseq ) {
 		for ( unsigned int i = 0; i < tmp->size; i += 1 ) {
 			uHandlerBase * elem = tmp->table[i];		// optimization
 			const void * bound = event.boundObject;
-			uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, EventType:%p, bound:%p\n",
-								  i, elem, elem->getMatchBinding(), elem->getEventType(), bound ); )
+			uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse table[%d]:%p, originalThrower:%p, ExceptionType:%p, bound:%p\n",
+								  i, elem, elem->getMatchBinding(), elem->getExceptionType(), bound ); )
 				// if (no binding OR binding match) AND (type match OR resume_any) => handler found
 				if ( ( elem->getMatchBinding() == nullptr || bound == elem->getMatchBinding() ) &&
-					 ( elem->getEventType() == nullptr || match_exception_type( raisedtype, elem->getEventType() ) ) ) {
+					 ( elem->getExceptionType() == nullptr || match_exception_type( raisedtype, elem->getExceptionType() ) ) ) {
 					uDEBUGPRT( uDebugPrt( "uEHM::resumeWorkHorse match\n" ); )
 						ResumeWorkHorseInit newStackVisualTop( next, (uBaseException &)event );
 					elem->uHandler( (uBaseException &)event );
@@ -554,7 +554,7 @@ void uEHM::resumeWorkHorse( const uBaseException & event, bool conseq ) {
 	// cannot find a handler, use the default handler
 	ResumeWorkHorseInit newStackVisualTop( nullptr, (uBaseException &)event ); // record the current resumption
 	// default routine for event may change the event, so remove const used to allow both const and non-const events
-	const_cast<uBaseException &>(event).defaultResume();	// default handler can change the exception
+	const_cast<uBaseException &>(event).defaultResume(); // default handler can change the exception
 } // uEHM::resumeWorkHorse
 
 #pragma GCC diagnostic pop

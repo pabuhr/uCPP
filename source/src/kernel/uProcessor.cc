@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Mar 14 17:39:15 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 30 14:59:18 2023
-// Update Count     : 2215
+// Last Modified On : Fri Jan  3 09:48:30 2025
+// Update Count     : 2216
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -746,7 +746,7 @@ void uProcessorKernel::main() {
 } // uProcessorKernel::main
 
 
-uProcessorKernel::uProcessorKernel() : uBaseCoroutine( PTHREAD_STACK_MIN > __U_DEFAULT_STACK_SIZE__ ? PTHREAD_STACK_MIN : __U_DEFAULT_STACK_SIZE__ ) {
+uProcessorKernel::uProcessorKernel() : uBaseCoroutine( PTHREAD_STACK_MIN > __U_DEFAULT_STACK_SIZE__ ? (unsigned int)PTHREAD_STACK_MIN : __U_DEFAULT_STACK_SIZE__ ) {
 } // uProcessorKernel::uProcessorKernel
 
 uProcessorKernel::~uProcessorKernel() {

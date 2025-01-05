@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Mar 20 18:12:31 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 24 22:10:09 2022
-// Update Count     : 78
+// Last Modified On : Fri Jan  3 09:49:26 2025
+// Update Count     : 86
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,28 +33,28 @@
 // currently in a critical section.  A critical section begins when a task acquires a lock and ends when a user releases
 // a lock.
 
-#define __U_DEFAULT_PREEMPTION__ 10
+enum : unsigned int { __U_DEFAULT_PREEMPTION__ = 10 };
 
 
 // Define the default spin time in units of checks and context switches. The idle task checks the ready queue and
 // context switches this many times before the UNIX process executing the idle task goes to sleep.
 
-#define __U_DEFAULT_SPIN__ 1000
+enum : unsigned int { __U_DEFAULT_SPIN__ = 1000 };
 
 
 // Define the default stack size in bytes.  Change the implicit default stack size for a task or coroutine created on a
 // particular cluster.
 
-//#define __U_DEFAULT_STACK_SIZE__ 30000
-#define __U_DEFAULT_STACK_SIZE__ 250 * 1000
+//enum { __U_DEFAULT_STACK_SIZE__ = 30000 };
+enum  : unsigned int{ __U_DEFAULT_STACK_SIZE__ = 250 * 1000 };
 
 // often large automatic arrays for setting up the program
-#define __U_DEFAULT_MAIN_STACK_SIZE__ 500 * 1000
+enum : unsigned int { __U_DEFAULT_MAIN_STACK_SIZE__ = 500 * 1000 };
 
 
 // Define the default number of processors created on the user cluster. Must be greater than 0.
 
-#define __U_DEFAULT_USER_PROCESSORS__ 1
+enum : unsigned int { __U_DEFAULT_USER_PROCESSORS__ = 1 };
 
 
 extern unsigned int uDefaultStackSize();				// cluster coroutine/task stack size (bytes)

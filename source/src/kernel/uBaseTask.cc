@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 25 15:13:43 2023
-// Update Count     : 458
+// Last Modified On : Thu Jan  2 17:42:35 2025
+// Update Count     : 490
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,7 +42,7 @@ using namespace UPP;
 //######################### uBaseTask #########################
 
 
-size_t uBaseTask::thread_random_seed = uRdtsc();
+size_t uBaseTask::thread_random_seed;					// set in uKernelBoot::startup
 size_t uBaseTask::thread_random_prime = 4'294'967'291u;
 bool uBaseTask::thread_random_mask = false;
 
@@ -161,11 +161,11 @@ uBaseTask::uTaskDestructor::~uTaskDestructor() noexcept(false) {
 	if ( f == uYes ) {
 		uDEBUG(
 			if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
-				abort( "Attempt to delete task %.256s (%p) that is not halted.\n"
+				abort( "After implicit/explicit accept of a destructor call, task %.256s (%p) blocks, which restarts the destructor call before the task's main has terminated.\n"
 					   "Possible cause is task blocked on a condition queue.",
 					   task.getName(), &task );
 			} // if
-			);
+		);
 
 		cleanup( task );
 		if ( task.cause ) {								// join task end with unhandled exception ?
@@ -238,13 +238,13 @@ void uBaseTask::forwardUnhandled( UnhandledException & ex ) {
 } // uBaseTask::forwardUnhandled
 
 
-void uBaseTask::handleUnhandled( uBaseEvent * ex ) {
+void uBaseTask::handleUnhandled( uBaseException * ex ) {
 	#define uBaseCoroutineSuffixMsg1 "an unhandled thrown exception of type "
 	#define uBaseCoroutineSuffixMsg2 "an unhandled resumed exception of type "
 	char msg[sizeof(uBaseCoroutineSuffixMsg2) - 1 + uEHMMaxName]; // use larger message
-	uBaseEvent::RaiseKind raisekind = ex == nullptr ? uBaseEvent::ThrowRaise : ex->getRaiseKind();
-	strcpy( msg, raisekind == uBaseEvent::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
-	uEHM::getCurrentEventName( raisekind, msg + strlen( msg ), uEHMMaxName );
+	uBaseException::RaiseKind raisekind = ex == nullptr ? uBaseException::ThrowRaise : ex->getRaiseKind();
+	strcpy( msg, raisekind == uBaseException::ThrowRaise ? uBaseCoroutineSuffixMsg1 : uBaseCoroutineSuffixMsg2 );
+	uEHM::getCurrentExceptionName( raisekind, msg + strlen( msg ), uEHMMaxName );
 	cause = new uBaseCoroutine::UnhandledException( ex == nullptr ? ex : ex->duplicate(), msg );
 	cause->setSrc( *this );								// set source of non-local raise
 } // uBaseTask::handleUnhandled

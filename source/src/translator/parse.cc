@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 22 10:45:39 2024
-// Update Count     : 5092
+// Last Modified On : Thu Jan  2 15:38:48 2025
+// Update Count     : 5145
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -502,13 +502,13 @@ static token_t * op() {
 	if ( match( ARROW ) ) return back;
 	if ( match( GMAX ) ) return back;					// g++
 	if ( match( GMIN ) ) return back;					// g++
+	if ( match( STRING_IDENTIFIER ) ) return back;		// C++14 user defined literals
 
-	// because the following operators are denoted by multiple tokens, but only should be represented with single
-	// tokens, they are parsed as multiple tokens, but only the first token is passsed back to identify them later
+	// because the following operators are denoted by multiple tokens, but only should be represented with a single
+	// token, they are parsed as multiple tokens, but only the first token is passsed back to identify them later
 
 	if ( match( LP ) && match( RP ) ) return back;
 	if ( match( LB ) && match( RB ) ) return back;
-	if ( match( STRING_IDENTIFIER ) ) return back;		// C++14 user defined literals
 
 	ahead = back; return nullptr;
 } // op
@@ -544,14 +544,16 @@ static token_t * operater() {
 
 	nested_name_specifier();
 
-	if ( match( OPERATOR ) ) {
+	if ( check( OPERATOR ) ) {
 		token_t * start = ahead;
+		focus = top->tbl;
+		match( OPERATOR );
 		if ( ( token = op() ) != nullptr ) {
 			template_key();
 
 			// if this operator has no symbol table entry associated with it, make one
 
-			token->symbol = focus->search_table( token->hash );	// look up token
+			uassert( token != nullptr );
 			if ( token->symbol == nullptr ) {
 				token->symbol = new symbol_t( OPERATOR, token->hash );
 			} // if
@@ -559,7 +561,7 @@ static token_t * operater() {
 			// check if this is a fundamental assignment operator so the translator does not generate a null, private
 			// assignment operator.
 
-			if ( '=' == token->value && focus->symbol != nullptr ) {
+			if ( '=' == token->value && focus != nullptr && focus->symbol != nullptr ) {
 				token_t * save = ahead;
 
 				if ( match( LP ) ) {
@@ -578,56 +580,52 @@ static token_t * operater() {
 				ahead = save;
 			} // if
 
+			uDEBUGPRT( print_focus_change( "operater2", focus, top->tbl ); )
+			return token;
+		} // if
+
+		attribute_t attribute;							// dummy
+
+		if ( specifier_list( attribute ) ) {			// specifier_list CHANGES FOCUS
+			while ( ptr_operator() );					// optional
+
+			uDEBUGPRT( print_focus_change( "operater3", focus, top->tbl ); );
+			focus = top->tbl;
+
+			char name[256] = "\0";
+			for ( token_t * p = start; p != ahead; ) {	// build a name for the conversion operator
+				strcat( name, p->hash->text );
+				token_t * c = p;
+				p = p->next_parse_token();
+				if ( p != ahead ) {
+					strcat( name, " " );
+				} // if
+				c->remove_token();						// remove tokens forming the name
+				delete c;
+			} // for
+			strcat( name, " " );						// add a blank for name mangling
+
+			token = gen_code( ahead, name, TYPE );		// insert new token into the token stream
+			token->symbol = focus->search_table( token->hash ); // look up token
+			if ( token->symbol == nullptr ) {
+				// if the symbol is not defined in the symbol table, define it
+				token->symbol = new symbol_t( OPERATOR, token->hash );
+			} else {
+				// if the symbol is already defined but not in this scope => make one for this scope
+				
+				if ( token->symbol->data->found != focus ) {
+					token->symbol = new symbol_t( OPERATOR, token->hash );
+					focus->insert_table( token->symbol );
+				} // if
+			} // if
+
 			// reset the scanner's focus and return the current token
 
-			uDEBUGPRT( print_focus_change( "operater2", focus, top->tbl ); )
-			focus = top->tbl;
+			uDEBUGPRT( print_focus_change( "operater4", focus, top->tbl ); );
 			return token;
-		} else {
-			table_t * savefocus = focus;				// specifier_list changes focus
-			attribute_t attribute;						// dummy
-
-			if ( specifier_list( attribute ) ) {
-				while ( ptr_operator() );				// optional
-
-				uDEBUGPRT( print_focus_change( "operater3", focus, savefocus ); )
-				focus = savefocus;
-				char name[256] = "\0";
-				for ( token_t * p = start; p != ahead; ) { // build a name for the conversion operator
-					strcat( name, p->hash->text );
-					token_t * c = p;
-					p = p->next_parse_token();
-					if ( p != ahead ) {
-						strcat( name, " " );
-					} // if
-					c->remove_token();					// remove tokens forming the name
-					delete c;
-				} // for
-				strcat( name, " " );					// add a blank for name mangling
-
-				token = gen_code( ahead, name, TYPE );	// insert new token into the token stream
-				token->symbol = focus->search_table( token->hash ); // look up token
-				if ( token->symbol == nullptr ) {
-					// if the symbol is not defined in the symbol table, define it
-					token->symbol = new symbol_t( OPERATOR, token->hash );
-				} else {
-					// if the symbol is already defined but not in this scope => make one for this scope
-
-					if ( token->symbol->data->found != focus ) {
-						token->symbol = new symbol_t( OPERATOR, token->hash );
-						focus->insert_table( token->symbol );
-					} // if
-				} // if
-
-				// reset the scanner's focus and return the current token
-
-				uDEBUGPRT( print_focus_change( "operater4", focus, top->tbl ); )
-				focus = top->tbl;
-				return token;
-			} // if
-			uDEBUGPRT( print_focus_change( "operater5", focus, savefocus ); )
-			focus = savefocus;
 		} // if
+		uDEBUGPRT( print_focus_change( "operater5", focus, top->tbl ); );
+
 		focus = top->tbl;
 		match( IDENTIFIER );
 		template_key();

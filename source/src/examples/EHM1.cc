@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 26 23:06:25 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:08:02 2023
-// Update Count     : 267
+// Last Modified On : Thu Nov 28 11:08:23 2024
+// Update Count     : 269
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -36,12 +36,12 @@ using std::endl;
 
 _Exception XXX {
   public:
-	XXX( const char *const msg ) : uBaseEvent( msg ) {}
+	XXX( const char * const msg ) : uBaseException( msg ) {}
 };
 
 _Exception YYY {
   public:
-	YYY( const char *msg ) { setMsg( msg ); }
+	YYY( const char * msg ) { setMsg( msg ); }
 };
 
 _Coroutine CoroutineDummy1 {
@@ -240,8 +240,8 @@ int main() {
 	}
 	//######################### uCondition::uWaitingFailure #########################
 
-	TaskDummy1 *t1 = new TaskDummy1;
-	TaskDummy2 *t2 = new TaskDummy2( *t1 );
+	TaskDummy1 * t1 = new TaskDummy1;
+	TaskDummy2 * t2 = new TaskDummy2( *t1 );
 	delete t1;						// delete t1 with t2 blocked on condition variable
 	delete t2;
 
@@ -259,15 +259,15 @@ int main() {
 	}
 	//######################### uMutexFailure::uEntryFailure (acceptor/signalled stack) #########################
 
-	TaskDummy4 *t4 = new TaskDummy4;
-	TaskDummy5 *t5 = new TaskDummy5( *t4 );
+	TaskDummy4 * t4 = new TaskDummy4;
+	TaskDummy5 * t5 = new TaskDummy5( *t4 );
 	delete t4;
 	delete t5;
 
 	//######################### uMutexFailure::uEntryFailure (entry queue) #########################
 
-	TaskDummy6 *t6 = new TaskDummy6;
-	TaskDummy7 *t7 = new TaskDummy7( *t6 );
+	TaskDummy6 * t6 = new TaskDummy6;
+	TaskDummy7 * t7 = new TaskDummy7( *t6 );
 	delete t6;
 	delete t7;
 

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Feb 25 15:46:42 1994
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Aug 14 18:25:57 2023
-// Update Count     : 973
+// Last Modified On : Thu Nov 28 11:05:21 2024
+// Update Count     : 975
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,7 +49,7 @@ using namespace UPP;
 extern "C" void pthread_deletespecific_( void * );		// see pthread simulation
 
 
-#define MinStackSize 1000								// minimum feasible stack size in bytes
+enum { MinStackSize = 1000 };							// minimum feasible stack size in bytes
 
 
 namespace UPP {
@@ -82,7 +82,7 @@ namespace UPP {
 				This.notHalted_ = false;				// terminate coroutine
 			} catch( uBaseCoroutine::UnhandledException & ex ) {
 				This.forwardUnhandled( ex );			// continue forwarding
-			} catch( uBaseEvent & ex ) {				// uC++ raise ?
+			} catch( uBaseException & ex ) {			// uC++ raise ?
 				ex.defaultTerminate();					// default defaultTerminate return here for forwarding
 				This.handleUnhandled( &ex );			// start forwarding
 			} catch( ... ) {							// C++ exception ?
@@ -134,7 +134,7 @@ namespace UPP {
 				ex.exec_dtor = false;					// defuse the unwinder
 			} catch( uBaseCoroutine::UnhandledException & ex ) {
 				This.forwardUnhandled( ex );			// continue forwarding
-			} catch( uBaseEvent & ex ) {				// uC++ raise ?
+			} catch( uBaseException & ex ) {			// uC++ raise ?
 				ex.defaultTerminate();					// default defaultTerminate return here for forwarding
 				This.handleUnhandled( &ex );			// start forwarding
 			} catch( ... ) {							// C++ throw ?

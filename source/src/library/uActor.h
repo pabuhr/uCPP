@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan  3 08:21:59 2024
-// Update Count     : 1240
+// Last Modified On : Thu Nov 28 11:07:17 2024
+// Update Count     : 1243
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -192,7 +192,7 @@ class uActor {
 					uDEBUG( if ( maybeActor ) maybeActor->pendingCallbacks += 1; );
 					return false;
 				} // if
-				if ( comp == CHAINED ) abort( "duplicate callback for promise" ); // _Throw DupCallback(); // duplicate chaining
+				if ( comp == CHAINED ) abort( "Duplicate callback for promise." ); // _Throw DupCallback(); // duplicate chaining
 				assert( comp == FULFILLED && lock == FULFILLED );
 				return true;
 			} // Impl::maybe
@@ -214,7 +214,7 @@ class uActor {
 				Status prev;
 				if ( lock != FULFILLED ) {
 					prev = uFetchAssign( lock, FULFILLED ); // mark delivered
-					if ( prev == FULFILLED ) abort( "Duplicate delivery to promise; must reset promise" ); //_Throw DupDelivery();
+					if ( prev == FULFILLED ) abort( "Duplicate delivery to promise; must reset promise." ); //_Throw DupDelivery();
 				} else prev = FULFILLED;
 
 				// if maybeActor is null then the program main called maybe so use a default ticket of 0
@@ -226,12 +226,12 @@ class uActor {
 			} // Impl::delivery
 
 			Result result() {
-				if ( lock != FULFILLED ) abort( "no result %d", lock );	// _Throw NoResult(); // no result
+				if ( lock != FULFILLED ) abort( "No result %d.", lock );	// _Throw NoResult(); // no result
 				return result_;
 			} // Impl::access
 
 			void reset() {								// mark promise as empty (for reuse)
-				if ( lock == CHAINED ) abort( "Duplicate delivery to promise; must reset promise" ); // _Throw ChainedReset();
+				if ( lock == CHAINED ) abort( "Duplicate delivery to promise; must reset promise." ); // _Throw ChainedReset();
 				lock = EMPTY;
 			} // Impl::reset
 		}; // Impl
@@ -323,7 +323,7 @@ class uActor {
 
 	static inline void checkActor( uActor & actor ) {
 		if ( actor.allocation_ != Nodelete ) {
-			uDEBUG( if ( actor.pendingCallbacks > 0 ) abort( "Destroying/deleting/finishing an actor with pending callbacks" ); );
+			uDEBUG( if ( actor.pendingCallbacks > 0 ) abort( "Destroying/deleting/finishing an actor with pending callbacks." ); );
 			switch ( actor.allocation_ ) {				// analyze actor allocation status
 			  case Delete: delete &actor; break;
               case Destroy:
@@ -354,19 +354,19 @@ class uActor {
 				// if promise_allocation or returned allocation is Nodelete it gets overriden by the other
 				if ( returnedAlloc == Nodelete ) actor.allocation( actor.promise_allocation_ ); 
 				else if ( actor.promise_allocation_ == Nodelete ) actor.allocation( returnedAlloc );
-				// if both not Nodelete, this is erroneous behaviour so we abort
-				else abort( "Changing allocation status of an actor being destroyed/deleted/finished" );
+				// if both not Nodelete, this is erroneous behaviour so abort
+				else abort( "Changing allocation status of an actor being destroyed/deleted/finished." );
 
 				// Process message first because it might be in actor-related storage (Finished) that is deallocated
 				// after the actor terminates.
 				checkMsg( msg );						// process message
 				checkActor( actor );
-			} catch ( uBaseEvent & ex ) {
+			} catch ( uBaseException & ex ) {
 				// To have a zero-cost try block, the checkMsg call is duplicated above/below.
 				checkMsg( msg );						// process message
 				_Throw;									// fail to worker thread
 			} catch ( ... ) {
-				abort( "C++ exception unsupported from throw in actor for promise message" );
+				abort( "C++ exception unsupported from throw in actor for promise message." );
 			} // try
 		} // Deliver_::operator()
 	}; // uActor::Deliver_
@@ -384,10 +384,10 @@ class uActor {
 				uDEBUG( actor->pendingCallbacks -= 1; );
 				actor->allocation_ = func();			// call current callback
 				checkActor( *actor );
-			} catch ( uBaseEvent & ex ) {
+			} catch ( uBaseException & ex ) {
 				_Throw;									// fail to worker thread
 			} catch ( ... ) {
-				abort( "C++ exception unsupported from throw in actor for promise message" );
+				abort( "C++ exception unsupported from throw in actor for promise message." );
 			} // try
 		} // Deliver_Callback_::operator()
 	}; // uActor::Deliver_Callback_
@@ -395,12 +395,12 @@ class uActor {
 	virtual Allocation process_( Message & msg ) = 0;	// type-safe access to subclass receivePtr
 	// Do NOT make pure to allow replacement by "become" in constructor.
 	virtual Allocation receive( Message & ) {			// user supplied message handler
-		abort( "must supply receive routine for actor" );
+		abort( "Must supply receive member for actor." );
 		return Delete;
 	} // uActor::receive
 
 	void setAllocation( Allocation & to, Allocation from ) {
-		if ( to != Nodelete ) abort( "Cannot change allocation status of an actor being deleted/destroyed/finished" );
+		if ( to != Nodelete ) abort( "Cannot change allocation status of an actor being deleted/destroyed/finished." );
 		to = from;										// can always overwrite Nodelete
 	} // uActor::setAllocation
 	void promise_allocation( Allocation alloc ) { setAllocation( promise_allocation_, alloc ); } // setter
@@ -455,7 +455,7 @@ class uActor {
 	// Communication
 
 	uActor & tell( Message & msg ) {					// async call, no return value
-		uDEBUG( if ( ticket == SIZE_MAX ) abort( "sending message to terminated actor." ); );
+		uDEBUG( if ( ticket == SIZE_MAX ) abort( "Sending message to terminated actor." ); );
 		executor_->send( Deliver_( *this, msg ), ticket ); // copy functor
 		return *this;
 	} // uActor::tell
@@ -568,7 +568,7 @@ template< typename Actor > class uActorType : public uActor {
 
 	void restart_() {
 		receivePtr_ = &uActorType<Actor>::receive;		// restart message-handler pointer
-		preStart();					// rerun preStart
+		preStart();										// rerun preStart
 	} // uActorType::restart_
   protected:
 	// Must be done from within the actor not from outside the actor.  Does not provide a stack of message handlers =>
