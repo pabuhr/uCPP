@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 22 20:35:13 2024
-// Update Count     : 167
+// Last Modified On : Mon Jan  6 17:24:31 2025
+// Update Count     : 169
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -112,6 +112,7 @@ typedef enum state_t {
 	decimal,
 	long_unsigned,
 	fraction,
+	hex_fraction,
 	possible_exponent,
 	possible_signed_exponent,
 	exponent,
@@ -660,6 +661,9 @@ token_t * getinput() {
 			  case '.':
 				state = fraction;
 				break;
+			  case 'e': case 'E':
+				state = possible_exponent;
+				break;
 			  default:
 				unget( c );
 				wrap();
@@ -675,6 +679,12 @@ token_t * getinput() {
 				break;
 			  case 'l': case 'L': case 'u': case 'U':
 				state = long_unsigned;
+				break;
+			  case '.':
+				state = hex_fraction;
+				break;
+			  case 'p': case 'P':
+				state = possible_exponent;
 				break;
 			  default:
 				unget( c );
@@ -720,8 +730,24 @@ token_t * getinput() {
 			  case 'e': case 'E':
 				state = possible_exponent;
 				break;
-			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
 				state = float_long;
+				break;
+			  default:
+				unget( c );
+				wrap();
+				return new token_t( NUMBER, hash_table->lookup( buffer ) );
+			} // switch
+			break;
+		  case hex_fraction:
+			switch ( c ) {
+			  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+			  case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+			  case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+			  case '\'':
+				break;
+			  case 'p': case 'P':
+				state = possible_exponent;
 				break;
 			  default:
 				unget( c );
@@ -738,7 +764,7 @@ token_t * getinput() {
 				state = possible_signed_exponent;
 				break;
 			  default:
-				unget( c ); unget( c );
+				unget( c );
 				wrap();
 				return new token_t( NUMBER, hash_table->lookup( buffer ) );
 			} // switch
@@ -750,7 +776,7 @@ token_t * getinput() {
 				state = exponent;
 				break;
 			  default:
-				unget( c ); unget( c ); unget( c );
+				unget( c );
 				wrap();
 				return new token_t( NUMBER, hash_table->lookup( buffer ) );
 			} // switch
@@ -760,7 +786,7 @@ token_t * getinput() {
 			  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 			  case '\'':
 				break;
-			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
 				state = float_long;
 				break;
 			  default:
@@ -771,7 +797,7 @@ token_t * getinput() {
 			break;
 		  case float_long:
 			switch ( c ) {
-			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
 				break;
 			  default:
 				unget( c );								// put character back as it could start float size
