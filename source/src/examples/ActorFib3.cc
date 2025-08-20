@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb 12 16:20:35 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul  6 09:18:17 2022
-// Update Count     : 17
+// Last Modified On : Mon Mar  3 22:38:55 2025
+// Update Count     : 23
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,11 +34,13 @@ _CorActor Fib {
 	long int * fn;										// pointer into return message
 
 	Allocation receive( Message & msg ) {
-		Case( FibMsg, msg ) {
-			fmsg = msg_d;								// coroutine communication
-			fn = &msg_d->fn;							// compute answer in message
+		iftype ( FibMsg, msg ) {
+			fmsg = &msg;								// coroutine communication
+			fn = &msg.fn;								// compute answer in message
 			resume();
-		} else Case( StopMsg, msg ) return Finished;
+		} eliftype ( StopMsg, msg ) {
+			return Finished;
+		} endiftype;
 		return Nodelete;
 	} // Fib::receive
 
@@ -74,10 +76,10 @@ _Actor Generator {
 
 	Allocation receive( Message & msg ) {
 		if ( i < Times ) {
-			Case( FibMsg, msg ) {
-				cout << msg_d->fn << endl;
+			iftype ( FibMsg, msg ) {
+				cout << msg.fn << endl;
 				fib | fibMsg;
-			} // Case
+			} endiftype;
 			i += 1;
 			return Nodelete;
 		} else {

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:26:15 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul  1 07:40:56 2021
-// Update Count     : 17
+// Last Modified On : Tue Jul  1 09:19:08 2025
+// Update Count     : 20
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -44,18 +44,18 @@ _Actor Filter {
 	} // Filter::preStart
 
 	Allocation receive( Message &msg ) {
-		Case( Number, msg ) {							// determine message kind
-			if ( msg_d->n % myprime != 0 ) {
+		iftype ( Number, msg ) {						// determine message kind
+			if ( msg.n % myprime != 0 ) {
 				if ( ! next ) {
-					next = new Filter( msg_d->n, root );
+					next = new Filter( msg.n, root );
 				} else {
-					*next | *new Number( msg_d->n );
+					*next | *new Number( msg.n );
 				} // if
 			} // if
-		} else Case( StopMsg, msg ) {
-				(next ? *next : *root) | msg;			// propagate stop or stop root at list end
-				return Delete;							// delete actor
-			} // Case
+		} eliftype ( StopMsg, msg ) {
+			(next ? *next : *root) | msg;				// propagate stop or stop root at list end
+			return Delete;								// delete actor
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Filter::receive
   public:
@@ -74,12 +74,12 @@ _Actor Sieve {
 	} // Sieve::preStart
 
 	Allocation receive( Message &msg ) {
-		Case( Number, msg ) {							// determine message kind
-			osacquire( cout ) << msg_d->n << endl;		// print reported prime
-		} else Case( StopMsg, msg ) {
-				osacquire( cout ) << "all done" << endl;
-				return Delete;							// delete actor
-			} // Case
+		iftype ( Number, msg ) {						// determine message kind
+			osacquire( cout ) << msg.n << endl;			// print reported prime
+		} eliftype ( StopMsg, msg ) {
+			osacquire( cout ) << "all done" << endl;
+			return Delete;								// delete actor
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Sieve::receive
   public:

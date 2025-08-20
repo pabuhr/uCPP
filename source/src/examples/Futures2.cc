@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec  2 16:20:24 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec  2 16:21:24 2022
-// Update Count     : 1
+// Last Modified On : Sat Mar  1 14:51:59 2025
+// Update Count     : 2
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -50,7 +50,7 @@ _Task Worker {
 			and _Select( fm ) { cout << fm().i << " " << fm().j << endl; fm.reset(); }
 			and _Select( fmp ) { cout << fmp() << " " << fmp()->i << " " << fmp()->j << endl; fmp.reset(); }
 			or _Select( fs ) { cout << "stop" << endl; break; }
-			fc.delivery( (Cont){} );					// synchronize
+			fc( (Cont){} );					// synchronize
 		} // for
 	} // Worker::main
 }; // Worker
@@ -59,13 +59,13 @@ int main() {
 	Worker worker;
 	uProcessor p;
 	for ( int i = 0; i < 10; i += 1 ) {
-		fi.delivery( i );
-		fip.delivery( &x );
-		fd.delivery( i + 2.5 );
-		fm.delivery( (Msg){ i, 2 } );
-		fmp.delivery( &fred );
+		fi( i );
+		fip( &x );
+		fd( i + 2.5 );
+		fm( (Msg){ i, 2 } );
+		fmp( &fred );
 		fc(); fc.reset();								// wait for 3 futures to be processed
 		cout << endl;
 	}
-	fs.delivery( (Stop){} );
+	fs( (Stop){} );
 } // wait for worker to terminate

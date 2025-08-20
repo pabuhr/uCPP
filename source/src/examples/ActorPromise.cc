@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:37 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 22 10:52:22 2022
-// Update Count     : 726
+// Last Modified On : Sun Jul 20 09:18:08 2025
+// Update Count     : 775
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -30,7 +30,7 @@ using namespace std;
 
 struct IntMsg : public uActor::PromiseMsg<int> { int val; };
 struct StrMsg : public uActor::PromiseMsg<string> { string val; };
-struct IntStrMsg : public uActor::PromiseMsg< int > { string val; };
+struct IntStrMsg : public uActor::PromiseMsg<int> { string val; };
 static struct ClientStopMsg : public uActor::Message {} clientStopmsg;
 
 int Delay = 10;
@@ -41,22 +41,23 @@ _Actor Server {
 	unsigned int cntClients = 0;
 
 	Allocation receive( uActor::Message & msg ) {
-        delay( Delay )							// pretend to perform client work
+        delay( Delay )									// pretend to perform client work
 		// work
-		Case( IntMsg, msg ) { msg_d->delivery( 7 ); }
-		else Case( StrMsg, msg ) { msg_d->delivery( "XYZ" ); }
-		else Case( IntStrMsg, msg ) { msg_d->delivery( 12 ); }
+		iftype ( IntMsg, msg ) { msg( 7 ); }
+		eliftype ( StrMsg, msg ) { msg( "XYZ" ); }
+		eliftype ( IntStrMsg, msg ) { msg( 12 ); }
 		// admin
-		else Case( ClientStopMsg, msg ) {
+		eliftype ( ClientStopMsg, msg ) {
 			cntClients += 1;
 			if ( cntClients == NoOfClients ) return Delete; // delete actor
 		// errors
-		} else Case( UnhandledMsg, msg ) {				// receiver complained
-			abort( "sent unknown message to %p", msg_d->sender() );
-		} else {										// unknown void message
+		} eliftype ( UnhandledMsg, msg ) {				// receiver complained
+			abort( "sent unknown message to %p", msg.sender() );
+		} elsetype {									// unknown void message
 			osacquire( cout ) << "server unhandled" << endl;
-			*msg_d->sender() | uActor::unhandledMsg;	// complain to sender
-		} // Case
+			ifsendermsg( msg ) *msg.sender() | uActor::unhandledMsg; // complain to sender ?
+			endiftype
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Server::receive
   public:
@@ -67,8 +68,8 @@ _Actor Server {
 _Actor Client {
 	enum { MsgKinds = 3,								// number of message kinds
 		   Messages = 100,								// number of message kinds sent
-		   Times = 1000  };								// number of send repetitions
-
+		   Times = 1000,								// number of send repetitions
+	};
 	Server & server;
 	unsigned int times = 0, processed = 0, maybes = 0, callbacks = 0, tmaybes = 0, tcallbacks = 0;
 
@@ -143,18 +144,20 @@ _Actor Client {
 	} // Client::send
 
 	Allocation receive( uActor::Message & msg ) {		// receive callback messages
-		Case( IntMsg, msg ) {							// ask messages
-			processed += 1; assert( (*msg_d)() == 7 || (*msg_d)() == 12 ); delay( 500 ); // touch result
-		} else Case( StrMsg, msg ) {
-			processed += 1; assert( (*msg_d)() == "XYZ" ); delay( 500 ); // touch result
+		iftype ( IntMsg, msg ) {						// ask messages
+			processed += 1; assert( msg() == 7 || msg() == 12 ); delay( 500 ); // touch result
+		} eliftype ( StrMsg, msg ) {
+			processed += 1; assert( msg() == "XYZ" ); delay( 500 ); // touch result
 		// error cases
-		} else Case( UnhandledMsg, msg ) {				// receiver complained
-			abort( "sent unknown message to %p", msg_d->sender() );
-		} else {										// unknown void message
-			osacquire( cout ) << "client unhandled " << &msg << ' ' << msg_d->sender() << endl;
-			*msg_d->sender() | uActor::unhandledMsg;		// complain to sender
+		} eliftype ( UnhandledMsg, msg ) {				// receiver complained
+			abort( "sent unknown message to %p", msg.sender() );
+		} elsetype {									// unknown void message
+			ifsendermsg( msg ) {						// complain to sender ?
+				osacquire( cout ) << "client unhandled " << &msg << ' ' << msg.sender() << endl;
+				*msg.sender() | uActor::unhandledMsg;
+			} endiftype
 			return Nodelete;							// reuse actor
-		} // Case
+		} endiftype
 
 		if ( processed == MsgKinds * Messages ) return shutdown(); // all requests fulfilled ?
 		return Nodelete;								// reuse actor

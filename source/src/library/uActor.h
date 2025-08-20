@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Thierry Delisle
 // Created On       : Mon Nov 14 22:40:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 28 11:07:17 2024
-// Update Count     : 1243
+// Last Modified On : Tue Jul  1 09:55:15 2025
+// Update Count     : 1302
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -55,10 +55,50 @@ T * uReference( T & t ) { return &t; }
 #endif
 
 #ifndef Case
-#define Case( type, msg ) if ( type * msg##_d __attribute__(( unused )) = dynamic_cast< type * >( uReference( msg ) ) )
+#define Case( type, msg ) _Pragma( "GCC warning \"'Case( type, msg )' macro deprecated. Use iftype( type, msg )/eliftype( type, msg )/elsetype/endiftype instead.\"" ) \
+	if ( type * msg##_d __attribute__(( unused )) = dynamic_cast< type * >( uReference( msg ) ) )
 #else
 #error actor must provided a "Case" macro and macro name "Case" is already in use.
 #endif // ! Case
+
+#ifndef iftype
+#define iftype( type, msg  ) if ( type * __##msg##_dp__ __attribute__(( unused )) = dynamic_cast< type * >( uReference( msg ) ) ) { \
+	type & msg __attribute__ ( ( unused ) ) = *uReference( __##msg##_dp__ );
+#else
+#error actor must provided a "iftype" macro and macro name "iftype" is already in use.
+#endif // ! iftype
+
+#ifndef eliftype
+#define eliftype( type, msg ) } else iftype( type, msg )
+#else
+#error actor must provided a "eliftype" macro and macro name "eliftype" is already in use.
+#endif // ! eliftype
+
+#ifndef elsetype
+#define elsetype } else {
+#else
+#error actor must provided a "elsetype" macro and macro name "elsetype" is already in use.
+#endif // ! elsetype
+
+#ifndef endiftype
+#define endiftype }
+#else
+#error actor must provided a "endiftype" macro and macro name "endiftype" is already in use.
+#endif // ! endiftype
+
+#ifndef ifsendermsg
+#define ifsendermsg( msg ) if ( uActor::SenderMsg * __##msg##_dp__ __attribute__(( unused )) = dynamic_cast< uActor::SenderMsg * >( uReference( msg ) ) ) { \
+	uActor::SenderMsg & msg __attribute__ ( ( unused ) ) = *uReference( __##msg##_dp__ );
+#else
+#error actor must provided a "ifsendermsg" macro and macro name "ifsendermsg" is already in use.
+#endif // ! ifsendermsg
+
+#ifndef iftracemsg
+#define iftracemsg( msg ) if ( uActor::TraceMsg * __##msg##_dp__ __attribute__(( unused )) = dynamic_cast< uActor::TraceMsg * >( uReference( msg ) ) ) { \
+	uActor::TraceMsg & msg __attribute__ ( ( unused ) ) = *uReference( __##msg##_dp__ );
+#else
+#error actor must provided a "iftracemsg" macro and macro name "iftracemsg" is already in use.
+#endif // ! iftracemsg
 
 // http://doc.akka.io/docs/akka/current/java/untyped-actors.html
 
@@ -294,6 +334,7 @@ class uActor {
 		// USED BY SERVER
 
 		void delivery( Result result ) { impl->delivery( result ); } // make result available in the promise
+		void operator()( Result result ) { delivery( result ); } // alternate syntax for result
 	}; // Promise
 
 	template< typename Result > class PromiseMsg : public SenderMsg {
@@ -308,6 +349,7 @@ class uActor {
 		PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : SenderMsg( allocation, sender ) {}
 		PromiseMsg( uActor * sender ) : SenderMsg( Delete, sender ) {}
 		void delivery( Result res ) { result_.delivery( res ); } // make result available in promise
+		void operator()( Result res ) { delivery( res ); } // alternate syntax for result
 		Result result() { return result_.result(); }
 		Result operator()() { return result(); }		// alternate syntax for result
 	}; // PromiseMsg

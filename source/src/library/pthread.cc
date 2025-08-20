@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec  9 21:38:53 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug  9 20:23:38 2023
-// Update Count     : 1198
+// Last Modified On : Sun Jul  6 22:06:10 2025
+// Update Count     : 1206
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -895,7 +895,7 @@ extern "C" {
 	} // pthread_self
 
 
-	int pthread_once( pthread_once_t * once_control, void (* init_routine)( void ) ) __OLD_THROW {
+	int pthread_once( pthread_once_t * once_control, void (* init_routine)( void ) ) {
 		uDEBUGPRT(
 			//uDebugPrt( "pthread_once(once_control:%p, init_routine:%p) enter task:%p\n", once_control, init_routine, &uThisTask() );
 		);
@@ -930,14 +930,14 @@ extern "C" {
 	//######################### Cancellation #########################
 
 
-	int pthread_cancel( pthread_t threadID ) __OLD_THROW {
+	int pthread_cancel( pthread_t threadID ) {
 		assert( threadID != NOT_A_PTHREAD );
 		uPthreadable * p = PthreadPid::lookup( threadID );
 		p->cancel();
 		return 0;
 	} // pthread_cancel
 
-	int pthread_setcancelstate( int state, int * oldstate ) __OLD_THROW {
+	int pthread_setcancelstate( int state, int * oldstate ) {
 	  if ( state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE ) return EINVAL;
 	    uBaseCoroutine * c = &uThisCoroutine();
 #ifdef __U_DEBUG__
@@ -949,7 +949,7 @@ extern "C" {
 		return 0;
 	} // pthread_setcancelstate
 
-	int pthread_setcanceltype( int type, int * oldtype ) __OLD_THROW {
+	int pthread_setcanceltype( int type, int * oldtype ) {
 		// currently do not support asynchronous cancellation
 	  if ( type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS ) return EINVAL;
 		uBaseCoroutine * c = &uThisCoroutine();
@@ -962,7 +962,7 @@ extern "C" {
 		return 0;
 	} // pthread_setcanceltype
 
-	void pthread_testcancel( void ) __OLD_THROW {
+	void pthread_testcancel( void ) {
 		uBaseCoroutine * c = &uThisCoroutine();
 		uPthreadable * p = dynamic_cast<uPthreadable *>(c);
 	  if ( p == nullptr ) return;
@@ -1316,7 +1316,8 @@ extern "C" {
 	} // pthread_setaffinity_np
 
 	int pthread_getaffinity_np( pthread_t /* thread */, size_t /* cpusetsize */, cpu_set_t * /* cpuset */ ) __THROW {
-	 	abort( "pthread_getaffinity_np not directly accessible" );
+//	 	abort( "pthread_getaffinity_np not directly accessible" );
+		return 0;
 	} // pthread_getaffinity_np
 
 	int pthread_attr_setaffinity_np( pthread_attr_t * /* attr */, size_t /* cpusetsize */, const cpu_set_t * /* cpuset */ ) __THROW {

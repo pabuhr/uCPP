@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:22:05 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 25 17:26:17 2022
-// Update Count     : 28
+// Last Modified On : Mon Jun 30 17:11:25 2025
+// Update Count     : 29
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,13 +43,13 @@ _Actor Fork {
 	unsigned int level;
 
 	Allocation receive( Message & msg ) {
-		Case( StartMsg, msg ) {
+		iftype ( StartMsg, msg ) {
 			PRT( osacquire( cout ) << this << " level " << level << endl; )
 				if ( level < (unsigned int)MaxLevel ) {
 					*(new Fork( level + 1 )) | uActor::startMsg; // left
 					*(new Fork( level + 1 )) | uActor::startMsg; // right
 				} // if
-		} // Case
+		} endiftype
 		return Delete;
 	} // Fork::receive
   public:

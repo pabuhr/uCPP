@@ -192,8 +192,9 @@
 	\def\${{\myCHarFont \char`\$}}%
 	\def\"{\ifc@mment\ifright@ ''\global\right@false \else``\global\right@true \fi \else{\raisebox{.1ex}{\ttfamily\upshape \char`\"}}\fi}%
 %	\def\'{\raisebox{1ex}{{\rotatebox{-15}{\scriptsize $\prime$}}}}%
-	\def\'{{\ttfamily\upshape \char`\'}}%
-	\def\`{\raisebox{0.85ex}{{\rotatebox{10}{\scriptsize $\backprime$}}}}%
+%	\def\'{{\ttfamily\upshape \char`\'}}%
+	\def\'{{\textquotesingle}}%
+	\def\`{\raisebox{0.65ex}{{\rotatebox{10}{\scriptsize $\backprime$\,}}}}%
 	%
 	% \def\{{\CH\lbrace {\char'173}\lbrace }%
 	% \def\}{\CH\rbrace {\char'175}\rbrace }%

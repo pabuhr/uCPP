@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jan 11 08:18:18 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 23 16:45:03 2022
-// Update Count     : 15
+// Last Modified On : Mon Jun 30 17:12:43 2025
+// Update Count     : 16
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -53,13 +53,13 @@ _Actor Node {
 	unsigned int level;
 
 	Allocation receive( Message & msg ) {
-		Case( StartMsg, msg ) {
+		iftype ( StartMsg, msg ) {
 			PRT( osacquire( cout ) << this << " Node level " << level << endl; )
 				if ( level < (unsigned int)MaxLevel ) {
 					*(new Node( level + 1 )) | startMsg; // left
 					*(new Node( level + 1 )) | startMsg; // right
 				} // if
-		} // Case
+		} endiftype
 
 		*root | stopMsg;
 	    return Delete;
@@ -69,17 +69,17 @@ _Actor Node {
 }; // Node
 
 uActor::Allocation Fork::receive( Message &msg ) {
-	Case( StartMsg, msg ) {
+	iftype ( StartMsg, msg ) {
 		PRT( osacquire( cout ) << this << " Fork level 0 " << endl; )
 			*(new Node( 1 )) | startMsg;				// left
 		*(new Node( 1 )) | startMsg;					// right
-	} else Case( StopMsg, msg ) {
-			PRT( osacquire( cout ) << this << " Fork node ends " << endl; )
-				total += 1;
-			if ( total == leafNodes ) {					// all node ended ?
-				return Delete;
-			} // if
-		} // Case
+	} eliftype ( StopMsg, msg ) {
+		PRT( osacquire( cout ) << this << " Fork node ends " << endl; )
+			total += 1;
+		if ( total == leafNodes ) {						// all node ended ?
+			return Delete;
+		} // if
+	} endiftype
 	return Nodelete;
 } // Fork::receive
 

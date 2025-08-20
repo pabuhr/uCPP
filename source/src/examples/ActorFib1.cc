@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Dec 18 23:46:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul  6 09:25:50 2022
-// Update Count     : 76
+// Last Modified On : Mon Mar  3 22:31:21 2025
+// Update Count     : 78
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -34,8 +34,8 @@ _Actor Fib {
 	int state = 1;
 
 	Allocation receive( Message & msg ) {
-		Case( FibMsg, msg ) {
-			long int & fn = msg_d->fn;					// compute answer in message
+		iftype ( FibMsg, msg ) {
+			long int & fn = msg.fn;						// compute answer in message
 			switch( state ) {							// discriminate Fibonacci state
 			  case 1:
 				fn = 0; fn1 = fn;						// fib(0) => 0
@@ -49,8 +49,10 @@ _Actor Fib {
 				fn = fn1 + fn2; fn2 = fn1; fn1 = fn;	// fib(n) => fib(n-1) + fib(n-2)
 				break;
 			} // switch
-			*msg_d->sender() | *msg_d;					// return fn
-		} else Case( StopMsg, msg ) return Finished;
+			*msg.sender() | msg;						// return fn
+		} eliftype ( StopMsg, msg ) {
+			return Finished;
+		} endiftype;
 		return Nodelete;
 	} // Fib::receive
 }; // Fib
@@ -68,10 +70,10 @@ _Actor Generator {
 
 	Allocation receive( Message & msg ) {
 		if ( i < Times ) {
-			Case( FibMsg, msg ) {
-				cout << msg_d->fn << endl;
+			iftype ( FibMsg, msg ) {
+				cout << msg.fn << endl;
 				fib | figMsg;
-			} // Case
+			} endiftype
 			i += 1;
 			return Nodelete;
 		} else {

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:00 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 14 17:25:26 2022
-// Update Count     : 74
+// Last Modified On : Mon Jun 30 17:15:20 2025
+// Update Count     : 81
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,26 +42,26 @@ _Actor Ping {
 	int cycle = 0, cycles;
 
 	Allocation receive( Message & msg ) {
-		Case( Token, msg ) {
-			int & cnt = msg_d->cnt;						// optimization
+		iftype ( Token, msg ) {
+			int & cnt = msg.cnt;						// optimization
 			PRT( cout << "ping " << cnt << endl; );
 			cnt -= 1;
-			if ( cnt > 0 ) { *msg_d->sender() | tokenMsg; return Nodelete; }
-			if ( cnt == 0 ) { *msg_d->sender() | tokenMsg; } // special case to stop partner
-		} // Case
+			if ( cnt > 0 ) { *msg.sender() | tokenMsg; return Nodelete; }
+			if ( cnt == 0 ) { *msg.sender() | tokenMsg; } // special case to stop partner
+		} endiftype
 		return Finished;
 	} // Ping::receive
 }; // Ping
 
 _Actor Pong {
 	Allocation receive( Message & msg ) {
-		Case( Token, msg ) {
-			int & cnt = msg_d->cnt;						// optimization
+		iftype ( Token, msg ) {
+			int & cnt = msg.cnt;						// optimization
 			PRT( cout << "pong " << cnt << endl; )
 			cnt -= 1;
-			if ( cnt > 0 ) { *msg_d->sender() | tokenMsg; return Nodelete; }
-			if ( cnt == 0 ) { *msg_d->sender() | tokenMsg; } // special case to stop partner
-		} // Case
+			if ( cnt > 0 ) { *msg.sender() | tokenMsg; return Nodelete; }
+			if ( cnt == 0 ) { *msg.sender() | tokenMsg; } // special case to stop partner
+		} endiftype
 		return Finished;
 	} // Pong::receive
 }; // Pong

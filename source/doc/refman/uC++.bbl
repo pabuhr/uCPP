@@ -45,7 +45,7 @@ Gregory~R. Andrews, Ronald~A. Olsson, Michael Coffin, Irving Elshoff, Kelvin
 Peter~A. Buhr and Glen Ditchfield.
 \newblock Adding Concurrency to a Programming Language.
 \newblock In {\em USENIX {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}
-  Technical Conference Proceedings}, pages 207--224, Portland, Oregon, U.S.A.,
+  Technical Conference Proceedings}, pages 207--224, Portland, Oregon, USA,
   August 1992. USENIX Association.
 
 \bibitem[BDS{\etalchar{+}}92]{Buhr92a}
@@ -62,7 +62,7 @@ P.~A. Buhr, Glen Ditchfield, and C.~R. Zarnke.
   Programming Language.
 \newblock {\em SIGPLAN Not.}, 24(4):18--21, April 1989.
 \newblock Proceedings of the ACM SIGPLAN Workshop on Object-Based Concurrent
-  Programming, Sept. 26--27, 1988, San Diego, California, U.S.A.
+  Programming, Sept. 26--27, 1988, San Diego, CA, USA.
 
 \bibitem[BFC95]{Buhr95b}
 Peter~A. Buhr, Michel Fortier, and Michael~H. Coffin.
@@ -80,6 +80,11 @@ Peter~A. Buhr, Hamish~I. Macdonald, and C.~Robert Zarnke.
   $\mu${S}ystem.
 \newblock {\em Softw. Pract. Exper.}, 22(9):735--776, September 1992.
 
+\bibitem[Boe05]{Boehm05}
+Hans-J. Boehm.
+\newblock Threads Cannot be Implemented as a Library.
+\newblock {\em SIGPLAN Not.}, 40(6):261--268, June 2005.
+
 \bibitem[BP91]{Baker91a}
 T.~Baker and O.~Pazy.
 \newblock Real-Time Features of {A}da 9X.
@@ -91,6 +96,11 @@ Andrej Bauer and Matija Pretnar.
 \newblock Programming with Algebraic Effects and Handlers.
 \newblock {\em Journal of Logical and Algebraic Methods in Programming},
   84(1):108--123, January 2015.
+
+\bibitem[BPDL23]{Buhr23}
+Peter~A. Buhr, Colby~A. Parsons, Thierry Delisle, and He~Nan Li.
+\newblock High-Performance Extended Actors.
+\newblock {\em Softw. Pract. Exper.}, 53(12):2463--2500, December 2023.
 
 \bibitem[{Bri}75]{ConcurrentPascal}
 Per {Brinch Hansen}.
@@ -106,6 +116,11 @@ P.~A. Buhr.
 Peter~A. Buhr.
 \newblock Are Safe Concurrency Libraries Possible?
 \newblock {\em Communications of the ACM}, 38(2):117--120, February 1995.
+
+\bibitem[Buh25]{llheap}
+Peter~A. Buhr.
+\newblock llheap: low-latency memory allocaor.
+\newblock \url{https://github.com/cforall/llheap}, 2025.
 
 \bibitem[But97]{Butenhof97}
 David~R. Butenhof.
@@ -128,8 +143,8 @@ Tom~A. Cargill.
 \newblock Does {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Really Need
   Multiple Inheritance?
 \newblock In {\em USENIX {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}
-  Conference Proceedings}, pages 315--323, San Francisco, California, U.S.A.,
-  April 1990. USENIX Association.
+  Conference Proceedings}, pages 315--323, San Francisco, CA, USA, April 1990.
+  USENIX Association.
 
 \bibitem[CD95]{Chung95}
 Tai~M. Chung and Hank~G. Dietz.
@@ -164,7 +179,7 @@ Thomas~W. Doeppner and Alan~J. Gebele.
   Machine.
 \newblock In {\em Proceedings and Additional Papers
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Workshop}, pages 94--107,
-  Santa Fe, New Mexico, U.S.A, November 1987. USENIX Association.
+  Santa Fe, New Mexico, USA, November 1987. USENIX Association.
 
 \bibitem[Dij65]{Dijkstra65}
 Edsger~W. Dijkstra.
@@ -215,7 +230,7 @@ Robert~H. Halstead, Jr.
 \bibitem[HBS73]{Hewitt73}
 Carl Hewitt, Peter Bishop, and Richard Steiger.
 \newblock A Universal Modular {ACTOR} Formalism for Artificial Intelligence.
-\newblock IJCAI'73, pages 235--245, Standford, California, U.S.A., August 1973.
+\newblock IJCAI'73, pages 235--245, Standford, CA, USA, August 1973.
   Proceedings of the 3rd International Joint Conference on Artificial
   Intelligence.
 
@@ -278,7 +293,7 @@ M.~Donald MacLaren.
 \newblock Exception Handling in {PL/I}.
 \newblock {\em SIGPLAN Not.}, 12(3):101--104, March 1977.
 \newblock Proceedings of an ACM Conference on Language Design for Reliable
-  Software, March 28--30, 1977, Raleigh, North Carolina, U.S.A.
+  Software, March 28--30, 1977, Raleigh, North Carolina, USA.
 
 \bibitem[Mar78]{Martin78}
 T.~Martin.
@@ -309,7 +324,7 @@ Ole~Lehrmann Madsen, Birger M{\o}ller-Pedersen, and Kristen Nygaard.
 James~G. Mitchell, William Maybury, and Richard Sweet.
 \newblock Mesa Language Manual.
 \newblock Technical Report CSL--79--3, Xerox Palo Alto Research Center, Palo
-  Alto, California, U.S.A., April 1979.
+  Alto, CA, USA, April 1979.
 
 \bibitem[Ope15]{OpenMP}
 {\em OpenMP Application Program Interface, Version 4.5}, November 2015.
@@ -354,7 +369,7 @@ Robert~E. Strom, David~F. Bacon, Arthur~P. Goldberg, Andy Lowry, Daniel~M.
   Yellin, and Shaula~Alexander Yemini.
 \newblock Hermes: A Language for Distributed Computing.
 \newblock Technical report, IBM T. J. Watson Research Center, Yorktown Heights,
-  New York, U.S.A., 10598, October 1990.
+  New York, USA, 10598, October 1990.
 
 \bibitem[SD92]{Sahraoui92}
 A.E.K. Sahraoui and D.~Delfieu.
@@ -367,7 +382,7 @@ Jonathan~E. Shopiro.
   System for Real-Time Control.
 \newblock In {\em Proceedings and Additional Papers
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Workshop}, pages 77--94,
-  Santa Fe, New Mexico, U.S.A, November 1987. USENIX Association.
+  Santa Fe, New Mexico, USA, November 1987. USENIX Association.
 
 \bibitem[SRL90]{Sha90b}
 L.~Sha, R.~Rajkumar, and J.~P. Lehoczky.
@@ -393,14 +408,14 @@ Michael~D. Tiemann.
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}.
 \newblock In {\em Proceedings of the USENIX
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}} Conference}, pages
-  343--361, Denver, Colorado, U.S.A, October 1988. USENIX Association.
+  343--361, Denver, Colorado, USA, October 1988. USENIX Association.
 
 \bibitem[Tie90]{GNU-C++}
 Michael~D. Tiemann.
 \newblock User's Guide to GNU
   {C}{\kern-.1em\hbox{\large\texttt{+\kern-.25em+}}}.
-\newblock Free Software Foundation, 1000 Mass Ave., Cambridge, MA, U.S.A.,
-  02138, March 1990.
+\newblock Free Software Foundation, 1000 Mass Ave., Cambridge, MA, USA, 02138,
+  March 1990.
 
 \bibitem[TvRvS{\etalchar{+}}90]{Tanenbaum90}
 Andrew~S. Tanenbaum, Robbert van Renesse, Hans van Staveren, Gregory~J. Sharp,
@@ -413,7 +428,7 @@ Dorian~P. Yeager.
 \newblock Teaching Concurrency in the Programming Languages Course.
 \newblock {\em SIGCSE BULLETIN}, 23(1):155--161, March 1991.
 \newblock The Papers of the Twenty-Second SIGCSE Technical Symposium on
-  Computer Science Education, March. 7--8, 1991, San Antonio, Texas, U.S.A.
+  Computer Science Education, March. 7--8, 1991, San Antonio, Texas, USA.
 
 \bibitem[Yok92]{Yokote92}
 Yasuhiko Yokote.

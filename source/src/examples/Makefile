@@ -238,7 +238,7 @@ EHM :
 	if [ ${MULTI} = TRUE ] ; then \
 		multi=${MULTI} ; \
 	fi ; \
-	for filename in EHM1 EHM2 EHM3 EHM4 EHM5 EHM6 EHM7 EHM8 EHM9 EHM10 EHM11 CRAII UncaughtException ; do \
+	for filename in EHM1 EHM2 EHM3 EHM4 EHM5 EHM6 EHM7 EHM8 EHM9 EHM10 EHM11 EHM12 CRAII UncaughtException ; do \
 		for ccflags in "" "-nodebug" $${multi+"-multi"} $${multi+"-multi -nodebug"} ; do \
 			${CXX} ${CXXFLAGS} $${ccflags} $${filename}.cc ; \
 			./a.out ; \

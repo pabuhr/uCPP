@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan 20 20:34:08 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 19 11:25:13 2022
-// Update Count     : 60
+// Last Modified On : Sun Jul  6 23:38:03 2025
+// Update Count     : 61
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,7 +42,7 @@ extern "C" {
 		return 0;
 	} // sem_init
 
-	int sem_wait( sem_t *sem ) __OLD_THROW {
+	int sem_wait( sem_t *sem ) {
 		((uSemaphore *)sem)->P();
 		return 0;
 	} // sem_wait

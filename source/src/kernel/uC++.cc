@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan  3 15:37:31 2025
-// Update Count     : 3462
+// Last Modified On : Wed Jul 16 16:46:38 2025
+// Update Count     : 3463
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -2328,8 +2328,8 @@ void UPP::uKernelBoot::startup() {
 
 extern void heapManagerDtor();
 
-void UPP::uKernelBoot::finishup() {
-	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+void UPP::uKernelBoot::shutdown() {
+	uDEBUGPRT( uDebugPrt( "uKernelBoot::shutdown1, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
 						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 	// Flush standard output streams as required by 27.4.2.1.6
@@ -2351,7 +2351,7 @@ void UPP::uKernelBoot::finishup() {
 
 	uKernelModule::bootTask->migrate( *uKernelModule::systemCluster );
 
-	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+	uDEBUGPRT( uDebugPrt( "uKernelBoot::shutdown2, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
 						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 	delete uKernelModule::userProcessors[0];
@@ -2417,15 +2417,15 @@ void UPP::uKernelBoot::finishup() {
 	// no tasks on the ready queue so it can be deleted
 	uKernelModule::systemScheduler.dtor();
 
-	uDEBUGPRT( uDebugPrt( "uKernelBoot::finishup3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
+	uDEBUGPRT( uDebugPrt( "uKernelBoot::shutdown3, disableInt:%d, disableIntCnt:%d, uPreemption:%d\n",
 						  TLS_GET( disableInt ), TLS_GET( disableIntCnt ), uThisProcessor().getPreemption() ); );
 
 	uKernelModule::globalClusters.dtor();
 	uKernelModule::globalProcessors.dtor();
 
 	heapManagerDtor();
-	uHeapControl::finishup();
-} // uKernelBoot::finishup
+	uHeapControl::shutdown();
+} // uKernelBoot::shutdown
 
 
 void uInitProcessorsBoot::startup() {
@@ -2435,11 +2435,11 @@ void uInitProcessorsBoot::startup() {
 } // uInitProcessorsBoot::startup
 
 
-void uInitProcessorsBoot::finishup() {
+void uInitProcessorsBoot::shutdown() {
 	for ( unsigned int i = 1; i < uKernelModule::numUserProcessors; i += 1 ) {
 		delete uKernelModule::userProcessors[i];
 	} // for
-} // uInitProcessorsBoot::finishup
+} // uInitProcessorsBoot::shutdown
 
 
 // Local Variables: //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 31 18:04:13 2022
-// Update Count     : 209
+// Last Modified On : Fri Aug 15 18:52:53 2025
+// Update Count     : 212
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,7 +41,7 @@ _Task Worker {
 
 
 void Worker::main() {
-	enum { NoOfAllocs = 5000, NoOfMmaps = 10 };
+	enum { NoOfAllocs = 10'000, NoOfMmaps = 10 };
 	char * locns[NoOfAllocs];
 	size_t amount;
 	enum { limit = 64 * 1024 };							// check alignments up to here
@@ -326,6 +326,82 @@ void Worker::main() {
 		free( area );
 	} // for
 
+	// check malloc/posix_realloc/free (sbrk)
+
+	for ( int i = 2; i < NoOfAllocs; i += 12 ) {
+		// initial N byte allocation
+		char * area = (char *)malloc( i );
+		area[0] = '\345'; area[i - 1] = '\345';			// fill first/penultimate byte
+
+		// Do not start this loop index at 0 because posix_realloc of 0 bytes frees the storage.
+		int prev = i;
+		for ( int s = i; s < 256 * 1024; s += 26 ) {	// start at initial memory request
+			if ( area[0] != '\345' || area[prev - 1] != '\345' ) abort( "malloc/posix_realloc/free corrupt storage" );
+			posix_realloc( (void **)&area, s );			// attempt to reuse storage
+			area[s - 1] = '\345';						// fill last byte
+			prev = s;
+		} // for
+		free( area );
+	} // for
+
+	// check malloc/posix_realloc/free (mmap)
+
+	for ( int i = 2; i < NoOfAllocs; i += 12 ) {
+		// initial N byte allocation
+		size_t s = i + malloc_mmap_start();				// cross over point
+		char * area = (char *)malloc( s );
+		area[0] = '\345'; area[s - 1] = '\345';			// fill first/penultimate byte
+
+		// Do not start this loop index at 0 because posix_realloc of 0 bytes frees the storage.
+		int prev = s;
+		for ( int r = s; r < 256 * 1024; r += 26 ) {	// start at initial memory request
+			if ( area[0] != '\345' || area[prev - 1] != '\345' ) abort( "malloc/posix_realloc/free corrupt storage" );
+			posix_realloc( (void **)&area, s );			// attempt to reuse storage
+			area[r - 1] = '\345';						// fill last byte
+			prev = r;
+		} // for
+		free( area );
+	} // for
+
+	// check calloc/posix_realloc/free (sbrk)
+
+	for ( int i = 1; i < 10000; i += 12 ) {
+		// initial N byte allocation
+		char * area = (char *)calloc( 5, i );
+		if ( area[0] != '\0' || area[i - 1] != '\0' ||
+			 area[malloc_size( area ) - 1] != '\0' ||
+			 ! malloc_zero_fill( area ) ) abort( "calloc/posix_realloc/free corrupt storage1" );
+
+		// Do not start this loop index at 0 because posix_realloc of 0 bytes frees the storage.
+		for ( int s = i; s < 256 * 1024; s += 26 ) {	// start at initial memory request
+			posix_realloc( (void **)&area, s );			// attempt to reuse storage
+			if ( area[0] != '\0' || area[s - 1] != '\0' ||
+				 area[malloc_size( area ) - 1] != '\0' ||
+				 ! malloc_zero_fill( area ) ) abort( "calloc/posix_realloc/free corrupt storage2" );
+		} // for
+		free( area );
+	} // for
+
+	// check calloc/posix_realloc/free (mmap)
+
+	for ( int i = 1; i < 1000; i += 12 ) {
+		// initial N byte allocation
+		size_t s = i + malloc_mmap_start();				// cross over point
+		char * area = (char *)calloc( 1, s );
+		if ( area[0] != '\0' || area[s - 1] != '\0' ||
+			 area[malloc_size( area ) - 1] != '\0' ||
+			 ! malloc_zero_fill( area ) ) abort( "calloc/posix_realloc/free corrupt storage3" );
+
+		// Do not start this loop index at 0 because posix_realloc of 0 bytes frees the storage.
+		for ( int r = i; r < 256 * 1024; r += 26 ) {	// start at initial memory request
+			posix_realloc( (void **)&area, r );			// attempt to reuse storage
+			if ( area[0] != '\0' || area[r - 1] != '\0' ||
+				 area[malloc_size( area ) - 1] != '\0' ||
+				 ! malloc_zero_fill( area ) ) abort( "calloc/posix_realloc/free corrupt storage4" );
+		} // for
+		free( area );
+	} // for
+
 	// check memalign/resize with align/free
 
 	amount = 2;
@@ -340,7 +416,7 @@ void Worker::main() {
 
 		// Do not start this loop index at 0 because resize of 0 bytes frees the storage.
 		for ( int s = amount; s < 256 * 1024; s += 1 ) { // start at initial memory request
-			area = (char *)resize( area, a * 2, s );	// attempt to reuse storage
+			area = (char *)aligned_resize( area, a * 2, s ); // attempt to reuse storage
 			//sout | i | area | endl;
 			if ( (size_t)area % a * 2 != 0 ) {			// check for initial alignment
 				abort( "memalign/resize with align/free bad alignment %p", area );
@@ -439,7 +515,7 @@ void Worker::main() {
 		// Do not start this loop index at 0 because realloc of 0 bytes frees the storage.
 		for ( int s = amount; s < 256 * 1024; s += 1 ) { // start at initial memory request
 			if ( area[0] != '\345' || area[s - 2] != '\345' ) abort( "memalign/realloc/free corrupt storage" );
-			area = (char *)realloc( area, a * 2, s );	// attempt to reuse storage
+			area = (char *)aligned_realloc( area, a * 2, s ); // attempt to reuse storage
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a * 2 != 0 ) {			// check for initial alignment
 				abort( "memalign/realloc with align/free bad alignment %p", area );
@@ -467,7 +543,7 @@ void Worker::main() {
 		// Do not start this loop index at 0 because realloc of 0 bytes frees the storage.
 		for ( int s = amount; s < 256 * 1024; s += 1 ) { // start at initial memory request
 			if ( area[0] != '\345' || area[s - 2] != '\345' ) abort( "cmemalign/realloc with align/free corrupt storage2" );
-			area = (char *)realloc( area, a * 2, s );	// attempt to reuse storage
+			area = (char *)aligned_realloc( area, a * 2, s ); // attempt to reuse storage
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a * 2 != 0 || malloc_alignment( area ) != a * 2 ) { // check for initial alignment
 				abort( "cmemalign/realloc with align/free bad alignment %p %zd %zd", area, malloc_alignment( area ), a * 2 );

@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:23:31 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 26 15:06:02 2022
-// Update Count     : 16
+// Last Modified On : Mon Mar  3 21:48:36 2025
+// Update Count     : 23
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,6 @@
 using namespace std;
 #include <uActor.h>
 
-
 struct StrMsg : public uActor::Message {				// actor message
 	string val;
 	StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
@@ -35,17 +34,19 @@ struct StrMsg : public uActor::Message {				// actor message
 
 _Actor Hello {
 	Allocation receive( Message & str ) {
-		Case( StrMsg, str ) {							// determine message kind
+		iftype ( StrMsg, str ) {						// determine message kind
 			osacquire acq( cout );
-			cout << str_d->val;							// access message value
-			if ( str_d->val == "hello" ) {
+			cout << str.val;							// access message value
+			if ( str.val == "hello" ) {
 				cout << ", hello back at you!" << endl;
 			} else {
 				cout << ", do not understand?" << endl;
 			} // if
-		} else Case( StopMsg, str ) {
-				return Delete;							// delete actor
-			} // Case
+		} eliftype ( StopMsg, str ) {
+			return Delete;								// delete actor
+		} elsetype {
+			abort( "undefined message" );
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Hello::receive
 }; // Hello

@@ -7,8 +7,8 @@
 // Author           : Russell Mok
 // Created On       : Mon Jun 30 16:46:18 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 29 11:44:13 2024
-// Update Count     : 553
+// Last Modified On : Mon May 26 15:42:00 2025
+// Update Count     : 560
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -66,9 +66,9 @@ class uBaseException {
 	const uBaseCoroutine & source() const { return *src; }
 	const char * sourceName() const { return src != nullptr ? srcName : "*unknown*"; }
 	RaiseKind getRaiseKind() const { return raiseKind; }
-	const void * getRaiseObject() const { return boundObject; }
+	void * getRaiseObject() const { return boundObject; }
+	void * setRaiseObject( void * object ) { void * temp = boundObject; boundObject = object; return temp; }
 	const void * getOriginalThrower() const __attribute__(( deprecated )) { return getRaiseObject(); }
-	const void * setRaiseObject( void * object ) { void * temp = boundObject; boundObject = object; return temp; }
 	virtual void defaultTerminate();
 	virtual void defaultResume();
 
@@ -93,7 +93,7 @@ class uEHM {
 	class AsyncEMsgBuffer;
 
 	static bool match_exception_type( const std::type_info * derived_type, const std::type_info * parent_type );
-	static bool deliverable_exception( const std::type_info * event_type );
+	static bool deliverable_exception( const std::type_info * exception_type );
 	static void terminate() __attribute__(( noreturn ));
 	static void terminateHandler() __attribute__(( noreturn ));
 	static void unexpected() __attribute__(( noreturn ));
@@ -109,17 +109,17 @@ class uEHM {
 	class uHandlerBase;
 	class uDeliverEStack;
 
-	static void asyncToss( const uBaseException & event, uBaseCoroutine & target, uBaseException::RaiseKind raiseKind, bool rethrow = false );
+	static void asyncToss( const uBaseException & exception, uBaseCoroutine & target, uBaseException::RaiseKind raiseKind, bool rethrow = false );
 	static void asyncReToss( uBaseCoroutine & target, uBaseException::RaiseKind raiseKind );
 
-	static void Throw( const uBaseException & event, void * const bound = nullptr ) __attribute__(( noreturn ));
-	//static void ThrowAt( const uBaseException & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseException::ThrowRaise ); }
+	static void Throw( const uBaseException & exception, void * const bound = nullptr ) __attribute__(( noreturn ));
+	//static void ThrowAt( const uBaseException & exception, uBaseCoroutine & target ) { asyncToss( exception, target, uBaseException::ThrowRaise ); }
 	//static void ThrowAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseException::ThrowRaise ); } // asynchronous rethrow
 	static void ReThrow() __attribute__(( noreturn ));	// synchronous rethrow
 
-	static void Resume( const uBaseException & event, void * const bound = nullptr, bool conseq = true );
+	static void Resume( const uBaseException & exception, void * const bound = nullptr, bool conseq = true );
 	static void ReResume( bool conseq = true );
-	static void ResumeAt( const uBaseException & event, uBaseCoroutine & target ) { asyncToss( event, target, uBaseException::ResumeRaise ); }
+	static void ResumeAt( const uBaseException & exception, uBaseCoroutine & target ) { asyncToss( exception, target, uBaseException::ResumeRaise ); }
 	static void ResumeAt( uBaseCoroutine & target ) { asyncReToss( target, uBaseException::ResumeRaise ); } // asynchronous reresume
 
 	static bool pollCheck();
@@ -130,7 +130,7 @@ class uEHM {
 	static char * getCurrentExceptionName( uBaseException::RaiseKind raiseKind, char * s1, size_t n );
 	static char * strncpy( char * s1, const char * s2, size_t n );
   private:
-	static void resumeWorkHorse( const uBaseException & event, bool conseq );
+	static void resumeWorkHorse( const uBaseException & exception, bool conseq );
 }; // uEHM
 
 
@@ -149,7 +149,7 @@ class uEHM::AsyncEMsg : public uSeqable {
 	AsyncEMsg & operator=( const AsyncEMsg & );
 	AsyncEMsg( const AsyncEMsg & );
 
-	AsyncEMsg( const uBaseException & event );
+	AsyncEMsg( const uBaseException & exception );
   public:
 	~AsyncEMsg();
 }; // uEHM::AsyncEMsg
@@ -180,14 +180,14 @@ class uEHM::AsyncEMsgBuffer : public uSequence<uEHM::AsyncEMsg> {
 // base class allowing a list of otherwise-heterogeneous uHandlers
 class uEHM::uHandlerBase {
 	const void * const matchBinding;
-	const std::type_info * eventType;
+	const std::type_info * exceptionType;
   protected:
-	uHandlerBase( const void * matchBinding, const std::type_info * eventType ) : matchBinding( matchBinding ), eventType( eventType ) {}
+	uHandlerBase( const void * matchBinding, const std::type_info * exceptionType ) : matchBinding( matchBinding ), exceptionType( exceptionType ) {}
 	virtual ~uHandlerBase() {}
   public:
 	virtual void uHandler( uBaseException & exn ) = 0;
 	const void * getMatchBinding() const { return matchBinding; }
-	const std::type_info * getExceptionType() const { return eventType; }
+	const std::type_info * getExceptionType() const { return exceptionType; }
 }; // uHandlerBase
 
 template< typename Exn >
@@ -229,15 +229,15 @@ class uEHM::uResumptionHandlers {
 }; // uEHM::uResumptionHandlers
 
 
-// The following implements a linked list of event_id's table.  Used in enable and disable block.
+// The following implements a linked list of exception_id's table.  Used in enable and disable block.
 
 class uEHM::uDeliverEStack {
 	friend bool uEHM::deliverable_exception( const std::type_info * );
 
 	uDeliverEStack * next;
-	bool deliverFlag;									// true when events in table is Enable, otherwise false
-	int  table_size;                                    // number of events in the table, 0 implies everything
-	const std::type_info ** event_table;				// event id table
+	bool deliverFlag;									// true when exceptions in table is Enable, otherwise false
+	int  table_size;                                    // number of exceptions in the table, 0 implies everything
+	const std::type_info ** exception_table;			// exception id table
   public:
 	uDeliverEStack( const uDeliverEStack & ) = delete;	// no copy
 	uDeliverEStack( uDeliverEStack && ) = delete;

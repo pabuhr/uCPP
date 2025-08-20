@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:25:19 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 24 09:53:57 2022
-// Update Count     : 25
+// Last Modified On : Tue Jul  1 09:17:04 2025
+// Update Count     : 28
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -43,19 +43,18 @@ _Actor Passer {
 	Passer * partner;									// chain actors
 
 	Allocation receive( Message & msg ) {
-		Case( Token, msg ) {							// determine message kind
-			// msg_d is an implicit new variable of type "Token *"
-			PRT( osacquire( cout ) << id << " " << msg_d->cnt << endl; )
-				msg_d->cnt += 1;
-			if ( msg_d->cnt >= (unsigned int)Times ) {
+		iftype ( Token, msg ) {							// determine message kind
+			PRT( osacquire( cout ) << id << " " << msg.cnt << endl; )
+				msg.cnt += 1;
+			if ( msg.cnt >= (unsigned int)Times ) {
 				// force token completely around the cycle so all actors stop
-				if ( msg_d->cnt < (unsigned int)Times + RingSize - 1 ) *partner | msg;
-				PRT( osacquire( cout ) << id << " stopping " << msg_d->cnt << endl; )
+				if ( msg.cnt < (unsigned int)Times + RingSize - 1 ) *partner | msg;
+				PRT( osacquire( cout ) << id << " stopping " << msg.cnt << endl; )
 					return Delete;						// delete actor
 			} else {
 				*partner | msg;							// pass token to partner
 			} // if
-		} // Case
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Ping::receive
   public:

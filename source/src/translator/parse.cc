@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  2 15:38:48 2025
-// Update Count     : 5145
+// Last Modified On : Thu Aug 14 18:47:22 2025
+// Update Count     : 5166
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -3103,7 +3103,7 @@ static token_t * class_head( attribute_t & attribute ) {
 			// look ahead for old style C struct declarations.
 			if ( ( symbol->data->key == STRUCT || symbol->data->key == UNION ) && ( ! check( ':' ) && ! check( LC ) && ! check( ';' ) ) ) return token;
 
-			uassert( symbol->data->found != nullptr );
+	if ( symbol->data->found == nullptr ) goto fini; // possible missing semi-colon at end of struct body
 
 			table_t * containing = focus == attribute.plate ? focus->lexical : focus;
 			symbol_t * checksym;
@@ -3171,7 +3171,7 @@ static token_t * class_head( attribute_t & attribute ) {
 
 		return token;
 	} // if
-
+  fini:
 	ahead = back; return nullptr;
 } // class_head
 
@@ -5158,6 +5158,7 @@ static bool using_definition() {
 
 	if ( match( USING ) ) {
 		bool typname = match( TYPENAME );				// optional
+		token_t * fred = ahead;
 		if ( ( token = identifier() ) != nullptr || ( token = operater() ) != nullptr || ( token = type() ) != nullptr ) {
 			match( DOT_DOT_DOT );						// optional
 			attribute_clause_list();					// optional
@@ -5166,14 +5167,19 @@ static bool using_definition() {
 				symbol_t * symbol = token->symbol;
 				if ( typname ) {
 					make_type( token, token->symbol );
-				} else if ( symbol != nullptr ) {
+					// C++11 introduced a feature that allows a derived class to explicitly inherit constructors from
+					// its base class using a "using" declaration, using C::C. Hence C::C or C<T>::C, only puts the type
+					// C in the symbol table and not a variable (constructor) C. This works because C++ does not allow
+					// explicit calls to constructors, so the second variable C cannot appear in code, only the first
+					// type C.
+				} else if ( symbol != nullptr && strcmp( fred->hash->text, token->hash->text ) != 0 ) {
 					local_t * use = new local_t;
 					use->useing = true;
 					use->tblsym = false;
 					use->kind.sym = symbol;
 					use->link = focus->local;
-					//cerr << "adding using symbol:" << use << " (" << symbol->hash->text << ") to:" << focus << " ("
-					//	 << (focus->symbol != nullptr ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
+					// cerr << "adding using symbol:" << use << " (" << symbol->hash->text << ") to:" << focus << " ("
+					// 	 << (focus->symbol != nullptr ? focus->symbol->hash->text : (focus == root) ? "root" : "template/compound") << ")" << endl;
 					focus->useing = true;				// using entries in this list
 					focus->local = use;
 				} // if
@@ -5221,7 +5227,6 @@ static bool using_directive() {
 // using-alias:
 //	"using" identifier attr(optional) "=" typename_opt type-id ";"
 //	"template" "<" template-parameter-list ">" "using" identifier attr(optional) "=" typename_opt type-id ";"
-
 
 static bool using_alias( attribute_t & attribute ) {
 	token_t * back = ahead;

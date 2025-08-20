@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 25 13:05:45 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jan 29 21:19:55 2023
-// Update Count     : 428
+// Last Modified On : Tue Jul  1 09:29:02 2025
+// Update Count     : 431
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -49,11 +49,12 @@ struct ValueMsg : public uActor::Message {
 
 _Actor Cons {
 	Allocation receive( uActor::Message & msg ) {
-		Case( ValueMsg, msg ) {							// receive value
-			PRT( osacquire( cout ) << "cons " << this << " remove " << msg_d->value << endl; )
+		iftype ( ValueMsg, msg ) {						// receive value
+			PRT( osacquire( cout ) << "cons " << this << " remove " << msg.value << endl; )
 			//for ( volatile size_t delay = 0; delay < 100; delay += 1 );
-		} else Case( StopMsg, msg ) return Delete;		// stop consuming
-		else abort( "Cons unknown message" );
+		} eliftype ( StopMsg, msg ) return Delete;		// stop consuming
+		elsetype abort( "Cons unknown message" );
+		endiftype;
 		return Nodelete;								// reuse actor
 	}
 }; // Cons

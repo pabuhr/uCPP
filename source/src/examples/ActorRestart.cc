@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:24:42 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 17 08:00:23 2022
-// Update Count     : 38
+// Last Modified On : Tue Jul  1 09:15:29 2025
+// Update Count     : 43
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -47,24 +47,24 @@ _Actor Restart {
 	} // Restart::preStart
 
 	Allocation receive( Message & msg ) {
-		Case( DummyMsg, msg ) {							// determine message kind
-			PRT( osacquire( cout ) << "receive " << msg_d->id << endl; );
+		iftype ( DummyMsg, msg ) {						// determine message kind
+			PRT( osacquire( cout ) << "receive " << msg.id << endl; );
 			cnt += 1;
-			msg_d->delivery( 12 );
-		} // Case
+			(msg)( 12 );
+		} endiftype
 		become( &Restart::receive2 );
 		return Nodelete;								// reuse actor
 	} // Restart::receive
 
 	Allocation receive2( Message & msg ) {
-		Case( DummyMsg, msg ) {							// determine message kind
-			PRT( osacquire( cout ) << "receive2 " << msg_d->id << endl; );
+		iftype ( DummyMsg, msg ) {						// determine message kind
+			PRT( osacquire( cout ) << "receive2 " << msg.id << endl; );
 			cnt += 1;
-			msg_d->delivery( 12 );
-		} else Case( StopMsg, msg ) {
+			(msg)( 12 );
+		} eliftype ( StopMsg, msg ) {
 			PRT( osacquire( cout ) << "stop" << endl; );
 			return Delete;								// delete actor
-		} // Case
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Restart::receive2
 }; // Restart

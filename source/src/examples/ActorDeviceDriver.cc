@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue May  4 21:20:09 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 30 20:56:33 2024
-// Update Count     : 93
+// Last Modified On : Mon Jun 30 17:07:30 2025
+// Update Count     : 106
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -42,12 +42,13 @@ _CorActor Driver {
 	unsigned char byte;									// byte passed by interrupt
   public:
 	Allocation receive( Message & msg ) {
-		Case( ByteMsg, msg ) {
-			Driver::msg = msg_d;						// coroutine communication
-			byte = msg_d->byte;
+		iftype ( ByteMsg, msg ) {
+			Driver::msg = &msg;							// coroutine communication
+			byte = msg.byte;
 			resume();
-			*msg_d->sender() | *msg_d;
-		} else Case( StopMsg, msg ) return Finished;
+			*msg.sender() | msg;
+		} eliftype ( StopMsg, msg ) return Finished;
+		endiftype
 		return Nodelete;
 	} // Driver::receive
   private:
@@ -92,7 +93,7 @@ _CorActor Driver {
 					continue msg;
 				} // if
 				cout << (char)byte;
-				msg->msgtext[lnth++] = byte;			// store message
+				msg->msgtext[lnth++] = byte;				// store message
 				sum += byte;
 			} // for
 			checkCRC( sum );							// refactor CRC check
@@ -121,11 +122,11 @@ _Actor Generator {
 	} // Generator::preStart
 
 	Allocation receive( Message & msg ) {
-		Case( Driver::ByteMsg, msg ) {
-			switch ( msg_d->status ) {
+		iftype ( Driver::ByteMsg, msg ) {
+			switch ( msg.status ) {
 			  case Driver::MSG:
 				cout << " message \"";
-				for ( unsigned int i = 0; i < msg_d->byte; i += 1 ) cout << msgtext[i];
+				for ( unsigned int i = 0; i < msg.byte; i += 1 ) cout << msgtext[i];
 				cout << "\"" << endl;
 				break;
 			  case Driver::ESTX:
@@ -147,7 +148,7 @@ _Actor Generator {
 			} // if
 			byteMsg.byte = byte;
 			driver | byteMsg;
-		} // Case
+		} endiftype
 		return Nodelete;
 	} // Fib::receive
   public:

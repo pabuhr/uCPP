@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Jan  8 23:06:40 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 14 16:12:27 2022
-// Update Count     : 28
+// Last Modified On : Mon Jun 30 16:54:49 2025
+// Update Count     : 35
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -76,33 +76,33 @@ _Actor Mall {
 	int n, check, numChameneos, sumMeetings = 0, numFaded = 0;
 
 	Allocation receive( Message &msg ) {
-		Case( MeetMsg, msg ) {
+		iftype ( MeetMsg, msg ) {
 			if ( n > 0 ) {
 				if ( waitingChameneo ) {
-					PRT( osacquire( cout ) << ((Chameneos *)(msg_d->sender()))->cid << " arrived at mall and matched with " << waitingChameneo->cid << endl; )
+					PRT( osacquire( cout ) << ((Chameneos *)(msg.sender()))->cid << " arrived at mall and matched with " << waitingChameneo->cid << endl; )
 					n -= 1;
 					assert( ((void)"mall, MeetMsg waitingChameneo == nullptr", waitingChameneo) );
-					waitingChameneo->tell( *new MeetMsg( msg_d->colour ), msg_d->sender() );
+					waitingChameneo->tell( *new MeetMsg( msg.colour ), msg.sender() );
 					waitingChameneo = nullptr;
 				} else {
-					waitingChameneo = dynamic_cast<Chameneos *>(msg_d->sender());
+					waitingChameneo = dynamic_cast<Chameneos *>(msg.sender());
 					PRT( osacquire( cout ) << waitingChameneo->cid << " arrived at mall but no partner (waiting)" << endl; )
 					assert( ((void)"mall, MeetMsg not Chameneos", waitingChameneo) );
 				} // if
 			} else {
-				PRT( osacquire( cout ) << ((Chameneos *)(msg_d->sender()))->cid << " exit" << endl; )
-				*msg_d->sender() | exitMsg;
+				PRT( osacquire( cout ) << ((Chameneos *)(msg.sender()))->cid << " exit" << endl; )
+				*msg.sender() | exitMsg;
 			} // if
-		} else Case( MeetingCountMsg, msg ) {
+		} eliftype ( MeetingCountMsg, msg ) {
 			numFaded += 1;
-			sumMeetings += msg_d->count;
+			sumMeetings += msg.count;
 			if ( numFaded == numChameneos ) {
 				osacquire( cout ) << "meetings " << sumMeetings << " check " << check << endl;
 				return Delete;
 			} // if
-		} else {
+		} elsetype {
 			assert( ((void)"Mall, unhandled message", false) );
-		} // Case
+		} endiftype
 		return Nodelete;								// reuse actor
 	} // Mall::receive
   public:
@@ -119,27 +119,27 @@ void Chameneos::preStart() {
 } // Chameneos::preStart
 
 uActor::Allocation Chameneos::receive( Message &msg ) {
-	Case( MeetMsg, msg ) {
+	iftype ( MeetMsg, msg ) {
 		Colour prev = colour;
-		colour = complement( colour, msg_d->colour);
-		assert( ((void)"Chameneos, sender == nullptr", msg_d->sender()) );
-		assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg_d->sender())) );
-		PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg_d->sender()))->cid << " " << ColourNames[msg_d->colour]
+		colour = complement( colour, msg.colour);
+		assert( ((void)"Chameneos, sender == nullptr", msg.sender()) );
+		assert( ((void)"Chameneos, sender == Mall", ! dynamic_cast<Mall *>(msg.sender())) );
+		PRT( osacquire( cout ) << cid << " " << ColourNames[prev] << " meets " << ((Chameneos *)(msg.sender()))->cid << " " << ColourNames[msg.colour]
 			 << " and changes to " << ColourNames[colour] << endl; )
 		meetings += 1;
-		*msg_d->sender() | *new ChangeMsg( colour );
+		*msg.sender() | *new ChangeMsg( colour );
 		*mall | *new MeetMsg( colour );
-	} else Case( ChangeMsg, msg ) {
-		PRT( osacquire( cout ) << cid << " change from " << ColourNames[colour] << " to " << ColourNames[msg_d->colour] << endl; )
-		colour = msg_d->colour;
+	} eliftype ( ChangeMsg, msg ) {
+		PRT( osacquire( cout ) << cid << " change from " << ColourNames[colour] << " to " << ColourNames[msg.colour] << endl; )
+		colour = msg.colour;
 		meetings += 1;
 		*mall | *new MeetMsg( colour );
-	} else Case( ExitMsg, msg ) {
-		*msg_d->sender() | *new MeetingCountMsg( meetings );
+	} eliftype ( ExitMsg, msg ) {
+		*msg.sender() | *new MeetingCountMsg( meetings );
 		return Delete;
-	} else {
+	} elsetype {
 		assert( ((void)"Mall, unhandled message", false) );
-	} // Case
+	} endiftype
 	return Nodelete;									// reuse actor
 } // Chameneos::receive
 

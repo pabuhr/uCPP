@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 28 11:05:22 2024
-// Update Count     : 6427
+// Last Modified On : Wed Jul 16 16:46:57 2025
+// Update Count     : 6437
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -101,7 +101,6 @@
 // pthread cancellation. To compile with a pre-NPTL version of the header files use
 #define __THROW throw ()
 #endif // ! __THROW
-#define __OLD_THROW
 
 #if ! defined( _LIBC_REENTRANT )
 #define _LIBC_REENTRANT
@@ -115,6 +114,7 @@
 #include <csignal>										// signal, etc.
 #include <sys/mman.h>									// mmap
 #include <ucontext.h>									// ucontext_t
+#include <stdexcept>									// out_of_range
 
 #include <new>											// uNoCtor (also included by exception)
 #include <iosfwd>										// std::filebuf
@@ -128,6 +128,9 @@ intmax_t convert( const char * str );					// proper string to integral convertio
 
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+
+//######################### VLA #########################
 
 
 // VLA arrays with post constructor initialization but no subscript checking.
@@ -151,21 +154,45 @@ template< typename T, bool runDtor = true > class uNoCtor {
 
 
 // VLA arrays with post constructor initialization and subscript checking.
-#define uArray( T, V, S ) uNoCtor<T> __ ## V ## _Impl__[S]; uArrayImpl<T> V( __ ## V ## _Impl__, S )
-#define uArrayPtr( T, V, S ) uArrayImpl<T, true> V( new uNoCtor<T>[S], S )
+#define uArray( T, V, S ) uNoCtor<T> __ ## V ## _Impl__[S]; uArrayImpl<T> V{ __ ## V ## _Impl__, S }
+#define uArrayFill( T, V, S, ... ) uNoCtor<T> __ ## V ## _Impl__[S]; uArrayImpl<T> V{ __ ## V ## _Impl__, S }; \
+	for ( size_t i = 0; i < S; i += 1 ) V[i]( __VA_ARGS__ )
+#define uArrayPtr( T, V, S ) uArrayImpl<T> V( new uNoCtor<T>[S], S, true )
+#define uArrayPtrFill( T, V, S, ... ) uArrayImpl<T> V( new uNoCtor<T>[S], S, true ); \
+	for ( size_t i = 0; i < S; i += 1 ) V[i]( __VA_ARGS__ )
+#define uArrayRef( T, parm ) uArrayImpl<T> & parm
 
-template< typename T, bool runDtor = false > class uArrayImpl {
+template< typename T > class uArrayImpl {
+	const bool runDtor;									// used by uArrayPtr
+	const size_t asize;
 	uNoCtor<T> * arr;
-	size_t size;
   public:
-	uArrayImpl( uNoCtor<T> * arr, size_t size ) : arr{ arr }, size{ size } {}
+	uArrayImpl( uNoCtor<T> * arr, size_t asize, bool runDtor = false ) : runDtor{ runDtor }, asize{ asize }, arr{ arr } {
+		if constexpr ( std::is_default_constructible<T>::value ) { // have default constructor ?
+			for ( size_t i = 0; i < asize; i += 1 ) arr[i](); // run default constructors
+		} // if
+	} // uArrayImpl::uArrayImpl
+
+	~uArrayImpl() { if ( runDtor ) delete [] arr; }		// used by uArrayPtr
+
+	uArrayImpl<T> & operator=( const uArrayImpl<T> & rhs ) {
+		size_t minarr = asize < rhs.asize ? asize : rhs.asize; // min( asize, rhs.asize )
+		for ( size_t i = 0; i < minarr; i += 1 ) {		// copy minimum array size 
+			arr[i] = rhs.arr[i];						// must use assignment not memcpy
+		} // for
+		return *this;
+	} // uArrayImpl::operator=
+
+	size_t size() const { return asize; }
+
 	uNoCtor<T> & operator[]( size_t index ) const {
-		if ( index >= size ) {
-			abort( "bad subscript: array %p has subscript %zu outside dimension 0..%zu.", arr, index, size - 1 );
+		if ( index >= asize ) {
+			char buf[256];
+			sprintf( buf, "uArray %p bad subscript %zd outside dimension range 0..%zd.", arr, index, asize - 1 );
+			throw std::out_of_range( buf );
 		} // if
 		return arr[index];
-	} // operator[]
-	~uArrayImpl() { if ( runDtor ) delete [] arr; }		// used by uArrayPtr
+	} // uArrayImpl::operator[]
 }; // uArrayImpl
 
 
@@ -1026,7 +1053,7 @@ class uMutexLock {
 		count = false;									// no one has acquired the lock
 	} // uMutexLock::uMutexLock
 
-	uDEBUG( ~uMutexLock(); )
+	uDEBUG( virtual ~uMutexLock(); )
 
 	void acquire();
 	bool tryacquire();
@@ -3171,11 +3198,11 @@ _Task uMain : public uPthreadable {
 
 namespace UPP {
 	class uHeapControl {
-		friend class UPP::uKernelBoot;					// access: startup, finishup
+		friend class UPP::uKernelBoot;					// access: startup, shutdown
 		friend class ::uBaseTask;						// access: prepareTask
 		friend class UPP::PthreadLock;					// access: startup
 
-		static void finishup();
+		static void shutdown();
 		static void prepareTask( uBaseTask * task );
 		static void startTask();
 		static void finishTask();
@@ -3250,7 +3277,7 @@ namespace UPP {
 		static int count;
 
 		static void startup();
-		static void finishup();
+		static void shutdown();
 
 		uKernelBoot() {
 			count += 1;
@@ -3263,7 +3290,7 @@ namespace UPP {
 		~uKernelBoot() {
 			uDEBUGPRT( uDebugPrt( "(uKernelBoot &)%p.~uKernelBoot count %d\n", this, count ); );
 			if ( count == 1 ) {
-				finishup();
+				shutdown();
 			} // if
 			count -= 1;
 		} // uKernelBoot::~uKernelBoot
@@ -3274,7 +3301,7 @@ namespace UPP {
 		static int count;
 
 		static void startup();
-		static void finishup();
+		static void shutdown();
 	  public:
 		uInitProcessorsBoot() {
 			count += 1;
@@ -3287,7 +3314,7 @@ namespace UPP {
 		~uInitProcessorsBoot() {
 			uDEBUGPRT( uDebugPrt( "(uInitProcessorsBoot &)%p.~uInitProcessorsBoot count %d\n", this, count ); );
 			if ( count == 1 ) {
-				finishup();
+				shutdown();
 			} // if
 			count -= 1;
 		} // uInitProcessorsBoot::~uInitProcessorsBoot

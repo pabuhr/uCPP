@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May  1 09:18:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:07:39 2023
-// Update Count     : 181
+// Last Modified On : Sun Mar  2 11:51:03 2025
+// Update Count     : 191
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -41,12 +41,13 @@ _CorActor PhoneNo {
 	char ch;											// character passed by cocaller
   public:
 	Allocation receive( Message & msg ) {
-		Case( DigitMsg, msg ) {
-			PhoneNo::msg = msg_d;						// coroutine communication
-			ch = msg_d->ch;
+		iftype ( DigitMsg, msg ) {
+			PhoneNo::msg = &msg;						// coroutine communication
+			ch = msg.ch;
 			resume();
-			*msg_d->sender() | *msg_d;
-		} else Case( StopMsg, msg ) return Finished;
+			*msg.sender() | msg;
+		} eliftype ( StopMsg, msg ) return Finished;
+		endiftype;
 		return Nodelete;
 	} // PhoneNo::receive
   private:
@@ -117,13 +118,13 @@ _Actor Generator {
 	} // Generator::preStart
 
 	Allocation receive( Message & msg ) {
-		Case( PhoneNo::DigitMsg, msg ) {
-			switch ( msg_d->status ) {
+		iftype ( PhoneNo::DigitMsg, msg ) {
+			switch ( msg.status ) {
 			  case PhoneNo::MATCH:
 				cout << " phone number" << endl;
 				break;
 			  case PhoneNo::ERROR:
-				cout << " ! phone number ";
+				cout << " not phone number ";
 				if ( ch != '\n' ) {
 					cout << " extras ";
 					for ( ;; ) {
@@ -144,7 +145,8 @@ _Actor Generator {
 			cout << ch;
 			digitMsg.ch = ch;
 			phone | digitMsg;
-		} else Case( StopMsg, msg ) return Finished;
+		} eliftype ( StopMsg, msg ) return Finished;
+		endiftype;
 		return Nodelete;
 	} // Fib::receive
   public:

@@ -6,8 +6,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Thu Sep 16 13:57:26 2004
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 22 23:08:47 2024
-// Update Count     : 171
+// Last Modified On : Wed Jul  9 10:03:38 2025
+// Update Count     : 172
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -62,9 +62,9 @@ static inline __attribute__((always_inline)) void uFence() { // fence to prevent
 
 static inline __attribute__((always_inline)) void uPause() { // pause to prevent excess processor bus usage
 #if defined( __i386 ) || defined( __x86_64 )
-	__asm__ __volatile__ ( "pause" ::: );
+	__asm__ __volatile__ ( "pause" : : : );
 #elif defined( __ARM_ARCH )
-	__asm__ __volatile__ ( "YIELD" ::: );
+	__asm__ __volatile__ ( "YIELD" : : : );
 #else
 	#error unsupported architecture
 #endif

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Dec 27 08:49:10 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Mar 14 09:14:34 2022
-// Update Count     : 6
+// Last Modified On : Sat Mar  1 14:59:59 2025
+// Update Count     : 7
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,7 +33,7 @@ _Task Worker {
 
 	void main() {
 		yield( rand() % 10 );
-		f.delivery( 3 );
+		f( 3 );
 		yield( rand() % 10 );
 	} // Worker::main
   public:
@@ -48,7 +48,7 @@ _Task Worker2 {
 	void main() {
 		for ( unsigned int i = 0; i < NoOfTime; i += 1 ) {
 			yield( rand() % 10 );
-			f.delivery( 3 );
+			f( 3 );
 			while ( f.available() ) yield();
 		} // for
 	} // Worker2::main

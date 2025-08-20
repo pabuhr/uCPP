@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri May 21 07:42:26 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri May 21 07:45:13 2021
-// Update Count     : 2
+// Last Modified On : Tue Jul  1 09:19:50 2025
+// Update Count     : 3
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -31,8 +31,9 @@ struct TMsg : public uActor::TraceMsg { int cnt = 0; } tmsg; // traceable messag
 
 _CorActor Trace {
 	Allocation receive( Message & msg ) {
-		Case( TMsg, msg ) { resume(); }
-		else Case( StopMsg, msg ) return Finished;
+		iftype ( TMsg, msg ) { resume(); }
+		eliftype ( StopMsg, msg ) return Finished;
+		endiftype
 		return Nodelete;
 	} // Trace::receive
 

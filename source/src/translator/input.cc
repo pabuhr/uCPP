@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:05:28 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  6 17:24:31 2025
-// Update Count     : 169
+// Last Modified On : Mon Jun 30 16:47:50 2025
+// Update Count     : 170
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -116,7 +116,7 @@ typedef enum state_t {
 	possible_exponent,
 	possible_signed_exponent,
 	exponent,
-	float_long,
+	float_suffix,
 	float_size,											// g++-14, floating-point constant suffix
 	divide_or_comment,
 	new_comment,
@@ -730,8 +730,8 @@ token_t * getinput() {
 			  case 'e': case 'E':
 				state = possible_exponent;
 				break;
-			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
-				state = float_long;
+			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+				state = float_suffix;
 				break;
 			  default:
 				unget( c );
@@ -786,8 +786,8 @@ token_t * getinput() {
 			  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 			  case '\'':
 				break;
-			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
-				state = float_long;
+			  case 'f': case 'F': case 'l': case 'L': case 'b': case 'B':
+				state = float_suffix;
 				break;
 			  default:
 				unget( c );
@@ -795,9 +795,9 @@ token_t * getinput() {
 				return new token_t( NUMBER, hash_table->lookup( buffer ) );
 			} // switch
 			break;
-		  case float_long:
+		  case float_suffix:
 			switch ( c ) {
-			  case 'f': case 'F': case 'l': case 'L': //case 'b': case 'B':
+			  case 'f': case 'F': case 'l': case 'L':	// parses "bl" which is invalid
 				break;
 			  default:
 				unget( c );								// put character back as it could start float size

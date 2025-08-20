@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Dec 19 08:21:34 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul  6 09:14:05 2022
-// Update Count     : 53
+// Last Modified On : Mon Mar  3 22:35:02 2025
+// Update Count     : 56
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -33,31 +33,37 @@ _Actor Fib {
 	long int fn1, fn2;
 
 	Allocation f0( Message & msg ) {
-		Case( FibMsg, msg ) {
-			long int & fn = msg_d->fn;					// compute answer in message
+		iftype ( FibMsg, msg ) {
+			long int & fn = msg.fn;						// compute answer in message
 			fn = 0; fn1 = fn;							// fib(0) => 0
-			*msg_d->sender() | *msg_d;					// return fn
+			*msg.sender() | msg;						// return fn
 			become( &Fib::f1 );							// change state
-		} else Case( StopMsg, msg ) return Finished;
+		} eliftype ( StopMsg, msg ) {
+			return Finished;
+		} endiftype;
 		return Nodelete;
 	} // Fib::f0
 
 	Allocation f1( Message & msg ) {
-		Case( FibMsg, msg ) {
-			long int & fn = msg_d->fn;					// compute answer in message
+		iftype ( FibMsg, msg ) {
+			long int & fn = msg.fn;						// compute answer in message
 			fn = 1; fn2 = fn1; fn1 = fn;				// fib(1) => 1
-			*msg_d->sender() | *msg_d;					// return fn
+			*msg.sender() | msg;						// return fn
 			become( &Fib::fn );							// change state
-		} else Case( StopMsg, msg ) return Finished;
+		} eliftype ( StopMsg, msg ) {
+			return Finished;
+		} endiftype;
 		return Nodelete;
 	} // Fib::f1
 
 	Allocation fn( Message & msg ) {
-		Case( FibMsg, msg ) {
-			long int & fn = msg_d->fn;					// compute answer in message
+		iftype ( FibMsg, msg ) {
+			long int & fn = msg.fn;						// compute answer in message
 			fn = fn1 + fn2; fn2 = fn1; fn1 = fn;		// fib(n) => fib(n-1) + fib(n-2)
-			*msg_d->sender() | *msg_d;					// return fn
-		} else Case( StopMsg, msg ) return Finished;
+			*msg.sender() | msg;						// return fn
+		} eliftype ( StopMsg, msg ) {
+			return Finished;
+		} endiftype;
 		return Nodelete;
 	} // Fib::fn
   public:
@@ -77,10 +83,10 @@ _Actor Generator {
 
 	Allocation receive( Message & msg ) {
 		if ( i < Times ) {
-			Case( FibMsg, msg ) {
-				cout << msg_d->fn << endl;
+			iftype ( FibMsg, msg ) {
+				cout << msg.fn << endl;
 				fib | figMsg;
-			} // Case
+			} endiftype;
 			i += 1;
 			return Nodelete;
 		} else {

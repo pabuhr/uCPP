@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Jan  1 17:04:39 2025
-%% Update Count     : 8710
+%% Last Modified On : Sun Aug 17 09:24:42 2025
+%% Update Count     : 9276
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -22,6 +22,9 @@
 \usepackage[dvips]{graphics}
 \usepackage{mystyle}
 \usepackage[dvips,plainpages=false,pdfpagelabels,pdfpagemode=UseNone,colorlinks=true,pagebackref=true,linkcolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
+
+\usepackage{breakurl}
+\urlstyle{sf}
 
 \newcommand{\NT}[1]{\nterminal{#1}}
 \renewcommand{\newtermFontInline}{\color{OliveGreen}\textbf} % ForestGreen
@@ -45,9 +48,9 @@
 \pagestyle{headings}
 
 \title{\huge \bf
-\uC Annotated Reference Manual \\
+\uC Annotated Reference Manual	\\
 \vspace{1in}
-\LARGE Version \Version \\
+\LARGE Version \Version			\\
 \vspace{1in}
 \href{http://plg.uwaterloo.ca/~usystem/uC++.html}{\textsf{http:\,//\hspace{0.1ex}plg.uwaterloo.ca\,/$\sim$usystem/uC++.html}} \\
 \vspace{0.125in}
@@ -57,7 +60,7 @@
 \large Peter A. Buhr \copyright\thanks{\normalsize
 Permission is granted to redistribute this manual unmodified in any form;
 permission is granted to redistribute modified versions of this	manual in any form, provided the modified version explicitly attributes said modifications to their respective authors, and provided that no modification is made to these terms of redistribution.
-} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019, 2022 \\
+} 1995, 1996, 1998, 2000, 2003, 2004, 2005, 2007, 2009, 2012, 2016, 2019, 2022, \\ 2025 \\
 Peter A. Buhr and Richard A. Stroobosscher \copyright\footnotemark[\thefootnote] 1992 \\
 } % author
 
@@ -2086,7 +2089,7 @@ Initially, every attempt was made to add the new \uC types and statements by cre
 This approach has been used by others to provide coroutine facilities~\cite{Shopiro87,Labreche90} and simple parallel facilities~\cite{Doeppner87,PRESTO}.
 However, after discovering many limitations with all library approaches, it was abandoned in favour of language extensions.
 
-The most significant problem with all library approaches to concurrency is the lack of soundness and/or efficiency~\cite{Buhr95a}.
+The most significant problem with all library approaches to concurrency is the lack of soundness and/or efficiency~\cite{Buhr95a,Boehm05}.
 A compiler and/or assembler may perform valid sequential optimizations that invalidate a correct concurrent program.
 Code movement, dead code removal, and copying values into registers are just some examples of optimizations that can invalidate a concurrent program, e.g., moving code into or out of a critical section, removing a timing loop, or copying a shared variable into a register making it invisible to other processors.
 To preserve soundness, it is necessary to identify and selectively turn off optimizations for those concurrent sections of code that might cause problems.
@@ -3090,13 +3093,13 @@ If the computation cannot be interrupted, the call may block until the computati
 
 The future operations available to a server are:
 \begin{prefix}
-\item[%(delivery( T result )%)]
--- copy the server-generated result into the future, unblocking all clients waiting for the result.
+\item[%(operator()( T result )%)]
+-- (function call) copy the server-generated result into the future, unblocking all clients waiting for the result.
 This result is the value returned to the client.
 If the asynchronous call has already completed, an exception of type %(uDelivery%) is thrown at the server attempting to deliver the result.
 
-\item[%(delivery( uBaseException * cause )%)]
--- copy a server-generated exception into the future, unblocking all clients waiting for the result.
+\item[%(operator()( uBaseException * ex )%)]
+-- (function call) copy a server-generated exception into the future, unblocking all clients waiting for the result.
 This exception is thrown at any client instead of the future result.
 If the asynchronous call has already completed, an exception of type %(uDelivery%) is thrown at the server attempting to deliver the exception.
 
@@ -3104,7 +3107,7 @@ For the future to manage the exception lifetime, the exception must be dynamical
 %[
 _Exception E {};
 Future_ISM<int> result;
-result.delivery( \(\BF{\)new E\(}\) );\(}\Tab{36}{\)// exception deleted by future
+result( \(\BF{\)new E\(}\) );\(}\Tab{36}{\)// exception deleted by future
 %]
 The exception is implicitly deleted when the future is deleted or by %(reset%).
 
@@ -3153,8 +3156,8 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 	// used by server
 	ServerData serverData;					// information needed by server
 
-	void delivery( T result );				// make result available in the future
-	void delivery( uBaseException * ex );	// make exception available in the future
+	void operator()( T result );			// make result available in the future
+	void operator()( uBaseException * ex );	// make exception available in the future
 	void reset();							// mark future as empty (for reuse)
 };
 %]
@@ -3162,9 +3165,8 @@ template<typename T, typename ServerData> _Monitor Future_ESM {
 \index{Future_ESM@%(Future_ESM%)!operator()()@%(operator()()%)}%
 \index{Future_ESM@%(Future_ESM%)!cancelled@%(cancelled%)}%
 \index{Future_ESM@%(Future_ESM%)!cancel@%(cancel%)}%
-\index{Future_ESM@%(Future_ESM%)!delivery@%(delivery%)}%
+\index{Future_ESM@%(Future_ESM%)!operator()@%(operator()%)}%
 \index{Future_ESM@%(Future_ESM%)!reset@%(reset%)}%
-\index{Future_ESM@%(Future_ESM%)!exception@%(exception%)}%
 \vspace{-3mm}
 \caption{Future : Explicit Storage Management}
 \label{f:FutureExplicitStorageManagement}
@@ -3207,9 +3209,9 @@ template<typename T> class Future_ISM {
 	bool equals( const Future_ISM<T> & other ); // equality of reference
 
 	// used by server
-	void delivery( T result );				// make result available in the future
+	void operator()( T result );			// make result available in the future
+	void operator()( uBaseException * ex );	// make exception available in the future
 	void reset();							// mark future as empty (for reuse)
-	void delivery( uBaseException * ex );	// make exception available in the future
 };
 %]
 \index{Future_ISM@%(Future_ISM%)!available@%(available%)}%
@@ -3217,9 +3219,8 @@ template<typename T> class Future_ISM {
 \index{Future_ISM@%(Future_ISM%)!cancelled@%(cancelled%)}%
 \index{Future_ISM@%(Future_ISM%)!cancel@%(cancel%)}%
 \index{Future_ISM@%(Future_ISM%)!equals@%(equals%)}%
-\index{Future_ISM@%(Future_ISM%)!delivery@%(delivery%)}%
+\index{Future_ISM@%(Future_ISM%)!operator()@%(operator()%)}%
 \index{Future_ISM@%(Future_ISM%)!reset@%(reset%)}%
-\index{Future_ISM@%(Future_ISM%)!exception@%(exception%)}%
 \vspace{-3mm}
 \caption{Future : Implicit Storage Management}
 \label{f:FutureImplicitStorageManagement}
@@ -3635,7 +3636,7 @@ _Monitor InputServer {
 	_Mutex void input( int value, string text ) {
 		if ( requests.size() > value ) {
 			if ( requests[value] != nullptr ) {
-				requests[value]->delivery( text );
+				(*requests[value])( text );
 			}
 		}
 	} // input
@@ -3692,7 +3693,7 @@ _Monitor InputServer {
 	_Mutex void input( int value, string text ) {
 		if ( requests.size() > value ) {
 
-			requests[value].delivery( text );
+			requests[value]( text );
 
 		}
 	} // input
@@ -3873,6 +3874,7 @@ Responses are handled asynchronously through \emph{\Index{promise}}s (not future
 Actors do not have a thread and usually do not have a stack;
 instead they are executed by an underlying thread-pool (executor, see \VRef{s:Executors}), which calls an actor's current behaviour member with each message from its mailbox.
 An executor guarantees an actor's behaviours are executed sequentially and messages are processed in FIFO order from the actor's mailbox, i.e., messages are never executed concurrently for a specific actor by multiple executors.
+\uC provides a full-featured actor mechanism based on this model~\cite{Buhr23}.
 
 \begin{figure}
 \centering
@@ -3883,6 +3885,7 @@ An executor guarantees an actor's behaviours are executed sequentially and messa
 
 
 \subsection{Storage Management}
+\label{s:StorageManagement}
 
 Most actor systems leverage \Index{garbage collection} to manage actors and messages, and the actor system terminates when all actors terminate.
 Since \CC does not have implicit garbage collection, \uC actors and messages involve \Index{explicit storage management}.
@@ -3896,31 +3899,152 @@ enum Allocation { Nodelete, Delete, Destroy, Finished }; // allocation status
 \index{uActor@%(uActor%)!Finished@%(Finished%)}%
 \vspace*{-15pt}% FIX ME
 \begin{prefix}
-\item[%(Nodelete%)] means the actor/message persists and there is no action by the executor.
+\item[%(Nodelete%)] means executor does not nothing after %(receive%), so actor/message persists.
 Use for multi-use actors or messages during their life time. (actor/message default)
-\item[%(Delete%)] means the actor is removed from the actor system and the actor/message is deleted by the executor.
+\item[%(Delete%)] means executor deletes actor/message and decrements actor count after %(receive%).
 Use with dynamically allocated actors or messages when their life-time has expired.
-\item[%(Destroy%)] means the actor is removed from the actor system and the actor/message's destructor is called by the executor but storage is \emph{not} deallocated.
+\item[%(Destroy%)] means executor calls actor/message's destructor but storage is \emph{not} deallocated, and decrements actor count after %(receive%).
 Use with \Index{placement allocate}d actors or messages, i.e., %(new(...)%), where the storage is managed elsewhere, possibly to be reused for a new actor/message.
-\item[%(Finished%)] means the actor is removed from the actor system (no action for a message), but neither the destructor is called nor is storage deallocated.
+\item[%(Finished%)] means executor does not nothing but decrement actor count after %(receive%).
 Use with global or stack allocated actors or messages destructor call and deallocation are implicitly called at the end of a lexically scope.
 \end{prefix}
 Once an actor/message is deleted/destroyed/finished, no subsequent access is allowed until the storage is reallocated.
 
 
-\subsection{Messages}
+\subsection{Base Actor Type}
+\label{s:BaseActorType}
 
-\VRef[Figure]{f:BaseMessage} shows the basic type %(uActor::Message%), which is used for simple messages and all other actor messages types must inherit from it.
-The constructor routine %(Message%)\index{Message@%(Message%)} has the following form:
-\begin{prefix}
-\item[%(Message( Allocation allocation = Nodelete )%)]
--- creates a message with a default allocation of %(Nodelete%).
-\end{prefix}
-Note, the default constructor assumes the message persists.
+\VRef[Figure]{f:ActorType} shows the base actor type, which defines actor/message deallocation, message types, and send/receive communication members.
 
 \begin{figure}
 \LGindent=5pt
-\subfloat[Base]{\label{f:BaseMessage}
+%[
+class uActor {
+	virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
+  protected:
+	Allocation allocation();							// getter
+	void allocation( Allocation alloc );				// setter
+	virtual void preStart() { /* default empty */ };	// user supplied actor initialization
+	virtual Handler become( Handler handler );			// dynamically change message handler
+  public:
+	void restart();										// reset to initial receive member and run preStart
+	// Allocation States
+	enum Allocation { Nodelete, Delete, Destroy, Finished };
+	// Initialization
+	uActor();											// default allocation Nodelete
+	// Administration
+	static void start( uExecutor * executor = nullptr )	// create executor to run actors
+	static bool stop( uDuration duration = 0 ) {		// wait for all actors to terminate or timeout
+	// Message Types
+	class Message { ... };
+	class SenderMsg : public Message { ... }
+	class TraceMsg : public SenderMsg { ... };
+	template<typename T> class Promise { ... };
+	template<typename Result> struct PromiseMsg : public SenderMsg { ... }
+	// Communication
+	uActor & tell( Message & msg );						// async call, no return value
+	uActor & tell( SenderMsg & msg );					// async call, no return value
+	uActor & tell( SenderMsg & msg, uActor * sender );	// async call, no return value
+	uActor & tell( TraceMsg & msg );
+	uActor & operator | ( Message & msg );				// tell alternatives
+	uActor & operator | ( SenderMsg & msg )
+	uActor & operator | ( TraceMsg & msg );
+	uActor & forward( Message & msg );
+	uActor & forward( SenderMsg & msg ) {				// send but retain original sender
+	uActor & forward( TraceMsg & msg );
+	template< typename Result > Promise< Result >
+		ask( PromiseMsg< Result > & msg, uActor * sender = nullptr ) { // message send, return promise
+	template< typename Result > Promise< Result >
+		operator || ( PromiseMsg< Result > &msg );		// ask alternative
+	// Builtin Messages
+	static struct StartMsg : public uActor::SenderMsg {} startMsg; // start actor
+	static struct StopMsg : public uActor::SenderMsg {} stopMsg; // terminate actor
+	static struct UnhandledMsg : public uActor::SenderMsg {} unhandledMsg; // tell error
+};
+%]
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Nodelete@%(Nodelete%)}%
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Delete@%(Delete%)}%
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Destroy@%(Destroy%)}%
+\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Finished@%(Finished%)}%
+\index{uActor@%(uActor%)!receive@%(receive%)}%
+\index{uActor@%(uActor%)!allocation@%(allocation%)}%
+\index{uActor@%(uActor%)!preStart@%(preStart%)}%
+\index{uActor@%(uActor%)!become@%(become%)}%
+\index{uActor@%(uActor%)!restart@%(restart%)}%
+\index{uActor@%(uActor%)!start@%(start%)}%
+\index{uActor@%(uActor%)!stop@%(stop%)}%
+\index{uActor@%(uActor%)!Handler@%(Handler%)}%
+\index{uActor@%(uActor%)!tell@%(tell%)}%
+\index{uActor@%(uActor%)!forward@%(forward%)}%
+\index{uActor@%(uActor%)!ask@%(ask%)}%
+\index{uActor@%(uActor%)!StartMsg@%(StartMsg%)}%
+\index{uActor@%(uActor%)!startMsg@%(startMsg%)}%
+\index{uActor@%(uActor%)!StopMsg@%(StopMsg%)}%
+\index{uActor@%(uActor%)!stopMsg@%(stopMsg%)}%
+\index{uActor@%(uActor%)!UnhandledMsg@%(UnhandledMsg%)}%
+\index{uActor@%(uActor%)!unhandledMsg@%(unhandledMsg%)}%
+\caption{Actor Type}
+\label{f:ActorType}
+\end{figure}
+
+An actor program begins by creating an executor to run the actor system with its thread pool.
+The member routine %(start%)\index{start@%(start%)} is explicitly passed an executor (see \VRef{s:Executors}), or passed nothing and it implicitly creates an executor.
+An executor must have sufficient workers and processors to match with the actor workload;
+the life-time of the executor must exceed the life-time of the actor system.
+The simplest approach is calling %(start%) without an executor, so it creates the following executor in the heap:
+%[
+uExecutor( 0, uThisCluster().getProcessors(), false, -1 );
+%]
+This executor does not create any new processors, creates %(uThisCluster().getProcessors()%) worker threads and queues on the current cluster without affinity.
+Hence, this executor uses processors in the current cluster to execute actors, so the level of parallelism can be set in the program main by declaring %(uProcessor%)s.
+
+The member routine %(stop%)\index{stop@%(stop%)} is called to wait for all actors in the system to terminate, or the option timeout (in seconds) to expire.
+It then deletes the actor executor if %(start%) creates it, and returns true if the actor system stopped, and false if the timeout expired.
+Therefore, actors must be created prior to calling %(uActor::stop%) or the program ends immediately.
+The pattern for using these two members is:
+%[
+int main() {
+	uProcessor p[5];								// create parallelism for executor thread-pool
+	uActor::start();								// start actor system
+	// create initial actors and send them messages
+	uActor::stop();									// wait for all actors to terminate
+}
+%]
+
+Each actor type, if not derived from some other actor type, is implicitly derived from the actor type %(uActor%).
+%[
+\(\BF{\)_Actor\(}\) \(\nterminal{actor-name}\) \(\BF{\): public uActor\(}\) {  // implicit inheritance
+	...
+};
+%]
+The overloaded member routines %(allocation%) get and set an actor's current allocation value (see \VRef{s:StorageManagement}).
+Member %(preStart%)\index{preStart@%(preStart%)} is run via a special message sent at the end of an actor's constructor.
+This message is the first one received by an actor because messages are delivered in FIFO order.
+An executor processes a preStart message by invoking the %(preStart%) member rather than calling the current receive member set by %(become%).
+Hence, %(preStart%) is not performed by the thread executing the actor's constructor, but as part of normal message delivery.
+The member routine %(become%)\index{become@%(become%)} changes the receive member and returns the previous receive member.
+%[
+_Actor MyActor {
+	Allocation receive {								// initial receiver
+		... Handler prev = \(\BF{\)become\(}\)( receiver2 ); ...\(}\Tab{56}{\)// toggle to different receiver
+	}
+	Allocation receive2 {								// alternate receiver
+		... \(\BF{\)become\(}\)( receiver ); ...		// toggle back
+	}
+};
+%]
+The type %(Handle%)\index{Handle@%(Handle%)} represents a pointer to an actor member that matches the %(receive%) prototype.
+Initially, messages are delivered to member %(receive%) but are redirected to %(receive2%) after executing the %(become%) in %(receive%).
+A similar redirection occurs in member %(receive2%).
+The use of %(become%) allows an actor to behave like a finite-state machine, where each receive member is a state and %(become%) makes the transitions among states. 
+The member routine %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleted and creating a new actor.
+
+The default constructor %(uActor%)\index{uActor@%(uActor%)} creates an actor with a default allocation of %(Nodelete%).
+
+
+\subsection{Basic Message Type}
+
+The basic type %(uActor::Message%) is used for simple messages and all other actor messages types must inherit from it.
 %[
 class Message {
   public:
@@ -3928,12 +4052,20 @@ class Message {
 	Message( Allocation allocation = Nodelete );
 };	
 %]
-}% subfloat
 \index{Message@%(Message%)!allocation@%(allocation%)}%
+\index{uActor@%(uActor%)!Message@%(Message%)}%
 
-\medskip
+The constructor routine %(Message%)\index{Message@%(Message%)} has the following form:
+\begin{prefix}
+\item[%(Message( Allocation allocation = Nodelete )%)]
+-- creates a message with a default allocation of %(Nodelete%).
+\end{prefix}
+Note, the default constructor assumes the message persists.
 
-\subfloat[Sender]{\label{f:SenderMessage}
+
+\subsection{Sender Message Type}
+
+The message type %(uActor::SenderMsg%) inherits from %(uActor::Message%) and remembers the message sender.
 %[
 class SenderMsg : public Message {
 	friend class uActor;
@@ -3944,61 +4076,9 @@ class SenderMsg : public Message {
 	uActor * sender();					// sender actor
 };
 %]
-}% subfloat
 \index{SenderMsg@%(SenderMsg%)!sender@%(sender%)}%
-\index{SenderMsg@%(SenderMsg%)!allocation@%(allocation%)}%
-\index{uActor@%(uActor%)!SenderMsg!sender@%(sender%)}%
+\index{uActor@%(uActor%)!SenderMsg@%(SenderMsg%)}%
 
-\medskip
-
-\subfloat[Trace]{\label{f:TraceMessage}
-%[
-class TraceMsg : public SenderMsg {
-  public:
-	TraceMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
-	TraceMsg( uActor * sender ) : Message( sender ) {}
-	void erase();					// delete all message hops except cursor hop
-	void reset();					// delete all message hops from head to cursor
-	bool Return();					// move cursor back (towards tail) one hop and
-									//    send trace message to cursor actor
-	void retSender();				// set cursor to tail and send trace message to cursor actor
-	bool returned();				// check if cursor not at head
-	void resume();					// reset cursor to head and send trace message to cursor actor
-	void print();					// prints trace information from cursor to the end of the trace
-};
-%]
-}% subfloat
-\index{TraceMsg@%(TraceMsg%)!erase@%(erase%)}%
-\index{TraceMsg@%(TraceMsg%)!reset@%(reset%)}%
-\index{TraceMsg@%(TraceMsg%)!Return@%(Return%)}%
-\index{TraceMsg@%(TraceMsg%)!retSender@%(retSender%)}%
-\index{TraceMsg@%(TraceMsg%)!returned@%(returned%)}%
-\index{TraceMsg@%(TraceMsg%)!resume@%(resume%)}%
-\index{TraceMsg@%(TraceMsg%)!print@%(print%)}%
-
-\medskip
-
-\subfloat[Promise]{\label{f:PromiseMessage}
-%[
-template<typename Result> class PromiseMsg : public SenderMsg {
-	Promise< Result > result_;		// delivered promise
-  public:
-	PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
-	PromiseMsg( uActor * sender );	// allocation = Delete
-	void delivery( Result res );	// make result available in promise
-	Result result();				// return promise result
-	Result operator()();			// alternate syntax for result
-};
-%]
-}% subfloat
-\index{PromiseMsg@%(PromiseMsg%)!delivery@%(delivery%)}%
-\index{PromiseMsg@%(PromiseMsg%)!result@%(result%)}%
-
-\caption{Actor Messages}
-\label{f:ActorMessages}
-\end{figure}
-
-\VRef[Figure]{f:SenderMessage} shows the message type %(uActor::SenderMsg%), which remembers the message sender.
 The overloaded constructor routine %(SenderMsg%)\index{SenderMsg@%(SenderMsg%)} has the following forms:
 \begin{prefix}
 \item[%(SenderMsg( Allocation allocation = Nodelete, uActor * sender = nullptr )%)]
@@ -4008,6 +4088,154 @@ The overloaded constructor routine %(SenderMsg%)\index{SenderMsg@%(SenderMsg%)} 
 \end{prefix}
 Note, the default constructor assumes the message persists, while specifying the sender constructor assumes the message is deleted.
 The member routine %(sender%) returns the actor that sent the message, which can be used for sending a reply message.
+
+
+\subsection{Builtin Messages}
+
+The builtin sender message %(uActor::startMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StartMsg%)\index{StartMsg@%(StartMsg%)} is the \emph{suggested} way to start an actor.
+The builtin sender message %(uActor::stopMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StopMsg%)\index{StopMsg@%(StopdMsg%)} is the \emph{suggested} way to stop an actor.
+The builtin sender message %(uActor::unhandledMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)} is the \emph{suggested} way to tell a sender actor that a sent message to another actor is not understood.
+
+
+\subsection{Message Sending}
+
+The common mechanism for actor communication is members %(tell%) and %(ask%), for sending messages without and with a return value, and an actor subclass must provide at least one %(receive%) member where messages are delivered.
+The %(tell%) send has the following two forms:
+%[
+IntMsg msg;
+actor->\(\BF{\)tell\(}\)( *new IntMsg );\(}\Tab{36}{\)// send message to actor containing current sender
+*actor \(\BF{\)|\(}\) *new IntMsg;	// short form
+actor->tell( msg, \(\BF{\)proxysender\(}\) );\(}\Tab{36}{\)// send message to actor containing proxy sender
+%]
+%(tell%) message sends can be cascaded:
+%[
+actor->tell( *new IntMsg, this )->tell( *new IntMsg, sender )->tell( *new IntMsg );
+*actor | *new IntMsg | *new IntMsg | *new IntMsg;
+%]
+The %(ask%) send has the following two forms:
+%[
+promise = actor->\(\BF{\)ask\(}\)( msg );\(}\Tab{36}{\)// send message to actor with promise result, do not identify sender
+promise = *actor \(\BF{\)||\(}\) *new IntMsg;\(}\Tab{36}{\)// short form
+promise = actor->ask( msg, \(\BF{\)proxysender\(}\) ); // send message to actor containing proxy sender
+%]
+
+\subsection{Message Discrimination}
+
+An actor receive-member begins by discriminating (pattern matching) the kind of message passed to it based on the message type using macros %(iftype%)\index{iftype@%(iftype%)}, %(eliftype%)\index{eliftype@%(eliftype%)}, %(elsetype%)\index{elsetype@%(elsetype%)}, and %(endiftype%)\index{endiftype@%(endiftype%)}.
+%[
+Allocation \(\BF{\)receive\(}\)( Message & msg ) {	// deliver message from mailbox
+	\(\BF{\)iftype\(}\) ( MsgInt, msg ) {			// msg of type MsgInt ?
+		msg.i = msg.i + ... ;						// msg is MsgInt reference to message
+	} \(\BF{\)eliftype\(}\) ( MsgFloat, msg ) {		// msg of type MsgFloat ?
+		... msg + 5.6 ... ;							// msg is MsgFloat reference to message
+	} \(\BF{\)elsetype\(}\) { ...					// unknown message type
+	} \(\BF{\)endiftype\(}\)						// MUST ALWAYS APPEAR
+	return ... ;									// Nodelete or Delete
+}
+%]
+Within each %(iftype%)/%(eliftype%) clause, a reference variable is created with the same name as the \emph{base} message type but with the type specified in the %(iftype%)/%(eliftype%) clause.
+This local variable is used to access the specific fields associated with the kind of received message.
+Note, an %(iftype%) statement \Textbf{MUST} end with an %(endiftype%) macro.
+Finally, a receive member ends by returning whether the actor is to persist (%(Nodelete%)) or be deleted (%(Delete%)).
+
+For %(PromiseMsg%)\index{PromiseMsg@%(PromiseMsg%)} messages, the receive can deliver a value into the promise associated with the message.
+%[
+	iftype ( PMsg, msg ) {								// PMsg type ?
+		// compute val
+		msg.\(\BF{\)delivery\(}\)( val );				// deliver value into promise
+	} ...
+%]
+All promise operations are available through the variable %(msg%).
+
+The following mechanism is used to deal with message errors, such as sending a message not understood by the receiver, i.e., the type of the message is not one a receive member knows how to handle.
+The mechanism is to return the message %(uActor::unhandledMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)} to the sender indicating it sent an unhandleable message, e.g.:
+%[
+Allocation receive( Message & msg ) {
+	iftype ( MsgType1, msg ) {							// handle known message types
+		...
+	// error cases
+	} eliftype ( \(\BF{\)UnhandledMsg\(}\), msg ) {		// receiver complaint
+		abort( "sent unknown message to %p", msg.sender );
+	} elsetype {										// unknown message
+		\(\BF{\)ifsendermsg( msg )\(}\) *msg.sender() | \(\BF{\)uActor::unhandledMsg\(}\);\(}\Tab{56}{\)// sender complaint
+	} endiftype
+}
+%]
+In this case, the type of the %(unhandledMsg%) message (%(UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)}) is used to receive the %(unhandledMsg%) message from a complaining receiver.
+As well, the message %(unhandledMsg%) is returned to the sender, if it is a sender message, to indicate it sent an unhandleable message.
+The macros %(ifsendermsg%)\index{ifsendermsg@%(ifsendermsg%)} and %(iftracemsg%)\index{iftracemsg@%(iftracemsg%)} are used to test the kind of message.
+
+\subsection{Trace Message Type}
+
+\begin{figure}
+%[
+#include <iostream>
+using namespace std;
+#include <uActor.h>
+
+struct StrMsg : public uActor::Message {				// actor message
+	string val;
+	StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
+};
+_Actor Hello {
+	Allocation receive( Message & str ) {
+		iftype ( StrMsg, str ) {						// determine message kind
+			osacquire acq( cout );
+			cout << str.val;							// access message value
+			if ( str.val == "hello" ) { cout << ", hello back at you!" << endl; }
+			else { cout << ", do not understand?" << endl; }
+		} eliftype ( StopMsg, str ) return Delete;		// delete actor
+		return Nodelete;								// reuse actor
+	}
+};
+int main() {
+	uActor::start();									// start actor system
+	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
+	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
+	uActor::stop();										// wait for all actors to terminate
+}
+%]
+\caption{Hello Actor}
+\label{f:HelloActor}
+\end{figure}
+
+\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containing strings.
+There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
+The %(receive%) discriminates the kind of message and then examines the string within the message to print an appropriate message.
+In a discrimination clause, the variable %(msg%) is used to access the string in the message.
+For a %(StrMsg%), the actor continues to exist by returning %(Nodelete%);
+for a %(StopMsg%), the actor terminates by returning %(Delete%).
+The %(main%)\index{main@%(main%)} member creates two actors and passes each actor three messages, two string messages and a stop message.
+Then the \Index{program main} waits for all actors to end.
+
+\begin{figure}
+\LGindent=5pt
+%[
+class TraceMsg : public SenderMsg {
+  public:
+	TraceMsg( Allocation allocation = Nodelete, uActor * sender = nullptr ) : Message( allocation, sender ) {}
+	TraceMsg( uActor * sender ) : Message( sender ) {}
+	void erase();			 			// delete all message hops except cursor hop
+	void reset();						// delete all message hops from head to cursor
+	bool Return();						// move cursor back (towards tail) one hop and
+										//    send trace message to cursor actor
+	void retSender();					// set cursor to tail and send trace message to cursor actor
+	bool returned();					// check if cursor not at head
+	void resume();						// reset cursor to head and send trace message to cursor actor
+	void print();						// prints trace information from cursor to the end of the trace
+};
+%]
+\index{TraceMsg@%(TraceMsg%)!erase@%(erase%)}%
+\index{TraceMsg@%(TraceMsg%)!reset@%(reset%)}%
+\index{TraceMsg@%(TraceMsg%)!Return@%(Return%)}%
+\index{TraceMsg@%(TraceMsg%)!retSender@%(retSender%)}%
+\index{TraceMsg@%(TraceMsg%)!returned@%(returned%)}%
+\index{TraceMsg@%(TraceMsg%)!resume@%(resume%)}%
+\index{TraceMsg@%(TraceMsg%)!print@%(print%)}%
+\index{uActor@%(uActor%)!TraceMsg@%(TraceMsg%)}%
+\caption{Trace Message}
+\label{f:TraceMessage}
+\end{figure}
 
 \VRef[Figure]{f:TraceMessage} shows the message type %(uActor::TraceMsg%), which remembers the actor path a message follows.
 Each step a message takes between actors is called a \newterm{hop}, and hop links point in the reverse direction to the message sends.
@@ -4025,9 +4253,33 @@ The member routine %(returned%) returns %(true%) if the cursor is not at the hea
 The member routine %(resume%) moves the cursor to head and sends the message to the cursor actor.
 The member routine %(print%) prints the address of the trace message, trace head, cursor, and actors at each hop from cursor to tail, which is useful for debugging.
 
+\subsection{Promise Message Type}
+
+\begin{figure}
+\LGindent=5pt
+%[
+template<typename Result> class PromiseMsg : public SenderMsg {
+	Promise< Result > result_;			// delivered promise
+  public:
+	PromiseMsg( Allocation allocation = Nodelete, uActor * sender = nullptr );
+	PromiseMsg( uActor * sender );		// allocation = Delete
+	void delivery( Result res );		// make result available in promise
+	void operator( Result res );		// alternate syntax for result
+	Result result();					// return promise result
+	Result operator()();				// alternate syntax for result
+};
+%]
+\index{PromiseMsg@%(PromiseMsg%)!delivery@%(delivery%)}%
+\index{PromiseMsg@%(PromiseMsg%)!operator()@%(operator()%)}%
+\index{PromiseMsg@%(PromiseMsg%)!result@%(result%)}%
+\index{uActor@%(uActor%)!PromiseMsg@%(PromiseMsg%)}%
+\caption{Promise Message}
+\label{f:PromiseMessage}
+\end{figure}
+
 An actor cannot block because it is executed by a thread in the executor (see \VRef[Figure]{f:ActorModel}).
 A \newterm{promise} provides an alternate mechanism from message passing between two asynchronous actors (client/server) to communicate.
-The %(ask%) (see \VRef{s:ActorType}) message send returns a promise, which is subsequently used in an atomic check for completion and optional registration of a callback executed on completion.
+The %(ask%) (see \VRef{s:BaseActorType}) message send returns a promise, which is subsequently used in an atomic check for completion and optional registration of a callback executed on completion.
 
 \VRef[Figure]{f:PromiseMessage} shows the message type %(uActor::PromiseMsg%), which contains the matching promise (see \VRef[Figure]{f:PromiseType}) to a returned promise.
 The overloaded constructor routines %(PromiseMsg%)\index{PromiseMsg@%(PromiseMsg%)} are the same as for %(Message%).
@@ -4071,7 +4323,7 @@ The member routine %(reset%) allows the promise to be reused by reseting for a n
 \begin{figure}
 %[
 template<typename Result> class Promise {
-	std::function< void ( Result & ) > callback;		// functor type
+	std::function< Allocation ( Result ) > callback;	// functor type
   public:
 	_Exception PromiseFailure {};
 	_Exception DupCallback : public PromiseFailure {};	// raised if duplicate callback
@@ -4092,211 +4344,16 @@ template<typename Result> class Promise {
 
 	// USED BY SERVER
 	void delivery( Result result );						// make result available in the promise
+	void operator()( Result result );					// alternate syntax for result
 }; // Promise
 %]
 \caption{Promise Type}
 \label{f:PromiseType}
 \end{figure}
 
-\begin{figure}
-\LGindent=5pt
-%[
-class uActor {
-	virtual Allocation receive( Message & msg ) = 0;	// user supplied message handler
-  protected:
-	virtual void preStart() { /* default empty */ };	// user supplied actor initialization
-	virtual Handler become( Handler handler );			// dynamically change message handler
-	Allocation allocation();							// getter
-	void allocation( Allocation alloc );				// setter
-  public:
-	// Allocation States
-	enum Allocation { Nodelete, Delete, Destroy, Finished };
-	// Message Types
-	class Message { ... };
-	class SenderMsg : public Message { ... }
-	class TraceMsg : public SenderMsg { ... };
-	template<typename T> class Promise { ... };
-	template<typename Result> struct PromiseMsg : public SenderMsg { ... }
-	// Storage management
-	uActor();											// default allocation Nodelete
-	// Communication
-	uActor & tell( Message & msg );						// async call, no return value
-	uActor & tell( SenderMsg & msg );					// async call, no return value
-	uActor & tell( SenderMsg & msg, uActor * sender );	// async call, no return value
-	uActor & tell( TraceMsg & msg );
-	uActor & operator | ( Message & msg );				// tell alternatives
-	uActor & operator | ( SenderMsg & msg )
-	uActor & operator | ( TraceMsg & msg );
-	uActor & forward( Message & msg );
-	uActor & forward( SenderMsg & msg ) {				// send but retain original sender
-	uActor & forward( TraceMsg & msg );
-	template< typename Result > Promise< Result >
-		ask( PromiseMsg< Result > & msg, uActor * sender = nullptr ) { // message send, return promise
-	template< typename Result > Promise< Result >
-		operator || ( PromiseMsg< Result > &msg );		// ask alternative
-	// Administration
-	void restart();										// reset to initial receive member and run preStart
-	static void start( uExecutor * executor = nullptr )	// create executor to run actors
-	static bool stop( uDuration duration = 0 ) {		// wait for all actors to terminate or timeout
-	// Builtin Messages
-	static struct StartMsg : public uActor::SenderMsg {} startMsg; // start actor
-	static struct StopMsg : public uActor::SenderMsg {} stopMsg; // terminate actor
-	static struct UnhandledMsg : public uActor::SenderMsg {} unhandledMsg; // tell error
-};
-%]
-\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Nodelete@%(Nodelete%)}%
-\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Delete@%(Delete%)}%
-\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Destroy@%(Destroy%)}%
-\index{uActor@%(uActor%)!Allocation@%(Allocation%)!Finished@%(Finished%)}%
-\index{uActor@%(uActor%)!receive@%(receive%)}%
-\index{uActor@%(uActor%)!preStart@%(preStart%)}%
-\index{uActor@%(uActor%)!Handler@%(Handler%)}%
-\index{uActor@%(uActor%)!become@%(become%)}%
-\index{uActor@%(uActor%)!allocation@%(allocation%)}%
-\index{uActor@%(uActor%)!tell@%(tell%)}%
-\index{uActor@%(uActor%)!forward@%(forward%)}%
-\index{uActor@%(uActor%)!ask@%(ask%)}%
-\index{uActor@%(uActor%)!restart@%(restart%)}%
-\index{uActor@%(uActor%)!start@%(start%)}%
-\index{uActor@%(uActor%)!stop@%(stop%)}%
-\index{uActor@%(uActor%)!StartMsg@%(StartMsg%)}%
-\index{uActor@%(uActor%)!startMsg@%(startMsg%)}%
-\index{uActor@%(uActor%)!StopMsg@%(StopMsg%)}%
-\index{uActor@%(uActor%)!stopMsg@%(stopMsg%)}%
-\index{uActor@%(uActor%)!UnhandledMsg@%(UnhandledMsg%)}%
-\index{uActor@%(uActor%)!unhandledMsg@%(unhandledMsg%)}%
-\caption{Actor Type}
-\label{f:ActorType}
-\end{figure}
 
 
-\subsection{Actor Type}
-\label{s:ActorType}
-
-\VRef[Figure]{f:ActorType} shows the actor type, which defines actor/message deallocation, message types, and send/receive communication members.
-The constructor routine %(uActor%)\index{uActor@%(uActor%)} creates an actor with a default allocation of %(Nodelete%).
-The overloaded member routines %(allocation%) get and set an actor's current allocation value.
-
-The common mechanism for actor communication is members %(tell%) and %(ask%), for sending messages without and with a return value, and an actor subclass must provide at least one %(receive%) member where messages are delivered.
-The %(tell%) send has the following two forms:
-%[
-IntMsg msg;
-actor->\(\BF{\)tell\(}\)( *new IntMsg );\(}\Tab{36}{\)// send message to actor containing current sender
-*actor \(\BF{\)|\(}\) *new IntMsg;	// short form
-actor->tell( msg, \(\BF{\)proxysender\(}\) );\(}\Tab{36}{\)// send message to actor containing proxy sender
-%]
-%(tell%) message sends can be cascaded:
-%[
-actor->tell( *new IntMsg, this )->tell( *new IntMsg, sender )->tell( *new IntMsg );
-*actor | *new IntMsg | *new IntMsg | *new IntMsg;
-%]
-The %(ask%) send has the following two forms:
-%[
-promise = actor->\(\BF{\)ask\(}\)( msg );\(}\Tab{36}{\)// send message to actor with promise result, do not identify sender
-promise = *actor \(\BF{\)||\(}\) *new IntMsg;\(}\Tab{36}{\)// short form
-promise = actor->ask( msg, \(\BF{\)proxysender\(}\) ); // send message to actor containing proxy sender
-%]
-
-An actor receive-member begins by discriminating the kind of message passed to it based on the message type using the %(Case%)\index{Case@%(Case%)} macro:
-%[
-Allocation \(\BF{\)receive\(}\)( Message & msg ) {		// deliver message from mailbox
-	\(\BF{\)Case\(}\)( MsgInt, msg ) {					// msg of type MsgInt ?
-		msg\(\BF{\)_d\(}\)->i = msg_d->i + ... ;		// msg_d is MsgInt pointer to message
-	} else Case( MsgFloat, msg ) {						// msg of type MsgFloat ?
-		... msg_d + 5.6 ... ;							// msg_d is MsgFloat ponter to message
-	} else // unknown message type
-	return \(\BF{\)...\(}\) ;							// Nodelete or Delete
-}
-%]
-Within each %(Case%) clause, a new pointer variable to the \emph{derived} message type is created with name \emph{message-name}%(_d%) and type specified in the %(Case%) clause.
-This local variable is used to access the specific fields associated with the kind of received message.
-Finally, a receive member ends by returning whether the actor is to persist (%(Nodelete%)) or be deleted (%(Delete%)).
-
-For %(PromiseMsg%)\index{PromiseMsg@%(PromiseMsg%)} messages, the receive can deliver a value into the promise associated with the message:
-%[
-	Case( PMsg, msg ) {									// PMsg type ?
-		// compute val
-		msg_d->\(\BF{\)delivery\(}\)( val );			// deliver value into promise
-	} ...
-%]
-All promise operations are available through the variable %(msg_d%).
-
-An actor is created from an actor type, which has all the properties of a %(class%) and implicitly inherits from %(uActor%).
-%[
-\(\BF{\)_Actor\(}\) MyActor {							// new actor type
-	OtherActor * partner;
-	void \(\BF{\)preStart()\(}\) {						// executed by executor
-		*partner | *new IntMsg( 7 );					// contact partner
-	}
-	...
-  public:
-	MyActor( OtherActor * partner ) : partner( partner ) {} // executed by creator's thread
-};
-%]
-%(MyActor%) is created with a partner actor passed to its constructor and its first action is to send a message to its partner in member %(preStart%).
-Member %(preStart%)\index{preStart@%(preStart%)} is run via a special message sent at the end of an actor's constructor.
-This message is the first one received by an actor because messages are delivered in FIFO order.
-An executor processes a preStart message by invoking the %(preStart%) member rather than calling the current receive member set by %(become%).
-Hence, %(preStart%) is not performed by the thread executing the actor's constructor, but as part of normal message delivery.
-
-The member routine %(become%)\index{become@%(become%)} changes the receive member and returns the previous receive member.
-%[
-_Actor MyActor {
-	Allocation receive {								// initial receiver
-		... Handler prev = \(\BF{\)become\(}\)( receiver2 ); ...\(}\Tab{56}{\)// toggle to different receiver
-	}
-	Allocation receive2 {								// alternate receiver
-		... \(\BF{\)become\(}\)( receiver ); ...		// toggle back
-	}
-};
-%]
-The type %(Handle%)\index{Handle@%(Handle%)} represents a pointer to an actor member that matches the %(receive%) prototype.
-Initially, messages are delivered to member %(receive%) but are redirected to %(receive2%) after executing the %(become%) in %(receive%).
-A similar redirection occurs in member %(receive2%).
-The use of %(become%) allows an actor to behave like a finite-state machine, where each receive member is a state and %(become%) makes the transitions among states. 
-
-The member routine %(restart%)\index{restart@%(restart%)} resets an actor's receive member to %(receive%) and reruns member %(preStart%) so the actor can be re-purposed for a new use rather than being deleted and creating a new actor.
-
-The member routine %(start%)\index{start@%(start%)} is passed an external executor or it creates an executor to run the actor thread-pool.
-An executor must have sufficient workers and processors to match with the actor workload (see \VRef{s:Executors});
-the life-time of the executor must exceed the life-time of the actor system.
-If no executor is passed to %(start%), it creates the following executor in the heap:
-%[
-uExecutor( 0, uThisCluster().getProcessors(), false, -1 );
-%]
-which contains 0 new processors, %(uThisCluster().getProcessors()%) worker threads and queues on the current cluster without affinity.
-This executor uses processors in the current cluster to execute actors, so the level of parallelism can be set in the program main by declaring %(uProcessor%)s.
-The member routine %(stop%)\index{stop@%(stop%)} is optionally passed a timeout duration;
-it then wait for all actors to end or the timeout duration to expire, deletes the actor executor if %(start%) creates it, and returns true if the actor system stopped, and false if the timeout expired.
-The command pattern for using these two members is:
-%[
-uActor::start();									// start actor system
-// create initial actors and send them messages
-uActor::stop();										// wait for all actors to terminate
-%]
-
-The message %(uActor::startMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StartMsg%)\index{StartMsg@%(StartMsg%)} is the \emph{suggested} way to start an actor.
-The message %(uActor::stopMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::StopMsg%)\index{StopMsg@%(StopdMsg%)} is the \emph{suggested} way to stop an actor.
-%(uActor::stop%) is called to wait for all actors in the system to terminate;
-therefore, actors must be created prior to calling %(uActor::stop%) or the program ends immediately.
-The optional duration (in seconds) for %(uActor::stop%) unblocks the waiting task after the time interval has expired and returns %(false%), i.e., all the actors did not stop in the time interval.
-
-The following mechanism is used to deal with message errors, such as sending a message not understood by the receiver, i.e., the type of the message is not one a receive member knows how to handle.
-The mechanism is to return the message %(uActor::unhandledMsg%)\index{unhandledMsg@%(unhandledMsg%)} of type %(uActor::UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)} to the sender indicating it sent an unhandleable message, e.g.:
-%[
-Allocation receive( Message & msg ) {
-	Case( MsgType1, msg ) {								// handle known message types
-		...
-	// error cases
-	} else Case( \(\BF{\)UnhandledMsg\(}\), msg ) {		// receiver complain
-		abort( "sent unknown message to %p", msg.sender );
-	} else {											// unknown message
-		*msg.sender | \(\BF{\)uActor::unhandledMsg\(}\);\(}\Tab{56}{\)// sender complain
-	}		
-}
-%]
-In this case, the type of the %(unhandledMsg%) message (%(UnhandledMsg%)\index{UnhandledMsg@%(UnhandledMsg%)}) is used to receive the %(unhandledMsg%) message from a complaining receiver.
-As well, the message %(unhandledMsg%) is returned to the sender to indicate it sent an unhandleable message.
+\subsection{Actor Inheritance}
 
 Actors may inherit from other actors\index{actor!inheritance}:
 \begin{flushleft}
@@ -4333,6 +4390,9 @@ for variable %(d%), only %(D::preStart%) is called.
 In general, the most derived actor knows how it wants to initialize the entire actor object.
 However, it is possible for the derived actor to explicitly invoke the base actors %(preStart%), as in %(D::prestart%), which calls %(B::preStart%).
 
+
+\subsection{Actor Coroutine}
+
 A complementary approach to %(become%) is an \newterm{coroutine actor}\index{actor!coroutine}, which combines the properties of a coroutine with the properties of an actor (see \VRef{s:Coroutine}).
 %[
 _CorActor MyActor {
@@ -4348,47 +4408,6 @@ _CorActor MyActor {
 A coroutine actor has its own stack, so its coroutine main can suspend in multiple actor states, including in helper members.
 Often with a coroutine actor, only a single receive member as the different actor states appear in the coroutine main.
 It is still possible to use %(become%) and have multiple receive members with a coroutine actor.
-
-\begin{figure}
-%[
-#include <iostream>
-using namespace std;
-#include <uActor.h>
-
-struct StrMsg : public uActor::Message {				// actor message
-	string val;
-	StrMsg( string val ) : Message( uActor::Delete ), val( val ) {}
-};
-_Actor Hello {
-	Allocation receive( Message & str ) {
-		Case( StrMsg, str ) {							// determine message kind
-			osacquire acq( cout );
-			cout << str_d->val;							// access message value
-			if ( str_d->val == "hello" ) { cout << ", hello back at you!" << endl; }
-			else { cout << ", do not understand?" << endl; }
-		} else Case( StopMsg, str ) return Delete;		// delete actor
-		return Nodelete;								// reuse actor
-	}
-};
-int main() {
-	uActor::start();									// start actor system
-	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "bonjour" ) | uActor::stopMsg;
-	*new Hello() | *new StrMsg( "hello" ) | *new StrMsg( "buenos dias" ) | uActor::stopMsg;
-	uActor::stop();										// wait for all actors to terminate
-}
-%]
-\caption{Hello Actor}
-\label{f:HelloActor}
-\end{figure}
-
-\VRef[Figure]{f:HelloActor} shows a basic actor receiving a number of messages containing strings.
-There are two kinds of messages: one to send a string and the other to tell the actor to stop and delete itself.
-The %(receive%) discriminates the kind of message and then examines the string within the message to print an appropriate message.
-In a discrimination clause, the variable %(msg_d%) is used to access the string in the message.
-For a %(StrMsg%), the actor continues to exist by returning %(Nodelete%);
-for a %(StopMsg%), the actor terminates by returning %(Delete%).
-The %(main%)\index{main@%(main%)} member creates two actors and passes each actor three messages, two string messages and a stop message.
-Then the \Index{program main} waits for all actors to end.
 
 \VRef[Figure]{f:FibonacciActor} shows computing Fibonacci numbers, where the left actor manages the three states of the Fibonacci algorithm using the flag variable %(state%), the middle actor uses %(become%) to change the receive target for each of the three states, and the right actor uses the coroutine to remember the last point of execution among the three states.
 The actors accept a %(NextMsg%) to compute the next Fibonacci number and a %(StopMsg%) to terminate.
@@ -4406,7 +4425,7 @@ struct NextMsg : public uActor::Message {};
 _Actor Fib {
 	long int fn1, fn2;  int \(\BF{\)state = 1\(}\);
 	Allocation receive( Message & msg ) {
-		Case( NextMsg, msg ) {
+		iftype ( NextMsg, msg ) {
 			FibMsg * fibmsg = new FibMsg;
 			long int & fn = fibmsg->fn;
 			switch( state ) {
@@ -4423,8 +4442,8 @@ _Actor Fib {
 				fn1 = fn;
 				break;
 			} // switch
-			*msg_d->sender | *fibmsg;
-		} else Case( StopMsg, msg )
+			*msg.sender | *fibmsg;
+		} eliftype ( StopMsg, msg )
 			return Finished;
 		return Nodelete;
 	}
@@ -4449,35 +4468,35 @@ _Actor Fib {
 _Actor Fib {
 	long int fn1, fn2;
 	Allocation \(\BF{\)f0\(}\)( Message & msg ) {
-		Case( NextMsg, msg ) {
+		iftype ( NextMsg, msg ) {
 			FibMsg * fibmsg = new FibMsg;
 			long int & fn = fibmsg->fn;
 			fn = 0; fn1 = fn;
 			*msg.sender | *fibmsg;
 			\(\BF{\)become( &Fib::f1 );\(}\)
-		} else Case( StopMsg, msg )
+		} eliftype ( StopMsg, msg )
 			return Finished;
 		return Nodelete;
 	}
 	Allocation \(\BF{\)f1\(}\)( Message & msg ) {
-		Case( NextMsg, msg ) {
+		iftype ( NextMsg, msg ) {
 			FibMsg * fibmsg = new FibMsg;
 			long int & fn = fibmsg->fn;
 			fn = 1; fn2 = fn1; fn1 = fn;
 			*msg.sender | *fibmsg;
 			\(\BF{\)become( &Fib::fn );\(}\)
-		} else Case( StopMsg, msg )
+		} eliftype ( StopMsg, msg )
 			return Finished;
 		return Nodelete;
 	}
 	Allocation \(\BF{\)fn\(}\)( Message & msg ) {
-		Case( NextMsg, msg ) {
+		iftype ( NextMsg, msg ) {
 			FibMsg * fibmsg = new FibMsg;
 			long int & fn = fibmsg->fn;
 			fn = fn1 + fn2; fn2 = fn1;
 			fn1 = fn;
 			*msg.sender | *fibmsg;
-		} else Case( StopMsg, msg )
+		} eliftype ( StopMsg, msg )
 			return Finished;
 		return Nodelete;
 	}
@@ -4494,12 +4513,12 @@ _CorActor Fib {
 	FibMsg * fibmsg;
 	NextMsg * msg;
 	Allocation receive( Message & msg ) {
-		Case( NextMsg, msg ) {
-			Fib::msg = msg_d;
+		iftype ( NextMsg, msg ) {
+			Fib::msg = msg;
 			fibmsg = new FibMsg;
 			fn = &fibmsg->fn;
 			\(\BF{\)resume();\(}\)
-		} else Case( StopMsg, msg )
+		} eliftype ( StopMsg, msg )
 			return Finished;
 		return Nodelete;
 	}
@@ -4564,8 +4583,8 @@ struct TMsg : public uActor::TraceMsg { int cnt = 0; } tmsg; // traceable messag
 
 _CorActor Trace {
 	Allocation receive( Message & msg ) {
-		Case( TMsg, msg ) { resume(); }
-		else Case( StopMsg, msg ) return Finished;
+		iftype ( TMsg, msg ) { resume(); }
+		eliftype ( StopMsg, msg ) return Finished;
 		return Nodelete;
 	}
 	void main() {
@@ -4657,7 +4676,7 @@ message 0x65ba80 source:0x8ddd50 cursor (node:0x8ddd50, actor:0x859060)
 using namespace std;
 #include <uActor.h>
 
-struct IntMsg : public uActor::PromiseMsg< int > {
+struct IntMsg : public uActor::PromiseMsg<int> {
 	int val;
 	IntMsg() {}
 	IntMsg( int val ) : PromiseMsg( uActor::Delete ), val( val ) {}
@@ -4669,9 +4688,9 @@ struct StrMsg : public uActor::PromiseMsg< string > {
 };
 _Actor Server {
 	Allocation receive( uActor::Message & msg ) {
-		Case( IntMsg, msg ) { msg_d->delivery( 7 ); }
-		else Case( StrMsg, msg ) { msg_d->delivery( "XYZ" ); }
-		else Case( StopMsg, msg ) { return Finished; }
+		iftype ( IntMsg, msg ) { msg.delivery( 7 ); }
+		eliftype ( StrMsg, msg ) { msg.delivery( "XYZ" ); }
+		eliftype ( StopMsg, msg ) { return Finished; }
 		return Nodelete;								// reuse actor
 	}
 };
@@ -4701,8 +4720,9 @@ _Actor Client {
 		return Nodelete;								// reuse actor
 	}
 	Allocation receive2( uActor::Message & msg ) {		// receive callback messages
-		Case( IntMsg, msg ) { (*msg_d)(); results += 1; }
-		else Case( StrMsg, msg ) { (*msg_d)(); results += 1; }
+		iftype ( IntMsg, msg ) { (msg)(); results += 1; }
+		eliftype ( StrMsg, msg ) { (msg)(); results += 1; }
+		endiftype
 		if ( results == 2 * Messages - 1 ) { server | uActor::stopMsg; return Finished; }
 		return Nodelete;								// reuse actor
 	}
@@ -10421,17 +10441,17 @@ When the user cluster is created, at least this many processors are implicitly c
 
 The following default routine directly affects the heap:
 %[
-unsigned int malloc_expansion();	// heap expansion size (bytes)
-unsigned int malloc_mmap_start();	// division point (bytes)
-size_t malloc_unfreed();			// 
+size_t malloc_extend();			// heap extend size (bytes)
+size_t malloc_mmap_start();		// division point (bytes)
+size_t malloc_unfreed();		// persistent storage (bytes)
 %]
-\index{malloc_expansion@%(malloc_expansion%)}%
+\index{malloc_extend@%(malloc_extend%)}%
 \index{malloc_mmap_start@%(malloc_mmap_start%)}%
 \index{malloc_unfreed@%(malloc_unfreed%)}%
-\index{heap area!expansion size}%
+\index{heap area!extend size}%
 \index{heap area!mmap start}%
 \index{heap area!malloc unfreed}%
-Routine %(malloc_expansion%) returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
+Routine %(malloc_extend%) returns the amount to extend the heap size once all the current storage in the heap is allocated (see \VRef{s:Heap}).
 Routine %(malloc_mmap_start%) returns the division point after which allocation requests are separately mmapped rather than being allocated from the heap area.
 Routine %(malloc_unfreed%) returns the amount subtracted to adjust for unfreed program storage (debug only).
 
@@ -10663,8 +10683,9 @@ The ellipsis in the following rules represent the productions elided from the \C
 \label{s:Heap Allocator}
 \index{heap allocator}%
 
-\uC uses its own heap allocator, which is a binning allocator where allocation requests are rounded up to a bin size and each bin is protected with a lock.
-This structure reduces contention by using fine-grain locking for each bin.
+\uC uses a modified version of the llheap allocator~\cite{llheap} because of user-level threading.
+The allocator has a heap per kernel thread (%(uProcessor%)).
+Allocation requests are rounded up to a fixed-number of bin sizes.
 The bin sizes are close together for smaller sizes and further apart for larger sizes (Zipf distribution).
 A free list is maintained for each bin size.
 The free list for the corresponding bin size is quickly checked for a free allocation of the correct size.
@@ -10676,66 +10697,183 @@ This approach avoids external fragmentation as large allocations are infrequent.
 Each allocation starts with a header containing management information.
 No coalescing of free storage is performed in the heap buffer and the buffer is never reduced in size.
 
-The \uC allocator provides the standard C heap-operations:
-\begin{description}[topsep=5pt,parsep=2pt]
-\item[%(malloc( size )%)]\index{malloc@%(malloc%)} allocate %(size%) bytes and return a pointer to the allocated memory;
+The \uC allocator provides the following GNUC library routines.
+\begin{description}[topsep=5pt,parsep=0pt]
+\item[%(void * malloc( size_t size )%)]\index{malloc@%(malloc%)}
+allocate %(size%) bytes and return a pointer to the allocated memory;
 memory is uninitialized.
-\item[%(calloc( N, size )%)]\index{calloc@%(calloc%)} allocate %(N%) elements of %(size%) bytes (%(N%) $\times$ %(size%) bytes) and return a pointer to the allocated memory;
-memory is zero filled up to the allocation size.
-\item[%(realloc( addr, size )%)]\index{realloc@%(realloc%)} change the size of the memory allocation pointed-to by %(addr%) to %(size%) bytes and return a pointer to the allocated memory;
+
+\item[%(void * calloc( size_t dimension, size_t elemsize )%)]\index{calloc@%(calloc%)}
+equivalent to %(memset( malloc( dimension * elemsize ), '\0',%) \linebreak %(dimension * elemsize )%).
+
+\item[%(void * realloc( void * addr, size_t size )%)]\index{realloc@%(realloc%)}
+change the size of the memory allocation pointed-to by %(addr%) to %(size%) bytes and return a pointer to the allocated memory;
 the size change can be smaller or larger than the original allocation.
 As much data as possible it copied from the old storage to the new and the old storage is freed.
-\item[%(memalign( alignment, size )%)]\index{memalign@%(memalign%)} allocate %(size%) bytes and return a pointer to the allocated memory;
+
+\item[%(void * reallocarray( void * addr, size_t dimension, size_t elemsize )%)]\index{reallocarray@%(reallocarray%)}
+equivalent to %(realloc( addr, dimension *%) \linebreak %(elemsize )%).
+
+\item[%(void free( void * addr )%)]\index{free@%(free%)}
+deallocate memory pointed-to by %(addr%), which must be allocated by one of the allocation routines.
+If %(addr%) is the null, no operation is performed.
+
+\item[%(void * memalign( size_t alignment, size_t size )%)]\index{memalign@%(memalign%)}
+allocate %(size%) bytes and return a pointer to the aligned, allocated memory;
 the address returned is a multiple of %(alignment%) and memory is uninitialized.
-The alignment must be a power of two $\ge$ to the minimum architecture-alignment, e.g., multiple of 16.
-\item[%(aligned_alloc( alignment, size )%)]\index{aligned_alloc@%(aligned_alloc%)} allocate %(size%) bytes and return a pointer to the allocated memory;
-the address returned is a multiple of %(alignment%) and memory is uninitialized.
-The alignment must be a power of two $\ge$ to the minimum architecture-alignment.
-\item[%(posix_memalign( memaddr, alignment, size )%)]\index{posix_memalign@%(posix_memalign%)} allocate %(size%) bytes and return a pointer to the allocated memory through output-parameter %(memaddr%);
-the address returned is a multiple of %(alignment%) and memory is uninitialized.
-The alignment must be a power of two $\ge$ to the minimum architecture-alignment.
-The routine returns zero on success or an error value.
-\item[%(free( addr )%)]\index{free@%(free%)} deallocate memory pointed-to by %(addr%), which must be allocated by one of the allocation routines.
-If %(addr%) is the %(nulladdr%), no operation is performed.
+The alignment must be a power of 2 $\ge$ to the minimum architecture-alignment, e.g., multiple of 16.
+
+\item[%(void * aligned_alloc( size_t alignment, size_t size )%)]\index{aligned_alloc@%(aligned_alloc%)}
+equivalent to %(memalign( alignment, size )%).
+
+\item[%(int posix_memalign( void ** addrp, size_t alignment, size_t size )%)]\index{posix_memalign@%(posix_memalign%)}
+equivalent to %(addrp = memalign( alignment,%) \linebreak %(size )%).
+On success, directly returns 0 and indirectly the address of the new storage though output parameter %(addrp%).
+On failure, directly returns 0, %(EINVAL%), or %(ENOMEM%), and %(addrp%) and %(errno%) are not set.
+
+\item[%(void * valloc( size_t size )%)]\index{valloc@%(valloc%)}
+equivalent to %(memalign( sysconf( _SC_PAGESIZE ), size )%).
+
+\item[%(void * pvalloc( size_t size )%)]\index{pvalloc@%(pvalloc%)}
+equivalent to %(valloc( ceiling( size, sysconf( _SC_PAGESIZE ) ) )%).
 \end{description}
-A zero-sized allocation returns %(nullptr%);
-the program aborts if an allocation cannot be fulfilled because memory is full.
+For all routines, a zero-sized allocation returns a unique memory location that must be freed.
+If an allocation cannot be fulfilled because memory is full, null is returned and %(errno%) is set to %(ENOMEM%).
+
+\begin{description}
+\item[%(int mallopt( int parameter, int value )%)]\index{mallopt@%(mallopt%)}
+adjust memory-allocator parameters (see also \VRef{s:DefaultValuesHeap}).
+Supported parameters are:
+\begin{description}
+\item[%(M_TOP_PAD%)]\index{M_TOP_PAD@%(M_TOP_PAD%)}
+sets the amount to extend the heap size once all the current storage in the heap is allocated.
+
+\item[%(M_MMAP_THRESHOLD%)]\index{M_MMAP_THRESHOLD@%(M_MMAP_THRESHOLD%)}
+sets the division point after which allocation requests are separately memory mapped rather than being allocated from the heap area.
+\end{description}
+
+\item[%(size_t malloc_usable_size( void * addr )%)]\index{malloc_usable_size@%(malloc_usable_size%)}
+returns the number of usable bytes for the dynamically allocated storage, which is greater than or equal to the allocation size.
+
+\item[%(void malloc_stats()%)]\index{malloc_stats@%(malloc_stats%)}
+print memory-allocation statistics on the file-descriptor set by %(malloc_stats_fd%).
+If the shell variable %(MALLOC_STATS%)\index{MALLOC_STATS@%(MALLOC_STATS%)} is defined, %(malloc_stats%) is implicitly called at program termination.
+
+\item[%(int malloc_info( int options, int stream )%)]\index{malloc_info@%(malloc_info%)}
+print memory-allocation statistics as an XML string on the specified file-descriptor set by %(malloc_stats_fd%).
+The %(options%) argument must be zero.
+\end{description}
 
 The \uC allocator extended the standard C heap functionality by preserving zero fill and alignment on reallocation.
 Hence, if the old reallocation storage is aligned, the storage returned from %(realloc%) has the same alignment.
 Similarly, if the old storage is zero filled, storage from the old size to the new size is zero filled.
 Without this extension, it is unsafe to %(realloc%) storage initially allocated with zero-fill/alignment as these properties are not preserved.
 This silent generation of a problem is unintuitive to programmers and difficult to locate because it is transient.
+As well, new POSIX-style %(realloc%) routines are available to handle the failure case %(p = realloc( p, size )%), when there is insufficient memory.
+Here, the original storage is leaked when pointer %(p%) is overwritten with null, negating the benefit of not freeing the storage on failure for recovery purposes.
 
-As well, the following additional heap operations are provided, which completes programmer expectation with respect to accessing the different allocation properties.
-\begin{description}
-\item[%(resize( oaddr, size )%)]\index{resize@%(resize%)} re-purpose an old allocation for a new type \emph{without} preserving fill or alignment.
-\item[%(resize( oaddr, alignment, size )%)]\index{resize@%(resize%)} re-purpose an old allocation with new alignment but \emph{without} preserving fill.
-\item[%(realloc( oaddr, alignment, size )%)]\index{realloc@%(realloc%)} same as previous %(realloc%) but adding or changing alignment.
-\item[%(aalloc( dim, elemSize )%)]\index{aalloc@%(aalloc%)} same as %(calloc%) except memory is \emph{not} zero filled.
-\item[%(amemalign( alignment, dim, elemSize )%)]\index{amemalign@%(amemalign%)} same as %(aalloc%) with memory alignment.
-\item[%(cmemalign( alignment, dim, elemSize )%)]\index{cmemalign@%(cmemalign%)} same as %(calloc%) with memory alignment.
+The following additional heap operations are provided, which completes programmer expectation with respect to accessing the different allocation properties.
+\begin{description}[parsep=0pt]
+\item[%(void * resize( void * oaddr, size_t size )%)]\index{resize@%(resize%)}
+equivalent to %(realloc( oaddr, size )%) to repurpose a prior allocation for a new type \emph{without} copying the previous data into the new allocation or preserving zero fill or alignment (faster than %(realloc%)).
+The original storage is always freed for expansion even if the new allocation fails.
+
+\item[%(void * resizearray( void * oaddr, size_t dimension, size_t elemSize )%)]\index{resizearray@%(resizearray%)}
+equivalent to %(resize( oaddr, dimension *%) \linebreak %(elemSize )%) for a new array-type allocation \emph{without} copying previous data into the new allocation or preserving zero fill or alignment (faster than %(reallocarray%)).
+The original storage is always freed for expansion even if the new allocation fails.
+
+\item[%(int posix_realloc( void ** oaddrp, size_t size )%)]\index{posix_realloc@%(posix_realloc%)}
+equivalent to %(oaddrp = realloc( *oaddrp, size )%).
+Sticky properties are preserved.
+(Requires an ugly cast: %(int ret = posix_realloc( (void **)&p, size )%).)
+On success, directly returns 0 and indirectly the address of the new storage though output parameter %(oaddrp%).
+On failure, directly returns 0 or %(ENOMEM%), and %(oaddrp%) and %(errno%) are not set.
+
+\item[%(int posix_reallocarray( void ** oaddrp, size_t dimension, size_t elemSize )%)]\index{posix_reallocarray@%(posix_reallocarray%)}
+equivalent to %(posix_realloc( oaddrp,%) \linebreak %(dimension * elemSize )%) for an array allocation.
+Sticky properties are preserved.
+
+\item[%(void * aalloc( size_t dimension, size_t elemSize )%)]\index{aalloc@%(aalloc%)}
+equivalent to %(malloc( dimension * elemSize )%) \emph{without} zero filling the memory (faster than %(calloc%)).
+No sticky properties are set.
+
+\item[%(void * amemalign( size_t alignment, size_t dimension, size_t elemSize )%)]\index{amemalign@%(amemalign%)}
+equivalent to %(memalign( alignment,%) \linebreak %(dimension * elemSize )%) for array alignment.
+Sets sticky alignment property.
+
+\item[%(void * cmemalign( size_t alignment, size_t dimension, size_t elemSize )%)]\index{cmemalign@%(cmemalign%)}
+equivalent to %(memset( amemalign(%) \linebreak %(alignment, dimension, elemSize ), '\0', dimension * elemsize )%) for array with zero fill.
+Sets sticky zero-fill and alignment property.
+
+\item[%(void * aligned_resize( void * oaddr, size_t nalignment, size_t size )%)]\index{aligned_resize@%(aligned_resize%)}
+equivalent to %(resize( oaddr, size )%) with an alignment.
+No sticky properties are preserved.
+
+\item[%(void * aligned_resizearray( void * oaddr, size_t nalignment, size_t dimension, size_t elemSize )%)]\index{aligned_resizearray@%(aligned_resizearray%)}
+equivalent \linebreak to %(resizearray( oaddr, dimension, elemSize )%) with an alignment.
+No sticky properties are preserved.
+
+\item[%(void * aligned_realloc( void * oaddr, size_t nalignment, size_t size )%)]\index{aligned_realloc@%(aligned_realloc%)}
+equivalent to %(realloc( oaddr, size )%) with an alignment.
+Sticky properties are preserved.
+
+\item[%(void * aligned_reallocarray( void * oaddr, size_t nalignment, size_t dimension, size_t elemSize )%)]\index{aligned_reallocarray@%(aligned_reallocarray%)}
+equivalent \linebreak to %(reallocarray( oaddr, dimension, elemSize )%) with an alignment.
+Sticky properties are preserved.
+
+\item[%(int aligned_posix_realloc( void ** oaddrp, size_t nalignment, size_t size )%)]\index{aligned_posix_realloc@%(aligned_posix_realloc%)}
+equivalent to %(posix_resizearray(%) \linebreak %(oaddrp, dimension, elemSize )%) with an alignment.
+Sticky properties are preserved.
+
+\item[%(void * aligned_posix_reallocarray( void * oaddrp, size_t nalignment, size_t dimension, size_t elemSize )%)]\index{aligned_posix_reallocarray@%(aligned_posix_reallocarray%)} \ \linebreak
+equivalent to %(posix_reallocarray( oaddr, dimension, elemSize )%) with an alignment.
+Sticky properties are preserved.
 \end{description}
 
-The \uC allocator provides the following non-standard heap-operations:
-\begin{description}
-\item[%(mallopt( parameter, value )%)]\index{mallopt@%(mallopt%)} adjust parameters of the memory allocator.
-Supported parameters are (see also \VRef{s:DefaultValuesHeap}):
-\begin{description}
-\item[%(M_TOP_PAD%)]\index{M_TOP_PAD@%(M_TOP_PAD%)} sets the amount to extend the heap size once all the current storage in the heap is allocated.
-\item[%(M_MMAP_THRESHOLD%)]\index{M_MMAP_THRESHOLD@%(M_MMAP_THRESHOLD%)} sets the division point after which allocation requests are separately memory mapped rather than being allocated from the heap area.
+The \uC allocator provides the following new control operations that are called \emph{once} during startup to set specific limits \emph{before} an application starts.
+Setting these value early is essential because allocations can occur from the dynamic loader and other libraries before application code executes.
+To set a value, define a specific routine in an application and return the desired value, e.g.:
+%[
+size_t malloc_extend() { return 16 * 1024 * 1024; }  // bytes
+%]
+\begin{description}[parsep=0pt]
+\item[%(malloc_extend()%)]\index{malloc_extend@%(malloc_extend%)}
+return the number of bytes to extend the %(sbrk%) area when there is insufficient free storage to service an allocation request.
+Returns the heap extension size used throughout a program.
+
+\item[%(size_t malloc_mmap_start()%)]\index{malloc_mmap_start@%(malloc_mmap_start%)}
+return the crossover allocation size from the %(sbrk%) area to separate mapped areas.
+Can be changed dynamically with %(mallopt%) and %(M_MMAP_THRESHOLD%).
+Returns the crossover point used throughout a program.
+
+\item[%(size_t malloc_unfreed()%)]\index{malloc_unfreed@%(malloc_unfreed%)}
+return the amount subtracted from the global unfreed program storage to adjust for unreleased storage from routines like %(printf%) (debug only).
+Returns the new subtraction amount and called by %(malloc_stats%).
 \end{description}
-\item[%(malloc_alignment( addr )%)]\index{malloc_alignment@%(malloc_alignment%)} returns the alignment of the allocation pointed-to by %(addr%).
-If the allocation is not aligned or %(addr%) is the %(nulladdr%), the minimal alignment is returned.
-\item[%(malloc_zero_fill( addr )%)]\index{malloc_zero_fill@%(malloc_zero_fill%)} returns a boolean result indicating if the memory pointed-to by %(addr%) is allocated with zero fill, e.g., by %(calloc%)/%(cmemalign%).
-\item[%(malloc_size( addr )%)]\index{malloc_size@%(malloc_size%)} returns the size of the memory allocation pointed-to by %(addr%).
-\item[%(malloc_usable_size( addr )%)]\index{malloc_usable_size@%(malloc_usable_size%)} returns the usable size of the memory pointed-to by %(addr%), i.e., the bin size containing the allocation, where %(malloc_size( addr )%) $\le$ %(malloc_usable_size( addr )%).
+
+The \uC allocator provides the following additional C information routines.
+
+\begin{description}[parsep=0pt]
+\item[%(size_t malloc_size( addr )%)]\index{malloc_size@%(malloc_size%)}
+returns the requested size of a dynamic object, which is updated when an object is resized. See also %(malloc_usable_size%).
+
+\item[%(size_t malloc_alignment( addr )%)]\index{malloc_alignment@%(malloc_alignment%)}
+returns the object alignment, where the minimal alignment is 16 bytes, by %(memalign%)/\-%(cmemalign%)/etc.
+
+\item[%(bool malloc_zero_fill( addr )%)]\index{malloc_zero_fill@%(malloc_zero_fill%)}
+returns if the object is zero filled, e.g., by %(calloc%)/%(cmemalign%).
+
+\item[%(bool malloc_remote( addr )%)]\index{malloc_remote@%(malloc_remote%)}
+returns if the object is from a remote heap.
+
 \item[%(malloc_stats_fd( fd )%)]\index{malloc_stats_fd@%(malloc_stats_fd%)} set file-descriptor number for printing memory-allocation statistics (default %(STDERR_FILENO%)).
 This file descriptor is used implicitly by %(malloc_stats%) and %(malloc_info%).
-\item[%(malloc_stats()%)]\index{malloc_stats@%(malloc_stats%)} print memory-allocation statistics on the file-descriptor set by %(malloc_stats_fd%).
-If the shell variable %(UPP_MALLOC_STATS%)\index{UPP_MALLOC_STATS@%(UPP_MALLOC_STATS%)} is defined, %(malloc_stats%) is implicitly called at program termination.
-\item[%(malloc_info( options, stream )%)]\index{malloc_info@%(malloc_info%)} print memory-allocation statistics as an XML string on the specified file-descriptor set by %(malloc_stats_fd%).
-The %(options%) argument must be zero.
+
+\item[%(malloc_stats_clear( void )%)]\index{malloc_stats_clear@%(malloc_stats_clear%)}
+clear the statistics counters for all thread heaps.
+
+\item[%(heap_stats( void )%)]\index{heap_stats@%(heap_stats%)}
+extends %(malloc_stats%) to only print statistics for the heap associated with the executing thread.
 \end{description}
 
 
@@ -10942,54 +11080,100 @@ int main() {
 \end{itemize}
 
 
-\chapter{Stack Object Allocation}
-\label{s:StackObjectAllocation}
-\index{stack object allocation}%
+\chapter{Array Initialization and Stack Allocation}
+\label{s:StackArrayAllocation}
+\index{array!stack allocation}%
+\index{array!initialization}%
 
-\CC has no mechanism to created an array of objects where each array element is initialized via the object's constructor to a different value.
-As result, it is necessary to use the heap.
+\CC has limitations with respect to initializing array declarations and allocating arrays on the stack.
+
+C-style array initialization is possible, if the array type is a POD (Plain Old Data type).
+This form of initialization allows some or all of the array elements to be explicitly set.
+%[
+int ia[5] = { 0, 1, 2, };  // set first 3
+struct S { int i, j; } sa[5] = { {0, 1}, {1, 2}, {2, 3}, };  // set first 3
+%]
+C-style designator is disallowed for non-contiguous initialization.
+%[
+int ia[5] = { [0] = 0, [2] = 1, [4] = 2, };  // set 0, 2, 4, disallowed
+%]
+However, if any constructor is added to %(S%), possibly because of a %(const%) member, C-style initializer is allowed but any uninitialized elements \emph{must} be initialization with the default constructor (even without %(const%) members).
+%[
+struct S {
+	const int i;	// can only be initialized at declaration
+	int j;
+	S() : i{0} {}	// default constructor (or const int i = 0)
+	\(\BF{\)S( int i, int j ) : i{i}, j{j} {}\(}\)
+} sa[5] = { {0, 1}, {1, 2}, {2, 3}, };  // set first 3, remaining set by default constructor
+%]
+For large arrays, there is no convenient mechanism to initialize \emph{all} array elements different from the default constructor;
+the following does not work.
+%[
+S sa[500]{ 2, 3 }   \({\rm equivalent to}\)  S sa[500] = {{2}, {3}}  \({\rm not}\)  = {{2, 3}}
+%]
+which fails without adding a constructor taking a single parameter.
+%[
+S( int i ) : i{i} {}
+%]
+The fallback is post-initialization using a loop, which can initialize a (non-contiguous) subset of elements.
+%[
+for ( int i = 0; i < 500; i += 1 ) sa[i] = S{ 2, 3 };  // anonymous S object
+%]
+which fails without adding an assignment operation.
+%[
+S & operator=( const S & rhs ) { j = rhs.j; return *this; }
+%]
+that can only reset the non-%(const%) members.
+The problem is exacerbated when each array element needs to be initialized with different values.
+%[
+S sa[500]{ 0..499, 0..4990..10 };  // imaginary range syntax
+%]
+as a post-initialization loop still does not work.
+%[
+for ( int i = 0; i < 500; i += 1 ) sa[i] = S{ i, i * 10 };
+%]
+
+The only \CC mechanism to resolve these issues is to use indirection with the heap.
 \begin{cquote}
+\setlength{\tabcolsep}{15pt}
 \begin{tabular}{@{}l|l@{}}
 %[
-struct Obj {
-	const int id; ...
-	Obj( int id ) : id( id ) { ... }
-	void mem(...) { ... }
-}
-ostream & operator<<( ostream & os, const Obj & obj ) {
-    return os << obj.id;
-}
-cin >> size;
-Obj \(\BF{\)*\(}\) objs[size];
-for ( int id = 0; id < size; id += 1 )
-	objs[id] = \(\BF{\)new\(}\) Obj( id );
+
+
+S \(\BF{\)*\(}\) sa[500];
+for ( int i = 0; i < 500; i += 1 )
+	sa[i] = \(\BF{\)new\(}\) S( i, i * 10 );
 ...
-for ( int id = 0; id < size; id += 1 )
-	\(\BF{\)delete\(}\) objs[id];
+for ( int i = 0; i < 5; i += 1 )
+	\(\BF{\)delete\(}\) sa[i];
 %]
 &
 \LGindent=0pt
 %[
 #include <memory>
-
-
-
-
-
-
-
 {
-	\(\BF{\)unique_ptr<Obj>\(}\) objs[size];
-	for ( int id = 0; id < size; id += 1 )
-		objs[id] = \(\BF{\)make_unique<Obj>\(}\)( id );
+	\(\BF{\)unique_ptr<S>\(}\) sa[500];
+	for ( int i = 0; i < 500; i += 1 )
+		sa[i] = \(\BF{\)make_unique<S>\(}\)( i, i * 10 ); // constructor call
 	...
-} // automatically delete objs array elements
+} // automatically delete sa array elements
 
 %]
 \end{tabular}
 \end{cquote}
+However, there are implicit costs in using the heap, and unfortunately, \CC does not support stack-based \Index{variable-size arrays (VLA)}, while C and %(g++%) do.
+%[
+cin >> size;
+int arr[\(\BF{\)size\(}\)];  // disallowed in C++, allowed in C/g++
+%]
+(Note, \CC %(std::array%) is not a VLA;
+its size is a constant expression.)
+Creating a VLA is an $O(1)$ operation (subtract from the stack pointer), whereas %(unique_ptr%) is $O(size)$ heap operations, i.e., one for each array element, where each heap operation can take 10s or 100s of instructions.
+Also, the heap may be a shared resource, resulting in contention from multiple threads.
+Unfortunately, VLAs have the same intialization problems as static fixed-sized arrays, which pushes the programmer back to using the heap.
 
 
+\begin{comment}
 \section{\texorpdfstring{\BGfont uNoCtor}{uNoCtor}}
 
 \uC provides template %(uNoCtor%)\index{uNoCtor@%(uNoCtor%)} for stack allocations of an array of objects (\Index{VLA}) without calling the default constructor using the placement %(new%) mechanism (like %(optional::emplace_back%)).
@@ -11017,16 +11201,16 @@ In the latter case, if an object has no destructor, no call to %(dtor%) is requi
 The following example shows how %(uNoCtor%) is used to create an array of objects on the stack and initialize each array element to a different value using the old-style constructor syntax (parenthesis versus curly brackets).
 %[
 {
-	\(\BF{\)uNoCtor<Obj>\(}\) objs[size]; // objs on stack and no default constructor calls
+	\(\BF{\)uNoCtor<S>\(}\) sa[size]; // sa on stack and no default constructor calls
 	for ( int id = 0; id < size; id += 1 )
-		objs[id]\(\BF{\)( id )\(}\); // initialize and use
+		sa[id]\(\BF{\)( id )\(}\); // initialize and use
 	...
-} // automatically delete objs array elements
+} // automatically delete sa array elements
 %]
 As for %(unique_ptr%), use %(*%) for object and %(->%) for field access.
 %[
 for ( int id = 0; id < size; id += 1 )
-	cout << \(\BF{\)*\(}\)objs[id] << ' ' << objs[id]\(\BF{\)->\(}\)id << endl;
+	cout << \(\BF{\)*\(}\)sa[id] << ' ' << sa[id]\(\BF{\)->\(}\)id << endl;
 %]
 %(uNoCtor%) can be used with all new \uC types, e.g.:
 %[
@@ -11051,7 +11235,7 @@ For potentially large arrays, increase the coroutine/task stack size (see \VRef{
 %[
 _Coroutine C {
 	void main() {  // 64K stack
-		Obj \(\BF{\)objs[100000];\(}\) // overflow
+		S \(\BF{\)sa[100000];\(}\) // overflow
 		// implicit initialize with ctor calls
 		...
 
@@ -11063,10 +11247,10 @@ _Coroutine C {
 %[
 _Coroutine C {
 	void main() {
-		\(\BF{\)uNoCtor<Obj> * objs = new uNoCtor<Obj>[100000]\(}\);
+		\(\BF{\)uNoCtor<S> * sa = new uNoCtor<S>[100000]\(}\);
 		// explicit initialize with ctor calls
 		...
-		delete [] \(\BF{\)objs\(}\); // explicit array deallocation
+		delete [] \(\BF{\)sa\(}\); // explicit array deallocation
 	}
 };
 %]
@@ -11074,30 +11258,99 @@ _Coroutine C {
 \end{cquote}
 The %(uNoCtor%) array is in the heap but the constructor calls for that array can be done after the allocation.
 Alternatives are large stacks (waste virtual space) or dynamic stack growth (complex and pauses).
+\end{comment}
 
 
 \section{\texorpdfstring{\BGfont uArray}{uArray}}
 
-\uC provides wrappers %(uArray%)\index{uArray@%(uArray%)} and %(uArrayPtr%)\index{uArrayPtr@%(uArrayPtr%)} for single-dimension %(uNoCtor%) arrays \BF{with subscript checking}.
-%[
-{ // GOOD, use stack
-	cin >> size;
-	\(\BF{\)uArray( Obj, objs, size );\(}\) // macro: type, variable, dimension
-	for ( int id = 0; id < size; id += 1 )
-		objs[id]\(\BF{\)( id )\(}\); // subscript checking, constructor call
-	...
-} // automatically delete objs
-%]
-Macro %(uArray( Obj, objs, size )%) is the same as %(uNoCtor<Obj> objs[size]%), but the %(uArray%) type redefines the subscript operator to check the subscript is within the dimension range %(0..N-1%);
-otherwise %(uArray%) usage is the same as %(uNoCtor%).
-
-When large local variables are allocated on a small stack use %(uArrayPtr%).
+To solve both these issues, \uC provides macro %(uArray%)\index{uArray@%(uArray%)} for declaring a single-dimension VLA array.
 \begin{cquote}
+\setlength{\tabcolsep}{15pt}
+\begin{tabular}{@{}ll@{}}
+\multicolumn{1}{c}{\uC\ \ VLA} & \multicolumn{1}{c}{C\ \ VLA} \\
+%[
+uArray( S, sa, size ); // type, variable, dimension
+%]
+&
+\LGindent=0pt
+%[
+S sa[size];
+%]
+\end{tabular}
+\end{cquote}
+%(uArray%) extends the VLA with declaration initialization of all array elements, post declaration constructor calls, only performing default initialization if the object provides an explicit default constructor, %(size%) member returning the array size, array assignment, and subscript checking.
+Hence, %(uArray%) is a drop-in replacements for %(unique_ptr%) \emph{without} any dynamic allocation.
+%[
+{
+	\(\BF{\)uArray( S, sa, size );\(}\)		// no default constructor calls, unless one specified
+	for ( int i = 0; i < sa.\(\BF{\)size()\(}\); i += 1 )\(}\Tab{44}{\)// array size
+		sa[i]\(\BF{\)( i, i * 10 )\(}\);	// subscript checking, post-declaration constructor call
+	...
+} // automatically delete sa calling destructors for each element
+%]
+The destructor for each array element is called when the array is deallocated.
+If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure object initialization.
+
+As for %(unique_ptr%), use %(*%) for object and %(->%) for field access.
+%[
+for ( int i = 0; i < sa.size(); i += 1 )
+	cout << \(\BF{\)*\(}\)sa[i] << ' ' << sa[i]\(\BF{\)->\(}\)j << endl;
+%]
+As well, subscript checking raises the exception %(std::out_of_range%).
+%[
+try {
+	sa[100] = ...;
+} catch( const std::out_of_range & ex ) {
+	cerr << ex.what() << endl;
+}
+uArray 0x7fff3a4bea70 bad subscript 100 outside dimension range 0..9.
+%]
+Use macro %(uArrayFill%)\index{uArrayFill@%(uArrayFill%)} to declare and initialize \emph{all} array elements to a fixed value.
+It is the same as %(uArray%) with trailing arguments for one of the element's constructors.
+%[
+uArrayFill( int, ia, 10, \(\BF{\)42\(}\) );\(}\Tab{44}{\)// all int array elements have value 42
+uArrayFill( S, sa, 10, \(\BF{\)2, 3\(}\) );\(}\Tab{44}{\)// all S's array elements have value 2, 3
+%]
+%(uArray%) assignment is only allowed if the array elements are assignable.
+The minimum array-size elements are copied.
+%[
+uArray( int, ia2, 20 );
+ia = ia2 = ia;  // copy first 10 elements of ia to ia2, copy first 10 elements of ia2 back to ia
+%]
+%(uArray%) can be used with all new \uC types, e.g.:
+\begin{cquote}
+\setlength{\tabcolsep}{15pt}
+\begin{tabular}{@{}l|l@{}}
+%[
+_Coroutine C {
+	const int id;
+	void main() { ... }
+  public:
+	C( int i ) : id{ id } { ... }
+};
+%]
+&
+\LGindent=0pt
+%[
+int main() {
+	\(\BF{\)uArray<C> c[10];\(}\)
+	for ( int id = 0; id < c.size(); id += 1 ) {
+	 	c[id]\(\BF{\)( id )\(}\);  // construct coroutine
+	}
+} // automatically delete c array calling destructors on each element
+%]
+\end{tabular}
+\end{cquote}
+
+Creating large VLAs on a coroutine or task stack can overflow it.
+For potentially large arrays, use macro %(uArrayPtr%).
+\begin{cquote}
+\setlength{\tabcolsep}{15pt}
 \begin{tabular}{@{}l|l@{}}
 %[
 _Coroutine C {
 	void main() {  // 64K stack
-		Obj \(\BF{\)objs[100000];\(}\) // overflow
+		S \(\BF{\)sa[100\('\)000];\(}\) // on stack, overflow
 		// implicit initialize with ctor calls
 		...
 	} // implicitly array deallocate
@@ -11108,7 +11361,7 @@ _Coroutine C {
 %[
 _Coroutine C {
 	void main() {
-		\(\BF{\)uArrayPtr( Obj, objs, 100000 )\(}\)
+		\(\BF{\)uArrayPtr( S, sa, 100\('\)000 )\(}\)  // on heap
 		// explicit initialize with ctor calls
 		...
 	} // implicitly array deallocate
@@ -11116,7 +11369,17 @@ _Coroutine C {
 %]
 \end{tabular}
 \end{cquote}
-%(uArrayPtr%)\index{uArrayPtr@%(uArrayPtr%)} dynamically allocates the array in the heap, and implicitly frees it at the end of the block (like %(unique_ptr%)).
+%(uArrayPtr%)\index{uArrayPtr@%(uArrayPtr%)} (%(uArrayPtrFill%)\index{uArrayPtrFill@%(uArrayPtrFill%)}) performs a single dynamically allocation for the array in the heap, and implicitly frees it at the end of the block (like %(unique_ptr%)).
+The array elements are initialized post declaration with %(uArray%) constructor calls.
+
+A %(uArray%) (%(uArrayFill%)) or %(uArrayPtr%) (%(uArrayPtrFill%)) object cannot be passed by value to a routine, as it is impossible to have a VLA parameter.
+When passing these objects, use macro %(uArrayRef%)\index{uArrayRef@%(uArrayRef%)} to create the parameter, which accepts the argument %(uArray%)\,/\,%(uArrayPtr%) by reference.
+%[
+template<typename T> void print( \(\BF{\)uArrayRef( T, parm )\(}\) ) {  // T & parm
+	for ( size_t i = 0; i < parm.size(); i += 1 ) cout << *parm[i] << ' ';
+	cout << endl;
+}
+%]
 
 
 \chapter{String to Integer}
@@ -11186,14 +11449,9 @@ bool listed() const;
 \index{uSeqable@%(uSeqable%)!listed@%(listed%)}%
 which returns %(true%) if the node is an element of any collection or sequence and %(false%) otherwise.
 
-Finally, no header files are necessary to access the \uC DSL.
-
-Some \uC DSL restrictions are:
-\begin{itemize}
-\item
-None of the member routines are virtual in any of the data structures for efficiency reasons.
+The \uC DSL has no virtual member routines in any of the data structures for efficiency reasons.
 Therefore, pointers to data structures must be used with care or incorrect member routines may be invoked.
-\end{itemize}
+Finally, no header files are necessary to access the \uC DSL.
 
 
 \section{Stack}
@@ -11228,14 +11486,25 @@ template<typename T> class uStack {
 \index{uStack@%(uStack%)!pop@%(pop%)}%
 %(T%) must be a public descendant of %(uColable%).
 
-The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the stack has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the top node of the stack without removing it or %(nullptr%) if the stack has no nodes.
-The member routine %(top%)\index{top@%(top%)} is a synonym for %(head%).
-The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the top of the stack and returns a pointer to the node.
-The member routine %(add%)\index{add@%(add%)} is a synonym for %(addHead%).
-The member routine %(push%)\index{push@%(push%)} is a synonym for %(addHead%).
-The member routine %(drop%)\index{drop@%(drop%)} removes a node from the top of the stack and returns a pointer to it or %(nullptr%) if the stack has no nodes.
-The member routine %(pop%)\index{pop@%(pop%)} is a synonym for %(drop%).
+The %(uStack%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
+%(empty%)\index{empty@%(empty%)} returns %(true%) if the stack has no nodes and %(false%) otherwise.
+\item
+%(head%)\index{head@%(head%)} returns a pointer to the top node of the stack without removing it or %(nullptr%) if the stack is empty.
+\item
+%(top%)\index{top@%(top%)} is a synonym for %(head%).
+\item
+%(addHead%)\index{addHead@%(addHead%)} adds a node to the top of the stack and returns a pointer to the node for cascading.
+\item
+%(add%)\index{add@%(add%)} is a synonym for %(addHead%).
+\item
+%(push%)\index{push@%(push%)} is a synonym for %(addHead%).
+\item
+%(drop%)\index{drop@%(drop%)} removes a node from the top of the stack and returns a pointer to it or %(nullptr%) if the stack is empty.
+\item
+%(pop%)\index{pop@%(pop%)} is a synonym for %(drop%).
+\end{itemize}
 
 
 \subsection{Iterator}
@@ -11265,10 +11534,15 @@ the association must be done subsequently with member %(over%).
 the association can be changed subsequently with member %(over%).
 \end{prefix}
 
-The member routine %(over%)\index{over@%(over%)} resets the iterator to the top of the specified stack.
-The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
+The %(uStackIter%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
+%(over%)\index{over@%(over%)} resets the iterator to the top of the specified stack.
+\item
+%(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the bottom (end) of the stack has not been reached, the argument is set to the address of the next node and %(true%) is returned;
 otherwise the argument is set to %(nullptr%) and %(false%) is returned.
+\end{itemize}
 
 \VRef[Figure]{f:DSLStack} illustrates creating and using a stack and stack iterator.
 
@@ -11342,22 +11616,38 @@ template<typename T> class uQueue {
 \index{uQueue@%(uQueue%)!split@%(split%)}%
 %(T%) must be a public descendant of %(uColable%).
 
-The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the queue has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the queue without removing it or %(nullptr%) if the queue has no nodes.
-The member routine %(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the queue without removing it or %(nullptr%) if the queue has no nodes.
-The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(nullptr%) if the specified node is the last node in the sequence.
-The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the queue and returns a pointer to the node.
-The member routine %(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the queue and returns returns a pointer to the node.
-The member routine %(add%)\index{add@%(add%)} is a synonym for %(addTail%).
-The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the queue and returns a pointer to it or %(nullptr%) if the queue has no nodes.
-The member routine %(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
-The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the queue and returns a pointer to it or %(nullptr%) if the queue has no nodes.
-The member routine %(remove%)\index{remove@%(remove%)} removes the specified node from the queue (any location) and returns a pointer to the node.
-The member routine %(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the ``from'' list to the tail or end of the specified queue;
-the ``from'' list is empty after the transfer.
-The member routine %(split%)\index{split@%(split%)} transfer the ``from'' list up to node ``n'' to the end of the specified queue;
-the ``from'' list becomes the list after node ``n''.
-Node ``n'' must be in the ``from'' list.
+The %(uQueue%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
+%(empty%)\index{empty@%(empty%)} returns %(true%) if the queue has no nodes and %(false%) otherwise.
+\item
+%(head%)\index{head@%(head%)} returns a pointer to the head (first) node of the queue without removing it or %(nullptr%) if the queue is empty.
+\item
+%(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the queue without removing it or %(nullptr%) if the queue is empty.
+\item
+%(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(nullptr%) if the specified node is the last node in the sequence.
+\item
+%(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the queue and returns a pointer to the node for cascading.
+\item
+%(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the queue and returns returns a pointer to the node for cascading.
+\item
+%(add%)\index{add@%(add%)} is a synonym for %(addTail%).
+\item
+%(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the queue and returns a pointer to it or %(nullptr%) if the queue is empty.
+\item
+%(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
+\item
+%(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the queue and returns a pointer to it or %(nullptr%) if the queue is empty.
+\item
+%(remove%)\index{remove@%(remove%)} removes the specified node from the queue (any location) and returns a pointer to the node.
+\item
+%(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the %(from%) list to the tail or end of the specified queue;
+the %(from%) list is empty after the transfer.
+\item
+%(split%)\index{split@%(split%)} transfer the %(from%) list up to node %(n%) to the end of the specified queue;
+the %(from%) list becomes the list after node %(n%).
+Node %(n%) must be in the %(from%) list.
+\end{itemize}
 
 
 \subsection{Iterator}
@@ -11387,10 +11677,15 @@ the association must be done subsequently with member %(over%).
 the association can be changed subsequently with member %(over%).
 \end{prefix}
 
+The %(uQueueIter%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
 The member routine %(over%)\index{over@%(over%)} resets the iterator to the head of the specified queue.
+\item
 The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the tail (end) of the queue has not been reached, the argument is set to the address of the next node and %(true%) is returned;
 otherwise the argument is set to %(nullptr%) and %(false%) is returned.
+\end{itemize}
 
 \VRef[Figure]{f:DSLQueue} illustrates creating and using a queue and queue iterator.
 
@@ -11471,26 +11766,44 @@ template<typename T> class uSequence {
 \index{uSequence@%(uSequence%)!split@%(split%)}%
 %(T%) must be a public descendant of %(uSeqable%).
 
-The member routine %(empty%)\index{empty@%(empty%)} returns %(true%) if the sequence has no nodes and %(false%) otherwise.
-The member routine %(head%)\index{head@%(head%)} returns a pointer to the head or first node of the sequence without removing it or %(nullptr%) if the sequence has no nodes.
-The member routine %(tail%)\index{tail@%(tail%)} returns a pointer to the tail or last node of the sequence without removing it or %(nullptr%) if the sequence has no nodes.
-The member routine %(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (toward the tail) or %(nullptr%) if the specified node is the last node in the sequence.
-The member routine %(pred%)\index{pred@%(pred%)} returns a pointer to the predecessor node before the specified node (toward the head) or %(nullptr%) if the specified node is the first node in the sequence.
-The member routine %(insertBef%)\index{insertBef@%(insertBef%)} adds a node before the specified node or at the end (tail) if %(bef%) is %(nullptr%).
-The member routine %(insertAft%)\index{insertAft@%(insertAft%)} adds a node after the specified node or at the beginning (head) if %(aft%) is %(nullptr%).
-The member routine %(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the sequence and returns a pointer to the node.
-The member routine %(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the sequence and returns returns a pointer to the node.
-The member routine %(add%)\index{add@%(add%)} is a synonym for %(addTail%).
-The member routine %(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the sequence and returns a pointer to it or %(nullptr%) if the sequence has no nodes.
-The member routine %(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
-The member routine %(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail or end of the sequence and returns a pointer to it or %(nullptr%) if the sequence has no nodes.
-The member routine %(remove%)\index{remove@%(remove%)} removes the specified node from the sequence (any location) and returns a pointer to the node.
-The member routine %(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the ``from'' list to the tail or end of the specified sequence;
-the ``from'' list is empty after the transfer.
-The member routine %(split%)\index{split@%(split%)} transfer the ``from'' list up to node ``n'' to the end of the specified sequence;
-the ``from'' list becomes the list after node ``n''.
-Node ``n'' must be in the ``from'' list.
-
+The %(uSequence%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
+%(empty%)\index{empty@%(empty%)} returns %(true%) if the sequence has no nodes and %(false%) otherwise.
+\item
+%(head%)\index{head@%(head%)} returns a pointer to the head (first) node of the sequence without removing it or %(nullptr%) if the sequence is empty.
+\item
+%(tail%)\index{tail@%(tail%)} returns a pointer to the tail (last) node of the sequence without removing it or %(nullptr%) if the sequence is empty.
+\item
+%(succ%)\index{succ@%(succ%)} returns a pointer to the successor node after the specified node (towards tail) or %(nullptr%) if the specified node is the last node in the sequence.
+\item
+%(pred%)\index{pred@%(pred%)} returns a pointer to the predecessor node before the specified node (towards head) or %(nullptr%) if the specified node is the first node in the sequence.
+\item
+%(insertBef%)\index{insertBef@%(insertBef%)} adds a node before the specified node or at the end (tail) if %(bef%) is %(nullptr%) and returns a pointer to the node for cascading.
+\item
+%(insertAft%)\index{insertAft@%(insertAft%)} adds a node after the specified node or at the beginning (head) if %(aft%) is %(nullptr%) and returns a pointer to the node for cascading.
+\item
+%(addHead%)\index{addHead@%(addHead%)} adds a node to the head or front of the sequence and returns a pointer to the node for cascading.
+\item
+%(addTail%)\index{addTail@%(addTail%)} adds a node to the tail or end of the sequence and returns returns a pointer to the node for cascading.
+\item
+%(add%)\index{add@%(add%)} is a synonym for %(addTail%).
+\item
+%(dropHead%)\index{dropHead@%(dropHead%)} removes a node from the head or front of the sequence and returns a pointer to it or %(nullptr%) if the sequence is empty.
+\item
+%(drop%)\index{drop@%(drop%)} is a synonym for %(dropHead%).
+\item
+%(dropTail%)\index{dropTail@%(dropTail%)} removes a node from the tail (end) of the sequence and returns a pointer to it or %(nullptr%) if the sequence is empty.
+\item
+%(remove%)\index{remove@%(remove%)} removes the specified node from the sequence (any location) and returns a pointer to the node.
+\item
+%(transfer%)\index{transfer@%(transfer%)} transfers all nodes from the %(from%) list to the tail or end of the specified sequence;
+the %(from%) list is empty after the transfer.
+\item
+%(split%)\index{split@%(split%)} transfer the %(from%) list up to node %(n%) to the end of the specified sequence;
+the %(from%) list becomes the list after node %(n%).
+Node %(n%) must be in the %(from%) list.
+\end{itemize}
 A sequence behaves like a queue when members %(add%) and %(drop%) are used.
 The example program in \VRef{s:DiskScheduler} makes use of a sequence and modifies it so that nodes are maintained in order.
 
@@ -11536,10 +11849,15 @@ the association must be done subsequently with member %(over%).
 the association can be changed subsequently with member %(over%).
 \end{prefix}
 
+The %(uQueueIter%) members are:
+\begin{itemize}[leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt]
+\item
 The member routine %(over%)\index{over@%(over%)} resets the iterator to the head or tail of the specified sequence depending on which iterator is used.
+\item
 The member routine %(>>%)\index{>>@%(>>%)} attempts to move the iterator's internal cursor to the next node.
 If the head (front) or tail (end) of the sequence has not been reached depending on which iterator is used, the argument is set to the address of the next node and %(true%) is returned;
 otherwise the argument is set to %(nullptr%) and %(false%) is returned.
+\end{itemize}
 
 \VRef[Figure]{f:DSLSeq} illustrates creating and using a sequence and sequence iterator.
 
@@ -11793,6 +12111,7 @@ The server can deal with multiple simultaneous clients.
 \bibliography{/usr/local/bibliographies/pl,/usr/local/bibliographies/ps,/usr/local/bibliographies/realtime}
 
 
+\markboth{INDEX}{INDEX}
 \input{uC++.ind}
 
 \end{document}
