@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 16 16:46:57 2025
-// Update Count     : 6437
+// Last Modified On : Thu Aug 28 21:34:25 2025
+// Update Count     : 6438
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -168,12 +168,19 @@ template< typename T > class uArrayImpl {
 	uNoCtor<T> * arr;
   public:
 	uArrayImpl( uNoCtor<T> * arr, size_t asize, bool runDtor = false ) : runDtor{ runDtor }, asize{ asize }, arr{ arr } {
-		if constexpr ( std::is_default_constructible<T>::value ) { // have default constructor ?
-			for ( size_t i = 0; i < asize; i += 1 ) arr[i](); // run default constructors
+		if constexpr ( std::is_pointer<T>::value ) {
+			for ( size_t i = 0; i < asize; i += 1 ) *arr[i] = nullptr; // must initialize all
 		} // if
 	} // uArrayImpl::uArrayImpl
 
-	~uArrayImpl() { if ( runDtor ) delete [] arr; }		// used by uArrayPtr
+	~uArrayImpl() {
+		if constexpr ( std::is_pointer<T>::value ) {
+			for ( size_t i = 0; i < asize; i += 1 ) {
+				delete *arr[i];							// free storage
+			} // for
+		} // if
+		if ( runDtor ) delete [] arr;					// used by uArrayPtr
+	} // uArrayImpl::~uArrayImpl
 
 	uArrayImpl<T> & operator=( const uArrayImpl<T> & rhs ) {
 		size_t minarr = asize < rhs.asize ? asize : rhs.asize; // min( asize, rhs.asize )

@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Aug 17 09:24:42 2025
-%% Update Count     : 9276
+%% Last Modified On : Wed Sep  3 15:05:19 2025
+%% Update Count     : 9300
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -11106,15 +11106,16 @@ struct S {
 	\(\BF{\)S( int i, int j ) : i{i}, j{j} {}\(}\)
 } sa[5] = { {0, 1}, {1, 2}, {2, 3}, };  // set first 3, remaining set by default constructor
 %]
-For large arrays, there is no convenient mechanism to initialize \emph{all} array elements different from the default constructor;
-the following does not work.
+For large arrays, there is no convenient mechanism to initialize \emph{all} array elements different from the default constructor.
+The following is deceiving.
 %[
-S sa[500]{ 2, 3 }   \({\rm equivalent to}\)  S sa[500] = {{2}, {3}}  \({\rm not}\)  = {{2, 3}}
+S sa[500]{ 2, 3 };   \({\rm equivalent to}\)  S sa[500] = {{2}, {3}}  \({\rm not}\)  = {{2, 3}}
 %]
-which fails without adding a constructor taking a single parameter.
+which means call the constructor taking a single parameter (must add)
 %[
 S( int i ) : i{i} {}
 %]
+for the first two array elements.
 The fallback is post-initialization using a loop, which can initialize a (non-contiguous) subset of elements.
 %[
 for ( int i = 0; i < 500; i += 1 ) sa[i] = S{ 2, 3 };  // anonymous S object
@@ -11126,7 +11127,7 @@ S & operator=( const S & rhs ) { j = rhs.j; return *this; }
 that can only reset the non-%(const%) members.
 The problem is exacerbated when each array element needs to be initialized with different values.
 %[
-S sa[500]{ 0..499, 0..4990..10 };  // imaginary range syntax
+S sa[500]{ 0..4990..10 };  // imaginary range syntax
 %]
 as a post-initialization loop still does not work.
 %[
@@ -11156,7 +11157,7 @@ for ( int i = 0; i < 5; i += 1 )
 	for ( int i = 0; i < 500; i += 1 )
 		sa[i] = \(\BF{\)make_unique<S>\(}\)( i, i * 10 ); // constructor call
 	...
-} // automatically delete sa array elements
+} // delete array elements
 
 %]
 \end{tabular}
@@ -11170,7 +11171,7 @@ int arr[\(\BF{\)size\(}\)];  // disallowed in C++, allowed in C/g++
 its size is a constant expression.)
 Creating a VLA is an $O(1)$ operation (subtract from the stack pointer), whereas %(unique_ptr%) is $O(size)$ heap operations, i.e., one for each array element, where each heap operation can take 10s or 100s of instructions.
 Also, the heap may be a shared resource, resulting in contention from multiple threads.
-Unfortunately, VLAs have the same intialization problems as static fixed-sized arrays, which pushes the programmer back to using the heap.
+Unfortunately, VLAs have the same initialization problems as static fixed-sized arrays, which pushes the programmer back to using the heap.
 
 
 \begin{comment}
@@ -11205,7 +11206,7 @@ The following example shows how %(uNoCtor%) is used to create an array of object
 	for ( int id = 0; id < size; id += 1 )
 		sa[id]\(\BF{\)( id )\(}\); // initialize and use
 	...
-} // automatically delete sa array elements
+} // delete sa array elements
 %]
 As for %(unique_ptr%), use %(*%) for object and %(->%) for field access.
 %[
@@ -11226,7 +11227,7 @@ int main() {
 	for ( int i = 0; i < 10; i += 1 ) {
 	 	c[i]\(\BF{\)( i )\(}\);
 	}
-} // automatically delete coroutine array elements calling destructors on each element
+} // delete coroutine array elements calling destructors on each element
 %]
 Creating large VLAs on a coroutine or task stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
@@ -11278,18 +11279,19 @@ S sa[size];
 %]
 \end{tabular}
 \end{cquote}
-%(uArray%) extends the VLA with declaration initialization of all array elements, post declaration constructor calls, only performing default initialization if the object provides an explicit default constructor, %(size%) member returning the array size, array assignment, and subscript checking.
+%(uArray%) extends the VLA with declaration initialization of all array elements, post declaration constructor calls, %(size%) member returning the array size, array assignment, and subscript checking.
 Hence, %(uArray%) is a drop-in replacements for %(unique_ptr%) \emph{without} any dynamic allocation.
 %[
 {
 	\(\BF{\)uArray( S, sa, size );\(}\)		// no default constructor calls, unless one specified
 	for ( int i = 0; i < sa.\(\BF{\)size()\(}\); i += 1 )\(}\Tab{44}{\)// array size
-		sa[i]\(\BF{\)( i, i * 10 )\(}\);	// subscript checking, post-declaration constructor call
+		sa[i]\(\BF{\)( i, i * 10 )\(}\);	// post-declaration constructor call, subscript checking
 	...
-} // automatically delete sa calling destructors for each element
+} // delete sa calling destructors for each element
 %]
+\Textbf{Note, post-declaration constructor calls are required, even default constructor, otherwise the array objects are uninitialized.}
 The destructor for each array element is called when the array is deallocated.
-If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure object initialization.
+If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure correct object initialization.
 
 As for %(unique_ptr%), use %(*%) for object and %(->%) for field access.
 %[
@@ -11305,18 +11307,50 @@ try {
 }
 uArray 0x7fff3a4bea70 bad subscript 100 outside dimension range 0..9.
 %]
-Use macro %(uArrayFill%)\index{uArrayFill@%(uArrayFill%)} to declare and initialize \emph{all} array elements to a fixed value.
-It is the same as %(uArray%) with trailing arguments for one of the element's constructors.
-%[
-uArrayFill( int, ia, 10, \(\BF{\)42\(}\) );\(}\Tab{44}{\)// all int array elements have value 42
-uArrayFill( S, sa, 10, \(\BF{\)2, 3\(}\) );\(}\Tab{44}{\)// all S's array elements have value 2, 3
-%]
 %(uArray%) assignment is only allowed if the array elements are assignable.
 The minimum array-size elements are copied.
 %[
 uArray( int, ia2, 20 );
 ia = ia2 = ia;  // copy first 10 elements of ia to ia2, copy first 10 elements of ia2 back to ia
 %]
+Use macro %(uArrayFill%)\index{uArrayFill@%(uArrayFill%)} to declare and initialize \emph{all} array elements to a fixed value.
+It is the same as %(uArray%) with trailing arguments for one of the element's constructors.
+%[
+uArrayFill( int, ia, 10, \(\BF{\)42\(}\) );\(}\Tab{44}{\)// all int array elements have value 42
+uArrayFill( S, sa, 10, \(\BF{\)2, 3\(}\) );\(}\Tab{44}{\)// all S's array elements have value 2, 3
+%]
+%(uArray%) can mimic %(unique_ptr%) for pointer types.
+\begin{cquote}
+\setlength{\tabcolsep}{15pt}
+\begin{tabular}{@{}l|l@{}}
+%[
+{
+	uArray( S \(\BF{\)*\(}\), sap, size );
+	for ( int i = 0; i < sap.size(); i += 1 ) {
+		sap[i] = \(\BF{\)new S( i, i );\(}\)
+	}
+	for ( int i = 0; i < sap.size(); i += 1 ) {
+		cout << \(\BF{\)(*sap[i])\(}\)->i << endl;
+	}
+} // delete array elements
+%]
+&
+\LGindent=0pt
+%[
+{
+	unique_ptr<S> sa[size];
+	for ( int i = 0; i < size; i += 1 ) {
+		sa[i] = \(\BF{\)make_unique<S>\(}\)( i, i );
+	}
+	for ( int i = 0; i < size; i += 1 ) {
+		cout << \(\BF{\)sa[i]\(}\)->i << endl;
+	}
+} // delete array elements
+%]
+\end{tabular}
+\end{cquote}
+Note, %(uArray%) requires an explicit dereference of the pointer element, while %(unique_ptr%) does an implicitly dereferences.
+
 %(uArray%) can be used with all new \uC types, e.g.:
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}
@@ -11337,12 +11371,11 @@ int main() {
 	for ( int id = 0; id < c.size(); id += 1 ) {
 	 	c[id]\(\BF{\)( id )\(}\);  // construct coroutine
 	}
-} // automatically delete c array calling destructors on each element
+} // delete c array calling destructors on each element
 %]
 \end{tabular}
 \end{cquote}
-
-Creating large VLAs on a coroutine or task stack can overflow it.
+As well, creating large VLAs on a coroutine or task stack can overflow it.
 For potentially large arrays, use macro %(uArrayPtr%).
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}

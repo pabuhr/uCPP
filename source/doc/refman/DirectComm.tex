@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(2189,1482)(0,-10)
 \put(1094,997){\blacken\ellipse{90}{90}}
@@ -30,8 +23,8 @@
 \path(1093,323)(44,322)(44,22)
 \blacken\thinlines
 \path(21.500,112.000)(44.000,22.000)(66.500,112.000)(21.500,112.000)
-\put(45,1296){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}Task$_1$}}}}
-\put(2145,1296){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}Task$_2$}}}}
-\put(1245,621){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}rendezvous}}}}
+\put(45,1296){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont Task$_1$}}}
+\put(2145,1296){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont Task$_2$}}}
+\put(1245,621){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont rendezvous}}}
 \end{picture}
 }

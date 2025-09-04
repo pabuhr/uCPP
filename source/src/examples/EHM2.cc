@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Oct 27 21:24:48 1998
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct  7 08:06:53 2023
-// Update Count     : 44
+// Last Modified On : Thu Aug 28 21:33:05 2025
+// Update Count     : 64
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -39,9 +39,11 @@ _Exception yyy {
 
 
 _Task fred {
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Winfinite-recursion"
 	void r( int i ) {
 		if ( i == 0 ) {
-			_Throw xxx( &uThisTask() );
+			_Throw xxx( &uThisTask() );					// compiler does not honour noreturn
 		} else {
 			r( i - 1 );
 		} // if
@@ -72,10 +74,10 @@ _Task fred {
 			t( i - 1 );
 		} // if
 	} // fred::t
-	
+	#pragma GCC diagnostic pop
+
 	void main() {
 		for ( int i = 0; i < 5000; i += 1 ) {
-//	for ( int i = 0; i < 5; i += 1 ) {
 			try {
 				t( 5 );
 			} catch( yyy & e ) {

@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(6924,3784)(0,-10)
 \put(2742,2112){\whiten\ellipse{60}{60}}
@@ -48,6 +41,11 @@
 	(3987,12)(4212,12)
 \dashline{45.000}(5337,12)(5112,12)(5112,237)
 	(5337,237)(5337,12)
+\put(5412,87){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont cluster}}}
+\put(4287,87){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont processor}}}
+\put(3237,87){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont monitor}}}
+\put(2262,87){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont task}}}
+\put(1137,87){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont coroutine}}}
 \put(612,2187){\ellipse{300}{300}}
 \put(4362,2337){\ellipse{300}{300}}
 \put(4362,1737){\ellipse{300}{300}}
@@ -137,16 +135,11 @@
 \blacken\path(6747.000,964.500)(6837.000,987.000)(6747.000,1009.500)(6747.000,964.500)
 \path(6687,987)(6687,2637)(6012,2637)(6012,2412)
 \blacken\path(5989.500,2502.000)(6012.000,2412.000)(6034.500,2502.000)(5989.500,2502.000)
-\put(5412,87){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}cluster}}}}
-\put(4287,87){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}processor}}}}
-\put(3237,87){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}monitor}}}}
-\put(2262,87){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}task}}}}
-\put(1137,87){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}coroutine}}}}
-\put(762,3237){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}System Cluster}}}}
-\put(4362,537){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}Processors}}}}
-\put(3012,1737){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}Blocked Tasks}}}}
-\put(3012,987){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}Ready Tasks}}}}
-\put(6162,3237){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}Other Cluster(s)}}}}
-\put(3462,3237){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}User Cluster}}}}
+\put(762,3237){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont System Cluster}}}
+\put(4362,537){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont Processors}}}
+\put(3012,1737){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont Blocked Tasks}}}
+\put(3012,987){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont Ready Tasks}}}
+\put(6162,3237){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont Other Cluster(s)}}}
+\put(3462,3237){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont User Cluster}}}
 \end{picture}
 }

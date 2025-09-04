@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Aug 17 09:24:42 2025
-%% Update Count     : 9276
+%% Last Modified On : Wed Sep  3 15:05:19 2025
+%% Update Count     : 9300
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -11106,15 +11106,16 @@ However, if any constructor is added to \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{S
 \CE{}\L{\LB{}\Tab{4}{\BF{\V{S}(\0\K{int}\0\V{i},\0\K{int}\0\V{j}\0)\0:\0\V{i}\{\V{i}\},\0\V{j}\{\V{j}\}\0\{\}}}}
 \L{\LB{\}\0\V{sa}[5]\0=\0\{\0\{0,\01\},\0\{1,\02\},\0\{2,\03\},\0\};\0\0\C{}\1\1\0set\0first\03,\0remaining\0set\0by\0default\0constructor}}
 \CE{}\endlgrinde\LGend
-For large arrays, there is no convenient mechanism to initialize \emph{all} array elements different from the default constructor;
-the following does not work.
+For large arrays, there is no convenient mechanism to initialize \emph{all} array elements different from the default constructor.
+The following is deceiving.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{S}\0\V{sa}[500]\{\02,\03\0\}\0\0\0{\rm equivalent to}\0\0\V{S}\0\V{sa}[500]\0=\0\{\{2\},\0\{3\}\}\0\0{\rm not}\0\0=\0\{\{2,\03\}\}}}
+\L{\LB{\V{S}\0\V{sa}[500]\{\02,\03\0\};\0\0\0{\rm equivalent to}\0\0\V{S}\0\V{sa}[500]\0=\0\{\{2\},\0\{3\}\}\0\0{\rm not}\0\0=\0\{\{2,\03\}\}}}
 \endlgrinde\LGend
-which fails without adding a constructor taking a single parameter.
+which means call the constructor taking a single parameter (must add)
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{S}(\0\K{int}\0\V{i}\0)\0:\0\V{i}\{\V{i}\}\0\{\}}}
 \endlgrinde\LGend
+for the first two array elements.
 The fallback is post-initialization using a loop, which can initialize a (non-contiguous) subset of elements.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0500;\0\V{i}\0+=\01\0)\0\V{sa}[\V{i}]\0=\0\V{S}\{\02,\03\0\};\0\0\C{}\1\1\0anonymous\0S\0object}}
@@ -11126,7 +11127,7 @@ which fails without adding an assignment operation.
 that can only reset the non-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{const}}}\endlgrinde\LGend{} members.
 The problem is exacerbated when each array element needs to be initialized with different values.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{S}\0\V{sa}[500]\{\00.\,.499,\00.\,.4990.\,.10\0\};\0\0\C{}\1\1\0imaginary\0range\0syntax}}
+\L{\LB{\V{S}\0\V{sa}[500]\{\00.\,.4990.\,.10\0\};\0\0\C{}\1\1\0imaginary\0range\0syntax}}
 \CE{}\endlgrinde\LGend
 as a post-initialization loop still does not work.
 \LGinlinefalse\LGbegin\lgrinde
@@ -11156,7 +11157,7 @@ The only \CC mechanism to resolve these issues is to use indirection with the he
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0500;\0\V{i}\0+=\01\0)}}
 \L{\LB{}\Tab{8}{\V{sa}[\V{i}]\0=\0\BF{\V{make\_unique}\<\V{S}\>}(\0\V{i},\0\V{i}\0\*\010\0);\0\C{}\1\1\0constructor\0call}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
-\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0sa\0array\0elements}}
+\L{\LB{\}\0\C{}\1\1\0delete\0array\0elements}}
 \CE{}\L{\LB{}}
 \endlgrinde\LGend
 \end{tabular}
@@ -11170,7 +11171,7 @@ However, there are implicit costs in using the heap, and unfortunately, \CC does
 its size is a constant expression.)
 Creating a VLA is an $O(1)$ operation (subtract from the stack pointer), whereas \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} is $O(size)$ heap operations, i.e., one for each array element, where each heap operation can take 10s or 100s of instructions.
 Also, the heap may be a shared resource, resulting in contention from multiple threads.
-Unfortunately, VLAs have the same intialization problems as static fixed-sized arrays, which pushes the programmer back to using the heap.
+Unfortunately, VLAs have the same initialization problems as static fixed-sized arrays, which pushes the programmer back to using the heap.
 
 
 \begin{comment}
@@ -11205,7 +11206,7 @@ The following example shows how \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uNoCtor}}
 \CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{size};\0\V{id}\0+=\01\0)}}
 \L{\LB{}\Tab{8}{\V{sa}[\V{id}]\BF{(\0\V{id}\0)};\0\C{}\1\1\0initialize\0and\0use}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
-\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0sa\0array\0elements}}
+\L{\LB{\}\0\C{}\1\1\0delete\0sa\0array\0elements}}
 \CE{}\endlgrinde\LGend
 As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\*}}\endlgrinde\LGend{} for object and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{} for field access.
 \LGinlinefalse\LGbegin\lgrinde
@@ -11226,7 +11227,7 @@ As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{},
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\010;\0\V{i}\0+=\01\0)\0\{}}
 \L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{i}]\BF{(\0\V{i}\0)};}}
 \L{\LB{}\Tab{4}{\}}}
-\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0coroutine\0array\0elements\0calling\0destructors\0on\0each\0element}}
+\L{\LB{\}\0\C{}\1\1\0delete\0coroutine\0array\0elements\0calling\0destructors\0on\0each\0element}}
 \CE{}\endlgrinde\LGend
 Creating large VLAs on a coroutine or task stack can overflow the stack.
 For potentially large arrays, increase the coroutine/task stack size (see \VRef{s:CoroutineInheritedMembers}) or use the heap.
@@ -11278,18 +11279,19 @@ To solve both these issues, \uC provides macro \LGinlinetrue\LGbegin\lgrinde\L{\
 \endlgrinde\LGend
 \end{tabular}
 \end{cquote}
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} extends the VLA with declaration initialization of all array elements, post declaration constructor calls, only performing default initialization if the object provides an explicit default constructor, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} member returning the array size, array assignment, and subscript checking.
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} extends the VLA with declaration initialization of all array elements, post declaration constructor calls, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{size}}}\endlgrinde\LGend{} member returning the array size, array assignment, and subscript checking.
 Hence, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} is a drop-in replacements for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} \emph{without} any dynamic allocation.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\{}}
 \L{\LB{}\Tab{4}{\BF{\V{uArray}(\0\V{S},\0\V{sa},\0\V{size}\0);}}\Tab{44}{\C{}\1\1\0no\0default\0constructor\0calls,\0unless\0one\0specified}}
 \CE{}\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{sa}.\BF{\V{size}()};\0\V{i}\0+=\01\0)}\Tab{44}{\C{}\1\1\0array\0size}}
-\CE{}\L{\LB{}\Tab{8}{\V{sa}[\V{i}]\BF{(\0\V{i},\0\V{i}\0\*\010\0)};}\Tab{44}{\C{}\1\1\0subscript\0checking,\0post\-declaration\0constructor\0call}}
+\CE{}\L{\LB{}\Tab{8}{\V{sa}[\V{i}]\BF{(\0\V{i},\0\V{i}\0\*\010\0)};}\Tab{44}{\C{}\1\1\0post\-declaration\0constructor\0call,\0subscript\0checking}}
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
-\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0sa\0calling\0destructors\0for\0each\0element}}
+\L{\LB{\}\0\C{}\1\1\0delete\0sa\0calling\0destructors\0for\0each\0element}}
 \CE{}\endlgrinde\LGend
+\Textbf{Note, post-declaration constructor calls are required, even default constructor, otherwise the array objects are uninitialized.}
 The destructor for each array element is called when the array is deallocated.
-If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure object initialization.
+If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure correct object initialization.
 
 As for \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}, use \LGinlinetrue\LGbegin\lgrinde\L{\LB{\*}}\endlgrinde\LGend{} for object and \LGinlinetrue\LGbegin\lgrinde\L{\LB{\-\>}}\endlgrinde\LGend{} for field access.
 \LGinlinefalse\LGbegin\lgrinde
@@ -11305,18 +11307,50 @@ As well, subscript checking raises the exception \LGinlinetrue\LGbegin\lgrinde\L
 \L{\LB{\}}}
 \L{\LB{\V{uArray}\00x7fff3a4bea70\0\V{bad}\0\V{subscript}\0100\0\V{outside}\0\V{dimension}\0\V{range}\00.\,.9.}}
 \endlgrinde\LGend
-Use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}\index{uArrayFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}} to declare and initialize \emph{all} array elements to a fixed value.
-It is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} with trailing arguments for one of the element's constructors.
-\LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{uArrayFill}(\0\K{int},\0\V{ia},\010,\0\BF{42}\0);}\Tab{44}{\C{}\1\1\0all\0int\0array\0elements\0have\0value\042}}
-\CE{}\L{\LB{\V{uArrayFill}(\0\V{S},\0\V{sa},\010,\0\BF{2,\03}\0);}\Tab{44}{\C{}\1\1\0all\0S\'s\0array\0elements\0have\0value\02,\03}}
-\CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} assignment is only allowed if the array elements are assignable.
 The minimum array-size elements are copied.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{uArray}(\0\K{int},\0\V{ia2},\020\0);}}
 \L{\LB{\V{ia}\0=\0\V{ia2}\0=\0\V{ia};\0\0\C{}\1\1\0copy\0first\010\0elements\0of\0ia\0to\0ia2,\0copy\0first\010\0elements\0of\0ia2\0back\0to\0ia}}
 \CE{}\endlgrinde\LGend
+Use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}\index{uArrayFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}} to declare and initialize \emph{all} array elements to a fixed value.
+It is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} with trailing arguments for one of the element's constructors.
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\V{uArrayFill}(\0\K{int},\0\V{ia},\010,\0\BF{42}\0);}\Tab{44}{\C{}\1\1\0all\0int\0array\0elements\0have\0value\042}}
+\CE{}\L{\LB{\V{uArrayFill}(\0\V{S},\0\V{sa},\010,\0\BF{2,\03}\0);}\Tab{44}{\C{}\1\1\0all\0S\'s\0array\0elements\0have\0value\02,\03}}
+\CE{}\endlgrinde\LGend
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} can mimic \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} for pointer types.
+\begin{cquote}
+\setlength{\tabcolsep}{15pt}
+\begin{tabular}{@{}l|l@{}}
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\{}}
+\L{\LB{}\Tab{4}{\V{uArray}(\0\V{S}\0\BF{\*},\0\V{sap},\0\V{size}\0);}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{sap}.\V{size}();\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{sap}[\V{i}]\0=\0\BF{\K{new}\0\V{S}(\0\V{i},\0\V{i}\0);}}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{sap}.\V{size}();\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\BF{(\*\V{sap}[\V{i}])}\-\>\V{i}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\}\0\C{}\1\1\0delete\0array\0elements}}
+\CE{}\endlgrinde\LGend
+&
+\LGindent=0pt
+\LGinlinefalse\LGbegin\lgrinde
+\L{\LB{\{}}
+\L{\LB{}\Tab{4}{\V{unique\_ptr}\<\V{S}\>\0\V{sa}[\V{size}];}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{size};\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{sa}[\V{i}]\0=\0\BF{\V{make\_unique}\<\V{S}\>}(\0\V{i},\0\V{i}\0);}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{size};\0\V{i}\0+=\01\0)\0\{}}
+\L{\LB{}\Tab{8}{\V{cout}\0\<\<\0\BF{\V{sa}[\V{i}]}\-\>\V{i}\0\<\<\0\V{endl};}}
+\L{\LB{}\Tab{4}{\}}}
+\L{\LB{\}\0\C{}\1\1\0delete\0array\0elements}}
+\CE{}\endlgrinde\LGend
+\end{tabular}
+\end{cquote}
+Note, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} requires an explicit dereference of the pointer element, while \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} does an implicitly dereferences.
+
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} can be used with all new \uC types, e.g.:
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}
@@ -11337,12 +11371,11 @@ The minimum array-size elements are copied.
 \L{\LB{}\Tab{4}{\K{for}\0(\0\K{int}\0\V{id}\0=\00;\0\V{id}\0\<\0\V{c}.\V{size}();\0\V{id}\0+=\01\0)\0\{}}
 \L{\LB{}\Tab{4}{\0}\Tab{8}{\V{c}[\V{id}]\BF{(\0\V{id}\0)};\0\0\C{}\1\1\0construct\0coroutine}}
 \CE{}\L{\LB{}\Tab{4}{\}}}
-\L{\LB{\}\0\C{}\1\1\0automatically\0delete\0c\0array\0calling\0destructors\0on\0each\0element}}
+\L{\LB{\}\0\C{}\1\1\0delete\0c\0array\0calling\0destructors\0on\0each\0element}}
 \CE{}\endlgrinde\LGend
 \end{tabular}
 \end{cquote}
-
-Creating large VLAs on a coroutine or task stack can overflow it.
+As well, creating large VLAs on a coroutine or task stack can overflow it.
 For potentially large arrays, use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}.
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}

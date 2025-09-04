@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(3662,1137)(0,-10)
 \path(950,312)(950,912)(50,912)
@@ -21,9 +14,9 @@
 \path(2450,312)(3350,312)
 \path(2900,462)(2150,462)
 \blacken\path(2240.000,484.500)(2150.000,462.000)(2240.000,439.500)(2240.000,484.500)
-\put(500,387){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}data}}}}
-\put(2900,87){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}data}}}}
-\put(500,987){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}collection node}}}}
-\put(2900,987){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}sequence node}}}}
+\put(500,387){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont data}}}
+\put(2900,87){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont data}}}
+\put(500,987){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont collection node}}}
+\put(2900,987){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont sequence node}}}
 \end{picture}
 }

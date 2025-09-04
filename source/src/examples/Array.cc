@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jun 13 14:39:12 2024
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul 13 17:54:23 2025
-// Update Count     : 8
+// Last Modified On : Fri Aug 29 07:58:13 2025
+// Update Count     : 11
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -52,6 +52,11 @@ template< typename T > void f( uArrayRef( T, parm ) ) {	// pass uArray by refere
 	cout << endl;
 }
 
+template< typename T > void f( uArrayRef( T *, parm ) ) { // pass uArray by reference
+	for ( size_t i = 0; i < parm.size(); i += 1 ) cout << **parm[i] << ' ';
+	cout << endl;
+}
+
 int main() {
 	{
 		uArrayFill( int, iarr, 10, 5 );
@@ -68,7 +73,7 @@ int main() {
 		cout << endl;
 	}
 	{
-		uArrayFill( string, sarr, 10, "xyz" );			//  must call default constructor
+		uArrayFill( string, sarr, 10, "xyz" );
 		for ( size_t i = 0; i < sarr.size(); i += 1 ) cout << *sarr[i] << ' ';
 		cout << endl;
 		for ( size_t i = 0; i < sarr.size(); i += 1 ) sarr[i] = "abc";
@@ -77,45 +82,56 @@ int main() {
 		f( sarr );
 	}
 	{
-		uArrayPtr( string, sarr2, 10 );
-		for ( size_t i = 0; i < sarr2.size(); i += 1 ) sarr2[i] = "abc";
-		for ( size_t i = 0; i < sarr2.size(); i += 1 ) cout << *sarr2[i] << ' ';
+		uArrayPtr( string, sarr, 10 );
+		for ( size_t i = 0; i < sarr.size(); i += 1 ) sarr[i](); //  must call default constructor
+		for ( size_t i = 0; i < sarr.size(); i += 1 ) sarr[i] = "abc";
+		for ( size_t i = 0; i < sarr.size(); i += 1 ) cout << *sarr[i] << ' ';
 		cout << endl;
-		f( sarr2 );
+		f( sarr );
 	}
 	{
-		uArrayFill( S, arr2, 10, 5  );
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) cout << arr2[i]->i << ',' << arr2[i]->j << ' ';
+		uArrayFill( S, Sarr, 10, 5  );
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << Sarr[i]->i << ',' << Sarr[i]->j << ' ';
 		cout << endl;
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) arr2[i]( 2, 3 );
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) cout << arr2[i]->i << ',' << arr2[i]->j << ' ';
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) Sarr[i]( 2, 3 );
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << Sarr[i]->i << ',' << Sarr[i]->j << ' ';
 		cout << endl;
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) arr2[i] = (S){ (int)i, 3 };
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) cout << arr2[i]->i << ' ';
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) Sarr[i] = (S){ (int)i, 3 };
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << Sarr[i]->i << ' ';
 		cout << endl;
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) arr2[i] = S{ (int)i, 3 };
-		for ( size_t i = 0; i < arr2.size(); i += 1 ) cout << arr2[i]->i << ' ';
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) Sarr[i] = S{ (int)i, 3 };
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << Sarr[i]->i << ' ';
 		cout << endl;
-		f( arr2 );
+		f( Sarr );
 	}
+	cout << endl;
 	{
-		uArray( T, arr3, 10 );							// const => no assignment
-		for ( size_t i = 0; i < arr3.size(); i += 1 ) arr3[i]( 3, 4 );
-		for ( size_t i = 0; i < arr3.size(); i += 1 ) cout << arr3[i]->i << ',' << arr3[i]->j << ' ';
+		uArray( T, Tarr, 10 );							// const => no assignment
+		for ( size_t i = 0; i < Tarr.size(); i += 1 ) Tarr[i]( 3, 4 );
+		for ( size_t i = 0; i < Tarr.size(); i += 1 ) cout << Tarr[i]->i << ',' << Tarr[i]->j << ' ';
 		cout << endl;
-		f( arr3 );
+		f( Tarr );
 	}
+	cout << endl;
 	{
 		struct E {};
 		try {
 			uArrayFill( S, arr1, 10, 2, 3 );
 			for ( size_t i = 0; i < arr1.size(); i += 1 ) cout << arr1[i]->i << ',' << arr1[i]->j << ' ';
 			cout << endl;
-			uArrayPtrFill( S, arr2, 10, 2, 3 );
-			for ( size_t i = 0; i < arr2.size(); i += 1 ) cout << arr2[i]->i << ',' << arr2[i]->j << ' ';
+			uArrayPtrFill( S, Sarr, 10, 2, 3 );
+			for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << Sarr[i]->i << ',' << Sarr[i]->j << ' ';
 			cout << endl;
 			throw E();
 		} catch( E ) {}
-		cout << endl;
 	}
+	cout << endl;
+	{
+		uArray( S *, Sarr, 10 );
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) Sarr[i] = new S( 2, 4 );
+		for ( size_t i = 0; i < Sarr.size(); i += 1 ) cout << (*Sarr[i])->i << ',' << (*Sarr[i])->j << ' ';
+		cout << endl;
+		f( Sarr );
+	}
+	cout << endl;
 } // main

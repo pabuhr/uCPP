@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(3920,3639)(0,-10)
 \put(462,1737){\blacken\ellipse{60}{60}}
@@ -70,11 +63,11 @@
 \blacken\path(2772.000,3439.500)(2862.000,3462.000)(2772.000,3484.500)(2772.000,3439.500)
 \path(762,3312)(762,3162)(3012,3162)(3012,3312)
 \blacken\path(3034.500,3222.000)(3012.000,3312.000)(2989.500,3222.000)(3034.500,3222.000)
-\put(462,3387){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}Priority 0}}}}
-\put(462,237){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}Priority 31}}}}
-\put(3087,237){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}Task}}}}
-\put(462,837){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}Priority 30}}}}
-\put(462,2187){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}Priority 2}}}}
-\put(462,2787){\makebox(0,0)[b]{\smash{{\SetFigFont{11}{13.2}{\familydefault}{\mddefault}{\updefault}Priority 1}}}}
+\put(462,3387){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont Priority\ 0}}}
+\put(462,237){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont Priority\ 31}}}
+\put(3087,237){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont Task}}}
+\put(462,837){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont Priority\ 30}}}
+\put(462,2187){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont Priority\ 2}}}
+\put(462,2787){\makebox(0,0)[b]{\smash{\fontsize{11}{13.2}\normalfont Priority\ 1}}}
 \end{picture}
 }

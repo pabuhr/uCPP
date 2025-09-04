@@ -96,8 +96,8 @@
 		\hyperpage{25}
   \item access object, \hyperpage{73}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{acquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
-  \item activation point, \hyperpage{13}, \hyperpage{29}
+		\hyperpage{37, 38}
+  \item activation point, \hyperpage{13}, \hyperpage{30}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Active}}}\endlgrinde\LGend{}, 
 		\hyperpage{15}
   \item active, \hyperpage{4}, \hyperpage{16}
@@ -142,13 +142,13 @@
   \item atomic instruction
     \subitem compare/assign, \hyperpage{41}
     \subitem fetch/add, \hyperpage{41}
-    \subitem fetch/assign, \hyperpage{40}
+    \subitem fetch/assign, \hyperpage{41}
     \subitem test/reset, \hyperpage{40}
     \subitem test/set, \hyperpage{40}
 
   \indexspace
 
-  \item barrier, \hyperpage{38}
+  \item barrier, \hyperpage{39}
   \item base priority, \hyperpage{150}
   \item basic priority-inheritance protocol, \hyperpage{149}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{become}}}\endlgrinde\LGend{}, 
@@ -158,7 +158,7 @@
   \item behaviour, \hyperpage{58}
   \item binomial theorem, \hyperpage{22}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{block}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Blocked}}}\endlgrinde\LGend{}, 
 		\hyperpage{31}
   \item blocked, \hyperpage{4}
@@ -166,7 +166,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{break}}}\endlgrinde\LGend{}, 
 		\hyperpage{11}
     \subitem labelled, \hyperpage{11}
-  \item busy wait, \hyperpage{36}
+  \item busy wait, \hyperpage{37}
   \item busy waiting, \hyperpage{51}
 
   \indexspace
@@ -261,7 +261,7 @@
     \subitem hardware
       \subsubitem compare/assign, \hyperpage{41}
       \subsubitem fetch/add, \hyperpage{41}
-      \subsubitem fetch/assign, \hyperpage{40}
+      \subsubitem fetch/assign, \hyperpage{41}
       \subsubitem test/reset, \hyperpage{40}
       \subsubitem test/set, \hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{currTime}}}\endlgrinde\LGend{}, 
@@ -298,7 +298,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{elsetype}}}\endlgrinde\LGend{}, 
 		\hyperpage{62}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}, 
-		\hyperpage{25}, \hyperpage{36}, \hyperpage{38}, 
+		\hyperpage{25}, \hyperpage{36}, \hyperpage{39}, 
 		\hyperpage{176, 177}, \hyperpage{179}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{END}}}\endlgrinde\LGend{}, 
 		\hyperpage{28}
@@ -346,7 +346,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{exit}}}\endlgrinde\LGend{}, 
 		\hyperpage{110}, \hyperpage{127}
   \item explicit storage management, \hyperpage{59}
-  \item external variables, \hyperpage{14}, \hyperpage{29}
+  \item external variables, \hyperpage{14}, \hyperpage{30}
 
   \indexspace
 
@@ -359,7 +359,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{fd}}}\endlgrinde\LGend{}, 
 		\hyperpage{75}, \hyperpage{78}, \hyperpage{80, 81}
   \item fetch-and-add, \hyperpage{41}
-  \item fetch-and-assign, \hyperpage{40}
+  \item fetch-and-assign, \hyperpage{41}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{FileAccess}}}\endlgrinde\LGend{}, 
 		\hyperpage{74}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{CloseFailure}}}\endlgrinde\LGend{}, 
@@ -401,13 +401,13 @@
   \item fixed-point registers, \hyperpage{43}
   \item floating-point registers, \hyperpage{43}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{flush}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item frame, \hyperpage{148}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{free}}}\endlgrinde\LGend{}, 
 		\hyperpage{127}, \hyperpage{161}
   \item free routine, \hyperpage{5}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}, 
-		\hyperpage{25}, \hyperpage{36}, \hyperpage{38}
+		\hyperpage{25}, \hyperpage{36}, \hyperpage{39}
   \item full coroutine, \hyperpage{12}
   \item future, \hyperpage{48}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Future\_ESM}}}\endlgrinde\LGend{}
@@ -445,9 +445,9 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{gdb}}}\endlgrinde\LGend{}, 
 		\hyperpage{183}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getActivePriority}}}\endlgrinde\LGend{}, 
-		\hyperpage{31}
+		\hyperpage{32}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getBasePriority}}}\endlgrinde\LGend{}, 
-		\hyperpage{31}
+		\hyperpage{32}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getClient}}}\endlgrinde\LGend{}, 
 		\hyperpage{80}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getCluster}}}\endlgrinde\LGend{}, 
@@ -503,7 +503,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{head}}}\endlgrinde\LGend{}, 
 		\hyperpage{176, 177}, \hyperpage{179}
   \item heap allocator, \hyperpage{161}
-  \item heap area, \hyperpage{14}, \hyperpage{29}, \hyperpage{155}
+  \item heap area, \hyperpage{14}, \hyperpage{30}, \hyperpage{155}
     \subitem extend size, \hyperpage{156}
     \subitem malloc unfreed, \hyperpage{156}
     \subitem mmap start, \hyperpage{156}
@@ -534,7 +534,7 @@
     \subitem private, \hyperpage{33}
     \subitem protected, \hyperpage{33}
     \subitem public, \hyperpage{33}
-    \subitem single, \hyperpage{33, 34}, \hyperpage{95}
+    \subitem single, \hyperpage{34}, \hyperpage{95}
   \item inherited members
     \subitem coroutine, \hyperpage{14}
     \subitem exception type, \hyperpage{85}
@@ -607,7 +607,7 @@
   \item lightweight, \hyperpage{8}
   \item lightweight process, \hyperpage{8}
   \item local exception, \hyperpage{88}
-  \item lock, \hyperpage{36}
+  \item lock, \hyperpage{37}
   \item locking, \hyperpage{16}
 
   \indexspace
@@ -705,8 +705,8 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{over}}}\endlgrinde\LGend{}, 
 		\hyperpage{176}, \hyperpage{178}, \hyperpage{180}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{owner}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
-  \item owner lock, \hyperpage{37}, \hyperpage{72}
+		\hyperpage{38}
+  \item owner lock, \hyperpage{38}, \hyperpage{72}
 
   \indexspace
 
@@ -909,7 +909,7 @@
 		\hyperpage{99--101}, \hyperpage{114, 115}
   \item reresume, \hyperpage{86}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{reset}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resetClock}}}\endlgrinde\LGend{}, 
 		\hyperpage{146}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{resize}}}\endlgrinde\LGend{}, 
@@ -988,7 +988,7 @@
   \item spin
     \subitem amount, \hyperpage{129}
     \subitem default, \hyperpage{155}
-    \subitem lock, \hyperpage{36}
+    \subitem lock, \hyperpage{37}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultSpin}}}\endlgrinde\LGend{}, 
 		\hyperpage{155}
     \subitem virtual processor, \hyperpage{131}
@@ -1002,7 +1002,7 @@
     \subitem automatic growth, \hyperpage{9}, \hyperpage{117}
     \subitem current, \hyperpage{15}
     \subitem data structure, \hyperpage{175}
-    \subitem default size, \hyperpage{14}, \hyperpage{30}, 
+    \subitem default size, \hyperpage{14}, \hyperpage{31}, 
 		\hyperpage{57}, \hyperpage{127, 128}, \hyperpage{155}
     \subitem diddling, \hyperpage{32}
     \subitem free, \hyperpage{15}
@@ -1041,7 +1041,7 @@
     \subitem errors, \hyperpage{107}
     \subitem warnings, \hyperpage{107}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\K{static}}}\endlgrinde\LGend{} storage, 
-		\hyperpage{14}, \hyperpage{29}
+		\hyperpage{14}, \hyperpage{30}
   \item static multi-level exit, \hyperpage{11}
   \item status flag, \hyperpage{84}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{StatusFailure}}}\endlgrinde\LGend{}, 
@@ -1076,7 +1076,7 @@
     \subitem inherited members, \hyperpage{30}
     \subitem periodic, \hyperpage{147}
     \subitem sporadic, \hyperpage{148}
-    \subitem termination, \hyperpage{29}
+    \subitem termination, \hyperpage{30}
   \item task main, \hyperpage{29}, \hyperpage{88}
   \item task type, \hyperpage{7}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{Terminate}}}\endlgrinde\LGend{}, 
@@ -1098,11 +1098,11 @@
   \item time stamp counter, \hyperpage{40}
   \item time-slice, \hyperpage{131}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{times}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{top}}}\endlgrinde\LGend{}, 
 		\hyperpage{176}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{total}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TraceMsg}}}\endlgrinde\LGend{}, 
 		\hyperpage{63}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{erase}}}\endlgrinde\LGend{}, 
@@ -1124,7 +1124,7 @@
   \item translator, \hyperpage{7}
     \subitem problems, \hyperpage{44}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tryacquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{37, 38}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TryP}}}\endlgrinde\LGend{}, 
 		\hyperpage{36}
 
@@ -1220,7 +1220,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBarrier}.\V{h}}}\endlgrinde\LGend{}, 
 		\hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uBaseCoroutine}}}\endlgrinde\LGend{}, 
-		\hyperpage{14}, \hyperpage{31}, \hyperpage{146}
+		\hyperpage{14}, \hyperpage{32}, \hyperpage{146}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancel}}}\endlgrinde\LGend{}, 
 		\hyperpage{14}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{cancelInProgress}}}\endlgrinde\LGend{}, 
@@ -1409,15 +1409,15 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uCondLock}}}\endlgrinde\LGend{}, 
 		\hyperpage{38}, \hyperpage{133}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{broadcast}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{front}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{signal}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{wait}}}\endlgrinde\LGend{}, 
-		\hyperpage{38}
+		\hyperpage{39}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uContext}}}\endlgrinde\LGend{}, 
 		\hyperpage{42}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uDefaultExecutorAffinity}}}\endlgrinde\LGend{}, 
@@ -1485,13 +1485,13 @@
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMutexFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{100}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uLock}}}\endlgrinde\LGend{}, 
-		\hyperpage{36}
+		\hyperpage{37}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{acquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{36}
+		\hyperpage{37}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{release}}}\endlgrinde\LGend{}, 
-		\hyperpage{36}
+		\hyperpage{37}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tryacquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{36}
+		\hyperpage{37}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMain}}}\endlgrinde\LGend{}, 
 		\hyperpage{8}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uMainStackSize}}}\endlgrinde\LGend{}, 
@@ -1532,17 +1532,17 @@
   \item unix process, \hyperpage{129}
   \item unlocking, \hyperpage{16}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uOwnerLock}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}, \hyperpage{133}
+		\hyperpage{38}, \hyperpage{133}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{acquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{owner}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{release}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{times}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{tryacquire}}}\endlgrinde\LGend{}, 
-		\hyperpage{37}
+		\hyperpage{38}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uPeriodicBaseTask}}}\endlgrinde\LGend{}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{getPeriod}}}\endlgrinde\LGend{}, 
 		\hyperpage{147}
@@ -1623,15 +1623,15 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}}}\endlgrinde\LGend{}, 
 		\hyperpage{35}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{counter}}}\endlgrinde\LGend{}, 
-		\hyperpage{35}
+		\hyperpage{36}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{empty}}}\endlgrinde\LGend{}, 
-		\hyperpage{35}
+		\hyperpage{36}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{P}}}\endlgrinde\LGend{}, 
-		\hyperpage{35}
+		\hyperpage{36}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{TryP}}}\endlgrinde\LGend{}, 
-		\hyperpage{35}
+		\hyperpage{36}
     \subitem \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{V}}}\endlgrinde\LGend{}, 
-		\hyperpage{35}
+		\hyperpage{36}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSemaphore}.\V{h}}}\endlgrinde\LGend{}, 
 		\hyperpage{35}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uSeqable}}}\endlgrinde\LGend{}, 
@@ -1895,7 +1895,7 @@
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisProcessor}}}\endlgrinde\LGend{}, 
 		\hyperpage{131}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uThisTask}}}\endlgrinde\LGend{}, 
-		\hyperpage{31}
+		\hyperpage{32}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uTime}}}\endlgrinde\LGend{}, 
 		\hyperpage{142}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uWaitQueue\_ESM}}}\endlgrinde\LGend{}
@@ -1941,14 +1941,14 @@
   \item wait-for-all, \hyperpage{51}
   \item wait-for-any, \hyperpage{51}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{waiters}}}\endlgrinde\LGend{}, 
-		\hyperpage{39}
+		\hyperpage{40}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{WaitingFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{24}, \hyperpage{100}
   \item warnings
     \subitem compile-time, \hyperpage{107}
     \subitem runtime, \hyperpage{110}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{write}}}\endlgrinde\LGend{}, 
-		\hyperpage{42}, \hyperpage{71}
+		\hyperpage{43}, \hyperpage{71}
   \item \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{WriteFailure}}}\endlgrinde\LGend{}, 
 		\hyperpage{74}, \hyperpage{77}, \hyperpage{79}, 
 		\hyperpage{81}, \hyperpage{100}

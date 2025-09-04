@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(6573,3040)(0,-10)
 \put(1487,2418){\ellipse{1500}{1200}}
@@ -14,6 +7,8 @@
 \put(5087,2343){\ellipse{1500}{450}}
 \put(1487,693){\ellipse{1500}{450}}
 \put(3003,157){\ellipse{300}{300}}
+\put(3287,93){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont socket endpoint}}}
+\put(2987,93){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
 \put(1788,1367){\ellipse{300}{300}}
 \put(1803,2193){\ellipse{300}{300}}
 \put(1788,2642){\ellipse{300}{300}}
@@ -36,31 +31,29 @@
 \blacken\path(2028.558,1382.948)(1937.000,1368.000)(2024.821,1338.104)(2028.558,1382.948)
 \path(1937,1368)(4637,1143)
 \blacken\path(4545.442,1128.052)(4637.000,1143.000)(4549.179,1172.896)(4545.442,1128.052)
-\put(3287,93){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}socket endpoint}}}}
-\put(2987,93){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(1788,1292){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(1563,1292){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_3$}}}}
-\put(1563,2117){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_2$}}}}
-\put(1788,2117){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(1563,2567){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_1$}}}}
-\put(1788,2567){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(4787,1068){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(5012,1068){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}server$_3$}}}}
-\put(4787,1518){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(5012,1518){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}server$_2$}}}}
-\put(4788,2267){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(5012,2268){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}server$_1$}}}}
-\put(662,693){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_3$}}}}
-\put(1563,617){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_4$}}}}
-\put(1788,617){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}S}}}}
-\put(662,1368){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_2$}}}}
-\put(662,1218){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}process}}}}
-\put(662,543){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}process}}}}
-\put(5912,2343){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}server$_1$}}}}
-\put(5912,1443){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}server$_2$}}}}
-\put(5912,2193){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}process}}}}
-\put(5912,1293){\makebox(0,0)[lb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}process}}}}
-\put(662,2493){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}client$_1$}}}}
-\put(662,2343){\makebox(0,0)[rb]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}process}}}}
+\put(1788,1292){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(1563,1292){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_3$}}}
+\put(1563,2117){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_2$}}}
+\put(1788,2117){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(1563,2567){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_1$}}}
+\put(1788,2567){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(4787,1068){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(5012,1068){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont server$_3$}}}
+\put(4787,1518){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(5012,1518){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont server$_2$}}}
+\put(4788,2267){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(5012,2268){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont server$_1$}}}
+\put(662,693){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_3$}}}
+\put(1563,617){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_4$}}}
+\put(1788,617){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont S}}}
+\put(662,1368){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_2$}}}
+\put(662,1218){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont process}}}
+\put(662,543){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont process}}}
+\put(5912,2343){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont server$_1$}}}
+\put(5912,1443){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont server$_2$}}}
+\put(5912,2193){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont process}}}
+\put(5912,1293){\makebox(0,0)[lb]{\smash{\fontsize{10}{12}\normalfont process}}}
+\put(662,2493){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont client$_1$}}}
+\put(662,2343){\makebox(0,0)[rb]{\smash{\fontsize{10}{12}\normalfont process}}}
 \end{picture}
 }

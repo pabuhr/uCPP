@@ -1,11 +1,4 @@
 \setlength{\unitlength}{0.00083333in}
-%
-\begingroup\makeatletter\ifx\SetFigFont\undefined%
-\gdef\SetFigFont#1#2#3#4#5{%
-  \reset@font\fontsize{#1}{#2pt}%
-  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
-  \selectfont}%
-\fi\endgroup%
 {\renewcommand{\dashlinestretch}{30}
 \begin{picture}(4706,4494)(0,-10)
 \put(3159,2994){\ellipse{200}{200}}
@@ -35,6 +28,14 @@
 \put(909,144){\ellipse{160}{160}}
 \put(3759,144){\shade\ellipse{200}{200}}
 \put(3759,144){\ellipse{200}{200}}
+\put(3159,2959){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont a}}}
+\put(3159,3259){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont c}}}
+\put(3159,3544){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont d}}}
+\put(3159,3844){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont b}}}
+\put(1359,3244){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont b}}}
+\put(1359,2959){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont a}}}
+\put(2259,3244){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont d}}}
+\put(2259,2959){\makebox(0,0)[b]{\smash{\fontsize{10}{12}\normalfont c}}}
 \put(309.000,2244.000){\arc{600.000}{1.5708}{4.7124}}
 \put(309.000,1344.000){\arc{600.000}{1.5708}{4.7124}}
 \path(1209,2844)(1434,2694)
@@ -56,35 +57,27 @@
 \path(2409,744)(3609,744)(3609,1644)
 	(4209,1644)(4209,1944)(3609,1944)
 	(3609,2844)(3309,2844)(3309,4044)
-\put(3159,2959){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}a}}}}
-\put(3159,3259){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}c}}}}
-\put(3159,3544){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}d}}}}
-\put(3159,3844){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}b}}}}
-\put(1359,3244){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}b}}}}
-\put(1359,2959){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}a}}}}
-\put(2259,3244){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}d}}}}
-\put(2259,2959){\makebox(0,0)[b]{\smash{{\SetFigFont{10}{12.0}{\familydefault}{\mddefault}{\updefault}c}}}}
-\put(2259,369){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}exit}}}}
-\put(459,2619){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}A}}}}
-\put(459,819){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}condition}}}}
-\put(459,594){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}B}}}}
-\put(3759,2019){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}stack}}}}
-\put(3759,2469){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}acceptor/}}}}
-\put(3759,2244){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}signalled}}}}
-\put(459,2844){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}condition}}}}
-\put(1359,3519){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}X}}}}
-\put(2259,3519){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}Y}}}}
-\put(3159,4344){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}entry}}}}
-\put(3159,4119){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}queue}}}}
-\put(3459,3294){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}arrival}}}}
-\put(2259,2019){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}shared}}}}
-\put(2259,1719){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}variables}}}}
-\put(1809,3969){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}mutex}}}}
-\put(1809,3744){\makebox(0,0)[b]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}queues}}}}
-\put(3984,69){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}duplicate}}}}
-\put(2484,69){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}blocked task}}}}
-\put(1059,69){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}active task}}}}
-\put(3459,3519){\makebox(0,0)[lb]{\smash{{\SetFigFont{12}{14.4}{\familydefault}{\mddefault}{\updefault}order of}}}}
+\put(2259,369){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont exit}}}
+\put(459,2619){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont A}}}
+\put(459,819){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont condition}}}
+\put(459,594){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont B}}}
+\put(3759,2019){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont stack}}}
+\put(3759,2469){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont acceptor/}}}
+\put(3759,2244){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont signalled}}}
+\put(459,2844){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont condition}}}
+\put(1359,3519){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont X}}}
+\put(2259,3519){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont Y}}}
+\put(3159,4344){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont entry}}}
+\put(3159,4119){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont queue}}}
+\put(3459,3294){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont arrival}}}
+\put(2259,2019){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont shared}}}
+\put(2259,1719){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont variables}}}
+\put(1809,3969){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont mutex}}}
+\put(1809,3744){\makebox(0,0)[b]{\smash{\fontsize{12}{14.4}\normalfont queues}}}
+\put(3984,69){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont duplicate}}}
+\put(2484,69){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont blocked task}}}
+\put(1059,69){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont active task}}}
+\put(3459,3519){\makebox(0,0)[lb]{\smash{\fontsize{12}{14.4}\normalfont order of}}}
 \path(1509,3444)(1509,2844)(2109,2844)(2109,3444)
 \end{picture}
 }
