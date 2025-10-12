@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Sep  3 15:05:19 2025
-%% Update Count     : 9300
+%% Last Modified On : Sun Oct 12 07:55:05 2025
+%% Update Count     : 9325
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -11111,7 +11111,7 @@ The following is deceiving.
 %[
 S sa[500]{ 2, 3 };   \({\rm equivalent to}\)  S sa[500] = {{2}, {3}}  \({\rm not}\)  = {{2, 3}}
 %]
-which means call the constructor taking a single parameter (must add)
+which means call the constructor taking a single parameter:
 %[
 S( int i ) : i{i} {}
 %]
@@ -11289,7 +11289,7 @@ Hence, %(uArray%) is a drop-in replacements for %(unique_ptr%) \emph{without} an
 	...
 } // delete sa calling destructors for each element
 %]
-\Textbf{Note, post-declaration constructor calls are required, even default constructor, otherwise the array objects are uninitialized.}
+\Textbf{Note, post-declaration constructor calls are required for non-basic types, even default constructor, otherwise the array objects are uninitialized.}
 The destructor for each array element is called when the array is deallocated.
 If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure correct object initialization.
 
@@ -11313,11 +11313,13 @@ The minimum array-size elements are copied.
 uArray( int, ia2, 20 );
 ia = ia2 = ia;  // copy first 10 elements of ia to ia2, copy first 10 elements of ia2 back to ia
 %]
-Use macro %(uArrayFill%)\index{uArrayFill@%(uArrayFill%)} to declare and initialize \emph{all} array elements to a fixed value.
+Macro %(uArrayFill%)\index{uArrayFill@%(uArrayFill%)} declares and initializes \emph{all} array elements to a fixed value.
 It is the same as %(uArray%) with trailing arguments for one of the element's constructors.
+If no arguments are given, the default constructor is run.
 %[
+uArrayFill( int, ia, 10 );					// all int array elements have value 0
 uArrayFill( int, ia, 10, \(\BF{\)42\(}\) );\(}\Tab{44}{\)// all int array elements have value 42
-uArrayFill( S, sa, 10, \(\BF{\)2, 3\(}\) );\(}\Tab{44}{\)// all S's array elements have value 2, 3
+uArrayFill( S, sa, 10, \(\BF{\)2, 3\(}\) );\(}\Tab{44}{\)// all S array elements have value 2, 3
 %]
 %(uArray%) can mimic %(unique_ptr%) for pointer types.
 \begin{cquote}
@@ -11375,8 +11377,7 @@ int main() {
 %]
 \end{tabular}
 \end{cquote}
-As well, creating large VLAs on a coroutine or task stack can overflow it.
-For potentially large arrays, use macro %(uArrayPtr%).
+Macro %(uArrayPtr%) is used to create large arrays in the heap, preventing stack overflow on a coroutine or task stack.
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}
 \begin{tabular}{@{}l|l@{}}
@@ -11384,7 +11385,8 @@ For potentially large arrays, use macro %(uArrayPtr%).
 _Coroutine C {
 	void main() {  // 64K stack
 		S \(\BF{\)sa[100\('\)000];\(}\) // on stack, overflow
-		// implicit initialize with ctor calls
+
+
 		...
 	} // implicitly array deallocate
 };
@@ -11395,15 +11397,17 @@ _Coroutine C {
 _Coroutine C {
 	void main() {
 		\(\BF{\)uArrayPtr( S, sa, 100\('\)000 )\(}\)  // on heap
-		// explicit initialize with ctor calls
+		for ( int i = 0; i < sa.size(); i += 1 )
+			sa[i]( i, i * 10 );
 		...
 	} // implicitly array deallocate
 };
 %]
 \end{tabular}
 \end{cquote}
-%(uArrayPtr%)\index{uArrayPtr@%(uArrayPtr%)} (%(uArrayPtrFill%)\index{uArrayPtrFill@%(uArrayPtrFill%)}) performs a single dynamically allocation for the array in the heap, and implicitly frees it at the end of the block (like %(unique_ptr%)).
+%(uArrayPtr%)\index{uArrayPtr@%(uArrayPtr%)} (%(uArrayPtrFill%)\index{uArrayPtrFill@%(uArrayPtrFill%)}) performs a single dynamically allocation $O(1)$ in the heap for an array of $N$ elements, and implicitly frees it at the end of the block (like %(unique_ptr%)).
 The array elements are initialized post declaration with %(uArray%) constructor calls.
+In contrast, %(unique_ptr%) creates an array of $N$ pointers in the heap \emph{and} performs $O(N)$ dynamic allocations for each element.
 
 A %(uArray%) (%(uArrayFill%)) or %(uArrayPtr%) (%(uArrayPtrFill%)) object cannot be passed by value to a routine, as it is impossible to have a VLA parameter.
 When passing these objects, use macro %(uArrayRef%)\index{uArrayRef@%(uArrayRef%)} to create the parameter, which accepts the argument %(uArray%)\,/\,%(uArrayPtr%) by reference.

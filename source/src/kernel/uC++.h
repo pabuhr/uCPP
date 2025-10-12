@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:04:27 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 28 21:34:25 2025
-// Update Count     : 6438
+// Last Modified On : Mon Oct  6 21:55:26 2025
+// Update Count     : 6440
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -143,12 +143,12 @@ template< typename T, bool runDtor = true > class uNoCtor {
 	inline __attribute__((always_inline)) T & operator*() { return (T &)*((T *)&storage); }
 	inline __attribute__((always_inline)) const T * operator->() const { return (T *)&storage; }
 	inline __attribute__((always_inline)) T * operator->() { return (T *)&storage; }
-	T & ctor() { return *new( &storage ) T; }
-	T & operator()() { return *new( &storage ) T; }
-	template< typename... Args > T & ctor( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
-	template< typename... Args > T & operator()( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
-	template< typename RHS > T & operator=( const RHS & rhs ) { return *(T *)storage = rhs; }
-	void dtor() { ((T *)&storage)->~T(); }
+	inline __attribute__((always_inline)) T & ctor() { return *new( &storage ) T; }
+	inline __attribute__((always_inline)) T & operator()() { return *new( &storage ) T; }
+	template< typename... Args > inline __attribute__((always_inline)) T & ctor( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
+	template< typename... Args > inline __attribute__((always_inline)) T & operator()( Args &&... args ) { return *new( &storage ) T( std::forward<Args>(args)... ); }
+	template< typename RHS > inline __attribute__((always_inline)) T & operator=( const RHS & rhs ) { return *(T *)storage = rhs; }
+	inline __attribute__((always_inline)) void dtor() { ((T *)&storage)->~T(); }
 	~uNoCtor() { if constexpr ( runDtor ) dtor(); }		// destroy (array) element ?
 }; // uNoCtor
 
@@ -166,6 +166,12 @@ template< typename T > class uArrayImpl {
 	const bool runDtor;									// used by uArrayPtr
 	const size_t asize;
 	uNoCtor<T> * arr;
+
+	static void subscript_fail( const uNoCtor<T> * arr, size_t index, size_t asize ) {
+		char buf[256];
+		sprintf( buf, "uArray %p bad subscript %zd outside dimension range 0..%zd.", arr, index, asize - 1 );
+		throw std::out_of_range( buf );
+	} // uArrayImpl::subscript_fail
   public:
 	uArrayImpl( uNoCtor<T> * arr, size_t asize, bool runDtor = false ) : runDtor{ runDtor }, asize{ asize }, arr{ arr } {
 		if constexpr ( std::is_pointer<T>::value ) {
@@ -182,22 +188,18 @@ template< typename T > class uArrayImpl {
 		if ( runDtor ) delete [] arr;					// used by uArrayPtr
 	} // uArrayImpl::~uArrayImpl
 
-	uArrayImpl<T> & operator=( const uArrayImpl<T> & rhs ) {
+	inline __attribute__((always_inline)) uArrayImpl<T> & operator=( const uArrayImpl<T> & rhs ) {
 		size_t minarr = asize < rhs.asize ? asize : rhs.asize; // min( asize, rhs.asize )
-		for ( size_t i = 0; i < minarr; i += 1 ) {		// copy minimum array size 
+		for ( size_t i = 0; i < minarr; i += 1 ) {		// copy minimum array size
 			arr[i] = rhs.arr[i];						// must use assignment not memcpy
 		} // for
 		return *this;
 	} // uArrayImpl::operator=
 
-	size_t size() const { return asize; }
+	inline __attribute__((always_inline)) size_t size() const { return asize; }
 
-	uNoCtor<T> & operator[]( size_t index ) const {
-		if ( index >= asize ) {
-			char buf[256];
-			sprintf( buf, "uArray %p bad subscript %zd outside dimension range 0..%zd.", arr, index, asize - 1 );
-			throw std::out_of_range( buf );
-		} // if
+	inline __attribute__((always_inline)) uNoCtor<T> & operator[]( size_t index ) const {
+		if ( UNLIKELY( index >= asize ) ) subscript_fail( arr, index, asize );
 		return arr[index];
 	} // uArrayImpl::operator[]
 }; // uArrayImpl

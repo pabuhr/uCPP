@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Wed Sep  3 15:05:19 2025
-%% Update Count     : 9300
+%% Last Modified On : Sun Oct 12 07:55:05 2025
+%% Update Count     : 9325
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -11111,7 +11111,7 @@ The following is deceiving.
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{S}\0\V{sa}[500]\{\02,\03\0\};\0\0\0{\rm equivalent to}\0\0\V{S}\0\V{sa}[500]\0=\0\{\{2\},\0\{3\}\}\0\0{\rm not}\0\0=\0\{\{2,\03\}\}}}
 \endlgrinde\LGend
-which means call the constructor taking a single parameter (must add)
+which means call the constructor taking a single parameter:
 \LGinlinefalse\LGbegin\lgrinde
 \L{\LB{\V{S}(\0\K{int}\0\V{i}\0)\0:\0\V{i}\{\V{i}\}\0\{\}}}
 \endlgrinde\LGend
@@ -11289,7 +11289,7 @@ Hence, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} is a 
 \CE{}\L{\LB{}\Tab{4}{.\,.\,.}}
 \L{\LB{\}\0\C{}\1\1\0delete\0sa\0calling\0destructors\0for\0each\0element}}
 \CE{}\endlgrinde\LGend
-\Textbf{Note, post-declaration constructor calls are required, even default constructor, otherwise the array objects are uninitialized.}
+\Textbf{Note, post-declaration constructor calls are required for non-basic types, even default constructor, otherwise the array objects are uninitialized.}
 The destructor for each array element is called when the array is deallocated.
 If the destructor depends on the state of the element object, it is the programmer's responsibility to ensure correct object initialization.
 
@@ -11313,11 +11313,13 @@ The minimum array-size elements are copied.
 \L{\LB{\V{uArray}(\0\K{int},\0\V{ia2},\020\0);}}
 \L{\LB{\V{ia}\0=\0\V{ia2}\0=\0\V{ia};\0\0\C{}\1\1\0copy\0first\010\0elements\0of\0ia\0to\0ia2,\0copy\0first\010\0elements\0of\0ia2\0back\0to\0ia}}
 \CE{}\endlgrinde\LGend
-Use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}\index{uArrayFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}} to declare and initialize \emph{all} array elements to a fixed value.
+Macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}\index{uArrayFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}} declares and initializes \emph{all} array elements to a fixed value.
 It is the same as \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} with trailing arguments for one of the element's constructors.
+If no arguments are given, the default constructor is run.
 \LGinlinefalse\LGbegin\lgrinde
-\L{\LB{\V{uArrayFill}(\0\K{int},\0\V{ia},\010,\0\BF{42}\0);}\Tab{44}{\C{}\1\1\0all\0int\0array\0elements\0have\0value\042}}
-\CE{}\L{\LB{\V{uArrayFill}(\0\V{S},\0\V{sa},\010,\0\BF{2,\03}\0);}\Tab{44}{\C{}\1\1\0all\0S\'s\0array\0elements\0have\0value\02,\03}}
+\L{\LB{\V{uArrayFill}(\0\K{int},\0\V{ia},\010\0);}\Tab{44}{\C{}\1\1\0all\0int\0array\0elements\0have\0value\00}}
+\CE{}\L{\LB{\V{uArrayFill}(\0\K{int},\0\V{ia},\010,\0\BF{42}\0);}\Tab{44}{\C{}\1\1\0all\0int\0array\0elements\0have\0value\042}}
+\CE{}\L{\LB{\V{uArrayFill}(\0\V{S},\0\V{sa},\010,\0\BF{2,\03}\0);}\Tab{44}{\C{}\1\1\0all\0S\0array\0elements\0have\0value\02,\03}}
 \CE{}\endlgrinde\LGend
 \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} can mimic \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} for pointer types.
 \begin{cquote}
@@ -11375,8 +11377,7 @@ Note, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} requir
 \CE{}\endlgrinde\LGend
 \end{tabular}
 \end{cquote}
-As well, creating large VLAs on a coroutine or task stack can overflow it.
-For potentially large arrays, use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}.
+Macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{} is used to create large arrays in the heap, preventing stack overflow on a coroutine or task stack.
 \begin{cquote}
 \setlength{\tabcolsep}{15pt}
 \begin{tabular}{@{}l|l@{}}
@@ -11384,8 +11385,9 @@ For potentially large arrays, use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{u
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{\0\0\C{}\1\1\064K\0stack}}
 \CE{}\L{\LB{}\Tab{8}{\V{S}\0\BF{\V{sa}[100'000];}\0\C{}\1\1\0on\0stack,\0overflow}}
-\CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0implicit\0initialize\0with\0ctor\0calls}}
-\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\CE{}\L{\LB{}}
+\L{\LB{}}
+\L{\LB{}\Tab{8}{.\,.\,.}}
 \L{\LB{}\Tab{4}{\}\0\C{}\1\1\0implicitly\0array\0deallocate}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
@@ -11395,15 +11397,17 @@ For potentially large arrays, use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{u
 \L{\LB{\K{\_Coroutine}\0\V{C}\0\{}}
 \L{\LB{}\Tab{4}{\K{void}\0\V{main}()\0\{}}
 \L{\LB{}\Tab{8}{\BF{\V{uArrayPtr}(\0\V{S},\0\V{sa},\0100'000\0)}\0\0\C{}\1\1\0on\0heap}}
-\CE{}\L{\LB{}\Tab{8}{\C{}\1\1\0explicit\0initialize\0with\0ctor\0calls}}
-\CE{}\L{\LB{}\Tab{8}{.\,.\,.}}
+\CE{}\L{\LB{}\Tab{8}{\K{for}\0(\0\K{int}\0\V{i}\0=\00;\0\V{i}\0\<\0\V{sa}.\V{size}();\0\V{i}\0+=\01\0)}}
+\L{\LB{}\Tab{12}{\V{sa}[\V{i}](\0\V{i},\0\V{i}\0\*\010\0);}}
+\L{\LB{}\Tab{8}{.\,.\,.}}
 \L{\LB{}\Tab{4}{\}\0\C{}\1\1\0implicitly\0array\0deallocate}}
 \CE{}\L{\LB{\};}}
 \endlgrinde\LGend
 \end{tabular}
 \end{cquote}
-\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}\index{uArrayPtr@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}} (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtrFill}}}\endlgrinde\LGend{}\index{uArrayPtrFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtrFill}}}\endlgrinde\LGend{}}) performs a single dynamically allocation for the array in the heap, and implicitly frees it at the end of the block (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}).
+\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}\index{uArrayPtr@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{}} (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtrFill}}}\endlgrinde\LGend{}\index{uArrayPtrFill@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtrFill}}}\endlgrinde\LGend{}}) performs a single dynamically allocation $O(1)$ in the heap for an array of $N$ elements, and implicitly frees it at the end of the block (like \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{}).
 The array elements are initialized post declaration with \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} constructor calls.
+In contrast, \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{unique\_ptr}}}\endlgrinde\LGend{} creates an array of $N$ pointers in the heap \emph{and} performs $O(N)$ dynamic allocations for each element.
 
 A \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{} (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayFill}}}\endlgrinde\LGend{}) or \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{} (\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtrFill}}}\endlgrinde\LGend{}) object cannot be passed by value to a routine, as it is impossible to have a VLA parameter.
 When passing these objects, use macro \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayRef}}}\endlgrinde\LGend{}\index{uArrayRef@\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayRef}}}\endlgrinde\LGend{}} to create the parameter, which accepts the argument \LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArray}}}\endlgrinde\LGend{}\,/\,\LGinlinetrue\LGbegin\lgrinde\L{\LB{\V{uArrayPtr}}}\endlgrinde\LGend{} by reference.
