@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 21 08:05:27 2025
-// Update Count     : 1298
+// Last Modified On : Sun Oct 26 16:36:22 2025
+// Update Count     : 1299
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -115,7 +115,7 @@ namespace UPP {
 
 		void operator()( uBaseException * ex ) {		// make exception available in the future : exception/result mutual exclusive
 			if ( UNLIKELY( available() || cancelled() ) ) _Throw uDelivery(); // already set or client does not want it
-			ex = ex;
+			uBaseFuture::ex = ex;
 			makeavailable();							// unblock waiting clients ?
 		} // uBaseFuture::operator()()
 
