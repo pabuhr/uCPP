@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 29 16:02:50 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 20 08:04:04 2024
-// Update Count     : 48
+// Last Modified On : Mon Dec  1 10:46:19 2025
+// Update Count     : 49
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -72,7 +72,7 @@ int main( int argc, char *argv[] ) {
 	{
 		Reader rd( server );							// execute until reader times out
 	}
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -o Server ServerINETDGRAM.cc" //

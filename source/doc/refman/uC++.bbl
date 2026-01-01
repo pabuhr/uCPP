@@ -326,10 +326,6 @@ James~G. Mitchell, William Maybury, and Richard Sweet.
 \newblock Technical Report CSL--79--3, Xerox Palo Alto Research Center, Palo
   Alto, CA, USA, April 1979.
 
-\bibitem[Ope15]{OpenMP}
-{\em OpenMP Application Program Interface, Version 4.5}, November 2015.
-\newblock \url{https://www.openmp.org/wp-content/uploads/openmp-4.5.pdf}.
-
 \bibitem[POS08]{POSIX08}
 IEEE and The Open Group.
 \newblock {\em 1003.1 Standard for Information Technology -- Portable Operating

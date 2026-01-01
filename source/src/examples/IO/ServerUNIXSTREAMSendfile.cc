@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:45:06 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 20 08:04:47 2024
-// Update Count     : 33
+// Last Modified On : Mon Dec  1 10:46:40 2025
+// Update Count     : 34
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -122,7 +122,7 @@ int main( int argc, char *argv[] ) {
 		Server s( sockserver );							// execute until acceptor times out
 	}
 	unlink( argv[1] );									// remove socket file
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work -o Server ServerUNIXSTREAMSendfile.cc" //

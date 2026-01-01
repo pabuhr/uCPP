@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr and Richard C. Bilson
 // Created On       : Wed Aug 30 22:34:05 2006
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 26 16:36:22 2025
-// Update Count     : 1299
+// Last Modified On : Sun Nov 16 10:52:08 2025
+// Update Count     : 1302
 // 
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -370,7 +370,7 @@ template<typename T> class Future_ISM {
 	} // Future_ISM::Future_ISM
 
 	Future_ISM<T> & operator=( const Future_ISM<T> & rhs ) {
-	  if ( rhs.impl == impl ) return *this;
+	  if ( impl == rhs.impl ) return *this;				// self assignment ?
 		if ( impl->decRef() ) delete impl;				// no references => delete current impl
 		impl = rhs.impl;								// point at new impl
 		impl->incRef();									//   and increment reference count

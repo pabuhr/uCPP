@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 17 17:06:03 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 25 22:37:50 2022
-// Update Count     : 193
+// Last Modified On : Mon Dec  1 10:47:11 2025
+// Update Count     : 194
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -370,7 +370,7 @@ int main() {
 		exit( EXIT_FAILURE );
 	} // if
 
-	// thread cancel test: check uMain's pthread emulation
+	// thread cancel test: check main's pthread emulation
 
 	maintestcancel();
 

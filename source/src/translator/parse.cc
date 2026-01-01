@@ -7,8 +7,8 @@
 // Author           : Richard A. Stroobosscher
 // Created On       : Tue Apr 28 15:10:34 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 14 18:47:22 2025
-// Update Count     : 5166
+// Last Modified On : Wed Dec 31 08:01:25 2025
+// Update Count     : 5190
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -680,7 +680,7 @@ static void prefix_labels( token_t * before, token_t * after, token_t * label[],
 		} // if
 		gen_code( after, "}" );
 		for ( int i = 0; i < cnt; i += 1 ) {
-			l = label[i];				// optimization
+			l = label[i];								// optimization
 			if ( l != nullptr && l->symbol != nullptr ) { // ignore duplicate and non-prefix labels
 				sprintf( name, "_U_B_%.256s : __attribute__ (( unused )) ;", l->hash->text );
 				gen_code( ahead, name );
@@ -807,15 +807,15 @@ static bool break_statement() {
 	if ( match( BREAK ) ) {
 		token_t * label = ahead;
 		if ( match( IDENTIFIER ) ) {
-			if ( label->symbol != nullptr ) {			// prefix label ?
-				// cannot remove "break" token as there may be pointers to it
+			if ( label->symbol != nullptr && label->symbol->data->index >= 1 ) { // prefix label ?
+				// Cannot remove "break" token as there may be pointers to it.
 				blocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 				blocn->value = blocn->hash->value;
-				char name[300];				// generate new label
+				char name[300];							// generate new label
 				sprintf( name, "_U_B_%.256s", label->hash->text );
 				label->hash = hash_table->lookup( name ); // change label
 			} else {
-				gen_error( ahead, "label is not a prefix of a \"for\", \"while\", \"do\", \"switch\", \"if\", \"try\" or compound \"{}\" statement." );
+				gen_error( ahead, "break label is not a prefix of a nested \"for\", \"while\", \"do\", \"switch\", compound \"{}\", \"if\", or \"try\" statement." );
 			} // if
 		} // if
 		if ( match( ';' ) ) return true;				// must end with semi-colon
@@ -837,14 +837,14 @@ static bool continue_statement() {
 		token_t * label = ahead;
 		if ( match( IDENTIFIER ) ) {
 			if ( label->symbol != nullptr && label->symbol->data->index == 1 ) { // prefix label ?
-				// cannot remove "continue" token as there may be pointers to it
+				// Cannot remove "continue" token as there may be pointers to it.
 				clocn->hash = hash_table->lookup( "goto" ); // change to "goto" token
 				clocn->value = clocn->hash->value;
 				char name[300];				// generate new label
 				sprintf( name, "_U_C_%.256s", label->hash->text );
 				label->hash = hash_table->lookup( name ); // change label
 			} else {
-				gen_error( ahead, "label is not a prefix of a \"for\", \"while\" or \"do\" statement." );
+				gen_error( ahead, "continue label is not a prefix of a nested \"for\", \"while\" or \"do\" statement." );
 			} // if
 		} // if
 		if ( match( ';' ) ) return true;				// must end with semi-colon
@@ -2241,8 +2241,8 @@ static bool labelled_statement( symbol_t * symbol ) {
 	int cnt;
 
 	for ( cnt = 0;; ) {
-		label[cnt] = ahead;				// save current token
-		if ( ! match( IDENTIFIER ) || ! match( ':' ) ) break;
+		label[cnt] = ahead;								// save current token
+	  if ( ! match( IDENTIFIER ) || ! match( ':' ) ) break;
 		gen_code( ahead, "__attribute__ (( unused )) ;" );
 		if ( cnt < labprefix ) {
 			cnt += 1;
@@ -2253,31 +2253,41 @@ static bool labelled_statement( symbol_t * symbol ) {
 		} // if
 	} // for
 	if ( cnt > 0 ) {									// any labels ?
-		if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( IF ) || check( TRY ) || check( LC ) ) {
+		if ( check( FOR ) || check( WHILE ) || check( DO ) || check( SWITCH ) || check( LC ) || check( IF ) || check( TRY ) ) {
 			int targetype;
-			if ( check( SWITCH ) || check( IF ) || check( TRY ) || check( LC ) ) targetype = 2;
+			if ( check( SWITCH ) || check( LC ) || check( IF ) || check( TRY ) ) targetype = 2;
 			else targetype = 1;
+
 			token_t * l;
 			for ( int i = 0; i < cnt; i += 1 ) {
-				l = label[i];				// optimization
-				// only need to create a symbol table for labels that need to be looked up by break and continue.
+				l = label[i];							// optimization
+				// Only need to create a symbol table for labels that need to be looked up by break and continue.
 				l->symbol = focus->search_table( l->hash );
 				if ( l->symbol == nullptr ) {			// not defined in this scope ?
 					l->symbol = new symbol_t( l->value, l->hash );
 					focus->insert_table( l->symbol );
 					// SKULLDUGGERY: put label target kind into mutex index field
 					l->symbol->data->index = targetype;
-				} else {				// already defined ? => duplicate label
+				} else {								// already defined ? => duplicate label
 					label[i] = nullptr;
 				} // if
 			} // for
-			if ( for_statement( symbol, label, cnt ) ) return true;
-			if ( while_statement( symbol, label, cnt ) ) return true;
-			if ( do_statement( symbol, label, cnt ) ) return true;
-			if ( switch_statement( symbol, label, cnt ) ) return true;
-			if ( if_statement( symbol, label, cnt ) ) return true;
-			if ( try_statement( symbol, label, cnt ) ) return true;
-			if ( compound_statement( symbol, label, cnt ) ) return true;
+			// Recursively parse nested control structures.
+			if ( for_statement( symbol, label, cnt ) ||
+				 while_statement( symbol, label, cnt ) ||
+				 do_statement( symbol, label, cnt ) ||
+				 switch_statement( symbol, label, cnt ) ||
+				 compound_statement( symbol, label, cnt ) ||
+				 if_statement( symbol, label, cnt ) ||
+				 try_statement( symbol, label, cnt )
+				) {
+				// Reset the label targetype to generate an error for unnested laballed break/continue.
+				for ( int i = 0; i < cnt; i += 1 ) {
+					l = label[i];							// optimization
+					if ( l->symbol != nullptr ) l->symbol->data->index = 0;
+				} // for
+				return true;
+			} // if
 		} else if ( statement( symbol ) ) {
 			return true;
 		} // if

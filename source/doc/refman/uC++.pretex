@@ -7,8 +7,8 @@
 %% Author           : Peter A. Buhr
 %% Created On       : Wed Jan  2 17:29:18 1991
 %% Last Modified By : Peter A. Buhr
-%% Last Modified On : Sun Oct 12 07:55:05 2025
-%% Update Count     : 9325
+%% Last Modified On : Tue Dec  2 08:09:04 2025
+%% Update Count     : 9338
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[openright,twoside]{report}
@@ -111,7 +111,7 @@ The following discussion is the rationale for the particular extensions that wer
 \section{Design Requirements}
 
 The following requirements directed this work:
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
 \item
 Any linguistic feature that affects code generation \emph{must} become part of the language.
 In other words, if the compiler can generate code that invalidates the correctness of a library package implementing a particular feature, either the library feature cannot be implemented safely or additional capabilities must be added to the programming language to support the feature.
@@ -1783,7 +1783,7 @@ When creating a cyclic call-graph using a coroutine monitor, it is the programme
 \section{Thread Creation and Destruction}
 
 Three macros are provided for implicit thread creation and destruction.
-\begin{enumerate}
+\begin{enumerate}[leftmargin=*]
 \item
 Macro %(COBEGIN%)\index{COBEGIN@%(COBEGIN%)}/%(COEND%)\index{COEND@%(COEND%)} starts $N$ thread, one to execute each nested %(BEGIN%)\index{BEGIN@%(BEGIN%)}/%(END%)\index{END@%(END%)} statement.
 %[
@@ -1845,9 +1845,7 @@ int main() {
 		    subtotals[row] += matrix[row][c];
 		}
 	); // wait for threads
-	for ( int r = 0; r < rows; r += 1 ) {
-		total += subtotals[r];  // total subtotals
-	}
+	for ( int r = 0; r < rows; r += 1 ) total += subtotals[r]; // total subtotals
 	cout << total << endl;
 }
 %]
@@ -2626,7 +2624,7 @@ It is \emph{not} meaningful to read or to assign to a barrier variable, or copy 
 
 The hardware provides an assortment of atomic read/write instructions, some of which are used to build the higher-level locks or lock-free data-structures.
 The following hardware instructions are accessible:
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
 \item
 {\LGindent=0pt
 %[
@@ -2923,7 +2921,7 @@ The following restrictions are an artifact of this implementation\index{implemen
 In some cases the restriction results from the fact that \uC is only a translator and not a compiler.
 In all other cases, the restrictions exist simply because time limitations on this project have prevented it from being implemented.
 
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
 \item
 While \uC has extended \CC with concurrency constructs, it is not a compiler.
 Therefore, it suffers from the soundness/efficiency problem related to all concurrency library approaches (see \VRef{s:LibraryApproach}).
@@ -2994,6 +2992,17 @@ This problem is an artifact of \uC being a translator.
 \item
 No %(break%), %(continue%), %(goto%), %(return%) from a resumption handler.
 This problem is because the handler is transformed into a local lambda routine, and hence, it cannot branch back within its lexical scope.
+However, a resumption handler is a corrective (fixup) action so computation can continue at the raise (dynamic return).
+Exiting the resumption handler is a recovery action (static return).
+If correction is impossible, the handler should \Textbf{throw} an exception not attempt to step into an enclosing block to cause the stack to unwind.
+%[
+B: try {
+	f();					// recursive calls and _Resume E()
+} _CatchResume( E e ) {		// handler H
+	... \(\BF{\)break B;\(}\)\(}\Tab{28}{\)// force static return (disallowed)
+	_Throw e;				// force recovery (allowed) 
+}
+%]
 \end{itemize}
 
 
@@ -5693,7 +5702,7 @@ The status value remains as long as it is not overwritten by another routine.
 \section{\texorpdfstring{\uC EHM}{uC++ EHM}}
 
 The following features characterize the \uC EHM, and differentiate it from the \CC EHM.
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
 \item
 \uC exceptions are generated from a specific kind of type, which can be thrown\index{exception!throw} and/or resumed\index{exception!resume}.
 All exception types are also grouped into a hierarchy by publicly inheriting among the exception types.
@@ -10910,7 +10919,7 @@ Finally, a PRNG usually generates a range of large values, e.g., %([0, UINT_MAX]
 
 \uC provides 32/64-bit sequential PRNG classes only accessible by a single thread (not thread-safe) and a set of global routines and companion task members accessible by multiple threads without contention.
 To use the PRNG interface \Textbf{requires %(#include <uPRNG.h>%)}\index{uPRNG.h@%(uPRNG.h%)}.
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
 \item
 The %(PRNG%) classes for sequential programs, including coroutining, are:
 %[

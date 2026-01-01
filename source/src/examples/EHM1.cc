@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Nov 26 23:06:25 1997
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Nov 28 11:08:23 2024
-// Update Count     : 269
+// Last Modified On : Wed Dec 31 08:22:57 2025
+// Update Count     : 295
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -68,23 +68,39 @@ _Coroutine CoroutineDummy2 {
 }; // CoroutineDummy1
 
 
+//######################### uBaseCoroutine::UnhandledException #########################
+
+
+_Task TaskDummy0 {
+	void main() {
+		_Throw XXX( "throw test" );
+	} // TaskDummy0::main
+}; // TaskDummy0
+
+_Task TaskDummy1 {
+	void main() {
+		TaskDummy0 t0;
+	} // TaskDummy1::main
+}; // TaskDummy1
+
+
 //######################### uCondition::uWaitingFailure #########################
 
 
-_Task TaskDummy1 {
+_Task TaskDummy2 {
 	uCondition x;
   public:
 	void mem() {
 		x.wait();
-	} // TaskDummy1::mem
+	} // TaskDummy2::mem
   private:
 	void main() {
 		_Accept( mem );
-	} // TaskDummy1::main
-}; // TaskDummy1
+	} // TaskDummy2::main
+}; // TaskDummy2
 
-_Task TaskDummy2 {
-	TaskDummy1 &t1;
+_Task TaskDummy3 {
+	TaskDummy2 & t1;
 
 	void main() {
 #if 0
@@ -92,24 +108,24 @@ _Task TaskDummy2 {
 #endif
 		try {
 			t1.mem();
-		} catch( uCondition::WaitingFailure &ex ) {
+		} catch( uCondition::WaitingFailure & ex ) {
 			osacquire( cout ) << "handled exception uCondition::WaitingFailure : task " << ex.source().getName() << " (" << &(ex.source()) << ") found blocked task" << " " << uThisTask().getName() << " (" << &uThisTask() << ") on condition variable " << &ex.conditionId() << endl << endl;
 		} // try
-	} // TaskDummy2::main
+	} // TaskDummy3::main
   public:
-	TaskDummy2( TaskDummy1 &t1 ) : t1( t1 ) {}
-}; // TaskDummy2
+	TaskDummy3( TaskDummy2 & t1 ) : t1( t1 ) {}
+}; // TaskDummy3
 
 
 //######################### uMutexFailure::uRendezvousFailure #########################
 
 
-_Task TaskDummy3 {
-	uBaseTask &t;
+_Task TaskDummy4 {
+	uBaseTask & t;
   public:
-	TaskDummy3( uBaseTask &t ) : t( t ) {}
+	TaskDummy4( uBaseTask & t ) : t( t ) {}
 	void mem() {
-	} // TaskDummy3::mem
+	} // TaskDummy4::mem
   private:
 	void main() {
 		_Resume XXX( "test" ) _At t;
@@ -118,34 +134,34 @@ _Task TaskDummy3 {
 #endif
 		try {
 			_Accept( mem );
-		} catch ( uMutexFailure::RendezvousFailure &ex ) {
+		} catch ( uMutexFailure::RendezvousFailure & ex ) {
 			osacquire( cout ) << "handled exception uMutexFailure::RendezvousFailure : accepted call fails from task " << ex.sourceName() << " (" << &(ex.source()) << ") to mutex member of task " << uThisTask().getName() << " (" << &uThisTask() << ")" << endl << endl;
 		} // try
-	} // TaskDummy3::main
-}; // TaskDummy3
+	} // TaskDummy4::main
+}; // TaskDummy4
 
 
 //######################### uMutexFailure::uEntryFailure (acceptor/signalled stack) #########################
 
 
-_Task TaskDummy4 {
+_Task TaskDummy5 {
 	uCondition temp;
   public:
 	void mem() {
 		temp.wait();
-	} // TaskDummy4::mem
+	} // TaskDummy5::mem
   private:
 	void main() {
-		_Accept( mem );					// let TaskDummy5 in so it can wait
-		temp.signal();					// put TaskDummy5 on A/S stack
-		_Accept( ~TaskDummy4 );				// uMain is calling the destructor
-	} // TaskDummy4::main
-}; // TaskDummy4
+		_Accept( mem );									// let TaskDummy6 in so it can wait
+		temp.signal();									// put TaskDummy6 on A/S stack
+		_Accept( ~TaskDummy5 );							// program main is calling the destructor
+	} // TaskDummy5::main
+}; // TaskDummy5
 
-_Task TaskDummy5 {
-	TaskDummy4 &t4;
+_Task TaskDummy6 {
+	TaskDummy5 & t4;
   public:
-	TaskDummy5( TaskDummy4 &t4 ) : t4( t4 ) {}
+	TaskDummy6( TaskDummy5 & t4 ) : t4( t4 ) {}
   private:
 	void main() {
 #if 0
@@ -153,32 +169,32 @@ _Task TaskDummy5 {
 #endif
 		try {
 			t4.mem();
-		} catch( uMutexFailure::EntryFailure &ex ) {
+		} catch( uMutexFailure::EntryFailure & ex ) {
 			osacquire( cout ) << "handled exception uMutexFailure::EntryFailure : while executing mutex destructor, task " << ex.source().getName() << " (" << &(ex.source()) << ") found task " << uThisTask().getName() << " (" << &uThisTask() << ") " << ex.message() << endl << endl;
 		} catch( ... ) {
 			abort( "invalid exception" );
 		} // try
-	} // TaskDummy5::main
-}; // TaskDummy5
+	} // TaskDummy6::main
+}; // TaskDummy6
 
 
 //######################### uMutexFailure::uEntryFailure (entry queue) #########################
 
 
-_Task TaskDummy6 {
+_Task TaskDummy7 {
   public:
-  void mem() {
-  } // TaskDummy6::mem
+	void mem() {
+	} // TaskDummy7::mem
   private:
-  void main() {
-	  _Accept( ~TaskDummy6 );
-  } // TaskDummy6::main
+	void main() {
+		_Accept( ~TaskDummy7 );
+	} // TaskDummy7::main
 };
 
-_Task TaskDummy7 {
-	TaskDummy6 &t6;
+_Task TaskDummy8 {
+	TaskDummy7 & t6;
   public:
-	TaskDummy7( TaskDummy6 &t6 ) : t6( t6 ) {}
+	TaskDummy8( TaskDummy7 & t6 ) : t6( t6 ) {}
   private:
 	void main() {
 #if 0
@@ -186,13 +202,13 @@ _Task TaskDummy7 {
 #endif
 		try {
 			t6.mem();
-		} catch( uMutexFailure::EntryFailure &ex ) {
+		} catch( uMutexFailure::EntryFailure & ex ) {
 			osacquire( cout ) << "handled exception uMutexFailure::EntryFailure : while executing mutex destructor, task " << ex.source().getName() << " (" << &(ex.source()) << ") found task " << uThisTask().getName() << " (" << &uThisTask() << ") " << ex.message() << endl << endl;
 		} catch( ... ) {
 			abort( "invalid exception" );
 		} // try
-	} // TaskDummy7::main
-}; // TaskDummy7
+	} // TaskDummy8::main
+}; // TaskDummy8
 
 
 int main() {
@@ -202,12 +218,12 @@ int main() {
 
 		try {
 			dummy1.mem();
-		} catch( uBaseCoroutine::UnhandledException &ex ) {
-			osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << "." << endl << endl;
+		} catch( uBaseCoroutine::UnhandledException & ex ) {
+			osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << "." << endl;
 			try {
 				osacquire( cout ) << "before trigger" << endl;
 				ex.triggerCause();
-				osacquire( cout ) << "after trigger" << endl;
+				osacquire( cout ) << "after trigger" << endl << endl;
 			} _CatchResume( YYY & ) {
 				osacquire( cout ) << "CatchResume YYY" << endl;
 			} // try
@@ -220,17 +236,18 @@ int main() {
 
 		try {
 			dummy2.mem();
-		} catch( uBaseCoroutine::UnhandledException &ex ) {
-			osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << " through " << ex.unhandled() << " unhandled exceptions." << endl << endl;
+		} catch( uBaseCoroutine::UnhandledException & ex ) {
+			osacquire( cout ) << "handled exception uBaseCoroutine::UnhandledException : in coroutine " << uThisCoroutine().getName() << " (" << &uThisCoroutine() << ") raised non-locally from resumed coroutine " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << " through " << ex.unhandled() << " unhandled exceptions." << endl;
 
 			osacquire( cout ) << "Now triggering exception" << endl;
 			try {
 				ex.triggerCause();
-			} _CatchResume ( uBaseCoroutine::UnhandledException &e ) {
+			} _CatchResume ( uBaseCoroutine::UnhandledException & e ) {
 				osacquire( cout ) << "Now triggering embedded UnhandledException" << endl;    
 				e.triggerCause();
-			} catch ( XXX &ex ) {
-				osacquire( cout ) << "caught XXX : " << ex.message() << endl;
+				abort();
+			} catch ( XXX & ex ) {
+				osacquire( cout ) << "caught XXX : " << ex.message() << endl << endl;
 			} catch ( ... ) {
 				abort( "invalid exception" );
 			} // try
@@ -238,36 +255,56 @@ int main() {
 			abort( "invalid exception" );
 		} // try
 	}
+
+	//######################### uBaseCoroutine::UnhandledException #########################
+	{
+		try {
+			TaskDummy1 t1;
+		} _CatchResume ( uBaseTask::UnhandledException & ex ) {
+			osacquire( cout ) << "handled exception uBaseTask::UnhandledException : in task " << uThisTask().getName() << " (" << &uThisTask() << ") raised non-locally from joined task " << ex.sourceName() << " (" << &(ex.source()) << ") because of " << ex.message() << "." << endl;
+			try {
+				osacquire( cout ) << "Now triggering embedded UnhandledException" << endl;
+				ex.triggerCause();
+				abort();
+			} catch ( XXX & ex ) {
+				osacquire( cout ) << "caught XXX : " << ex.message() << endl << endl;
+			} catch ( ... ) {
+				abort( "invalid exception" );
+			} // try
+		} // try
+	}
+
 	//######################### uCondition::uWaitingFailure #########################
 
-	TaskDummy1 * t1 = new TaskDummy1;
-	TaskDummy2 * t2 = new TaskDummy2( *t1 );
+	TaskDummy2 * t1 = new TaskDummy2;
+	TaskDummy3 * t2 = new TaskDummy3( *t1 );
 	delete t1;						// delete t1 with t2 blocked on condition variable
 	delete t2;
 
 	//######################### uMutexFailure::uRendezvousFailure #########################
 	{
-		TaskDummy3 t3( uThisTask() );
+		TaskDummy4 t3( uThisTask() );
 		try {
 			_Enable {
 				t3.mem();
 			} // _Enable
-		} catch( XXX &ex ) {
+		} catch( XXX & ex ) {
 		} catch( ... ) {
 			abort( "invalid exception" );
 		} // try
 	}
+
 	//######################### uMutexFailure::uEntryFailure (acceptor/signalled stack) #########################
 
-	TaskDummy4 * t4 = new TaskDummy4;
-	TaskDummy5 * t5 = new TaskDummy5( *t4 );
+	TaskDummy5 * t4 = new TaskDummy5;
+	TaskDummy6 * t5 = new TaskDummy6( *t4 );
 	delete t4;
 	delete t5;
 
 	//######################### uMutexFailure::uEntryFailure (entry queue) #########################
 
-	TaskDummy6 * t6 = new TaskDummy6;
-	TaskDummy7 * t7 = new TaskDummy7( *t6 );
+	TaskDummy7 * t6 = new TaskDummy7;
+	TaskDummy8 * t7 = new TaskDummy8( *t6 );
 	delete t6;
 	delete t7;
 

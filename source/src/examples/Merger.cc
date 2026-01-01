@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun May 16 22:40:36 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 26 08:19:52 2022
-// Update Count     : 78
+// Last Modified On : Mon Dec  1 10:46:53 2025
+// Update Count     : 79
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -122,7 +122,7 @@ int main() {
 	cout << endl;
 
 	cout << "successful completion" << endl;
-} // uMain:main
+} // main
 
 // Local Variables: //
 // compile-command: "u++ Merger.cc" //

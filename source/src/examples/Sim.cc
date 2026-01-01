@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Aug 16 13:51:34 1991
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jan 17 09:39:20 2023
-// Update Count     : 146
+// Last Modified On : Mon Dec  1 10:47:21 2025
+// Update Count     : 147
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -96,7 +96,7 @@ int main( int argc, char *argv[] ) {
 		Worker worker( NoWorkers, work / NoWorkers, work % NoWorkers );
 	}
 	cout << "successful completion" << endl;
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "../../bin/u++ -multi -g Sim.cc" //

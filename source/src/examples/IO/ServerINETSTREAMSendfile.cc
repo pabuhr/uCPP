@@ -8,8 +8,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 15 15:46:35 2007
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 20 08:04:21 2024
-// Update Count     : 23
+// Last Modified On : Mon Dec  1 10:45:33 2025
+// Update Count     : 24
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -125,7 +125,7 @@ int main( int argc, char *argv[] ) {
 	{
 		Server s( sockserver );							// execute until acceptor times out
 	}
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work ServerINETSTREAMSendfile.cc -o Server" //

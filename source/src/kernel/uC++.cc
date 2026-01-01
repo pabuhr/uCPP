@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Dec 17 22:10:52 1993
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jul 16 16:46:38 2025
-// Update Count     : 3463
+// Last Modified On : Mon Dec  1 17:36:58 2025
+// Update Count     : 3466
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -1848,12 +1848,6 @@ namespace UPP {
 
 	uSerialDestructor::uSerialDestructor( uAction f, uSerial & serial, uBasePrioritySeq & ml, int mp ) : f( f ) {
 		if ( f == uYes ) {
-			if ( std::__U_UNCAUGHT_EXCEPTION__() ) {	// exception in flight ?
-				abort( "Attempt to propagate exception across implicit task join.\n"
-					   "Possible cause is missing try block before task join.\n"
-					   "Try catching exception uBaseException and print the exception's message." );
-			} // if
-
 			uBaseTask & task = uThisTask();				// optimization
 			uDEBUG( nlevel = task.currSerialLevel += 1; );
 			serial.prevSerial = &task.getSerial();		// save previous serial

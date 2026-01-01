@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jan  8 16:14:20 1996
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jan  2 17:42:35 2025
-// Update Count     : 490
+// Last Modified On : Mon Dec  1 09:00:24 2025
+// Update Count     : 491
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -159,6 +159,12 @@ uBaseTask::uTaskConstructor::~uTaskConstructor() {
 
 uBaseTask::uTaskDestructor::~uTaskDestructor() noexcept(false) {
 	if ( f == uYes ) {
+		if ( std::__U_UNCAUGHT_EXCEPTION__() ) {	// exception in flight ?
+			abort( "Attempt to propagate exception across implicit task join.\n"
+				   "Possible cause is missing try block before task join.\n"
+				   "Try catching exception uBaseException and print the exception's message." );
+		} // if
+
 		uDEBUG(
 			if ( task.uBaseCoroutine::getState() != uBaseCoroutine::Halt ) {
 				abort( "After implicit/explicit accept of a destructor call, task %.256s (%p) blocks, which restarts the destructor call before the task's main has terminated.\n"

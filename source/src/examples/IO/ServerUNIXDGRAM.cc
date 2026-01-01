@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Apr 30 16:36:18 1999
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 20 08:04:29 2024
-// Update Count     : 50
+// Last Modified On : Mon Dec  1 10:45:53 2025
+// Update Count     : 51
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -74,7 +74,7 @@ int main( int argc, char *argv[] ) {
 		Reader rd( server );							// execute until reader times out
 	}
 	unlink( argv[1] );									// remove socket file
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work ServerUNIXDGRAM.cc -o Server" //

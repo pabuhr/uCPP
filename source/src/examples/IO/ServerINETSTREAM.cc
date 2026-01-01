@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jan  7 08:40:22 1992
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jan 20 08:04:13 2024
-// Update Count     : 194
+// Last Modified On : Mon Dec  1 10:45:25 2025
+// Update Count     : 195
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -125,7 +125,7 @@ int main( int argc, char *argv[] ) {
 	{
 		Server s( sockserver );							// execute until acceptor times out
 	}
-} // uMain
+} // main
 
 // Local Variables: //
 // compile-command: "u++-work ServerINETSTREAM.cc -o Server" //

@@ -7,8 +7,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Oct  3 22:58:11 2003
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 15 18:52:53 2025
-// Update Count     : 212
+// Last Modified On : Sun Dec 28 11:25:10 2025
+// Update Count     : 214
 //
 // This  library is free  software; you  can redistribute  it and/or  modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -121,6 +121,52 @@ void Worker::main() {
 		free( locns[i] );
 	} // for
 
+	// check aalloc/free (sbrk)
+
+	for ( int i = 0; i < NoOfAllocs; i += 1 ) {
+		size_t s = (i + 1) * 20;
+		char * area = (char *)aalloc( s, 10 );
+		area[0] = '\345'; area[s - 1] = '\345';			// fill first/last
+		area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+		free( area );
+	} // for
+
+	for ( int i = 0; i < NoOfAllocs; i += 1 ) {
+		size_t s = i + 1;								// +1 to make initialization simpler
+		locns[i] = (char *)aalloc( s, 10 );
+		locns[i][0] = '\345'; locns[i][s - 1] = '\345';	// fill first/last
+		locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
+	} // for
+	for ( int i = 0; i < NoOfAllocs; i += 1 ) {
+		size_t s = i + 1;
+		if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
+			 locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "aalloc/free corrupt storage" );
+		free( locns[i] );
+	} // for
+
+	// check aalloc/free (mmap)
+
+	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
+		size_t s = i + malloc_mmap_start();				// cross over point
+		char * area = (char *)aalloc( s, 10 );
+		area[0] = '\345'; area[s - 1] = '\345';			// fill first/last
+		area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+		free( area );
+	} // for
+
+	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
+		size_t s = i + malloc_mmap_start();				// cross over point
+		locns[i] = (char *)aalloc( s, 10 );
+		locns[i][0] = '\345'; locns[i][s - 1] = '\345';	// fill first/last
+		locns[i][malloc_usable_size( locns[i] ) - 1] = '\345'; // fill ultimate byte
+	} // for
+	for ( int i = 0; i < NoOfMmaps; i += 1 ) {
+		size_t s = i + malloc_mmap_start();				// cross over point
+		if ( locns[i][0] != '\345' || locns[i][s - 1] != '\345' ||
+			 locns[i][malloc_usable_size( locns[i] ) - 1] != '\345' ) abort( "aalloc/free corrupt storage" );
+		free( locns[i] );
+	} // for
+
 	// check calloc/free (sbrk)
 
 	for ( int i = 0; i < NoOfAllocs; i += 1 ) {
@@ -187,7 +233,7 @@ void Worker::main() {
 			char * area = (char *)memalign( a, s );
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-				abort( "memalign/free bad alignment : memalign(%d,%d) = %p", (int)a, s, area );
+				abort( "memalign/free bad alignment : memalign( %d, %d ) = %p", (int)a, s, area );
 			} // if
 			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
 			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
@@ -204,12 +250,110 @@ void Worker::main() {
 			char * area = (char *)memalign( a, s );
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-				abort( "memalign/free bad alignment : memalign(%d,%d) = %p", (int)a, (int)s, area );
+				abort( "memalign/free bad alignment : memalign( %d, %d ) = %p", (int)a, (int)s, area );
 			} // if
 			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
 			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
 			free( area );
 		} // for
+	} // for
+
+	// check aligned_alloc/free (sbrk)
+
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		//cout << setw(6) << alignments[a] << endl;
+		for ( int s = 1; s < NoOfAllocs; s += 1 ) {		// allocation of size 0 can return null
+			char * area = (char *)aligned_alloc( a, s );
+			//cout << setw(6) << i << " " << area << endl;
+			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+				abort( "aligned_alloc/free bad alignment : aligned_alloc( %d, %d ) = %p", (int)a, s, area );
+			} // if
+			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
+			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
+			free( area );
+		} // for
+	} // for
+
+	// check aligned_alloc/free (mmap)
+
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		//cout << setw(6) << alignments[a] << endl;
+		for ( int i = 1; i < NoOfMmaps; i += 1 ) {
+			size_t s = i + malloc_mmap_start();			// cross over point
+			char * area = (char *)aligned_alloc( a, s );
+			//cout << setw(6) << i << " " << area << endl;
+			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+				abort( "aligned_alloc/free bad alignment : aligned_alloc( %d, %d ) = %p", (int)a, (int)s, area );
+			} // if
+			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
+			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
+			free( area );
+		} // for
+	} // for
+
+	// check posix_memalign/free (sbrk)
+
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		//cout << setw(6) << alignments[a] << endl;
+		for ( int s = 1; s < NoOfAllocs; s += 1 ) {		// allocation of size 0 can return null
+			char * area;
+			int ret = posix_memalign( (void **)&area, a, s );
+			if ( ret ) abort();
+			//cout << setw(6) << i << " " << area << endl;
+			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+				abort( "posix_memalign/free bad alignment : posix_memalign( %d, %d ) = %p", (int)a, s, area );
+			} // if
+			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
+			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
+			free( area );
+		} // for
+	} // for
+
+	// check posix_memalign/free (mmap)
+
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		//cout << setw(6) << alignments[a] << endl;
+		for ( int i = 1; i < NoOfMmaps; i += 1 ) {
+			size_t s = i + malloc_mmap_start();			// cross over point
+			char * area;
+			int ret = posix_memalign( (void **)&area, a, s );
+			if ( ret ) abort();
+			//cout << setw(6) << i << " " << area << endl;
+			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+				abort( "posix_memalign/free bad alignment : posix_memalign( %d, %d ) = %p", (int)a, (int)s, area );
+			} // if
+			area[0] = '\345'; area[s - 1] = '\345';		// fill first/last byte
+			area[malloc_usable_size( area ) - 1] = '\345'; // fill ultimate byte
+			free( area );
+		} // for
+	} // for
+
+	// check valloc/free (sbrk)
+
+	size_t pagesize = sysconf( _SC_PAGESIZE );
+	for ( int s = 1; s < NoOfAllocs; s += 1 ) {			// allocation of size 0 can return null
+		char * area = (char *)valloc( s );
+		//cout << setw(6) << i << " " << area << endl;
+		if ( (size_t)area % pagesize != 0 || malloc_alignment( area ) != pagesize ) { // check for initial alignment
+			abort( "valloc/free bad alignment : valloc( %d ) = %p", s, area );
+		} // if
+		area[0] = '\345'; area[s - 1] = '\345';			// fill first/last byte
+		area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+		free( area );
+	} // for
+
+	// check valloc/free (mmap)
+
+	for ( int i = 1; i < NoOfMmaps; i += 1 ) {
+		size_t s = i + malloc_mmap_start();				// cross over point
+		char * area = (char *)valloc( s );
+		//cout << setw(6) << i << " " << area << endl;
+		if ( (size_t)area % pagesize != 0 || malloc_alignment( area ) != pagesize ) { // check for initial alignment
+			abort( "valloc/free bad alignment : valloc( %d ) = %p", (int)s, area );
+		} // if
+		area[0] = '\345'; area[s - 1] = '\345';			// fill first/last byte
+		area[malloc_usable_size( area ) - 1] = '\345';	// fill ultimate byte
+		free( area );
 	} // for
 
 #ifndef ALLOCATOR										// uC++ allocator only
@@ -410,7 +554,7 @@ void Worker::main() {
 		char * area = (char *)memalign( a, amount );	// aligned N-byte allocation
 		//sout | alignments[a] | area | endl;
 		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-			abort( "memalign/resize with align/free bad alignment : memalign(%d,%d) = %p", (int)a, (int)amount, area );
+			abort( "memalign/resize with align/free bad alignment : memalign( %d, %d ) = %p", (int)a, (int)amount, area );
 		} // if
 		area[0] = '\345'; area[amount - 2] = '\345';	// fill first/penultimate byte
 
@@ -434,7 +578,7 @@ void Worker::main() {
 		char * area = (char *)memalign( a, amount );	// aligned N-byte allocation
 		//cout << setw(6) << alignments[a] << " " << area << endl;
 		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-			abort( "memalign/realloc/free bad alignment : memalign(%d,%d) = %p", (int)a, (int)amount, area );
+			abort( "memalign/realloc/free bad alignment : memalign( %d, %d ) = %p", (int)a, (int)amount, area );
 		} // if
 		area[0] = '\345'; area[amount - 2] = '\345';	// fill first/penultimate byte
 
@@ -451,6 +595,55 @@ void Worker::main() {
 		free( area );
 	} // for
 
+	// check amemalign/resize with align/free
+
+	amount = 2;
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		// initial N byte allocation
+		char * area = (char *)amemalign( a, amount, 10 );	// aligned N-byte allocation
+		//sout | alignments[a] | area | endl;
+		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+			abort( "amemalign/resize with align/free bad alignment : amemalign( %d, %d ) = %p", (int)a, (int)amount, area );
+		} // if
+		area[0] = '\345'; area[amount - 2] = '\345';	// fill first/penultimate byte
+
+		// Do not start this loop index at 0 because resize of 0 bytes frees the storage.
+		for ( int s = amount; s < 256 * 1024; s += 1 ) { // start at initial memory request
+			area = (char *)aligned_resize( area, a * 2, s ); // attempt to reuse storage
+			//sout | i | area | endl;
+			if ( (size_t)area % a * 2 != 0 ) {			// check for initial alignment
+				abort( "amemalign/resize with align/free bad alignment %p", area );
+			} // if
+			area[s - 1] = '\345';						// fill last byte
+		} // for
+		free( area );
+	} // for
+
+	// check amemalign/realloc/free
+
+	amount = 2;
+	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
+		// initial N byte allocation
+		char * area = (char *)amemalign( a, amount, 10 );	// aligned N-byte allocation
+		//cout << setw(6) << alignments[a] << " " << area << endl;
+		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
+			abort( "amemalign/realloc/free bad alignment : amemalign( %d, %d ) = %p", (int)a, (int)amount, area );
+		} // if
+		area[0] = '\345'; area[amount - 2] = '\345';	// fill first/penultimate byte
+
+		// Do not start this loop index at 0 because realloc of 0 bytes frees the storage.
+		for ( int s = amount; s < 256 * 1024; s += 1 ) { // start at initial memory request
+			if ( area[0] != '\345' || area[s - 2] != '\345' ) abort( "amemalign/realloc/free corrupt storage" );
+			area = (char *)realloc( area, s );			// attempt to reuse storage
+			//cout << setw(6) << i << " " << area << endl;
+			if ( (size_t)area % a != 0 ) {				// check for initial alignment
+				abort( "amemalign/realloc/free bad alignment %p", area );
+			} // if
+			area[s - 1] = '\345';						// fill last byte
+		} // for
+		free( area );
+	} // for
+
 	// check cmemalign/free
 
 	for ( size_t a = uAlign(); a <= limit; a += a ) {	// generate powers of 2
@@ -459,7 +652,7 @@ void Worker::main() {
 			char * area = (char *)cmemalign( a, 1, s );
 			//cout << setw(6) << i << " " << area << endl;
 			if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-				abort( "cmemalign/free bad alignment : cmemalign(%d,%d) = %p", (int)a, s, area );
+				abort( "cmemalign/free bad alignment : cmemalign( %d, %d ) = %p", (int)a, s, area );
 			} // if
 			if ( area[0] != '\0' || area[s - 1] != '\0' ||
 				 area[malloc_size( area ) - 1] != '\0' ||
@@ -477,7 +670,7 @@ void Worker::main() {
 		char * area = (char *)cmemalign( a, 1, amount ); // aligned N-byte allocation
 		//cout << setw(6) << alignments[a] << " " << area << endl;
 		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-			abort( "cmemalign/realloc/free bad alignment : cmemalign(%d,%d) = %p", (int)a, (int)amount, area );
+			abort( "cmemalign/realloc/free bad alignment : cmemalign( %d, %d ) = %p", (int)a, (int)amount, area );
 		} // if
 		if ( area[0] != '\0' || area[amount - 1] != '\0' ||
 			 area[malloc_size( area ) - 1] != '\0' ||
@@ -508,7 +701,7 @@ void Worker::main() {
 		char * area = (char *)memalign( a, amount );	// aligned N-byte allocation
 		//cout << setw(6) << alignments[a] << " " << area << endl;
 		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-			abort( "memalign/realloc with align/free bad alignment : memalign(%d,%d) = %p", (int)a, (int)amount, area );
+			abort( "memalign/realloc with align/free bad alignment : memalign( %d, %d ) = %p", (int)a, (int)amount, area );
 		} // if
 		area[0] = '\345'; area[amount - 2] = '\345';	// fill first/penultimate byte
 
@@ -533,7 +726,7 @@ void Worker::main() {
 		char * area = (char *)cmemalign( a, 1, amount ); // aligned N-byte allocation
 		//cout << setw(6) << alignments[a] << " " << area << endl;
 		if ( (size_t)area % a != 0 || malloc_alignment( area ) != a ) { // check for initial alignment
-			abort( "cmemalign/realloc with align/free bad alignment : cmemalign(%d,%d) = %p", (int)a, (int)amount, area );
+			abort( "cmemalign/realloc with align/free bad alignment : cmemalign( %d, %d ) = %p", (int)a, (int)amount, area );
 		} // if
 		if ( area[0] != '\0' || area[amount - 1] != '\0' ||
 			 area[malloc_size( area ) - 1] != '\0' ||
